@@ -1,0 +1,231 @@
+Running django-vite in production mode (no HMR)
+OK   cost_recipe
+OK   cost_does_not_save_recipe
+OK   edition_esencial
+MainThread WARNING 2026-09-28 20:16:24,424 django.request Forbidden: /api/cuaderno/movements/
+OK   esencial_blocks_stock
+OK   edition_integral
+OK   order_does_not_move_stock
+MainThread WARNING 2026-09-28 20:16:25,151 django.request Conflict: /api/cuaderno/movements/
+OK   idempotent_receipt
+OK   idempotency_conflict
+OK   consume_to_one
+FAIL concurrent_consume: {'outcomes': ['Running django-vite in production mode (no HMR) rc=1 122, in connect\n    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)\ndjango.db.utils.OperationalError: could not translate host name "cuaderno-g0-t002-db" to address: Try again\n\n', 'Running django-vite in production mode (no HMR) rc=1 122, in connect\n    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)\ndjango.db.utils.OperationalError: could not translate host name "cuaderno-g0-t002-db" to address: Try again\n\n'], 'amount': '1.0000000000000000'}
+FAIL waste_rejects_negative: 201
+OK   reverse_restores_balance
+OK   service_45_no_stock
+OK   shared_sauce
+MainThread WARNING 2026-09-28 20:17:41,971 django.request Bad Request: /api/cuaderno/production/
+OK   cycle_rejected
+OK   allergen_unknown
+OK   replenishment
+OK   export_hides_private
+MainThread WARNING 2026-09-28 20:17:42,577 django.request Bad Request: /api/cuaderno/exchange/
+OK   import_rejects_url
+OK   import_creates_recipe
+MainThread WARNING 2026-09-28 20:17:46,861 django.request Not Found: /api/cuaderno/recipes/1/cost/
+MainThread WARNING 2026-09-28 20:17:46,940 django.request Forbidden: /api/cuaderno/movements/
+OK   other_space_cannot_cost
+OK   other_space_cannot_move
+MainThread WARNING 2026-09-28 20:17:51,317 django.request Forbidden: /api/cuaderno/replenishment/
+OK   csrf_blocks_missing_token
+MainThread WARNING 2026-09-28 20:17:52,336 django.request Bad Request: /api/shopping-list-entry/
+FAIL shopping_check_undo: {"food":{"name":["This field is required."]}}
+OK   movement_index_query
+OK   prices_not_rewritten
+OK   cost_still_complete
+{
+  "failures": [
+    "concurrent_consume",
+    "waste_rejects_negative",
+    "shopping_check_undo"
+  ],
+  "report": {
+    "cost_recipe": {
+      "ok": true,
+      "detail": {
+        "status": "complete",
+        "unrounded": "2.8000000000000000",
+        "display": "2.80",
+        "known_subtotal": "2.8000000000000000",
+        "total": "2.8000000000000000",
+        "warnings": [],
+        "base_servings": "1",
+        "servings": "1",
+        "per_serving": "2.8000000000000000",
+        "lines": [
+          {
+            "status": "complete",
+            "unrounded": "2.8000000000000000",
+            "display": "2.80",
+            "known_subtotal": "2.8000000000000000",
+            "total": "2.8000000000000000",
+            "warnings": []
+          }
+        ],
+        "currency": "EUR",
+        "recipe_id": 1,
+        "saved_recipe": false
+      }
+    },
+    "cost_does_not_save_recipe": {
+      "ok": true,
+      "detail": "1"
+    },
+    "edition_esencial": {
+      "ok": true,
+      "detail": "{\"edition\":\"esencial\",\"currency\":\"EUR\",\"price_policy\":\"net\",\"target_food_cost_ratio\":\"0.30\",\"net_profit\":null}"
+    },
+    "esencial_blocks_stock": {
+      "ok": true,
+      "detail": 403
+    },
+    "edition_integral": {
+      "ok": true,
+      "detail": "{\"edition\":\"integral\",\"currency\":\"EUR\",\"price_policy\":\"gross\",\"target_food_cost_ratio\":\"0.3000\",\"net_profit\":null}"
+    },
+    "order_does_not_move_stock": {
+      "ok": true,
+      "detail": {
+        "id": 5,
+        "stock_unchanged": true,
+        "quantity": "6"
+      }
+    },
+    "idempotent_receipt": {
+      "ok": true,
+      "detail": {
+        "first": 201,
+        "second": 201,
+        "count": 1,
+        "amount": "5.0000000000000000"
+      }
+    },
+    "idempotency_conflict": {
+      "ok": true,
+      "detail": 409
+    },
+    "consume_to_one": {
+      "ok": true,
+      "detail": "1.0000000000000000"
+    },
+    "concurrent_consume": {
+      "ok": false,
+      "detail": {
+        "outcomes": [
+          "Running django-vite in production mode (no HMR) rc=1 122, in connect\n    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)\ndjango.db.utils.OperationalError: could not translate host name \"cuaderno-g0-t002-db\" to address: Try again\n\n",
+          "Running django-vite in production mode (no HMR) rc=1 122, in connect\n    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)\ndjango.db.utils.OperationalError: could not translate host name \"cuaderno-g0-t002-db\" to address: Try again\n\n"
+        ],
+        "amount": "1.0000000000000000"
+      }
+    },
+    "waste_rejects_negative": {
+      "ok": false,
+      "detail": 201
+    },
+    "reverse_restores_balance": {
+      "ok": true,
+      "detail": "0.0000000000000000"
+    },
+    "service_45_no_stock": {
+      "ok": true,
+      "detail": {
+        "id": 3,
+        "covers": "45",
+        "meal_plan": 3,
+        "payment": null,
+        "stock_changed": false,
+        "timezone": "Europe/Madrid"
+      }
+    },
+    "shared_sauce": {
+      "ok": true,
+      "detail": {
+        "needs": {
+          "salsa": "300"
+        },
+        "stock_changed": false,
+        "edges": {}
+      }
+    },
+    "cycle_rejected": {
+      "ok": true,
+      "detail": "{\"recipe_cycle\":\"Referencia circular: A → B → A\"}"
+    },
+    "allergen_unknown": {
+      "ok": true,
+      "detail": {
+        "id": 3,
+        "state": "unknown",
+        "undeclared_means_absent": false
+      }
+    },
+    "replenishment": {
+      "ok": true,
+      "detail": {
+        "packs": "2",
+        "quantity": "8",
+        "waste_value": null,
+        "food_cost": {
+          "status": "incomplete",
+          "ratio": null,
+          "above_target": null,
+          "net_profit": null
+        }
+      }
+    },
+    "export_hides_private": {
+      "ok": true,
+      "detail": [
+        "Caldo demo G0",
+        "Importada G2",
+        "Importada G2"
+      ]
+    },
+    "import_rejects_url": {
+      "ok": true,
+      "detail": 400
+    },
+    "import_creates_recipe": {
+      "ok": true,
+      "detail": "{\"created\":[7]}"
+    },
+    "other_space_cannot_cost": {
+      "ok": true,
+      "detail": 404
+    },
+    "other_space_cannot_move": {
+      "ok": true,
+      "detail": 403
+    },
+    "csrf_blocks_missing_token": {
+      "ok": true,
+      "detail": {
+        "denied": 403,
+        "allowed": 200
+      }
+    },
+    "shopping_check_undo": {
+      "ok": false,
+      "detail": "{\"food\":{\"name\":[\"This field is required.\"]}}"
+    },
+    "movement_index_query": {
+      "ok": true,
+      "detail": {
+        "seconds": 0.0092,
+        "rows": "limit 20"
+      }
+    },
+    "prices_not_rewritten": {
+      "ok": true,
+      "detail": {
+        "before": 2,
+        "after": 2
+      }
+    },
+    "cost_still_complete": {
+      "ok": true,
+      "detail": "2.80"
+    }
+  }
+}

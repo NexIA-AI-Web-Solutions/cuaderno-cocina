@@ -43,6 +43,9 @@ let routes = [
     {path: '/property-editor', component: () => import("@/pages/PropertyEditorPage.vue"), name: 'PropertyEditorPage', meta: {title: 'Property_Editor'}},
     {path: '/pantry', component: () => import("@/pages/PantryPage.vue"), name: 'PantryPage', meta: {title: 'Pantry'}},
     {path: '/cuaderno/precios', component: () => import("@/cuaderno/pages/PreciosPage.vue"), name: 'CuadernoPreciosPage', meta: {title: 'Costes'}},
+    {path: '/cuaderno/lista', component: () => import("@/cuaderno/pages/ListaPage.vue"), name: 'CuadernoListaPage', meta: {title: 'Lista'}},
+    {path: '/cuaderno/produccion', component: () => import("@/cuaderno/pages/ProduccionPage.vue"), name: 'CuadernoProduccionPage', meta: {title: 'Producción'}},
+    {path: '/cuaderno/almacen', component: () => import("@/cuaderno/pages/AlmacenPage.vue"), name: 'CuadernoAlmacenPage', meta: {title: 'Almacén'}},
 
     {path: '/space-setup', component: () => import("@/pages/SpaceSetupPage.vue"), name: 'SpaceSetupPage'},
 

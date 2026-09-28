@@ -29,7 +29,9 @@ class EditionView(APIView):
                 "edition": profile.edition,
                 "currency": profile.currency,
                 "price_policy": profile.price_policy,
+                "target_food_cost_ratio": None if profile.target_food_cost_ratio is None else format(profile.target_food_cost_ratio, "f"),
                 "prices_are_metadata": True,
+                "net_profit": None,
             }
         )
 
@@ -43,8 +45,28 @@ class EditionView(APIView):
             raise ValidationError({"price_policy": "Política de precio desconocida. Elige neto o bruto."})
         profile.edition = edition
         profile.price_policy = policy
-        profile.save(update_fields=["edition", "price_policy"])
-        return Response({"edition": profile.edition, "currency": profile.currency, "price_policy": profile.price_policy})
+        if "target_food_cost_ratio" in request.data:
+            raw = request.data.get("target_food_cost_ratio")
+            if raw in (None, ""):
+                profile.target_food_cost_ratio = None
+            else:
+                try:
+                    ratio = parse_decimal(raw, allow_zero=False)
+                except DomainError as exc:
+                    raise ValidationError({"target_food_cost_ratio": exc.message}) from exc
+                if ratio > 1:
+                    raise ValidationError({"target_food_cost_ratio": "El objetivo de coste de materia es una fracción entre 0 y 1."})
+                profile.target_food_cost_ratio = ratio
+        profile.save(update_fields=["edition", "price_policy", "target_food_cost_ratio"])
+        return Response(
+            {
+                "edition": profile.edition,
+                "currency": profile.currency,
+                "price_policy": profile.price_policy,
+                "target_food_cost_ratio": None if profile.target_food_cost_ratio is None else format(profile.target_food_cost_ratio, "f"),
+                "net_profit": None,
+            }
+        )
 
 
 class PackageListView(APIView):

@@ -1,5 +1,5 @@
 <template>
-    <v-card class="mt-2" v-if="recipeId">
+    <v-card class="mt-2 cost-card" v-if="recipeId">
         <v-card-title class="text-h6">Coste de ingredientes</v-card-title>
         <v-card-text>
             <div v-if="loading">Calculando…</div>
@@ -83,3 +83,11 @@ async function load() {
 onMounted(load)
 watch(() => [props.recipeId, props.servings], load)
 </script>
+
+<style scoped>
+@media print {
+    .cost-card {
+        break-inside: avoid;
+    }
+}
+</style>
