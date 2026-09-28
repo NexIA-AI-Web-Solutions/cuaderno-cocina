@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "note": "Interfaz de comandos que Codex debe implementar, no comandos de app existentes en el kit.",
+  "scripts": {
+    "setup:local": "Inicializa configuración local y BD vacía sin sobrescribir datos; alta de propietario segura.",
+    "dev": "Servidor de desarrollo local.",
+    "demo:seed": "Carga solo datos sintéticos en una base vacía de demo.",
+    "db:migrate": "Ejecuta migraciones versionadas explícitas.",
+    "format:check": "Formato sin modificación.",
+    "lint": "Análisis estático.",
+    "check": "Svelte y TypeScript strict.",
+    "test:unit": "Tests de dominio con Vitest.",
+    "test:integration": "Persistencia SQLite real aislada.",
+    "test:coverage": "Umbrales de cobertura por módulos.",
+    "build": "adapter-node de producción.",
+    "verify": "Format/lint/check/unit/integration/coverage/build, todos reales.",
+    "test:e2e": "Smoke Chromium sobre build.",
+    "test:e2e:release": "Matriz de ediciones/roles y Chromium/WebKit/Firefox.",
+    "test:security": "Casos adversariales y permisos.",
+    "test:restore": "Backup/restore aislado con DB/media.",
+    "bench": "Benchmark determinista, medidas y entorno.",
+    "release:check": "Verificación de release y evidencia.",
+    "backup": "Snapshot consistente con manifiesto; destino explícito.",
+    "restore": "Restauración en destino explícito, nunca sobre base viva.",
+    "data:import": "Importación general con dry-run y confirmación.",
+    "data:export": "Exportación versionada de datos propios."
+  }
+}

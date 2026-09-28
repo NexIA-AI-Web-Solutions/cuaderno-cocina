@@ -1,0 +1,4 @@
+external_id;name;dimension;package_quantity;package_unit;price_cents;price_known
+ing-arroz;Arroz;mass;1000;g;250;true
+ing-verduras;Verduras;mass;1000;g;300;true
+ing-aceite;Aceite de oliva;volume;5000;ml;3200;true

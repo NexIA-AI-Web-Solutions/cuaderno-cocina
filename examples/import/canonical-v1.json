@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "dataOrigin": "SYNTHETIC",
+  "currency": "EUR",
+  "priceBasis": "entered",
+  "ingredients": [
+    {
+      "externalId": "ing-arroz",
+      "name": "Arroz",
+      "dimension": "mass",
+      "purchaseFormat": {
+        "quantity": "1000",
+        "unit": "g",
+        "priceCents": 250,
+        "priceKnown": true
+      }
+    },
+    {
+      "externalId": "ing-verduras",
+      "name": "Verduras",
+      "dimension": "mass",
+      "purchaseFormat": {
+        "quantity": "1000",
+        "unit": "g",
+        "priceCents": 300,
+        "priceKnown": true
+      }
+    },
+    {
+      "externalId": "ing-aceite",
+      "name": "Aceite de oliva",
+      "dimension": "volume",
+      "purchaseFormat": {
+        "quantity": "5000",
+        "unit": "ml",
+        "priceCents": 3200,
+        "priceKnown": true
+      }
+    }
+  ],
+  "recipes": [
+    {
+      "externalId": "rec-arroz",
+      "title": "Arroz con verduras (ejemplo)",
+      "servings": 4,
+      "category": "Primeros",
+      "preparation": "Preparación ficticia para probar la aplicación; no es una instrucción alimentaria validada.",
+      "lines": [
+        {
+          "ingredientExternalId": "ing-arroz",
+          "quantity": "400",
+          "unit": "g"
+        },
+        {
+          "ingredientExternalId": "ing-verduras",
+          "quantity": "600",
+          "unit": "g"
+        },
+        {
+          "ingredientExternalId": "ing-aceite",
+          "quantity": "200",
+          "unit": "ml"
+        }
+      ]
+    }
+  ],
+  "expectedForFixtureOnly": {
+    "recipeTotalCents": 408,
+    "perServingCents": 102
+  }
+}

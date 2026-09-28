@@ -1,0 +1,70 @@
+{
+  "intent": "App funcional, minimalista y profesional; no landing.",
+  "color": {
+    "canvas": "#F6F5F1",
+    "surface": "#FFFFFF",
+    "text": "#202822",
+    "muted": "#59665D",
+    "accent": "#426449",
+    "border": "#DCE2DA",
+    "danger": "#A52E31",
+    "warning": "#855D12"
+  },
+  "typography": {
+    "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+    "bodyPx": 16,
+    "tablePx": 14,
+    "lineHeight": 1.5,
+    "tabularNumbers": true
+  },
+  "spacePx": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48
+  ],
+  "radiusPx": [
+    6,
+    10,
+    14
+  ],
+  "touchTargetPx": 44,
+  "viewportChecks": [
+    [
+      360,
+      800
+    ],
+    [
+      390,
+      844
+    ],
+    [
+      768,
+      1024
+    ],
+    [
+      820,
+      1180
+    ],
+    [
+      1024,
+      768
+    ],
+    [
+      1366,
+      768
+    ],
+    [
+      1440,
+      900
+    ]
+  ],
+  "notes": [
+    "Verificar contraste real; los tokens no certifican accesibilidad.",
+    "Respetar reduced-motion.",
+    "No font CDN, no datos privados en localStorage."
+  ]
+}

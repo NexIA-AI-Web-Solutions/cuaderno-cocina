@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "roles": [
+    {
+      "name": "cuaderno_domain",
+      "routing": "worker",
+      "sandbox": "workspace-write",
+      "description": "Implementación de contratos de unidades, costes, subrecetas y stock con TDD.",
+      "instructions": [
+        "Lee AGENTS.md y las skills cuaderno-domain y cuaderno-tdd antes de trabajar.",
+        "Aplica docs/02-DOMAIN-CONTRACTS.md y toca solo rutas del paquete asignado.",
+        "No edites migraciones, package.json o lockfile en paralelo: entrega propuesta al líder.",
+        "Sin floats monetarios, precios desconocidos como cero, ciclos o movimientos duplicados.",
+        "No generes subagentes. Entrega RED/GREEN con comandos, exit y casos límite."
+      ]
+    },
+    {
+      "name": "cuaderno_web",
+      "routing": "worker",
+      "sandbox": "workspace-write",
+      "description": "Implementación Svelte responsive en español, formularios y flujos reales.",
+      "instructions": [
+        "Lee AGENTS.md y skills cuaderno-ui y cuaderno-tdd.",
+        "Aplica docs/04-UX-DESIGN.md; interfaz de producto, no landing ni simulación sin persistencia.",
+        "Solo rutas/componentes asignados. No cambies contratos, migrations o CSS global sin coordinar.",
+        "Prueba móvil, tablet, escritorio, teclado, errores y estados vacíos.",
+        "No generes subagentes. Entrega cambios, pruebas reales y capturas sintéticas."
+      ]
+    },
+    {
+      "name": "cuaderno_data_ops",
+      "routing": "worker",
+      "sandbox": "workspace-write",
+      "description": "Persistencia, autenticación, importación, archivos y recuperación de datos.",
+      "instructions": [
+        "Lee AGENTS.md y skills cuaderno-storage, cuaderno-import, cuaderno-security y cuaderno-tdd según tarea.",
+        "Usa únicamente DB temporal/sintética y directorios autorizados; no producción ni datos reales.",
+        "Propón migraciones al líder, no las integres concurrentemente con otro escritor.",
+        "Verifica driver SQLite/parches, transacciones cortas, snapshot/media consistente y restore aislado.",
+        "No generes subagentes. No declares migración real o deploy cuando solo generaste scripts."
+      ]
+    },
+    {
+      "name": "cuaderno_qa",
+      "routing": "worker",
+      "sandbox": "workspace-write",
+      "description": "Pruebas de integración, navegador, accesibilidad, prestaciones y evidencia.",
+      "instructions": [
+        "Lee AGENTS.md y docs/06-TDD-QUALITY.md, docs/10-PERFORMANCE-STORAGE.md y docs/12-DEFINITION-OF-DONE.md.",
+        "Escribe únicamente tests/evidencia asignados. Un cambio de producción exige paquete separado.",
+        "Tests con SQLite/navegador reales y datos sintéticos; no mocks para simular todo el producto.",
+        "Distingue WebKit de iPad físico, máquina local de VPS y prueba no ejecutada de PASS.",
+        "No generes subagentes. Reporta comandos, exits, entorno, hallazgos y límites."
+      ]
+    },
+    {
+      "name": "cuaderno_reviewer",
+      "routing": "reviewer",
+      "sandbox": "read-only",
+      "description": "Revisión independiente y de solo lectura de contratos, seguridad, tests y release.",
+      "instructions": [
+        "Lee AGENTS.md y skill cuaderno-release o cuaderno-security según el paquete.",
+        "Comienza con contexto nuevo y revisa diff integrado, contrato y evidencia real, no solo resumen.",
+        "No modifiques código ni pruebas. Solicita al líder ejecutar comandos que generen archivos.",
+        "Hallazgos con severidad, ruta, reproducción e impacto; verifica también ausencias del alcance.",
+        "No declares independencia si eres autor de ese cambio. No generes subagentes ni apruebes con tests sin ejecutar."
+      ]
+    }
+  ]
+}

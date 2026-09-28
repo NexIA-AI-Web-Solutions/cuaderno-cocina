@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "target": "ALL_TIERS",
+  "tasks": [
+    {
+      "id": "T001",
+      "phase": "G0",
+      "title": "Preflight, modelos, versiones y riesgos",
+      "dependsOn": [],
+      "suggestedOwner": "leader",
+      "scope": "Inventario de entorno, modelo efectivo, dependencias oficiales y SQLite parcheado. No fabricar resultados.",
+      "acceptance": "artifacts/preflight.json; docs/DEPENDENCY_BASELINE.md",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T002",
+      "phase": "G1",
+      "title": "Scaffold y herramientas de calidad",
+      "dependsOn": [
+        "T001"
+      ],
+      "suggestedOwner": "leader",
+      "scope": "SvelteKit estable, Node24, lockfile, TypeScript strict, ESLint/Prettier, Vitest/Playwright y CI mínima. No borrar el handoff.",
+      "acceptance": "Instalación limpia; test semántico inicial; build y scripts multiplataforma.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T003",
+      "phase": "G1",
+      "title": "Tipos de dinero, unidades y parser español",
+      "dependsOn": [
+        "T002"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Contratos decimales, dimensiones, nulos/ceros, conversiones, round HALF_UP y overflow.",
+      "acceptance": "Unitarias con oráculos fijos y propiedades; sin float monetario.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T004",
+      "phase": "G1",
+      "title": "Persistencia y migraciones core",
+      "dependsOn": [
+        "T002"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "SQLite real, Drizzle, foreign keys, WAL, private dirs, esquema mínimo y migración desde vacío.",
+      "acceptance": "Migraciones y restricciones pasan en Windows y Linux disponibles.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T005",
+      "phase": "G1",
+      "title": "Acceso privado, sesiones y setup propietario",
+      "dependsOn": [
+        "T004"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "Better Auth oficial, sin registro público, recuperar acceso por operador, logout y sesión revocada.",
+      "acceptance": "Auth integrada, límites de login y acceso anónimo rechazado.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T006",
+      "phase": "G1",
+      "title": "Sistema visual y shell responsive",
+      "dependsOn": [
+        "T002"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Tokens, navegación, botones/inputs/combobox accesibles, estados y estructura móvil/iPad.",
+      "acceptance": "Capturas sintéticas, teclado, foco y ausencia de overflow global.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T007",
+      "phase": "G1",
+      "title": "Capacidades y autorización servidor",
+      "dependsOn": [
+        "T005"
+      ],
+      "suggestedOwner": "leader",
+      "scope": "Resolver edición acumulativa y permisos; pruebas de URL directa, import y archivos.",
+      "acceptance": "Esencial no puede ejecutar funciones de otros tiers por endpoint.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T008",
+      "phase": "G2",
+      "title": "Ingredientes y formatos de compra",
+      "dependsOn": [
+        "T003",
+        "T004",
+        "T005",
+        "T006",
+        "T007"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "CRUD, búsqueda, precio desconocido/gratis, archivado, version conflict y formato claro.",
+      "acceptance": "Alta/editar/reabrir; actualizar precio sin perder referencias.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T009",
+      "phase": "G2",
+      "title": "Motor de escandallos y recálculo",
+      "dependsOn": [
+        "T008"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Servicio puro más consultas por lote; costes completos/parciales y ración, cambio de precio.",
+      "acceptance": "Golden cases y coste observado desde DB, sin redondeo por línea.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T010",
+      "phase": "G2",
+      "title": "Recetas completas y escalado",
+      "dependsOn": [
+        "T009"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Crear/editar/duplicar/archivar, cantidades, raciones, pasos básicos, simulación sin mutación.",
+      "acceptance": "E2E vertical de ingrediente→receta→coste→persistencia.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T011",
+      "phase": "G2",
+      "title": "Fotos privadas optimizadas",
+      "dependsOn": [
+        "T010"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "Subida segura, límites, variantes, EXIF fuera, almacenamiento atómico y acceso privado.",
+      "acceptance": "MIME falso/imagen enorme/path inválido bloqueados, foto válida visible.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T012",
+      "phase": "G2",
+      "title": "Búsqueda, fichas impresas y responsive Esencial",
+      "dependsOn": [
+        "T011"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Paginación/filtros, detalle y print A4; flujos táctiles y errores legibles.",
+      "acceptance": "Receta de 30 líneas imprimible; móvil/tablet/escritorio funcionales.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T013",
+      "phase": "G2",
+      "title": "Import/export genérico y backup básico",
+      "dependsOn": [
+        "T010",
+        "T011"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "JSON canónico, CSV validado, preview, idempotencia, export total y snapshot seguro con media.",
+      "acceptance": "Roundtrip y restore aislado Esencial; no datos reales.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T014",
+      "phase": "G2",
+      "title": "Puerta de aceptación Esencial",
+      "dependsOn": [
+        "T012",
+        "T013"
+      ],
+      "suggestedOwner": "cuaderno_qa",
+      "scope": "Todos los escenarios básicos y permisos pasan; checkpoint funcional antes de ampliar.",
+      "acceptance": "Revisión independiente y etiqueta interna ESSENTIAL_VERIFIED; no deploy comercial automático.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T015",
+      "phase": "G3",
+      "title": "Subrecetas y propagación por DAG",
+      "dependsOn": [
+        "T014"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Aristas, salida medible, costes transitivos, ciclos y profundidad, versiones y precio faltante.",
+      "acceptance": "Rechaza A→B→A y propaga cambios correctos, sin N+1.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T016",
+      "phase": "G3",
+      "title": "Mermas, rendimientos y alérgenos declarados",
+      "dependsOn": [
+        "T015"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Separar merma de ingrediente y rendimiento de elaboración; registro manual sin certificación sanitaria.",
+      "acceptance": "Ejemplo 80% una sola vez; agregación de alérgenos revisable.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T017",
+      "phase": "G3",
+      "title": "Menús, servicios y reservas internas",
+      "dependsOn": [
+        "T016"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Semana/agenda, raciones por plato, comensales manuales O reservas, cancelación, capacidad y consolidación.",
+      "acceptance": "No doble cómputo; DST y reservas canceladas; planificar no consume stock.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T018",
+      "phase": "G3",
+      "title": "Presupuestos y fichas de producción",
+      "dependsOn": [
+        "T017"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Coste por servicio/persona, presupuesto sin venta, contribución opcional sobre base comparable y ficha avanzada.",
+      "acceptance": "Sin falsa rentabilidad neta ni margen sobre precios incompletos.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T019",
+      "phase": "G3",
+      "title": "Puerta de aceptación Profesional",
+      "dependsOn": [
+        "T018"
+      ],
+      "suggestedOwner": "cuaderno_qa",
+      "scope": "E2E menú con subrecetas/merma/reservas y sus bloqueos por edición/rol.",
+      "acceptance": "Revisión nueva; PRO_VERIFIED; Esencial sigue limpio y rápido.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T020",
+      "phase": "G4",
+      "title": "Proveedores y productos normalizados",
+      "dependsOn": [
+        "T019"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "Fichas y referencias proveedor, formatos comparables, edición/archivado.",
+      "acceptance": "Mismo ingrediente con varios proveedores sin inventar conversiones.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T021",
+      "phase": "G4",
+      "title": "Libro de movimientos y saldo de existencias",
+      "dependsOn": [
+        "T020"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Ledger inmutable, entrada/apertura/ajuste, saldo transaccional, versiones y anti-negativos.",
+      "acceptance": "Carrera de consumo reproducida; no doble escritura ni saldo negativo.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T022",
+      "phase": "G4",
+      "title": "Compras y recepciones idempotentes",
+      "dependsOn": [
+        "T021"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "Borrador/pedido/recepción parcial, líneas, precios, eventos y snapshot.",
+      "acceptance": "Reintento de recepción no duplica stock; pedido sin recepción no incrementa saldo.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T023",
+      "phase": "G4",
+      "title": "Consumo por producción y desperdicios",
+      "dependsOn": [
+        "T022"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Confirmación explícita, explosión a ingredientes base, cantidades reales, motivos y compensaciones.",
+      "acceptance": "Subrecetas no descuentan dos veces; desperdicio tiene coste y actor.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T024",
+      "phase": "G4",
+      "title": "Valoración ponderada y consistencia",
+      "dependsOn": [
+        "T023"
+      ],
+      "suggestedOwner": "cuaderno_domain",
+      "scope": "Media ponderada, salidas al coste vigente operativo, residuos a saldo cero y reconstrucción.",
+      "acceptance": "Caso 20 kg/60 €→5 kg consumo→2 kg desperdicio=13 kg/39 €.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T025",
+      "phase": "G4",
+      "title": "Histórico e impacto de precios",
+      "dependsOn": [
+        "T022",
+        "T024"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Historial de compras y eventos, cambio de coste actual de recetas; snapshots pasados intactos.",
+      "acceptance": "Cambiar precio actual no reescribe compras ni producciones previas.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T026",
+      "phase": "G4",
+      "title": "Reposición, compra sugerida y equipo",
+      "dependsOn": [
+        "T025"
+      ],
+      "suggestedOwner": "cuaderno_web",
+      "scope": "Necesidad menos disponible, mínimos, redondeo de envase, permisos responsable/cocina/consulta.",
+      "acceptance": "Propuestas explicadas; no pedidos enviados solos; API y media no filtran importes.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T027",
+      "phase": "G4",
+      "title": "Puerta de aceptación Integral",
+      "dependsOn": [
+        "T026"
+      ],
+      "suggestedOwner": "cuaderno_qa",
+      "scope": "Flujo completo servicio→necesidad→recepción→producción→pérdida→saldo/valor; regresión demás tiers.",
+      "acceptance": "INTEGRAL_VERIFIED con revisión independiente y evidencias.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T028",
+      "phase": "G5",
+      "title": "Portabilidad completa y recuperación",
+      "dependsOn": [
+        "T027"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "Extender formato export/import a todas las entidades, backup coherente y restore completo.",
+      "acceptance": "Claves/refs/snapshots/media/stock restaurados en otro destino.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T029",
+      "phase": "G5",
+      "title": "Benchmark y reducción de recursos",
+      "dependsOn": [
+        "T028"
+      ],
+      "suggestedOwner": "cuaderno_qa",
+      "scope": "Seed grande fijo, p50/p95, RSS, disco/bundle/WAL, queries; mejorar cuellos encontrados.",
+      "acceptance": "Informe reproducible sin atribuir a VPS lo medido solo en portátil.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T030",
+      "phase": "G5",
+      "title": "Instalación Windows y publicación Linux",
+      "dependsOn": [
+        "T029"
+      ],
+      "suggestedOwner": "cuaderno_data_ops",
+      "scope": "setup local seguro, servicio Linux/Caddy, persistencia fuera build, migraciones y rollback documentados.",
+      "acceptance": "Checkout limpio→build→smoke; ningún servidor real modificado.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T031",
+      "phase": "G5",
+      "title": "Auditoría seguridad y dependencias",
+      "dependsOn": [
+        "T030"
+      ],
+      "suggestedOwner": "cuaderno_reviewer",
+      "scope": "Revisión independiente de auth, roles, edición, uploads, SQL, import y supply chain.",
+      "acceptance": "Sin fallos críticos/altos aplicables abiertos; alertas justificadas.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T032",
+      "phase": "G6",
+      "title": "Revisión cross-browser y manuales",
+      "dependsOn": [
+        "T031"
+      ],
+      "suggestedOwner": "cuaderno_qa",
+      "scope": "Chromium/WebKit/Firefox, vistas, accesibilidad, manual usuario y lista iPad físico pendiente.",
+      "acceptance": "Ninguna prueba no ejecutada declarada como PASS.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T033",
+      "phase": "G6",
+      "title": "Auditoría final sobre árbol integrado",
+      "dependsOn": [
+        "T032"
+      ],
+      "suggestedOwner": "cuaderno_reviewer",
+      "scope": "Comparar requerimientos con código y evidencias; rerun pedido al líder; comprobar recetas y ledger.",
+      "acceptance": "Veredicto independiente y fixes revalidados.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    },
+    {
+      "id": "T034",
+      "phase": "G6",
+      "title": "Release local y handoff final",
+      "dependsOn": [
+        "T033"
+      ],
+      "suggestedOwner": "leader",
+      "scope": "Empaquetar runtime/manifest, SHA256, guías y estado; resumir ejecutado y pendientes externos.",
+      "acceptance": "LOCAL_VERIFIED y Linux real cuando probado; nunca inventar deploy/migración cliente.",
+      "status": "NOT_STARTED",
+      "requiresIndependentReview": true
+    }
+  ]
+}

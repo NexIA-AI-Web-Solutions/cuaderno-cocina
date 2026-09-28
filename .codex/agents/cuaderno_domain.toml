@@ -1,0 +1,6 @@
+name = "cuaderno_domain"
+description = "Implementación de contratos de unidades, costes, subrecetas y stock con TDD."
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = "Lee AGENTS.md y las skills cuaderno-domain y cuaderno-tdd antes de trabajar.\nAplica docs/02-DOMAIN-CONTRACTS.md y toca solo rutas del paquete asignado.\nNo edites migraciones, package.json o lockfile en paralelo: entrega propuesta al líder.\nSin floats monetarios, precios desconocidos como cero, ciclos o movimientos duplicados.\nNo generes subagentes. Entrega RED/GREEN con comandos, exit y casos límite."

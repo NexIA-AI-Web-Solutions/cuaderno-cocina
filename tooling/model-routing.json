@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "leader": {
+    "model": "gpt-5.6-sol",
+    "reasoningEffort": "high"
+  },
+  "worker": {
+    "model": "gpt-6-astra",
+    "reasoningEffort": "medium"
+  },
+  "reviewer": {
+    "model": "gpt-5.6-sol",
+    "reasoningEffort": "high"
+  },
+  "interpretation": "GPT 6 Medium se concreta como GPT-6 Astra medium; verificar con el selector real y modificar explícitamente si era otra variante.",
+  "maxConcurrentSubagents": 3,
+  "maxConcurrentWriters": 2,
+  "requireRuntimeVerification": true,
+  "silentFallbackAllowed": false
+}

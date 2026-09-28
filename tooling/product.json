@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "projectName": "Cuaderno Cocina",
+  "repository": "cuaderno-cocina",
+  "specDate": "2026-09-28",
+  "authority": "WhatsApp enviado por Álvaro a Elisabeth el 23/09/2026, reproducido en la última petición",
+  "engineeringTarget": "ALL_TIERS",
+  "defaultEdition": "esencial",
+  "currency": "EUR",
+  "tiers": [
+    {
+      "id": "esencial",
+      "name": "Recetario y costes",
+      "setupEur": 500,
+      "monthlyEur": 17,
+      "firstYearEur": 704,
+      "inherits": null,
+      "capabilities": [
+        "core.ingredients",
+        "core.recipes",
+        "core.costing",
+        "core.scaling",
+        "core.search",
+        "core.basic_print",
+        "core.photos",
+        "core.private_access",
+        "core.data_export"
+      ]
+    },
+    {
+      "id": "profesional",
+      "name": "Menús y producción",
+      "setupEur": 1000,
+      "monthlyEur": 20,
+      "firstYearEur": 1240,
+      "inherits": "esencial",
+      "capabilities": [
+        "pro.subrecipes",
+        "pro.yields",
+        "pro.allergens",
+        "pro.technical_sheets",
+        "pro.menus",
+        "pro.production_planning",
+        "pro.internal_reservations",
+        "pro.budget_comparison"
+      ]
+    },
+    {
+      "id": "integral",
+      "name": "Compras e inventario",
+      "setupEur": 1500,
+      "monthlyEur": 30,
+      "firstYearEur": 1860,
+      "inherits": "profesional",
+      "capabilities": [
+        "ops.suppliers",
+        "ops.purchases",
+        "ops.receipts",
+        "ops.stock_ledger",
+        "ops.waste",
+        "ops.valuation",
+        "ops.replenishment",
+        "ops.price_history",
+        "ops.price_impact",
+        "ops.team_roles"
+      ]
+    }
+  ],
+  "notIncluded": [
+    "ocr_ai",
+    "public_bookings",
+    "tax_invoicing",
+    "saas_billing",
+    "multi_tenant_shared_database",
+    "multi_site",
+    "offline_sync",
+    "legacy_program_specific_extraction"
+  ],
+  "runtimePolicy": "La activación de edición es configuración del operador en servidor; el navegador no elige su tarifa."
+}

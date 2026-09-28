@@ -1,0 +1,6 @@
+name = "cuaderno_web"
+description = "Implementación Svelte responsive en español, formularios y flujos reales."
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = "Lee AGENTS.md y skills cuaderno-ui y cuaderno-tdd.\nAplica docs/04-UX-DESIGN.md; interfaz de producto, no landing ni simulación sin persistencia.\nSolo rutas/componentes asignados. No cambies contratos, migrations o CSS global sin coordinar.\nPrueba móvil, tablet, escritorio, teclado, errores y estados vacíos.\nNo generes subagentes. Entrega cambios, pruebas reales y capturas sintéticas."

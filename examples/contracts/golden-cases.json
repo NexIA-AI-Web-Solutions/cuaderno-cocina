@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "source": "Casos sintéticos con resultados aritméticos fijados; no tests de una app ya implementada.",
+  "cases": [
+    {
+      "id": "C01",
+      "scenario": "Aceite 5 L a 32 €, uso 200 ml, 4 raciones",
+      "packageCents": 3200,
+      "packageMl": 5000,
+      "usedMl": 200,
+      "servings": 4,
+      "expectedTotalCents": 128,
+      "expectedServingCents": 32
+    },
+    {
+      "id": "C02",
+      "scenario": "Mismo aceite actualizado a 40 €",
+      "packageCents": 4000,
+      "packageMl": 5000,
+      "usedMl": 200,
+      "servings": 4,
+      "expectedTotalCents": 160,
+      "expectedServingCents": 40
+    },
+    {
+      "id": "C03",
+      "scenario": "Escalar de 4 a 10 sin mutar receta",
+      "baseServings": 4,
+      "targetServings": 10,
+      "baseMl": 200,
+      "expectedMl": 500
+    },
+    {
+      "id": "C04",
+      "scenario": "Precio desconocido",
+      "priceCents": null,
+      "expectedStatus": "incomplete"
+    },
+    {
+      "id": "C05",
+      "scenario": "Gratis conocido",
+      "priceCents": 0,
+      "expectedStatus": "complete"
+    },
+    {
+      "id": "C06",
+      "scenario": "Compra 1 kg a 2 €, rendimiento 80%, coste de 1 kg útil",
+      "packageCents": 200,
+      "yield": "0.8",
+      "expectedCostCents": 250
+    },
+    {
+      "id": "C07",
+      "scenario": "Salsa 2.000 g a 10 €, uso 300 g",
+      "batchCents": 1000,
+      "batchG": 2000,
+      "usedG": 300,
+      "expectedCostCents": 150
+    },
+    {
+      "id": "C08",
+      "scenario": "Stock ponderado, consumo y desperdicio",
+      "receipts": [
+        {
+          "kg": 10,
+          "centsPerKg": 200
+        },
+        {
+          "kg": 10,
+          "centsPerKg": 400
+        }
+      ],
+      "consumeKg": 5,
+      "wasteKg": 2,
+      "expectedRemainingKg": 13,
+      "expectedRemainingCents": 3900,
+      "expectedWasteCents": 600
+    },
+    {
+      "id": "C09",
+      "scenario": "Tres líneas de 1/3 céntimo",
+      "lines": 3,
+      "numeratorCents": 1,
+      "denominator": 3,
+      "expectedRoundedTotalCents": 1
+    },
+    {
+      "id": "C10",
+      "scenario": "Referencia circular A→B→A",
+      "expectedError": "RECIPE_CYCLE"
+    },
+    {
+      "id": "C11",
+      "scenario": "Litros a kilos sin densidad",
+      "expectedError": "UNIT_DIMENSION_MISMATCH"
+    },
+    {
+      "id": "C12",
+      "scenario": "La misma recepción se envía dos veces",
+      "expectedPostedReceipts": 1
+    },
+    {
+      "id": "C13",
+      "scenario": "Dos operadores intentan consumir el último kilo",
+      "expectedSuccessfulConsumptions": 1,
+      "expectedRemainingKg": 0
+    },
+    {
+      "id": "C14",
+      "scenario": "POST inventario desde edición esencial",
+      "expectedHttpStatus": 403
+    },
+    {
+      "id": "C15",
+      "scenario": "Una receta con foto exportada y restaurada",
+      "expectedMissingAssets": 0
+    },
+    {
+      "id": "C16",
+      "scenario": "El coste actual cambia pero la producción ya confirmada no",
+      "expectedSnapshotUnchanged": true
+    }
+  ]
+}
