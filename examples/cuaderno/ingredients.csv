@@ -1,0 +1,4 @@
+external_id;name;package_quantity;package_unit;package_price;currency
+ING-001;Aceite de oliva;5;L;32,00;EUR
+ING-002;Arroz;5;kg;12,00;EUR
+ING-003;Huevos;12;unit;3,60;EUR

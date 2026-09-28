@@ -1,0 +1,14 @@
+# Packet Txxx — título
+- Objetivo observable:
+- Base commit / gate:
+- Dependencias DONE verificadas:
+- Allowed write paths:
+- Read-only paths / referencias:
+- Archivos compartidos reservados al líder:
+- Contrato / fixture / requisito:
+- Comportamiento nativo observado:
+- Donante + SHA + ruta (si procede):
+- Prueba RED esperada / comando:
+- Prueba GREEN y regresión:
+- Límites (sin despliegue/datos reales):
+- Entrega: resumen, diff, evidencia, riesgos, siguiente paso:

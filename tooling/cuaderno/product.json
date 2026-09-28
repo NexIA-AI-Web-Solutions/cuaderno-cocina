@@ -1,0 +1,33 @@
+{
+  "name": "Cuaderno Cocina",
+  "repository_name": "cuaderno-cocina",
+  "locale": "es-ES",
+  "timezone": "Europe/Madrid",
+  "currency": "EUR",
+  "default_edition": "esencial",
+  "development_target": [
+    "esencial",
+    "profesional",
+    "integral"
+  ],
+  "prices_are_commercial_metadata_not_billing_engine": true,
+  "editions": {
+    "esencial": {
+      "setup_eur": 500,
+      "monthly_eur": 17
+    },
+    "profesional": {
+      "setup_eur": 1000,
+      "monthly_eur": 20
+    },
+    "integral": {
+      "setup_eur": 1500,
+      "monthly_eur": 30
+    }
+  },
+  "price_source": "Último WhatsApp aportado por el usuario: 23/9, 13:23. Integral 1500, no 2000.",
+  "tax_handling": "Fuera del producto; no inferir ni implementar régimen fiscal.",
+  "contract_permission": "Afirmado por el usuario; contrato externo no aportado ni auditado. No bloquear desarrollo por volver a pedirlo.",
+  "deployment": "Una instalación privada por cliente inicialmente; preservar Spaces y permisos de Tandoor.",
+  "runtime": "Tandoor Django/DRF + Vue3/Vuetify + PostgreSQL; sin los tres donantes desplegados."
+}

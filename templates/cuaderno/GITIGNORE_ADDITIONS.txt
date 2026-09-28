@@ -1,0 +1,8 @@
+# Añadir de forma focalizada al .gitignore del fork en G0; no sustituir upstream.
+.cuaderno-runs/
+.private/
+.env.cuaderno*
+__pycache__/
+*.pyc
+# Revisar también imágenes privadas, backups, volúmenes y .dockerignore.
+# Nunca ignorar todo tests/, tooling/ o docs/ para ocultar trabajo pendiente.

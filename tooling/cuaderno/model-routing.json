@@ -1,0 +1,21 @@
+{
+  "leader": {
+    "requested_label": "GPT Sol 5.6",
+    "model": "gpt-5.6-sol",
+    "effort": "high"
+  },
+  "implementation": {
+    "requested_label": "GPT 6 Medium",
+    "interpretation": "GPT-6 Astra/medium, continuando el plan previo; configurable a gpt-6-sol/medium",
+    "model": "gpt-6-astra",
+    "effort": "medium"
+  },
+  "reviewer": {
+    "model": "gpt-5.6-sol",
+    "effort": "high"
+  },
+  "max_subagents": 3,
+  "max_concurrent_writers": 2,
+  "effective_models_verified": false,
+  "do_not_silently_fallback": true
+}

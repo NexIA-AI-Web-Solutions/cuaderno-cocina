@@ -1,0 +1,714 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "id": "T001",
+      "gate": "G0",
+      "title": "Validar clones, contrato-premisa y modelos",
+      "owner_role": "leader",
+      "depends_on": [],
+      "status": "DONE",
+      "allowed_paths_hint": [
+        "tooling/cuaderno",
+        "docs/cuaderno"
+      ],
+      "acceptance": [
+        "Pins exactos; modelos/cliente registrados; no actualizar latest ni reabrir licencia"
+      ],
+      "review_required": true,
+      "evidence": [
+        "docs/cuaderno/evidence/T001-validation.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/T001-review.md"
+      ]
+    },
+    {
+      "id": "T002",
+      "gate": "G0",
+      "title": "Arrancar Tandoor sin modificaciones",
+      "owner_role": "cocina_dataops",
+      "depends_on": [
+        "T001"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "devcontainer/compose propuesto"
+      ],
+      "acceptance": [
+        "Login y receta nativa funcionan; comandos y versiones grabados"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T003",
+      "gate": "G0",
+      "title": "Auditar entidades y puntos de extensión",
+      "owner_role": "cocina_scout",
+      "depends_on": [
+        "T001"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [],
+      "acceptance": [
+        "Mapa de Recipe/Food/Unit/Spaces/props/Inventory y mutaciones con rutas reales"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T004",
+      "gate": "G0",
+      "title": "Auditar Mealie KitchenOwl Grocy por capacidades",
+      "owner_role": "cocina_scout",
+      "depends_on": [
+        "T001"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [],
+      "acceptance": [
+        "Matriz native/partial/absent, donor SHA/símbolos/tests; nada copiado aún"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T005",
+      "gate": "G0",
+      "title": "Tests baseline y capturas del pin",
+      "owner_role": "cocina_qa",
+      "depends_on": [
+        "T002"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "tests/cuaderno",
+        "docs/cuaderno/evidence"
+      ],
+      "acceptance": [
+        "Upstream tests y UI baseline; errores preexistentes identificados"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T006",
+      "gate": "G0",
+      "title": "Congelar ADR y contratos API/modelos nuevos",
+      "owner_role": "leader",
+      "depends_on": [
+        "T003",
+        "T004",
+        "T005"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "docs/cuaderno/adr",
+        "cuaderno",
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Sin entidades duplicadas; source ownership decidido; registry con comandos reales"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T007",
+      "gate": "G1",
+      "title": "Configurar Space español y modo Esencial",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T006"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno"
+      ],
+      "acceptance": [
+        "Privado, EUR/política precios, es-ES, menú simple; sin borrar native"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T008",
+      "gate": "G1",
+      "title": "Contratos de unidades y precios manuales",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T006"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/domain",
+        "cuaderno/tests"
+      ],
+      "acceptance": [
+        "Golden casos exactos; desconocidos/ambiguos rechazados; precio sin stock"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T009",
+      "gate": "G1",
+      "title": "Persistir formatos y versiones de precios",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T008"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/services",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Food nativo, historial, permisos y conflictos; migración nueva revisada"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T010",
+      "gate": "G1",
+      "title": "Motor de escandallo y recálculo",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T009"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/domain",
+        "cuaderno/services",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Recipe nativa, escala sin guardar, invalidación de precios y completeness"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T011",
+      "gate": "G1",
+      "title": "Pantalla ingredientes/precios Tandoor",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T009"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Crear envase y precio en móvil; validation conserva entrada; API real"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T012",
+      "gate": "G1",
+      "title": "Integrar costes en receta nativa",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T010",
+        "T011"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Tandoor reconocible, selector raciones, coste/ración y warnings; no placeholders"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T013",
+      "gate": "G1",
+      "title": "Gate Esencial end-to-end",
+      "owner_role": "cocina_qa",
+      "depends_on": [
+        "T007",
+        "T012"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "tests/cuaderno"
+      ],
+      "acceptance": [
+        "5L/32→400mL=2.56; editar 35→2.80; reopen; privado; guardar receta"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T014",
+      "gate": "G2",
+      "title": "Importación/exportación con preview",
+      "owner_role": "cocina_dataops",
+      "depends_on": [
+        "T013"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/importers",
+        "cuaderno/tests"
+      ],
+      "acceptance": [
+        "Native primero; mapping, replay, informe, round-trip; sin datos reales"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T015",
+      "gate": "G2",
+      "title": "Impresión y accesibilidad multi-dispositivo",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T013"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Imprimir costes completos/incompletos; cuatro viewports; keyboard"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T016",
+      "gate": "G2",
+      "title": "Backup inicial y restore de Esencial",
+      "owner_role": "cocina_dataops",
+      "depends_on": [
+        "T014"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "scripts/cuaderno"
+      ],
+      "acceptance": [
+        "DB+media restaurados nuevos, hashes y login/recetas correctos"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T017",
+      "gate": "G2",
+      "title": "Revisión y preview local Esencial",
+      "owner_role": "leader",
+      "depends_on": [
+        "T015",
+        "T016"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "docs/cuaderno"
+      ],
+      "acceptance": [
+        "Revisor independiente y guía ejecutada; G2 evidencia, continuar desarrollo"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T018",
+      "gate": "G3",
+      "title": "Subelaboraciones y rendimiento sin duplicación",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T017"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/domain",
+        "cuaderno/services"
+      ],
+      "acceptance": [
+        "Food.recipe nativo auditado, output units, ciclos y cache correctos"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T019",
+      "gate": "G3",
+      "title": "Mermas y políticas de margen/presupuesto",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T018"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/domain",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Merma una vez, precio base homogéneo, no beneficio neto falso"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T020",
+      "gate": "G3",
+      "title": "Menús, servicios y reservas internas",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T017"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/services",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Extiende MealPlan, comensales/estado/snapshot, timezone correcta"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T021",
+      "gate": "G3",
+      "title": "UX lista compartida inspirada en KitchenOwl",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T020"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Agrupación/rápido/deshacer, estado explícito y conflicto; sin offline writes"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T022",
+      "gate": "G3",
+      "title": "Fichas producción y alérgenos declarados",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T019",
+        "T020"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Necesidades consolidadas y desconocidos visibles; no afirmación seguridad alimentaria"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T023",
+      "gate": "G3",
+      "title": "Gate Profesional end-to-end",
+      "owner_role": "cocina_qa",
+      "depends_on": [
+        "T021",
+        "T022"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "tests/cuaderno"
+      ],
+      "acceptance": [
+        "Servicio 45 personas, salsa compartida, presupuesto/fichas; sin consumo automático"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T024",
+      "gate": "G4",
+      "title": "ADR ledger único e integración stock nativo",
+      "owner_role": "leader",
+      "depends_on": [
+        "T023"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "docs/cuaderno/adr",
+        "cuaderno"
+      ],
+      "acceptance": [
+        "InventoryEntry/Log existentes y todos escritores cubiertos; sin doble autoridad"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T025",
+      "gate": "G4",
+      "title": "Proveedores formatos ofertas y pedidos",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T024"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/services",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Food nativo, pedido no altera stock; cantidades/precios por formato"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T026",
+      "gate": "G4",
+      "title": "Recepciones y movimientos idempotentes",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T025"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/services",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Transacciones/locks, retry mismo payload vs diferente, parcial/reversión"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T027",
+      "gate": "G4",
+      "title": "Consumo producción, desperdicio y auditoría",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T026"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/services"
+      ],
+      "acceptance": [
+        "No doble consumo subreceta; permisos; saldo/ledger coherente con concurrencia"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T028",
+      "gate": "G4",
+      "title": "Reposición e impacto de subidas",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T027"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno/services",
+        "cuaderno/api"
+      ],
+      "acceptance": [
+        "Disponible útil, envases al alza, precios nuevos sin reescribir snapshots"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T029",
+      "gate": "G4",
+      "title": "Interfaz Integral integrada en Tandoor",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T028"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Recibir distinto pedir, stocks mínimos, historial; roles y mobile"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T030",
+      "gate": "G4",
+      "title": "Gate Integral y regresión de ediciones",
+      "owner_role": "cocina_qa",
+      "depends_on": [
+        "T029"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "tests/cuaderno"
+      ],
+      "acceptance": [
+        "Recibir/reintentar/consumir simultáneo/desperdicio/revertir; T1/T2 no rompen"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T031",
+      "gate": "G5",
+      "title": "Privacidad Spaces API/media/import hardening",
+      "owner_role": "cocina_qa",
+      "depends_on": [
+        "T030"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "tests/cuaderno"
+      ],
+      "acceptance": [
+        "Regresiones advisories y rutas nuevas, csrf/idor/zip/ssrf; sin secretos"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T032",
+      "gate": "G5",
+      "title": "Performance índices bundle y almacenamiento",
+      "owner_role": "cocina_backend",
+      "depends_on": [
+        "T030"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "cuaderno",
+        "scripts/cuaderno"
+      ],
+      "acceptance": [
+        "Dataset declarado, métricas antes/después, no regresión ocultada"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T033",
+      "gate": "G5",
+      "title": "Diseño final y compatibilidad navegadores",
+      "owner_role": "cocina_frontend",
+      "depends_on": [
+        "T031",
+        "T032"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "vue3/src/cuaderno"
+      ],
+      "acceptance": [
+        "Tandoor visual preservado; Chromium/Firefox/WebKit; sin fake iPad claim"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T034",
+      "gate": "G6",
+      "title": "Imagen release y migración desde pin",
+      "owner_role": "cocina_dataops",
+      "depends_on": [
+        "T033"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "deploy/cuaderno",
+        "scripts/cuaderno"
+      ],
+      "acceptance": [
+        "Build limpio, prod profile local, no donantes/tooling de test en runtime"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T035",
+      "gate": "G6",
+      "title": "Restore completo, actualización y rollback",
+      "owner_role": "cocina_dataops",
+      "depends_on": [
+        "T034"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "scripts/cuaderno",
+        "docs/cuaderno"
+      ],
+      "acceptance": [
+        "Conteos/hashes/costes/saldos restaurados en destino nuevo; rollback ensayado"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T036",
+      "gate": "G6",
+      "title": "Manual usuario/admin, SBOM y procedencia",
+      "owner_role": "cocina_dataops",
+      "depends_on": [
+        "T035"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "docs/cuaderno"
+      ],
+      "acceptance": [
+        "Comandos reales, screenshots sintéticas, source ledger y external pending"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T037",
+      "gate": "G7",
+      "title": "Revisión independiente final",
+      "owner_role": "cocina_reviewer",
+      "depends_on": [
+        "T036"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [],
+      "acceptance": [
+        "Inspección diffs, tests, claims, UX y datos; hallazgos cerrados o gate falla"
+      ],
+      "review_required": true,
+      "evidence": []
+    },
+    {
+      "id": "T038",
+      "gate": "G7",
+      "title": "Rerun limpio y paquete final",
+      "owner_role": "leader",
+      "depends_on": [
+        "T037"
+      ],
+      "status": "TODO",
+      "allowed_paths_hint": [
+        "docs/cuaderno",
+        "release"
+      ],
+      "acceptance": [
+        "Todos gates con evidencia; start real, limitaciones y no despliegue sin permiso"
+      ],
+      "review_required": true,
+      "evidence": []
+    }
+  ]
+}

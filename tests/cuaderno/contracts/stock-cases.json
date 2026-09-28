@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "S001",
+      "initial_quantity": "10",
+      "received": "5",
+      "idempotency_key": "receipt-demo-001",
+      "retries": 2,
+      "expected_final_quantity": "15",
+      "expected_new_receipt_movements": 1
+    },
+    {
+      "id": "S002",
+      "initial_quantity": "10",
+      "concurrent_consumptions": [
+        "7",
+        "6"
+      ],
+      "negative_stock_allowed": false,
+      "expected_successes": 1,
+      "allowed_final_quantities": [
+        "3",
+        "4"
+      ],
+      "expected_failures": 1
+    },
+    {
+      "id": "S003",
+      "initial_quantity": "10",
+      "purchase_order_quantity": "12",
+      "received_quantity": "0",
+      "expected_final_quantity": "10"
+    },
+    {
+      "id": "S004",
+      "initial_quantity": "10",
+      "planned_consumption": "8",
+      "confirmed_production": false,
+      "expected_final_quantity": "10"
+    },
+    {
+      "id": "S005",
+      "required": "18",
+      "usable_stock": "7",
+      "pack_size": "5",
+      "expected_packs_to_buy": "3",
+      "expected_quantity_to_buy": "15"
+    },
+    {
+      "id": "S006",
+      "first_payload_quantity": "5",
+      "retry_payload_quantity": "6",
+      "same_idempotency_key": true,
+      "expected_http_status": 409,
+      "expected_extra_movements": 0
+    },
+    {
+      "id": "S007",
+      "initial_quantity": "10",
+      "waste_quantity": "2",
+      "unit_valuation": "3.00",
+      "expected_final_quantity": "8",
+      "expected_waste_value": "6.00"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "recipes": [
+    {
+      "external_id": "REC-DEMO-001",
+      "name": "Receta de prueba — arroz y aceite",
+      "servings": "4",
+      "ingredients": [
+        {
+          "external_food_id": "ING-001",
+          "quantity": "400",
+          "unit": "mL"
+        },
+        {
+          "external_food_id": "ING-002",
+          "quantity": "750",
+          "unit": "g"
+        }
+      ],
+      "instructions": "Ejemplo sintético para validar importación y costes. No es una receta culinaria validada."
+    }
+  ]
+}

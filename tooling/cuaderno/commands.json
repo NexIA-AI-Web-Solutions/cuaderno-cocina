@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "notice": "Contratos de comandos; la app aún no está implementada. G0 debe rellenar y comprobar cada argv. verified:false NUNCA significa PASS.",
+  "commands": {
+    "baseline": {
+      "purpose": "Pruebas upstream sin nuevas funciones; separar fallos heredados.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "format": {
+      "purpose": "Formato y lint de archivos modificados según herramientas heredadas.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "typecheck": {
+      "purpose": "Vue/TypeScript y tipos de código nuevo, sin supresiones masivas.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "unit": {
+      "purpose": "Contratos de unidades, precios y reglas de negocio.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "integration": {
+      "purpose": "PostgreSQL real y APIs con permisos/aislamiento.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "e2e": {
+      "purpose": "Build real en navegadores y cuatro viewports.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "security": {
+      "purpose": "Regresiones de permisos, media, exportación, ZIP y solicitudes externas.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "performance": {
+      "purpose": "Dataset sintético documentado y mediciones reproducibles.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "migrations": {
+      "purpose": "Migraciones desde el pin y sobre una copia aislada.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "build": {
+      "purpose": "Build reproducible del fork; no imagen original sin cambios.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "restore": {
+      "purpose": "Backup/restore a un destino local nuevo y validación de datos.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": false,
+      "verified_at_commit": null
+    },
+    "release": {
+      "purpose": "Agregador de checks con propagación de cualquier fallo.",
+      "argv": null,
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": false,
+      "verified_at_commit": null
+    }
+  }
+}

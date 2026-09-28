@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-09-28",
+  "strategy": "tandoor-derived-product; selective source adaptation; one runtime",
+  "repositories": [
+    {
+      "id": "tandoor",
+      "repository": "TandoorRecipes/recipes",
+      "url": "https://github.com/TandoorRecipes/recipes.git",
+      "tag": "2.6.15",
+      "commit": "7e1c427a0e17858ddc41bd198c79ccad77d3bd69",
+      "role": "base",
+      "history": "partial-clone-full-history",
+      "release_date": "2026-09-07"
+    },
+    {
+      "id": "mealie",
+      "repository": "mealie-recipes/mealie",
+      "url": "https://github.com/mealie-recipes/mealie.git",
+      "tag": "v3.28.0",
+      "commit": "0552eaa4a80031b8572849cca0ed95d07f1be001",
+      "role": "reference",
+      "history": "shallow",
+      "release_date": "2026-09-24"
+    },
+    {
+      "id": "kitchenowl",
+      "repository": "TomBursch/kitchenowl",
+      "url": "https://github.com/TomBursch/kitchenowl.git",
+      "tag": "v0.7.10",
+      "commit": "09aaf5fbd2343fcc10b12e906c63c3764dd38919",
+      "role": "reference",
+      "history": "shallow",
+      "release_date": "2026-07-26"
+    },
+    {
+      "id": "grocy",
+      "repository": "grocy/grocy",
+      "url": "https://github.com/grocy/grocy.git",
+      "tag": "v4.7.1",
+      "commit": "7d15c46bbdc35d4958cae99209ba170667dc1d64",
+      "role": "reference",
+      "history": "shallow",
+      "release_date": "2026-09-04"
+    }
+  ]
+}

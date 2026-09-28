@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "status": "Especificación de aceptación, no motor de costes implementado.",
+  "currency": "EUR",
+  "rounding": "ROUND_HALF_UP; sumar sin redondear por línea y redondear al presentar.",
+  "cases": [
+    {
+      "id": "C001",
+      "case": "aceite_por_litro",
+      "package_price": "32.00",
+      "package_quantity": "5",
+      "package_unit": "L",
+      "used_quantity": "400",
+      "used_unit": "mL",
+      "expected_cost_unrounded": "2.56",
+      "expected_cost_display": "2.56"
+    },
+    {
+      "id": "C002",
+      "case": "arroz_por_kg",
+      "package_price": "12.00",
+      "package_quantity": "5",
+      "package_unit": "kg",
+      "used_quantity": "750",
+      "used_unit": "g",
+      "expected_cost_unrounded": "1.800",
+      "expected_cost_display": "1.80"
+    },
+    {
+      "id": "C003",
+      "case": "huevos_por_unidad",
+      "package_price": "3.60",
+      "package_quantity": "12",
+      "package_unit": "unit",
+      "used_quantity": "5",
+      "used_unit": "unit",
+      "expected_cost_unrounded": "1.50",
+      "expected_cost_display": "1.50"
+    },
+    {
+      "id": "C004",
+      "case": "merma_pescado",
+      "package_price": "60.00",
+      "package_quantity": "5",
+      "package_unit": "kg",
+      "yield_ratio": "0.80",
+      "used_quantity": "600",
+      "used_unit": "g",
+      "quantity_basis": "net_usable",
+      "expected_cost_unrounded": "9.00",
+      "expected_cost_display": "9.00"
+    },
+    {
+      "id": "C005",
+      "case": "coste_incompleto",
+      "package_price": null,
+      "package_quantity": "1",
+      "package_unit": "kg",
+      "used_quantity": "100",
+      "used_unit": "g",
+      "expected_status": "incomplete",
+      "expected_total": null
+    },
+    {
+      "id": "C006",
+      "case": "conversion_incompatible",
+      "package_price": "3.00",
+      "package_quantity": "1",
+      "package_unit": "kg",
+      "used_quantity": "100",
+      "used_unit": "mL",
+      "density": null,
+      "expected_status": "needs_conversion",
+      "expected_total": null
+    },
+    {
+      "id": "C007",
+      "case": "escala_simulada",
+      "base_servings": "4",
+      "requested_servings": "10",
+      "base_ingredient_amount": "200",
+      "expected_scaled_amount": "500",
+      "expected_base_unchanged": "200"
+    },
+    {
+      "id": "C008",
+      "case": "redondeo_al_final",
+      "line_costs": [
+        "0.004",
+        "0.004",
+        "0.004"
+      ],
+      "expected_cost_unrounded": "0.012",
+      "expected_cost_display": "0.01"
+    },
+    {
+      "id": "C009",
+      "case": "subreceta_por_rendimiento",
+      "batch_cost": "8.00",
+      "batch_yield_g": "1000",
+      "used_g": "250",
+      "expected_cost_display": "2.00"
+    },
+    {
+      "id": "C010",
+      "case": "precio_actual_vs_snapshot",
+      "old_price": "32.00",
+      "new_price": "40.00",
+      "package_quantity": "5",
+      "used_quantity_L": "0.4",
+      "expected_current_cost": "3.20",
+      "expected_snapshot_cost": "2.56"
+    }
+  ]
+}
