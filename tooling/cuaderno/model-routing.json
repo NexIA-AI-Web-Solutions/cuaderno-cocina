@@ -17,5 +17,14 @@
   "max_subagents": 3,
   "max_concurrent_writers": 2,
   "effective_models_verified": false,
-  "do_not_silently_fallback": true
+  "do_not_silently_fallback": true,
+  "session_2026_09_28": {
+    "client": "Cursor",
+    "requested_unavailable": [
+      "gpt-5.6-sol/high",
+      "gpt-6-astra/medium"
+    ],
+    "substitution": false,
+    "execution": "Una sola sesión. No se lanzaron subagentes con esos modelos porque no están en el runtime. El trabajo lo ejecuta la sesión actual y no se atribuye a Sol ni a Astra."
+  }
 }

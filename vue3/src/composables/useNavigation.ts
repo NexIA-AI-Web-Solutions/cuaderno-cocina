@@ -14,6 +14,7 @@ export function useNavigation() {
     function getNavigationDrawer() {
         let navigation = [
             {component: VListItem, prependIcon: '$recipes', title: 'Home', to: {name: 'StartPage', params: {}}},
+            {component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}},
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},
             {component: VListItem, prependIcon: '$mealplan', title: t('Meal_Plan'), to: {name: 'MealPlanPage', params: {}}},
             {component: VListItem, prependIcon: '$shopping', title: t('Shopping'), to: {name: 'ShoppingListPage', params: {}}},

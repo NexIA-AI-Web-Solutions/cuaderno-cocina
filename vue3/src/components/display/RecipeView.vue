@@ -191,6 +191,8 @@
             </v-card-text>
         </v-card>
 
+        <recipe-cost-panel v-if="recipe.id" :recipe-id="recipe.id" :servings="servings"></recipe-cost-panel>
+
         <recipe-activity :recipe="recipe" :servings="servings" v-if="useUserPreferenceStore().userSettings.comments"></recipe-activity>
     </template>
 </template>
@@ -202,6 +204,7 @@ import {AiProvider, ApiApi, Recipe} from "@/openapi"
 import NumberScalerDialog from "@/components/inputs/NumberScalerDialog.vue"
 import StepsOverview from "@/components/display/StepsOverview.vue";
 import RecipeActivity from "@/components/display/RecipeActivity.vue";
+import RecipeCostPanel from "@/cuaderno/components/RecipeCostPanel.vue";
 import RecipeContextMenu from "@/components/inputs/RecipeContextMenu.vue";
 import KeywordsComponent from "@/components/display/KeywordsBar.vue";
 import RecipeImage from "@/components/display/RecipeImage.vue";

@@ -55,6 +55,9 @@ for p in settings.PLUGINS:
             print(f'ERROR failed loading urls for plugin <{p["name"]}>')
             traceback.format_exc()
 
+# Cuaderno routes before the cookbook catch-all.
+urlpatterns.append(path('', include('cuaderno.urls')))
+
 # include cookbook urls last because it has a catchall view to the tandoor frontend
 urlpatterns.append(
     path('', include('cookbook.urls')),

@@ -31,12 +31,12 @@
     },
     "unit": {
       "purpose": "Contratos de unidades, precios y reglas de negocio.",
-      "argv": null,
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "-m", "unittest", "cuaderno.tests.test_domain_costing"],
       "cwd": ".",
       "timeout_seconds": 1200,
       "isolated_mutations": false,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "6da7fe32"
     },
     "integration": {
       "purpose": "PostgreSQL real y APIs con permisos/aislamiento.",

@@ -1,12 +1,14 @@
 # Estado del producto
 
-Estado actual: G0 EN CURSO. La aplicación permanece sin modificaciones de
-producto; fuentes y entorno se están validando antes de reproducir el pin.
+Estado actual: G1 EN CURSO. Tandoor del pin arranca en local y el escandallo
+Esencial calcula sobre Food/Recipe nativos. G2–G7 no están hechos.
+`gpt-5.6-sol/high` y `gpt-6-astra/medium` no están en este runtime; no se
+sustituyen ni se finge su revisión.
 
 | Gate | Estado | Evidencia |
 |---|---|---|
-| G0 | IN_PROGRESS | T001 DONE: `evidence/T001-validation.md`, `evidence/T001-review.md` |
-| G1 | TODO | — |
+| G0 | IN_PROGRESS | T001 DONE. T002 runtime: `evidence/T002-baseline.md`. Mapas: `T003-map.md`, `T004-donors.md`. Falta pytest upstream. |
+| G1 | IN_PROGRESS | API 5 L / 32 → 2,56 y 35 → 2,80: `evidence/T010-cost-api.md`. Falta el panel Vue reconstruido. |
 | G2 | TODO | — |
 | G3 | TODO | — |
 | G4 | TODO | — |
@@ -14,7 +16,5 @@ producto; fuentes y entorno se están validando antes de reproducir el pin.
 | G6 | TODO | — |
 | G7 | TODO | — |
 
-Base: `7e1c427a` (`2.6.15`). Próxima acción: arranque aislado de Tandoor y
-exploración separada de base/donantes. Cliente
-`codex-cli 0.158.0`; roles de hijos disponibles. Por instrucción del
-propietario, modelo/esfuerzo no condicionan el avance.
+Base: `7e1c427a` (`2.6.15`). Local: `http://127.0.0.1:18080`, usuario `demo`.
+El VPS usará el Caddyfile existente (ADR 0001); no está desplegado.
