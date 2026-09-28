@@ -10,7 +10,7 @@ El propietario habilita Docker/virtualización o usa un Linux de desarrollo; no 
 3. Seed sintético y admin local generado/solicitado de forma segura, nunca default en prod.
 4. Build personalizado desde el fork, no imagen upstream sin nuestras modificaciones.
 5. Health/readiness con DB/migraciones, sin exponer secretos ni depender de servicio remoto.
-6. Profile prod probado localmente con datos demo, TLS/config para futuro dominio y secretos externos.
+6. Profile prod probado localmente con datos demo. En el VPS, TLS y dominio los sirve el Caddyfile ya instalado: importar `docs/install/caddy/Caddyfile`, publicar la app solo en `127.0.0.1:8080` y definir `ALLOWED_HOSTS` más `CSRF_TRUSTED_ORIGINS=https://<dominio>`. Secretos fuera de Git. No levantar un segundo proxy.
 7. README de operación, backup, restore, actualización/rollback e importación.
 
 ## Datos persistentes

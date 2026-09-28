@@ -1,0 +1,35 @@
+# Fragmento para el Caddyfile que ya sirve el VPS.
+# Importarlo o pegar el bloque del sitio. No sustituye el Caddyfile
+# completo ni arranca un segundo Caddy o Traefik.
+#
+# La app publica solo 127.0.0.1 (puerto de ejemplo 8080 -> 80 del
+# contenedor). PostgreSQL no aparece aquí: queda en la red interna
+# de Compose.
+#
+# En el contenedor, antes de apuntar el dominio real:
+#   ALLOWED_HOSTS=<dominio>
+#   CSRF_TRUSTED_ORIGINS=https://<dominio>
+#   ALLAUTH_TRUSTED_PROXY_COUNT=1
+# Caddy envía el cliente; el nginx embebido de Tandoor añade un salto.
+# Si el acceso queda registrado como la IP del bridge de Docker, subir
+# el contador a 2 y volver a comprobar.
+
+{$CUADERNO_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 512MB
+	}
+
+	reverse_proxy 127.0.0.1:8080 {
+		header_up Host {http.request.host}
+		header_up X-Forwarded-Host {http.request.host}
+		header_up X-Forwarded-Proto {http.request.scheme}
+		header_up X-Forwarded-For {http.request.remote.host}
+
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+		}
+	}
+}

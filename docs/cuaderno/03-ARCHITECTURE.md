@@ -5,7 +5,7 @@ Tandoor 2.6.15: backend Python/Django 5.2 (requirements fijadas), DRF, frontend 
 PostgreSQL para desarrollo integrado, tests de persistencia y producción. Ejemplo oficial consultado utiliza PostgreSQL 16; conservar línea soportada por el pin y congelar parche/digest. No sustituir por SQLite solo para ahorrar un servicio: Tandoor utiliza componentes PostgreSQL de búsqueda; evitar bifurcación y falsa portabilidad.
 
 ## Unidad de despliegue
-Un proyecto Compose: app Tandoor personalizada + PostgreSQL + proxy TLS existente o pequeño proxy cuando haga falta. Nginx embebido de upstream solo si sigue siendo necesario. No duplicar proxies sin razón. Primera reproducción conserva upstream; optimizar después con mediciones.
+Un proyecto Compose: app Tandoor personalizada + PostgreSQL. En el VPS el TLS y el dominio los termina el Caddyfile que ya existe; el bloque está en `docs/install/caddy/Caddyfile` y la app solo escucha en `127.0.0.1`. No se añade otro Caddy, Traefik ni un listener público 80/443. El nginx embebido del pin sigue siendo el servidor del contenedor (estáticos y socket de gunicorn), no el borde TLS. Ver ADR 0001.
 Vue se compila en build y sirve como estático: no dev server ni toolchain frontend en producción cuando se pueda separar con test. Redis/worker adicionales solo si el pin realmente los requiere para funciones seleccionadas y queda documentado; una dependencia listada no implica servicio obligatorio.
 No usar servidor Django de desarrollo en entrega; misma base y migraciones en local y producción.
 
