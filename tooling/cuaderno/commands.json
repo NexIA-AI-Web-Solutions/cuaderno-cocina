@@ -36,7 +36,7 @@
       "timeout_seconds": 1200,
       "isolated_mutations": false,
       "verified": true,
-      "verified_at_commit": "6da7fe32"
+      "verified_at_commit": "61f859c92cd8835ba67f91f89036b2b95b6ed7d1"
     },
     "integration": {
       "purpose": "PostgreSQL real y APIs con permisos/aislamiento.",
