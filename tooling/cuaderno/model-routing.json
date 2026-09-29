@@ -1,23 +1,37 @@
 {
   "leader": {
-    "requested_label": "GPT Sol 5.6",
-    "model": "gpt-5.6-sol",
+    "requested_label": "GPT 6.1 Sol (configuración local actual; sesión efectiva no verificada)",
+    "model": "gpt-6.1-sol",
     "effort": "high"
   },
   "implementation": {
-    "requested_label": "GPT 6 Medium",
-    "interpretation": "GPT-6 Astra/medium, continuando el plan previo; configurable a gpt-6-sol/medium",
-    "model": "gpt-6-astra",
+    "requested_label": "GPT 6.1 Sol; GPT 6 Luna permitido",
+    "interpretation": "Instrucción explícita del propietario del 2026-09-29: solo gpt-6.1-sol y gpt-6-luna para agentes; sin sustitución silenciosa.",
+    "model": "gpt-6.1-sol",
     "effort": "medium"
   },
   "reviewer": {
-    "model": "gpt-5.6-sol",
+    "model": "gpt-6.1-sol",
     "effort": "high"
   },
   "max_subagents": 3,
   "max_concurrent_writers": 2,
   "effective_models_verified": false,
   "do_not_silently_fallback": true,
+  "allowed_subagent_models": ["gpt-6-luna", "gpt-6.1-sol"],
+  "session_2026_09_29": {
+    "owner_instruction": "continue and use only GPT 6 Luna and GPT 6.1 Sol agentes",
+    "effective_subagents": [
+      {"task": "native_share_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
+      {"task": "integrity_review_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
+      {"task": "service_workflow_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
+      {"task": "pin_baseline_luna", "model": "gpt-6-luna", "spawn_accepted": true},
+      {"task": "exchange_ui_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
+      {"task": "purchase_workflow_sol", "model": "gpt-6.1-sol", "spawn_accepted": true}
+    ],
+    "previous_agents": "Interrumpidos review_integrity_fixes y frontend_native_consolidation. Sus cambios previos se preservan; no se atribuyen a los modelos nuevos.",
+    "leader": "Esta configuración no cambia ni verifica por sí sola el modelo de la sesión principal."
+  },
   "session_2026_09_28": {
     "client": "Cursor",
     "requested_unavailable": [

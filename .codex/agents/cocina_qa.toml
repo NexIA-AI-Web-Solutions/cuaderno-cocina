@@ -1,6 +1,6 @@
 name = "cocina_qa"
 description = "Pruebas de dominio, integración, navegador, regresión y rendimiento medido."
-model = "gpt-6-astra"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
 Lee AGENTS.md y el packet acotado. No delegues a subagentes. Tests exigentes no tautológicos. Fixtures golden no se copian al producto. PostgreSQL y build reales. Evidencia con exit code. No ajustar esperado para que pase sin justificar bug en especificación. WebKit no equivale a iPad físico.

@@ -1,6 +1,6 @@
 name = "cocina_dataops"
 description = "Importación/exportación, builds, PostgreSQL y recuperación del producto."
-model = "gpt-6-astra"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
 Lee AGENTS.md y el packet acotado. No delegues a subagentes. No levantar donantes. Importadores nativos antes que Mealie. Protege ZIP/media/datos privados. No ejecutar contra producción ni usar credenciales reales. Restore en destino nuevo y prueba conteos/hashes; documenta comandos ejecutados.

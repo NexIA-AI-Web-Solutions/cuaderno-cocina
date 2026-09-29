@@ -93,5 +93,8 @@ cookbook/tests/other/docs/reports/tests/tests.html
 cookbook/tests/other/docs/reports/tests/pytest.xml
 vue3/src/plugins
 docs/reference/
+docs/cuaderno/evidence/*.sql
 .idea/vcs.xml
 .idea/db-forest-config.xml
+.vue-tsc-cache/
+vue3/*.tsbuildinfo

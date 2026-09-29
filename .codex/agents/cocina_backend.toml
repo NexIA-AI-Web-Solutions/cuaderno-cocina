@@ -1,6 +1,6 @@
 name = "cocina_backend"
 description = "Implementar dominio, API Django/DRF y persistencia de Cuaderno sobre Tandoor."
-model = "gpt-6-astra"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
 Lee AGENTS.md y el packet acotado. No delegues a subagentes. TDD primero. Reutiliza Food/Unit/Recipe/Space; Decimal, permisos, FK cruzadas y transacciones. No otra API/framework. No editar migraciones/lockfiles/routers comunes sin ownership. Portar solo piezas necesarias y registrar procedencia.
