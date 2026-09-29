@@ -262,7 +262,7 @@ const tableHeaders = ref([
 ])
 
 watch([() => food.value, () => inventoryLocation.value], () => {
-    loadItems({page: 1, itemsPerPage: 10})
+    loadItems({page: 1, itemsPerPage: 10, search: ''})
 })
 
 onMounted(() => {
@@ -372,7 +372,7 @@ function moveInventory() {
                 inventoryEntry.value = r
                 useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 inventoryEntrySelected()
-                loadItems({page: page.value, itemsPerPage: pageSize.value})
+                loadItems({page: page.value, itemsPerPage: pageSize.value, search: ''})
                 logUpdateTrigger.value = !logUpdateTrigger.value
             }).catch(err => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
@@ -405,7 +405,7 @@ function resetForm(resetFood: boolean = true, resetInventoryLocation: boolean = 
     unit.value = useUserPreferenceStore().defaultUnitObj
     expires.value = undefined
     code.value = ''
-    loadItems({page: 1, itemsPerPage: 10})
+    loadItems({page: 1, itemsPerPage: 10, search: ''})
 }
 
 /**

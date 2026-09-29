@@ -73,7 +73,7 @@ test('activation clears legacy private caches and discards, never replays, the o
 })
 
 test('offline fallback is a public Spanish document without rendering a session', async () => {
-    const response = await worker().fallback({event: {request: {destination: 'document'}}})
+    const response = await worker().fallback({request: {destination: 'document'}})
     assert.equal(response.status, 503)
     assert.match(await response.text(), /Sin conexión/)
     assert.equal(response.headers.get('Cache-Control'), 'no-store')

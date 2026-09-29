@@ -78,14 +78,29 @@ class PackageListView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
     def get(self, request):
-        rows = list(PackageFormat.objects.filter(space=request.space).select_related("food", "unit").order_by("pk"))
+        rows = list(PackageFormat.objects.filter(space=request.space).order_by("pk").values(
+            "id", "food_id", "food__name", "unit_id", "unit__name", "label", "quantity", "is_reference",
+        ))
         latest_by_package = {
-            price.package_id: price
+            price["package_id"]: {
+                "id": price["id"], "amount": format(price["amount"], "f"),
+                "explicit_free": price["explicit_free"], "valid_from": price["valid_from"].isoformat(),
+            }
             for price in PriceVersion.objects.filter(
-                space=request.space, package_id__in=[row.pk for row in rows], valid_from__lte=timezone.now(),
-            ).order_by("package_id", "-valid_from", "-id").distinct("package_id")
+                space=request.space, package_id__in=[row["id"] for row in rows], valid_from__lte=timezone.now(),
+            ).order_by("package_id", "-valid_from", "-id").distinct("package_id").values(
+                "id", "package_id", "amount", "explicit_free", "valid_from",
+            )
         }
-        return Response([_package_payload(row, latest_by_package.get(row.pk)) for row in rows])
+        return Response([
+            {
+                "id": row["id"], "food": row["food_id"], "food_name": row["food__name"],
+                "unit": row["unit_id"], "unit_name": row["unit__name"], "label": row["label"],
+                "quantity": format(row["quantity"], "f"), "is_reference": row["is_reference"],
+                "current_price": latest_by_package.get(row["id"]),
+            }
+            for row in rows
+        ])
 
     @transaction.atomic
     def post(self, request):

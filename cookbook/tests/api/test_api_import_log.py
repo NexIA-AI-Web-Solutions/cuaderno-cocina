@@ -32,7 +32,7 @@ def test_list_permission(arg, request):
     assert c.get(reverse(LIST_URL)).status_code == arg[1]
 
 
-def test_list_space(obj_1, obj_2, u1_s1, u1_s2, space_2):
+def test_list_is_scoped_to_owner_and_space(obj_1, obj_2, u1_s1, u1_s2, space_2):
     assert json.loads(u1_s1.get(reverse(LIST_URL)).content)['count'] == 2
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 0
 
@@ -40,6 +40,9 @@ def test_list_space(obj_1, obj_2, u1_s1, u1_s2, space_2):
     obj_1.save()
 
     assert json.loads(u1_s1.get(reverse(LIST_URL)).content)['count'] == 1
+    # Security contract: moving a log never grants access to another creator.
+    assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 0
+    ImportLog.objects.create(type='own', created_by=auth.get_user(u1_s2), space=space_2)
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 1
 
 
@@ -47,7 +50,7 @@ def test_list_space(obj_1, obj_2, u1_s1, u1_s2, space_2):
     ['a_u', 403],
     ['g1_s1', 403],
     ['u1_s1', 200],
-    ['a1_s1', 200],
+    ['a1_s1', 404],  # Space admin cannot edit another user's private import log.
     ['g1_s2', 403],
     ['u1_s2', 404],
     ['a1_s2', 404],
@@ -63,6 +66,10 @@ def test_update(arg, request, obj_1):
         content_type='application/json'
     )
     assert r.status_code == arg[1]
+    if arg[0] == 'a1_s1':
+        obj_1.refresh_from_db()
+        assert obj_1.msg == ''
+        assert obj_1.running is True
 
 
 def test_delete(u1_s1, u1_s2, obj_1):

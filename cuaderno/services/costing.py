@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+from dataclasses import dataclass
 from decimal import Decimal
 
 from django.db.models import Q
 from django.utils import timezone
 
+from cookbook.models import UnitConversion
 from cuaderno.domain.costing import CostResult, line_cost, scale_amount
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
@@ -15,7 +18,7 @@ from cuaderno.models import PackageFormat, PriceVersion, RecipeYield
 
 def current_price(package: PackageFormat, as_of):
     return (
-        PriceVersion.objects.filter(package=package, space=package.space, valid_from__lte=as_of)
+        PriceVersion.objects.filter(package=package, space_id=package.space_id, valid_from__lte=as_of)
         .order_by("-valid_from", "-id")
         .first()
     )
@@ -23,68 +26,157 @@ def current_price(package: PackageFormat, as_of):
 
 def reference_package(food):
     return (
-        PackageFormat.objects.filter(food=food, space=food.space, is_reference=True)
+        PackageFormat.objects.filter(food=food, space_id=food.space_id, is_reference=True)
         .select_related("unit")
         .first()
     )
 
 
+@dataclass(frozen=True)
+class _CostingContext:
+    recipes: dict
+    yields: dict
+    packages: dict
+    prices: dict
+    global_conversions: tuple
+    food_conversions: dict
+
+
+def _load_costing_context(recipe_cache, space_id, as_of) -> _CostingContext:
+    food_ids = {
+        ingredient.food_id
+        for recipe in recipe_cache.values()
+        for step in recipe.steps.all()
+        for ingredient in step.ingredients.all()
+        if ingredient.food_id is not None
+    }
+    yields = {
+        row.recipe_id: row
+        for row in RecipeYield.objects.filter(space_id=space_id, recipe_id__in=recipe_cache).select_related("unit")
+    }
+    packages = {
+        row.food_id: row
+        for row in PackageFormat.objects.filter(
+            space_id=space_id,
+            food_id__in=food_ids,
+            is_reference=True,
+        ).select_related("unit")
+    }
+    prices = {
+        row.package_id: row
+        for row in PriceVersion.objects.filter(
+            space_id=space_id,
+            package_id__in=[package.pk for package in packages.values()],
+            valid_from__lte=as_of,
+        )
+        .order_by("package_id", "-valid_from", "-id")
+        .distinct("package_id")
+    }
+    conversion_rows = tuple(
+        UnitConversion.objects.filter(space_id=space_id)
+        .filter(Q(food_id__isnull=True) | Q(food_id__in=food_ids))
+        .select_related("base_unit", "converted_unit")
+        .order_by("pk")
+    )
+    food_conversions = defaultdict(list)
+    global_conversions = []
+    for row in conversion_rows:
+        if row.food_id is None:
+            global_conversions.append(row)
+        else:
+            food_conversions[row.food_id].append(row)
+    return _CostingContext(
+        recipes=recipe_cache,
+        yields=yields,
+        packages=packages,
+        prices=prices,
+        global_conversions=tuple(global_conversions),
+        food_conversions={food_id: tuple(rows) for food_id, rows in food_conversions.items()},
+    )
+
+
 def cost_recipe(recipe, servings, as_of=None, user=None) -> dict:
     from cuaderno.services.subrecipes import native_recipe_graph
-    native_recipe_graph([recipe.pk], recipe.space, user or recipe.created_by)
+
+    roots, recipe_cache, _ = native_recipe_graph([recipe.pk], recipe.space_id, user or recipe.created_by)
     as_of = as_of or timezone.now()
     base_servings = recipe.servings or 1
     if base_servings <= 0:
         raise DomainError("invalid_servings", "Las raciones base deben ser mayores que cero.")
     target = parse_decimal(servings, allow_zero=False)
     factor = scale_amount(1, base_servings, target)
-    lines = []
     warnings = []
-    lines = _cost_recipe_lines(recipe, factor, as_of, warnings, (), user or recipe.created_by)
+    context = _load_costing_context(recipe_cache, recipe.space_id, as_of)
+    lines = _cost_recipe_lines(roots[0], factor, as_of, warnings, (), context)
     return _sheet(lines, warnings, base_servings, target)
 
 
-def _cost_recipe_lines(recipe, factor, as_of, warnings, path, user):
+def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context):
     if recipe.pk in path:
         route = " → ".join(str(value) for value in (*path, recipe.pk))
         raise DomainError("recipe_cycle", f"Referencia circular: {route}")
     if len(path) >= 32:
         raise DomainError("recipe_graph_limit", "La receta supera 32 niveles de subelaboraciones.")
     lines = []
-    for step in recipe.steps.all().prefetch_related("ingredients__food__recipe", "ingredients__unit"):
+    for step in recipe.steps.all():
         if step.step_recipe_id:
-            child = visible_recipes(user, recipe.space).filter(pk=step.step_recipe_id).first()
+            child = context.recipes.get(step.step_recipe_id)
             if child is None:
                 raise DomainError("recipe_missing", "Una subreceta no está disponible en este espacio.")
             else:
-                lines.extend(_cost_recipe_lines(child, factor, as_of, warnings, (*path, recipe.pk), user))
+                lines.extend(_cost_recipe_lines(child, factor, as_of, warnings, (*path, recipe.pk), context))
         for ingredient in step.ingredients.all():
             if ingredient.food_id and ingredient.food.recipe_id and not ingredient.is_header and not ingredient.no_amount:
-                child = visible_recipes(user, recipe.space).filter(pk=ingredient.food.recipe_id).first()
+                child = context.recipes.get(ingredient.food.recipe_id)
                 if child is None:
                     raise DomainError("recipe_missing", "Una subreceta no está disponible en este espacio.")
                 if child.pk in (*path, recipe.pk):
                     raise DomainError("recipe_cycle", "Referencia circular en las subelaboraciones.")
-                declared = RecipeYield.objects.filter(space=recipe.space, recipe=child).select_related("unit").first()
+                declared = context.yields.get(child.pk)
                 if declared is None:
                     lines.append(CostResult("incomplete", None, None, None, ("rendimiento_desconocido",)))
                     continue
                 if declared.quantity <= 0 or ingredient.amount <= 0:
                     lines.append(CostResult("invalid", None, None, None, ("rendimiento_invalido",)))
                     continue
-                from cuaderno.services.subrecipes import convert_native_quantity
                 try:
-                    amount = convert_native_quantity(ingredient.amount, ingredient.unit, declared.unit, ingredient.food, recipe.space)
+                    amount = _convert_native_quantity(
+                        ingredient.amount,
+                        ingredient.unit,
+                        declared.unit,
+                        ingredient.food,
+                        context,
+                    )
                 except DomainError as exc:
                     lines.append(CostResult("needs_conversion", None, None, None, (exc.code,)))
                     continue
-                lines.extend(_cost_recipe_lines(child, factor * amount / declared.quantity, as_of, warnings, (*path, recipe.pk), user))
+                lines.extend(
+                    _cost_recipe_lines(
+                        child,
+                        factor * amount / declared.quantity,
+                        as_of,
+                        warnings,
+                        (*path, recipe.pk),
+                        context,
+                    )
+                )
             else:
-                lines.append(_cost_ingredient(ingredient, factor, as_of, warnings))
+                lines.append(_cost_ingredient(ingredient, factor, as_of, warnings, context))
     return lines
 
 
-def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list) -> CostResult:
+def _convert_native_quantity(amount, from_unit, to_unit, food, context):
+    """Reuse the native conversion algorithm and its total PK edge ordering."""
+    from cuaderno.services.subrecipes import convert_native_quantity
+
+    rows = context.global_conversions + context.food_conversions.get(food.pk, ())
+    return convert_native_quantity(
+        amount, from_unit, to_unit, food, food.space_id,
+        conversions=sorted(rows, key=lambda row: row.pk),
+    )
+
+
+def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context) -> CostResult:
     if ingredient.is_header:
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("encabezado",))
     if ingredient.no_amount:
@@ -97,10 +189,10 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list) -> Cost
     used = Decimal(ingredient.amount) * factor
     if used == 0:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
-    package = reference_package(ingredient.food)
+    package = context.packages.get(ingredient.food_id)
     if package is None:
         return CostResult("incomplete", None, None, None, ("sin_formato",))
-    price = current_price(package, as_of)
+    price = context.prices.get(package.pk)
     if price is None:
         return CostResult("incomplete", None, None, None, ("precio_desconocido",))
     unit_name = ingredient.unit.name if ingredient.unit_id else None

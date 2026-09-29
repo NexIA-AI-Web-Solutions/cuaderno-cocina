@@ -226,9 +226,7 @@ const {doAiImport, fileApiLoading} = useFileApi()
 
 const loading = ref(false)
 const recipe = defineModel<Recipe>({required: true})
-const props = defineProps<{
-    servings: {type: Number, required: false},
-}>()
+const props = defineProps<{servings?: number}>()
 
 const servings = ref(props.servings ?? recipe.value.servings ?? 1)
 const showFullRecipeName = ref(false)

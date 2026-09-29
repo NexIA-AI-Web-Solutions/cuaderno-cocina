@@ -11,7 +11,7 @@ from cuaderno.domain.units import convert_quantity, to_base
 from cuaderno.models import RecipeYield
 
 
-def convert_native_quantity(amount, from_unit, to_unit, food, space):
+def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversions=None):
     if from_unit is None or to_unit is None:
         raise DomainError("yield_unit_missing", "La subreceta y su uso necesitan unidad.")
     if from_unit.pk == to_unit.pk:
@@ -26,7 +26,8 @@ def convert_native_quantity(amount, from_unit, to_unit, food, space):
         # Unknown formats have no proven dimension/content: require a food-specific conversion.
         cross_dimension = True
     # Preserve native food-specific conversions, with Decimal arithmetic.
-    conversions = UnitConversion.objects.filter(space=space).filter(food__isnull=True) | UnitConversion.objects.filter(space=space, food=food)
+    if conversions is None:
+        conversions = UnitConversion.objects.filter(space=space).filter(food__isnull=True) | UnitConversion.objects.filter(space=space, food=food)
     graph = {}
     for row in conversions:
         if row.base_amount > 0 and row.converted_amount > 0:

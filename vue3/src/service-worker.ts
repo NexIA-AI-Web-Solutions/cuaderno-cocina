@@ -1,3 +1,4 @@
+/// <reference lib="webworker" />
 // Cache only built/public assets. Authenticated data is always network-only.
 import {precacheAndRoute, cleanupOutdatedCaches} from 'workbox-precaching';
 import {registerRoute, setCatchHandler} from 'workbox-routing';
@@ -24,8 +25,8 @@ self.addEventListener('activate', event => {
     ]))
 })
 
-setCatchHandler(async ({event}) => {
-    if (event.request.destination === 'document') {
+setCatchHandler(async ({request}) => {
+    if (request.destination === 'document') {
         return new Response('<!doctype html><html lang="es"><meta charset="utf-8">' +
             '<meta name="viewport" content="width=device-width, initial-scale=1">' +
             '<title>Sin conexión · Cuaderno Cocina</title><main><h1>Sin conexión</h1>' +

@@ -26,8 +26,9 @@ export function productionUsage(component: string, value: string) {
 export function serviceCovers(base: string, extra: string, cancelled: string) {
     const values = [base, extra, cancelled].map(value => value.trim())
     if (values.some(value => !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)))) return null
-    if (BigInt(values[2]) > BigInt(values[0]) + BigInt(values[1])) return null
-    return {base_covers: values[0], extra: values[1], cancelled: values[2]}
+    const [baseCovers = '', extraCovers = '', cancelledCovers = ''] = values
+    if (BigInt(cancelledCovers) > BigInt(baseCovers) + BigInt(extraCovers)) return null
+    return {base_covers: baseCovers, extra: extraCovers, cancelled: cancelledCovers}
 }
 
 export function serviceBody(title: string, value: string, serviceDate: string, recipe?: number) {

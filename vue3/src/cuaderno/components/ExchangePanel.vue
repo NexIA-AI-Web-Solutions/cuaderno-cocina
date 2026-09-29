@@ -39,34 +39,40 @@
 
                         <div v-for="item in foods" :key="item.ref" class="mapping-row">
                             <p class="mb-1"><strong>Ingrediente:</strong> {{ item.name }}</p>
-                            <v-radio-group v-model="choices.foods[item.ref].mode" inline hide-details :disabled="busy">
+                            <v-radio-group :model-value="choiceMode('foods', item.ref)" inline hide-details :disabled="busy"
+                                           @update:model-value="value => setChoiceMode('foods', item.ref, value)">
                                 <v-radio label="Crear nuevo" value="create" />
                                 <v-radio label="Reutilizar existente" value="reuse" />
                             </v-radio-group>
-                            <v-model-select v-if="choices.foods[item.ref].mode === 'reuse'"
-                                            v-model="choices.foods[item.ref].target" model="Food" search-on-load clearable
+                            <v-model-select v-if="choiceMode('foods', item.ref) === 'reuse'"
+                                            :model-value="choiceTarget('foods', item.ref)" model="Food" search-on-load clearable
+                                            @update:model-value="value => setChoiceTarget('foods', item.ref, value)"
                                             label="Ingrediente existente" hint="Selecciona la identidad exacta." :disabled="busy" />
                         </div>
 
                         <div v-for="item in units" :key="item.ref" class="mapping-row">
                             <p class="mb-1"><strong>Unidad:</strong> {{ item.name }}</p>
-                            <v-radio-group v-model="choices.units[item.ref].mode" inline hide-details :disabled="busy">
+                            <v-radio-group :model-value="choiceMode('units', item.ref)" inline hide-details :disabled="busy"
+                                           @update:model-value="value => setChoiceMode('units', item.ref, value)">
                                 <v-radio label="Crear nueva" value="create" />
                                 <v-radio label="Reutilizar existente" value="reuse" />
                             </v-radio-group>
-                            <v-model-select v-if="choices.units[item.ref].mode === 'reuse'"
-                                            v-model="choices.units[item.ref].target" model="Unit" search-on-load clearable
+                            <v-model-select v-if="choiceMode('units', item.ref) === 'reuse'"
+                                            :model-value="choiceTarget('units', item.ref)" model="Unit" search-on-load clearable
+                                            @update:model-value="value => setChoiceTarget('units', item.ref, value)"
                                             label="Unidad existente" hint="Debe tener la misma definición que la unidad importada." :disabled="busy" />
                         </div>
 
                         <div v-for="item in packages" :key="item.ref" class="mapping-row">
                             <p class="mb-1"><strong>Formato:</strong> {{ item.label }}</p>
-                            <v-radio-group v-model="choices.packages[item.ref].mode" inline hide-details :disabled="busy">
+                            <v-radio-group :model-value="choiceMode('packages', item.ref)" inline hide-details :disabled="busy"
+                                           @update:model-value="value => setChoiceMode('packages', item.ref, value)">
                                 <v-radio label="Crear nuevo" value="create" />
                                 <v-radio label="Reutilizar existente" value="reuse" />
                             </v-radio-group>
-                            <v-select v-if="choices.packages[item.ref].mode === 'reuse'"
-                                      v-model="choices.packages[item.ref].target" :items="packageOptions" item-value="id"
+                            <v-select v-if="choiceMode('packages', item.ref) === 'reuse'"
+                                      :model-value="choiceTarget('packages', item.ref)" :items="packageOptions" item-value="id"
+                                      @update:model-value="value => setChoiceTarget('packages', item.ref, value)"
                                       :item-title="packageTitle" label="Formato existente" clearable
                                       hint="Debe coincidir también su contenido y precios." persistent-hint :loading="loadingPackages" :disabled="busy" />
                         </div>
@@ -117,9 +123,12 @@ import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
 import {exchangeBody, readExchangeFile} from '@/cuaderno/exchangeUi'
+import type {EditorSupportedTypes} from '@/types/Models'
 
 type CatalogItem = {ref: string; id?: number; name?: string; label?: string}
-type Choice = {mode: 'create' | 'reuse'; target: any}
+type ChoiceKind = 'foods' | 'units' | 'packages'
+type ChoiceTarget = EditorSupportedTypes | number | null | undefined
+type Choice = {mode: 'create' | 'reuse'; target: ChoiceTarget}
 type Preview = {count: number; preview: Array<Record<string, any>>; writes: number; preview_sha256: string; warnings?: unknown[]}
 
 const document = ref<Record<string, any> | null>(null)
@@ -144,6 +153,30 @@ const isV2 = computed(() => document.value?.format === 'cuaderno-recipes-v2')
 const foods = computed<CatalogItem[]>(() => Array.isArray(document.value?.catalog?.foods) ? document.value!.catalog.foods : [])
 const units = computed<CatalogItem[]>(() => Array.isArray(document.value?.catalog?.units) ? document.value!.catalog.units : [])
 const packages = computed<CatalogItem[]>(() => Array.isArray(document.value?.catalog?.packages) ? document.value!.catalog.packages : [])
+
+function ensureChoice(kind: ChoiceKind, ref: string): Choice {
+    const existing = choices[kind][ref]
+    if (existing) return existing
+    const created: Choice = {mode: 'create', target: null}
+    choices[kind][ref] = created
+    return created
+}
+
+function choiceMode(kind: ChoiceKind, ref: string): Choice['mode'] {
+    return ensureChoice(kind, ref).mode
+}
+
+function choiceTarget(kind: ChoiceKind, ref: string): ChoiceTarget {
+    return ensureChoice(kind, ref).target
+}
+
+function setChoiceMode(kind: ChoiceKind, ref: string, value: unknown) {
+    ensureChoice(kind, ref).mode = value === 'reuse' ? 'reuse' : 'create'
+}
+
+function setChoiceTarget(kind: ChoiceKind, ref: string, value: ChoiceTarget) {
+    ensureChoice(kind, ref).target = value
+}
 
 function invalidatePreview() {
     previewHash.value = ''
@@ -224,8 +257,10 @@ function mapping(): Record<string, any> {
         for (const [ref, choice] of Object.entries(choices[kind])) {
             if (choice.mode !== 'reuse') continue
             const id = typeof choice.target === 'number' ? choice.target : choice.target?.id
-            if (!Number.isSafeInteger(id) || id < 1) throw new Error('Selecciona la identidad existente para cada correspondencia marcada como reutilizar.')
-            result[kind][ref] = id
+            if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1) throw new Error('Selecciona la identidad existente para cada correspondencia marcada como reutilizar.')
+            const target = result[kind]
+            if (!target) throw new Error('No se ha podido preparar la correspondencia del catálogo.')
+            target[ref] = id
         }
     }
     return result
