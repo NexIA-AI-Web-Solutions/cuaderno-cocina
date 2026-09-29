@@ -20,7 +20,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.i18n import JavaScriptCatalog
-from django.views.static import serve
+from cuaderno.media import authorized_media
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -40,8 +40,7 @@ if settings.DEBUG and settings.DEBUG_TOOLBAR:
 if settings.ENABLE_METRICS:
     urlpatterns += re_path('', include('django_prometheus.urls')),
 
-if settings.GUNICORN_MEDIA or settings.DEBUG:
-    urlpatterns += re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+urlpatterns += re_path(r'^media/(?P<path>.*)$', authorized_media),
 
 for p in settings.PLUGINS:
     try:

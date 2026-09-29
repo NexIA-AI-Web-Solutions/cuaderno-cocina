@@ -12,7 +12,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.core.files.uploadedfile import InMemoryUploadedFile, UploadedFile
 from django.core.validators import MinLengthValidator
-from django.db import IntegrityError, models
+from django.db import IntegrityError, models, transaction
 from django.db.models import Index, Q
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.functions import Substr
@@ -199,6 +199,7 @@ class TreeModel(MP_Node):
 
 class MergeModelMixin:
 
+    @transaction.atomic
     def merge_into(self, target):
         """
         very simple merge function that replaces the current instance with the target instance
@@ -810,6 +811,7 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
     def __str__(self):
         return self.name
 
+    @transaction.atomic
     def merge_into(self, target):
         """
         very simple merge function that replaces the current food with the target food
@@ -829,10 +831,21 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
         except AttributeError:
             pass  # AttributeError is raised when the object is not a tree and thus does not have the get_descendants_and_self() function
 
-        self.properties.all().delete()
-        self.properties.clear()
+        from cuaderno.services.food_merge import preserve_native_food_relations
+        preserve_native_food_relations(self, target)
         Ingredient.objects.filter(food=self).update(food=target)
         ShoppingListEntry.objects.filter(food=self).update(food=target)
+        InventoryEntry.objects.filter(food=self, space=self.space).update(food=target)
+
+        # Cuaderno extends native Food with protected professional history.
+        # Reassign it inside the same merge transaction so native merges do
+        # not delete inventory or strand prices, orders and declarations.
+        from cuaderno.models import AllergenDeclaration, PackageFormat, PurchaseOrder
+        if PackageFormat.objects.filter(space=self.space, food=target, is_reference=True).exists():
+            PackageFormat.objects.filter(space=self.space, food=self, is_reference=True).update(is_reference=False)
+        PackageFormat.objects.filter(space=self.space, food=self).update(food=target)
+        PurchaseOrder.objects.filter(space=self.space, food=self).update(food=target)
+        AllergenDeclaration.objects.filter(space=self.space, food=self).update(food=target)
         self.delete()
         return target
 

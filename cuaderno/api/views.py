@@ -2,11 +2,10 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from cookbook.helper.permission_helper import CustomRecipePermission
+from cookbook.helper.permission_helper import CustomIsAdmin, CustomIsGuest, CustomIsUser, CustomRecipePermission, CustomTokenHasReadWriteScope
 from cookbook.models import Food, Unit
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
@@ -20,7 +19,13 @@ def _profile(space) -> SpaceProfile:
 
 
 class EditionView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomIsGuest & CustomTokenHasReadWriteScope]
+
+    def get_permissions(self):
+        permission_classes = self.permission_classes
+        if self.request.method == "PUT":
+            permission_classes = [CustomIsAdmin & CustomTokenHasReadWriteScope]
+        return [permission() for permission in permission_classes]
 
     def get(self, request):
         profile = _profile(request.space)
@@ -70,7 +75,7 @@ class EditionView(APIView):
 
 
 class PackageListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
     def get(self, request):
         rows = PackageFormat.objects.filter(space=request.space).select_related("food", "unit")
@@ -102,7 +107,7 @@ class PackageListView(APIView):
 
 
 class PriceCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
     @transaction.atomic
     def post(self, request, pk):
@@ -112,14 +117,14 @@ class PriceCreateView(APIView):
 
 
 class RecipeCostView(APIView):
-    permission_classes = [IsAuthenticated, CustomRecipePermission]
+    permission_classes = [CustomRecipePermission & CustomTokenHasReadWriteScope]
 
     def get(self, request, recipe_id):
         recipe = get_object_or_404(visible_recipes(request.user, request.space), pk=recipe_id)
         self.check_object_permissions(request, recipe)
         servings = request.query_params.get("servings", recipe.servings or 1)
         try:
-            payload = cost_recipe(recipe, servings)
+            payload = cost_recipe(recipe, servings, user=request.user)
         except DomainError as exc:
             raise ValidationError({exc.code: exc.message}) from exc
         payload["currency"] = _profile(request.space).currency

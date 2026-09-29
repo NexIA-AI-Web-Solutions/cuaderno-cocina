@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_CEILING
+from decimal import Decimal, ROUND_CEILING, localcontext
 
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
@@ -18,13 +18,17 @@ def receive(balance, quantity, movements: list[dict], *, key: str, fingerprint: 
         return balance, movements
     movements = list(movements)
     movements.append({"key": key, "fingerprint": fingerprint, "quantity": quantity, "kind": "receipt"})
-    return balance + quantity, movements
+    with localcontext() as context:
+        context.prec = 64
+        return balance + quantity, movements
 
 
 def consume(balance, quantity, *, allow_negative: bool = False) -> Decimal:
     balance = parse_decimal(balance, allow_zero=True)
     quantity = parse_decimal(quantity, allow_zero=False)
-    updated = balance - quantity
+    with localcontext() as context:
+        context.prec = 64
+        updated = balance - quantity
     if updated < 0 and not allow_negative:
         raise DomainError("insufficient_stock", "El consumo dejaría el saldo en negativo.")
     return updated

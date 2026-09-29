@@ -1,0 +1,41 @@
+"""Authorize local media against the same native objects as the application."""
+from pathlib import PurePosixPath
+
+from django.conf import settings
+from django.db.models import Q
+from django.http import Http404
+from django.views.static import serve
+
+from cookbook.models import Recipe, UserFile
+from cuaderno.services.costing import visible_recipes
+
+
+def authorized_media(request, path):
+    normalized = PurePosixPath(path)
+    if normalized.is_absolute() or ".." in normalized.parts or "\\" in path or ":" in path:
+        raise Http404
+    path = normalized.as_posix()
+    allowed = False
+    if request.user.is_authenticated and getattr(request, "space", None):
+        visible = visible_recipes(request.user, request.space)
+        allowed = visible.filter(image=path).exists()
+        if not allowed:
+            uploaded = UserFile.objects.filter(space=request.space, file=path).first()
+            if uploaded:
+                references = Recipe.objects.filter(space=request.space, steps__file=uploaded)
+                allowed = not references.exists() or uploaded.created_by_id == request.user.pk or visible.filter(steps__file=uploaded).exists()
+    if not allowed and request.GET.get("share"):
+        from cookbook.helper.permission_helper import share_link_valid
+        from django_scopes import scopes_disabled
+        with scopes_disabled():
+            candidates = Recipe.objects.filter(Q(image=path) | Q(steps__file__file=path)).distinct()
+            allowed = any(share_link_valid(recipe, request.GET["share"]) for recipe in candidates)
+    if not allowed:
+        raise Http404
+    response = serve(request, path, document_root=settings.MEDIA_ROOT)
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    # Files cannot run active HTML/SVG on the application's authenticated origin.
+    if response.get("Content-Type", "").split(";")[0] not in {"image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"}:
+        response["Content-Disposition"] = "attachment"
+    return response

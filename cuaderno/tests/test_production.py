@@ -31,6 +31,8 @@ class ProductionTests(unittest.TestCase):
             parse_recipe_document({"url": "http://127.0.0.1/secret", "recipes": []})
         with self.assertRaises(DomainError):
             parse_recipe_document({"url": "http://169.254.169.254/latest/meta-data"})
+        with self.assertRaises(DomainError):
+            parse_recipe_document({"recipes": [{"name": "Raciones truncadas", "servings": "1.5"}]})
 
 
 if __name__ == "__main__":

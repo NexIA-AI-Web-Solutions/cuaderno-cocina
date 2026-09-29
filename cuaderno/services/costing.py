@@ -10,7 +10,7 @@ from django.utils import timezone
 from cuaderno.domain.costing import CostResult, line_cost, scale_amount
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
-from cuaderno.models import PackageFormat, PriceVersion
+from cuaderno.models import PackageFormat, PriceVersion, RecipeYield
 
 
 def current_price(package: PackageFormat, as_of):
@@ -29,7 +29,9 @@ def reference_package(food):
     )
 
 
-def cost_recipe(recipe, servings, as_of=None) -> dict:
+def cost_recipe(recipe, servings, as_of=None, user=None) -> dict:
+    from cuaderno.services.subrecipes import native_recipe_graph
+    native_recipe_graph([recipe.pk], recipe.space, user or recipe.created_by)
     as_of = as_of or timezone.now()
     base_servings = recipe.servings or 1
     if base_servings <= 0:
@@ -38,18 +40,58 @@ def cost_recipe(recipe, servings, as_of=None) -> dict:
     factor = scale_amount(1, base_servings, target)
     lines = []
     warnings = []
-    for step in recipe.steps.all().prefetch_related("ingredients__food", "ingredients__unit"):
-        for ingredient in step.ingredients.all():
-            lines.append(_cost_ingredient(ingredient, factor, as_of, warnings))
+    lines = _cost_recipe_lines(recipe, factor, as_of, warnings, (), user or recipe.created_by)
     return _sheet(lines, warnings, base_servings, target)
+
+
+def _cost_recipe_lines(recipe, factor, as_of, warnings, path, user):
+    if recipe.pk in path:
+        route = " → ".join(str(value) for value in (*path, recipe.pk))
+        raise DomainError("recipe_cycle", f"Referencia circular: {route}")
+    if len(path) >= 32:
+        raise DomainError("recipe_graph_limit", "La receta supera 32 niveles de subelaboraciones.")
+    lines = []
+    for step in recipe.steps.all().prefetch_related("ingredients__food__recipe", "ingredients__unit"):
+        if step.step_recipe_id:
+            child = visible_recipes(user, recipe.space).filter(pk=step.step_recipe_id).first()
+            if child is None:
+                raise DomainError("recipe_missing", "Una subreceta no está disponible en este espacio.")
+            else:
+                lines.extend(_cost_recipe_lines(child, factor, as_of, warnings, (*path, recipe.pk), user))
+        for ingredient in step.ingredients.all():
+            if ingredient.food_id and ingredient.food.recipe_id and not ingredient.is_header and not ingredient.no_amount:
+                child = visible_recipes(user, recipe.space).filter(pk=ingredient.food.recipe_id).first()
+                if child is None:
+                    raise DomainError("recipe_missing", "Una subreceta no está disponible en este espacio.")
+                if child.pk in (*path, recipe.pk):
+                    raise DomainError("recipe_cycle", "Referencia circular en las subelaboraciones.")
+                declared = RecipeYield.objects.filter(space=recipe.space, recipe=child).select_related("unit").first()
+                if declared is None:
+                    lines.append(CostResult("incomplete", None, None, None, ("rendimiento_desconocido",)))
+                    continue
+                if declared.quantity <= 0 or ingredient.amount <= 0:
+                    lines.append(CostResult("invalid", None, None, None, ("rendimiento_invalido",)))
+                    continue
+                from cuaderno.services.subrecipes import convert_native_quantity
+                try:
+                    amount = convert_native_quantity(ingredient.amount, ingredient.unit, declared.unit, ingredient.food, recipe.space)
+                except DomainError as exc:
+                    lines.append(CostResult("needs_conversion", None, None, None, (exc.code,)))
+                    continue
+                lines.extend(_cost_recipe_lines(child, factor * amount / declared.quantity, as_of, warnings, (*path, recipe.pk), user))
+            else:
+                lines.append(_cost_ingredient(ingredient, factor, as_of, warnings))
+    return lines
 
 
 def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list) -> CostResult:
     if ingredient.is_header:
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("encabezado",))
-    if ingredient.no_amount or ingredient.food_id is None:
+    if ingredient.no_amount:
         warnings.append("cantidad_excluida")
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("excluido",))
+    if ingredient.food_id is None:
+        return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
     if ingredient.amount is None:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
     used = Decimal(ingredient.amount) * factor

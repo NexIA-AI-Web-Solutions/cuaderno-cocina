@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class SpaceProfile(models.Model):
@@ -84,6 +85,8 @@ class StockMovement(models.Model):
     quantity = models.DecimalField(max_digits=32, decimal_places=16)
     idempotency_key = models.CharField(max_length=128)
     fingerprint = models.CharField(max_length=128)
+    balance_after = models.DecimalField(max_digits=32, decimal_places=16, null=True, blank=True)
+    metadata_snapshot = models.JSONField(default=dict, blank=True)
     reverses = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversals")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,11 +94,26 @@ class StockMovement(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["space", "idempotency_key"], name="cuaderno_movement_idempotency"),
+            models.UniqueConstraint(
+                fields=["reverses"],
+                condition=models.Q(reverses__isnull=False),
+                name="cuaderno_one_reversal_per_movement",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["space", "created_at"], name="cuaderno_movement_space_time"),
         ]
 
 
 class PurchaseOrder(models.Model):
     """An order is not a receipt and does not change stock."""
+
+    DRAFT = "draft"
+    ORDERED = "ordered"
+    PART_RECEIVED = "part_received"
+    RECEIVED = "received"
+    CANCELLED = "cancelled"
+    STATES = ((DRAFT, "Borrador"), (ORDERED, "Pedido"), (PART_RECEIVED, "Recibido parcialmente"), (RECEIVED, "Recibido"), (CANCELLED, "Cancelado"))
 
     space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE, related_name="cuaderno_orders")
     food = models.ForeignKey("cookbook.Food", on_delete=models.PROTECT)
@@ -104,16 +122,95 @@ class PurchaseOrder(models.Model):
     supplier_name = models.CharField(max_length=128, blank=True, default="")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
+    household = models.ForeignKey("cookbook.Household", on_delete=models.PROTECT, null=True, blank=True)
+    supplier = models.ForeignKey("cookbook.Supermarket", on_delete=models.PROTECT, null=True, blank=True)
+    package = models.ForeignKey(PackageFormat, on_delete=models.PROTECT, null=True, blank=True)
+    state = models.CharField(max_length=16, choices=STATES, default=DRAFT, db_index=True)
+    received_quantity = models.DecimalField(max_digits=32, decimal_places=16, default=0)
+    package_count = models.DecimalField(max_digits=32, decimal_places=16, null=True, blank=True)
+    package_quantity_snapshot = models.DecimalField(max_digits=32, decimal_places=16, null=True, blank=True)
+    package_unit_snapshot = models.ForeignKey("cookbook.Unit", on_delete=models.PROTECT, null=True, blank=True, related_name="cuaderno_order_package_units")
+    price_snapshot = models.DecimalField(max_digits=32, decimal_places=16, null=True, blank=True)
+    currency_snapshot = models.CharField(max_length=3, default="EUR")
+    ordered_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=models.Q(quantity__gt=0), name="cuaderno_order_positive"),
+            models.CheckConstraint(condition=models.Q(received_quantity__gte=0, received_quantity__lte=models.F("quantity")), name="cuaderno_order_received_bounds"),
+            models.CheckConstraint(condition=models.Q(state__in=["draft", "ordered", "part_received", "received", "cancelled"]), name="cuaderno_order_valid_state"),
+        ]
+
+
+class PurchaseOffer(models.Model):
+    """Dated supplier offer; not the recipe's reference price or a stock receipt."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    package = models.ForeignKey(PackageFormat, on_delete=models.PROTECT, related_name="supplier_offers")
+    supplier = models.ForeignKey("cookbook.Supermarket", on_delete=models.PROTECT, related_name="cuaderno_offers")
+    amount = models.DecimalField(max_digits=32, decimal_places=16)
+    explicit_free = models.BooleanField(default=False)
+    currency = models.CharField(max_length=3, default="EUR")
+    valid_from = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["package", "supplier", "valid_from"], name="cuaderno_offer_supplier_date")]
+        constraints = [models.CheckConstraint(
+            condition=models.Q(amount__gt=0, explicit_free=False) | models.Q(amount=0, explicit_free=True), name="cuaderno_offer_explicit_price",
+        )]
+
+
+class PurchaseReceipt(models.Model):
+    """Protected receipt document in order units, linked to its native stock movement."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    order = models.ForeignKey(PurchaseOrder, on_delete=models.PROTECT, related_name="receipts")
+    entry = models.ForeignKey("cookbook.InventoryEntry", on_delete=models.PROTECT)
+    movement = models.OneToOneField(StockMovement, on_delete=models.PROTECT, related_name="purchase_receipt")
+    quantity = models.DecimalField(max_digits=32, decimal_places=16)
+    idempotency_key = models.CharField(max_length=128)
+    fingerprint = models.CharField(max_length=64)
+    reversed_by = models.OneToOneField(StockMovement, on_delete=models.PROTECT, null=True, blank=True, related_name="purchase_receipt_reversal")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["space", "idempotency_key"], name="cuaderno_receipt_idempotency"),
+            models.CheckConstraint(condition=models.Q(quantity__gt=0), name="cuaderno_receipt_positive"),
+        ]
 
 
 class ServicePlan(models.Model):
     """Internal covers. Not a payment, a public booking, or a table."""
 
+    DRAFT = "draft"
+    CONFIRMED = "confirmed"
+    PRODUCED = "produced"
+    CANCELLED = "cancelled"
+    STATES = ((DRAFT, "Borrador"), (CONFIRMED, "Confirmado"), (PRODUCED, "Producido"), (CANCELLED, "Cancelado"))
+
     space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE, related_name="cuaderno_services")
+    household = models.ForeignKey("cookbook.Household", on_delete=models.PROTECT, null=True, blank=True)
     meal_plan = models.ForeignKey("cookbook.MealPlan", null=True, blank=True, on_delete=models.SET_NULL)
     title = models.CharField(max_length=128)
     covers = models.DecimalField(max_digits=12, decimal_places=2)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    service_date = models.DateField(default=timezone.localdate, db_index=True, null=True)
+    state = models.CharField(max_length=16, choices=STATES, default=DRAFT, db_index=True)
+    snapshot = models.JSONField(default=dict, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    produced_at = models.DateTimeField(null=True, blank=True)
+    produced_key = models.CharField(max_length=128, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(
+            fields=["space", "produced_key"], condition=~models.Q(produced_key=""), name="cuaderno_service_produced_key",
+        )]
 
 
 class AllergenDeclaration(models.Model):
@@ -127,3 +224,51 @@ class AllergenDeclaration(models.Model):
     food = models.ForeignKey("cookbook.Food", on_delete=models.PROTECT, related_name="cuaderno_allergens")
     name = models.CharField(max_length=128)
     state = models.CharField(max_length=16, choices=STATES, default=UNKNOWN)
+
+
+class RecipeExchangeRecord(models.Model):
+    """Stable source identity for replay-safe generic recipe imports."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE, related_name="cuaderno_recipe_imports")
+    source = models.CharField(max_length=64)
+    external_id = models.CharField(max_length=256)
+    payload_sha256 = models.CharField(max_length=64)
+    recipe = models.ForeignKey("cookbook.Recipe", on_delete=models.PROTECT, related_name="cuaderno_import_records")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["space", "source", "external_id"],
+                name="cuaderno_recipe_import_identity",
+            ),
+        ]
+
+
+class RecipeYield(models.Model):
+    """Declared usable output of a native Recipe for exact sub-recipe scaling."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE, related_name="cuaderno_recipe_yields")
+    recipe = models.OneToOneField("cookbook.Recipe", on_delete=models.CASCADE, related_name="cuaderno_yield")
+    quantity = models.DecimalField(max_digits=32, decimal_places=16)
+    unit = models.ForeignKey("cookbook.Unit", on_delete=models.PROTECT)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class InventoryWriteRequest(models.Model):
+    """Replay identity for native writes, including zero and metadata-only writes."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    entry = models.ForeignKey("cookbook.InventoryEntry", on_delete=models.PROTECT)
+    idempotency_key = models.CharField(max_length=128)
+    operation = models.CharField(max_length=64)
+    payload_sha256 = models.CharField(max_length=64)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True)
+    metadata_before = models.JSONField(default=dict, blank=True)
+    metadata_after = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["space", "idempotency_key"], name="cuaderno_native_inventory_request")]

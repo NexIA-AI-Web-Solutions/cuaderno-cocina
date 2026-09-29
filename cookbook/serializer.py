@@ -1,7 +1,7 @@
 import traceback
 import uuid
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from gettext import gettext as _
 from html import escape
 from smtplib import SMTPException
@@ -11,6 +11,7 @@ from django.forms.models import model_to_dict
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.cache import caches
 from django.core.mail import send_mail
+from django.db import transaction
 from django.db.models import Q, QuerySet, Sum
 from django.http import BadHeaderError
 from django.urls import reverse
@@ -1732,6 +1733,23 @@ class AutomationSerializer(serializers.ModelSerializer):
 class InventoryLocationSerializer(UniqueFieldsMixin, SpacedModelSerializer, WritableNestedModelSerializer):
     household = HouseholdSerializer()
 
+    def to_internal_value(self, data):
+        from cookbook.helper.permission_helper import has_group_permission
+        request = self.context['request']
+        household_data = data.get('household')
+        household_id = household_data.get('id') if isinstance(household_data, dict) else household_data
+        if household_id is None and self.instance is not None:
+            household_id = self.instance.household_id
+        allowed = Household.objects.filter(space=request.space)
+        if not has_group_permission(request, ['admin']):
+            membership = getattr(request, 'user_space', None)
+            allowed = allowed.filter(pk=membership.household_id) if membership and membership.household_id else allowed.none()
+        if not allowed.filter(pk=household_id).exists():
+            raise ValidationError({'household': _('The household is not available in this space.')})
+        if self.instance and household_id != self.instance.household_id:
+            raise ValidationError({'household': _('An existing location cannot be moved to another household. Create a new location instead.')})
+        return super().to_internal_value(data)
+
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         validated_data['space'] = self.context['request'].space
@@ -1748,6 +1766,49 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
     unit = UnitSerializer()
     label = serializers.SerializerMethodField('get_label')
 
+    def to_internal_value(self, data):
+        from cuaderno.services.inventory_access import household_inventory
+        raw = data.get('inventory_location')
+        location_id = raw if isinstance(raw, int) else raw.get('id') if isinstance(raw, dict) else None
+        if location_id is not None and not household_inventory(self.context['request'], InventoryLocation.objects, 'household_id').filter(pk=location_id).exists():
+            raise ValidationError({'inventory_location': _('The location is not available to this household.')})
+        return super().to_internal_value(data)
+
+    def _native_request(self, operation):
+        import hashlib
+        import json
+        from cuaderno.models import InventoryWriteRequest, StockMovement
+        from cuaderno.services.ledger import IdempotencyConflict
+        from cuaderno.domain.money import canonical_decimal
+
+        request = self.context['request']
+        key = request.headers.get('Idempotency-Key')
+        if not key:
+            raise ValidationError({'idempotency_key': _('Inventory writes require an Idempotency-Key header.')})
+        if len(key) > 128:
+            raise ValidationError({'idempotency_key': _('The key is too long.')})
+        payload = dict(request.data)
+        if 'amount' in payload:
+            payload['amount'] = canonical_decimal(Decimal(str(payload['amount'])))
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(',', ':'), default=str).encode()).hexdigest()
+        prior = InventoryWriteRequest.objects.filter(space=request.space, idempotency_key=key).select_related('entry').first()
+        if not prior and StockMovement.objects.filter(space=request.space, idempotency_key=key).exists():
+            raise IdempotencyConflict({'idempotency_key': _('The key already belongs to another stock operation.')})
+        if prior and (prior.operation != operation or prior.payload_sha256 != digest):
+            raise IdempotencyConflict({'idempotency_key': _('The same key was used for another inventory request.')})
+        return prior, key, digest
+
+    def _record_native_request(self, instance, operation, key, digest, before=None):
+        if key:
+            from cuaderno.models import InventoryWriteRequest
+            from cuaderno.services.ledger import inventory_metadata
+            InventoryWriteRequest.objects.create(
+                space=self.context['request'].space, entry=instance, operation=operation,
+                idempotency_key=key, payload_sha256=digest,
+                created_by=self.context['request'].user,
+                metadata_before=before or {}, metadata_after=inventory_metadata(instance),
+            )
+
     def get_label(self, obj):
         text = f'#{obj.code} - {round(obj.amount, 2)}'
         if obj.unit:
@@ -1755,46 +1816,121 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
         text += f' {obj.food.name}'
         return text
 
+    @transaction.atomic
     def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
-        validated_data['space'] = self.context['request'].space
+        from cuaderno.models import StockMovement
+        from cuaderno.services.ledger import apply_movement
 
+        request = self.context['request']
+        space = request.space
+        initial_amount = Decimal(validated_data.pop('amount', 0))
+        if initial_amount < 0:
+            raise ValidationError({'amount': _('The amount cannot be negative.')})
+
+        # Keep the lock order identical to the Cuaderno stock service.
+        Space.objects.select_for_update().get(pk=space.pk)
+        prior_request, request_key, request_digest = self._native_request('create')
+        if prior_request:
+            return prior_request.entry
+        idempotency_key = request.headers.get('Idempotency-Key')
+        validated_data['amount'] = Decimal('0')
+        validated_data['created_by'] = request.user
+        validated_data['space'] = space
         instance = super().create(validated_data)
 
         if not instance.code:
             instance.code = hex(instance.id)[2:].upper()
-            instance.save()
+            instance.save(update_fields=['code'])
 
-        InventoryLog.objects.create(
-            space=instance.space,
-            entry=instance,
-            booking_type=InventoryLog.B_ADD,
-            old_amount=0,
-            new_amount=instance.amount,
-            old_inventory_location=instance.inventory_location,
-            new_inventory_location=instance.inventory_location,
-        )
+        if initial_amount > 0:
+            apply_movement(
+                entry_id=instance.id,
+                space=space,
+                user=request.user,
+                kind=StockMovement.RECEIPT,
+                quantity=initial_amount,
+                idempotency_key=idempotency_key,
+            )
+            instance.refresh_from_db()
+        else:
+            InventoryLog.objects.create(
+                space=space, entry=instance, booking_type=InventoryLog.B_ADD,
+                old_amount=0, new_amount=0, old_inventory_location=instance.inventory_location,
+                new_inventory_location=instance.inventory_location,
+            )
 
+        self._record_native_request(instance, 'create', request_key, request_digest)
         return instance
 
+    @transaction.atomic
     def update(self, instance, validated_data):
-        old_amount = instance.amount
+        from cuaderno.models import StockMovement
+        from cuaderno.services.ledger import apply_movement, inventory_metadata
+
+        request = self.context['request']
+        space = request.space
+        target_amount = validated_data.pop('amount', None)
+        if target_amount is not None:
+            target_amount = Decimal(target_amount)
+            if target_amount < 0:
+                raise ValidationError({'amount': _('The amount cannot be negative.')})
+
+        Space.objects.select_for_update().get(pk=space.pk)
+        operation = f'update:{instance.pk}'
+        prior_request, request_key, request_digest = self._native_request(operation)
+        if prior_request:
+            return prior_request.entry
+        instance = InventoryEntry.objects.select_for_update().get(pk=instance.pk, space=space)
+        before = inventory_metadata(instance)
+        for field in ('food', 'unit'):
+            nested = validated_data.get(field)
+            proposed_id = nested.get('id') if isinstance(nested, dict) else getattr(nested, 'pk', None)
+            if nested is not None and proposed_id != getattr(instance, field + '_id') and instance.cuaderno_movements.exists():
+                raise ValidationError({field: _('An entry with stock history cannot change food or unit. Create a new entry instead.')})
+        old_amount = Decimal(instance.amount)
         old_inventory_location = instance.inventory_location
+        location_data = validated_data.get('inventory_location')
+        if location_data:
+            raw_location = request.data.get('inventory_location')
+            location_id = raw_location.get('id') if isinstance(raw_location, dict) else raw_location
+            new_location = InventoryLocation.objects.filter(pk=location_id, space=space).first()
+            if new_location:
+                new_household_id = new_location.household_id
+            else:
+                raw_household = raw_location.get('household') if isinstance(raw_location, dict) else None
+                new_household_id = raw_household.get('id') if isinstance(raw_household, dict) else raw_household
+            if new_household_id != old_inventory_location.household_id:
+                raise ValidationError({'inventory_location': _('Inter-household transfers require separate entries and explicit stock movements.')})
 
         instance = super().update(instance, validated_data)
 
-        if old_amount != instance.amount or old_inventory_location != instance.inventory_location:
-            booking_type = InventoryLog.B_MOVE if old_inventory_location != instance.inventory_location else InventoryLog.B_REMOVE
+        if old_inventory_location != instance.inventory_location:
             InventoryLog.objects.create(
-                space=instance.space,
+                space=space,
                 entry=instance,
-                booking_type=booking_type,
+                booking_type=InventoryLog.B_MOVE,
                 old_amount=old_amount,
-                new_amount=instance.amount,
+                new_amount=old_amount,
                 old_inventory_location=old_inventory_location,
                 new_inventory_location=instance.inventory_location,
             )
 
+        if target_amount is not None and target_amount != old_amount:
+            is_receipt = target_amount > old_amount
+            with localcontext() as context:
+                context.prec = 64
+                movement_quantity = (target_amount - old_amount).copy_abs()
+            apply_movement(
+                entry_id=instance.id,
+                space=space,
+                user=request.user,
+                kind=StockMovement.RECEIPT if is_receipt else StockMovement.CONSUME,
+                quantity=movement_quantity,
+                idempotency_key=request.headers.get('Idempotency-Key'),
+            )
+            instance.refresh_from_db()
+
+        self._record_native_request(instance, operation, request_key, request_digest, before)
         return instance
 
     class Meta:

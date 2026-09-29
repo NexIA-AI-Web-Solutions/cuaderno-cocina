@@ -45,3 +45,9 @@ def parse_decimal(value, *, allow_zero: bool = True, allow_negative: bool = Fals
 
 def money_display(amount: Decimal) -> Decimal:
     return amount.quantize(CENTS, rounding=ROUND_HALF_UP)
+
+
+def canonical_decimal(value) -> str:
+    """Stable exact string without context-sensitive normalize/rounding."""
+    text = format(Decimal(str(value)), "f")
+    return text.rstrip("0").rstrip(".") if "." in text else text

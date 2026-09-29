@@ -27,7 +27,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import caches
 from django.core.exceptions import FieldError, ValidationError
 from django.core.files import File
-from django.db import DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, transaction
 from django.db.models import Case, Count, Exists, OuterRef, ProtectedError, Q, Subquery, Value, When, QuerySet
 from django.db.models import Prefetch
 from django.db.models.fields import BooleanField
@@ -350,6 +350,7 @@ class MergeMixin(ViewSetMixin):
     ])
     @decorators.action(detail=True, url_path='merge/(?P<target>[^/.]+)', methods=['PUT'], )
     @decorators.renderer_classes((TemplateHTMLRenderer, JSONRenderer))
+    @transaction.atomic
     def merge(self, request, pk, target: int):
         self.description = f"Merge {self.basename} onto target {self.basename} with ID of [int]."
 
@@ -382,9 +383,15 @@ class MergeMixin(ViewSetMixin):
             try:
                 # TODO these checks could be improved to merge existing properties and conversion in a smart way. For now it will just loose them to prevent duplicates
                 if isinstance(source, Food):
-                    source.properties.all().delete()
-                    source.properties.clear()
-                    UnitConversion.objects.filter(food=source).delete()
+                    from cuaderno.services.food_merge import preserve_native_food_relations
+                    preserve_native_food_relations(source, target)
+
+                    # Cuaderno permits one reference purchase format per Food.
+                    # When both sides have one, retain the target as reference
+                    # and demote the source before the generic FK reassignment.
+                    from cuaderno.models import PackageFormat
+                    if PackageFormat.objects.filter(space=source.space, food=target, is_reference=True).exists():
+                        PackageFormat.objects.filter(space=source.space, food=source, is_reference=True).update(is_reference=False)
 
                 if isinstance(source, Unit):
                     UnitConversion.objects.filter(base_unit=source).delete()
@@ -419,6 +426,7 @@ class MergeMixin(ViewSetMixin):
                 source.delete()
                 return Response(content, status=status.HTTP_200_OK)
             except Exception:
+                transaction.set_rollback(True)
                 traceback.print_exc()
                 content = {'error': True,
                            'msg': _(f'An error occurred attempting to merge {source.name} with {target.name}')}
@@ -574,7 +582,7 @@ class DeleteRelationMixing:
         """
         get a paginated list of objects that are protecting the selected object form being deleted
         """
-        obj = self.queryset.filter(pk=pk, space=request.space).first()
+        obj = self.get_queryset().filter(pk=pk).first()
         if obj:
             CACHE_KEY = f'DELETE_COLLECTOR_{request.space.pk}_PROTECTING_{obj.__class__.__name__}_{obj.pk}'
             cache = self.request.query_params.get('cache', "true") == "true"
@@ -604,7 +612,7 @@ class DeleteRelationMixing:
         """
         get a paginated list of objects that will be cascaded (deleted) when deleting the selected object
         """
-        obj = self.queryset.filter(pk=pk, space=request.space).first()
+        obj = self.get_queryset().filter(pk=pk).first()
         if obj:
             CACHE_KEY = f'DELETE_COLLECTOR_{request.space.pk}_CASCADING_{obj.__class__.__name__}_{obj.pk}'
             cache = self.request.query_params.get('cache', "true") == "true"
@@ -636,7 +644,7 @@ class DeleteRelationMixing:
         """
         get a paginated list of objects where the selected object will be removed whe its deleted
         """
-        obj = self.queryset.filter(pk=pk, space=request.space).first()
+        obj = self.get_queryset().filter(pk=pk).first()
         if obj:
             CACHE_KEY = f'DELETE_COLLECTOR_{request.space.pk}_NULLING_{obj.__class__.__name__}_{obj.pk}'
             cache = self.request.query_params.get('cache', "true") == "true"
@@ -861,7 +869,8 @@ class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelati
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        return self.queryset.filter(space=self.request.space)
+        from cuaderno.services.inventory_access import household_inventory
+        return household_inventory(self.request, self.queryset, 'household_id')
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -876,8 +885,32 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        from cuaderno.models import InventoryWriteRequest
+        Space.objects.select_for_update().get(pk=request.space.pk)
+        entry = self.get_object()
+        if entry.amount != 0 or InventoryLog.objects.filter(entry=entry).exists() or entry.cuaderno_movements.exists() or InventoryWriteRequest.objects.filter(entry=entry).exists():
+            return Response({'detail': _('An entry with stock history cannot be deleted. Use a compensating movement.')}, status=400)
+        return super().destroy(request, *args, **kwargs)
+
+    @decorators.action(detail=True, methods=['POST'])
+    def consume(self, request, pk=None):
+        from cuaderno.models import StockMovement
+        from cuaderno.services.ledger import apply_movement
+
+        entry = self.get_object()
+        movement = apply_movement(
+            entry_id=entry.pk, space=request.space, user=request.user,
+            kind=StockMovement.CONSUME, quantity=request.data.get('quantity'),
+            idempotency_key=request.headers.get('Idempotency-Key', ''),
+        )
+        entry.refresh_from_db()
+        return Response({'movement_id': movement.pk, 'amount': format(entry.amount, 'f')})
+
     def get_queryset(self):
-        queryset = self.queryset.filter(space=self.request.space)
+        from cuaderno.services.inventory_access import household_inventory
+        queryset = household_inventory(self.request, self.queryset)
 
         if self.action == 'list':
             if 'empty' not in self.request.query_params:
@@ -885,7 +918,7 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
 
             if code := self.request.query_params.get('code'):
                 # find first food that has this code in this space
-                entry = InventoryEntry.objects.filter(space=self.request.space, code=code).first()
+                entry = queryset.filter(code=code).first()
                 if entry:
                     queryset = queryset.filter(food=entry.food)
                 else:
@@ -911,7 +944,8 @@ class InventoryLogViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        queryset = self.queryset.filter(space=self.request.space)
+        from cuaderno.services.inventory_access import household_inventory
+        queryset = household_inventory(self.request, self.queryset, 'entry__inventory_location__household_id')
 
         if entry_id := self.request.query_params.get('entry_id'):
             queryset = queryset.filter(entry__id=entry_id)
