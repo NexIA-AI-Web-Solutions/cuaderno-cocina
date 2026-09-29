@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    container_name: cuaderno-release-db
+    environment:
+      POSTGRES_DB: cuaderno_demo
+      POSTGRES_USER: cuaderno_demo
+      POSTGRES_PASSWORD: ${CUADERNO_LOCAL_DB_PASSWORD:?Run local_up.py}
+    volumes:
+      - cuaderno_release_database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U cuaderno_demo -d cuaderno_demo]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  web:
+    image: cuaderno-cocina:local
+    container_name: cuaderno-release-web
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18081:80"
+    environment:
+      SECRET_KEY: ${CUADERNO_LOCAL_SECRET_KEY:?Run local_up.py}
+      DB_ENGINE: django.db.backends.postgresql
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: cuaderno_demo
+      POSTGRES_USER: cuaderno_demo
+      POSTGRES_PASSWORD: ${CUADERNO_LOCAL_DB_PASSWORD:?Run local_up.py}
+      ALLOWED_HOSTS: "127.0.0.1,localhost"
+      CSRF_TRUSTED_ORIGINS: "http://127.0.0.1:18081"
+      TZ: Europe/Madrid
+      CUADERNO_LANGUAGE: es
+      SPACE_AI_ENABLED: "0"
+      SPACE_DEFAULT_ALLOW_SHARING: "0"
+      ENABLE_SIGNUP: "0"
+      DEBUG: "0"
+      GUNICORN_MEDIA: "0"
+      GUNICORN_WORKERS: "2"
+      GUNICORN_THREADS: "2"
+    healthcheck:
+      test: [CMD, /opt/recipes/venv/bin/python, -c, "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1/health/ready/', timeout=5))['ready'] is True"]
+      interval: 10s
+      timeout: 8s
+      start_period: 180s
+      retries: 60
+    volumes:
+      - cuaderno_release_media:/opt/recipes/mediafiles
+volumes:
+  cuaderno_release_database:
+  cuaderno_release_media:

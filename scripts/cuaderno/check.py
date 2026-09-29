@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import time
 import uuid
 
@@ -89,6 +90,8 @@ def execute(root: Path, name: str, *, allow_isolated_mutations: bool = False) ->
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("name", nargs="?")
     parser.add_argument("--list", action="store_true")
