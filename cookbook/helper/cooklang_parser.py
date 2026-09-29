@@ -215,6 +215,10 @@ class Recipe:
 
     @classmethod
     def parse(cls, raw: str) -> "Recipe":
+        # Uploaded files keep their original line endings, unlike text-mode
+        # fixtures. Cooklang delimiters and step breaks must behave identically.
+        raw = raw.replace('\r\n', '\n').replace('\r', '\n')
+
         # Remove white space at the end of the document
         raw = re.sub(r'\s+$', '', raw)
 
