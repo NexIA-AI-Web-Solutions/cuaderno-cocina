@@ -18,6 +18,7 @@ from cuaderno.api.purchasing import (
     ReplenishmentView,
 )
 from cuaderno.health import readiness
+from cuaderno.api.finance import RecipeFinanceView
 
 urlpatterns = [
     path("health/ready/", readiness),
@@ -25,6 +26,7 @@ urlpatterns = [
     path("api/cuaderno/packages/", PackageListView.as_view()),
     path("api/cuaderno/packages/<int:pk>/prices/", PriceCreateView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/cost/", RecipeCostView.as_view()),
+    path("api/cuaderno/recipes/<int:recipe_id>/finance/", RecipeFinanceView.as_view()),
     path("api/cuaderno/movements/", MovementView.as_view()),
     path("api/cuaderno/orders/", PurchaseOrderView.as_view()),
     path("api/cuaderno/purchase-offers/", PurchaseOfferView.as_view()),

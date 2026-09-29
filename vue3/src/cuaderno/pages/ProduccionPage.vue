@@ -100,6 +100,23 @@
                                 {{ confirmedCostLabel(plan.snapshot.cost) }}.
                                 No es beneficio neto ni valoración contable de existencias.
                             </p>
+                            <div v-if="plan.snapshot?.finance" class="mt-3">
+                                <p class="font-weight-bold">
+                                    Referencias financieras congeladas (política {{ pricePolicyLabel(plan.snapshot.finance.price_policy) }})
+                                </p>
+                                <p>Precio de venta/ración: {{ financeMoneyLabel(plan.snapshot.finance.selling_price_per_serving) }}</p>
+                                <p>Presupuesto/persona: {{ financeMoneyLabel(plan.snapshot.finance.budget_per_person) }}</p>
+                                <p>Coste de ingredientes/ración: {{ financeMoneyLabel(plan.snapshot.finance.ingredient_cost_per_serving) }}</p>
+                                <p>Diferencia frente al coste: {{ financeMoneyLabel(plan.snapshot.finance.difference_per_serving) }}</p>
+                                <p>Margen hasta presupuesto: {{ financeMoneyLabel(plan.snapshot.finance.budget_gap_per_person) }}</p>
+                                <p>Porcentaje de coste de materia: {{ financeRatioLabel(plan.snapshot.finance.food_cost_ratio) }}</p>
+                                <p class="text-medium-emphasis">
+                                    Esta referencia pertenece a la confirmación del servicio: no se recalcula con el precio actual y la diferencia no es beneficio neto.
+                                </p>
+                                <v-alert v-for="warning in plan.snapshot.finance.warnings || []" :key="warning" type="warning" class="mt-2">
+                                    {{ financeWarningLabel(warning) }}
+                                </v-alert>
+                            </div>
                             <v-alert v-for="(warning, index) in plan.snapshot?.warnings || []" :key="index" type="warning" class="mt-2">{{ productionWarning(warning) }}</v-alert>
                             <v-list v-if="plan.snapshot?.needs?.length">
                                 <v-list-item v-for="line in plan.snapshot.needs" :key="line.food_id" :title="line.food_name" :subtitle="`${line.quantity} ${line.unit_name || '(sin unidad)'}`" />
@@ -138,6 +155,13 @@ import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import {apiError, productionUsage, productionWarning, serviceBody, yieldBody, confirmedCostLabel} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {
+    financeMoneyLabel,
+    financeRatioLabel,
+    financeWarningLabel,
+    pricePolicyLabel,
+    type RecipeFinance,
+} from '@/cuaderno/financeUi'
 
 const states = [
     {title: "Desconocido", value: "unknown"},
@@ -152,6 +176,7 @@ const service = reactive({title: "", covers: "", date: "", recipe: null as any})
 type ServiceRow = {
     id: number; title: string; covers: string; service_date: string | null; state: string;
     snapshot?: {cost?: {status: string; total: string | null; display: string | null}; warnings?: unknown[];
+        finance?: RecipeFinance;
         needs?: {food_id: number; food_name: string; quantity: string; unit_name: string | null}[]}
 }
 const services = ref<ServiceRow[]>([])
