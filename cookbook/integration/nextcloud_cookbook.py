@@ -12,6 +12,15 @@ from cookbook.integration.integration import Integration
 from cookbook.models import Ingredient, Keyword, NutritionInformation, Recipe, Step
 
 
+def safe_archive_component(value):
+    """Return one portable, relative ZIP path component."""
+    value = re.sub(r'[\\/]+', '-', str(value).strip())
+    value = re.sub(r'\.+', '-', value)
+    value = re.sub(r'[^\w -]+', '-', value, flags=re.UNICODE)
+    value = re.sub(r'[-\s]+', '-', value).strip('-_. ')
+    return value or 'recipe'
+
+
 class NextcloudCookbook(Integration):
 
     def import_file_name_filter(self, zip_info_object):
@@ -111,6 +120,7 @@ class NextcloudCookbook(Integration):
     def get_file_from_recipe(self, recipe):
 
         export = {}
+        archive_name = safe_archive_component(recipe.name)
         export['name'] = recipe.name
         export['description'] = recipe.description
         export['url'] = recipe.source_url
@@ -118,8 +128,8 @@ class NextcloudCookbook(Integration):
         export['cookTime'] = self.formatTime(recipe.waiting_time)
         export['totalTime'] = self.formatTime(recipe.working_time + recipe.waiting_time)
         export['recipeYield'] = recipe.servings
-        export['image'] = f'/Recipes/{recipe.name}/full.jpg'
-        export['imageUrl'] = f'/Recipes/{recipe.name}/full.jpg'
+        export['image'] = f'/Recipes/{archive_name}/full.jpg'
+        export['imageUrl'] = f'/Recipes/{archive_name}/full.jpg'
 
         recipeKeyword = []
         for k in recipe.keywords.all():
@@ -147,17 +157,18 @@ class NextcloudCookbook(Integration):
         for recipe in recipes:
             if recipe.internal and recipe.space == self.request.space:
 
+                archive_name = safe_archive_component(recipe.name)
                 recipe_stream = StringIO()
                 filename, data = self.get_file_from_recipe(recipe)
                 recipe_stream.write(data)
-                export_zip_obj.writestr(f'{recipe.name}/{filename}', recipe_stream.getvalue())
+                export_zip_obj.writestr(f'{archive_name}/{filename}', recipe_stream.getvalue())
                 recipe_stream.close()
 
                 try:
                     imageByte = recipe.image.file.read()
-                    export_zip_obj.writestr(f'{recipe.name}/full.jpg', self.getJPEG(imageByte))
-                    export_zip_obj.writestr(f'{recipe.name}/thumb.jpg', self.getThumb(171, imageByte))
-                    export_zip_obj.writestr(f'{recipe.name}/thumb16.jpg', self.getThumb(16, imageByte))
+                    export_zip_obj.writestr(f'{archive_name}/full.jpg', self.getJPEG(imageByte))
+                    export_zip_obj.writestr(f'{archive_name}/thumb.jpg', self.getThumb(171, imageByte))
+                    export_zip_obj.writestr(f'{archive_name}/thumb16.jpg', self.getThumb(16, imageByte))
                 except ValueError:
                     pass
 

@@ -70,6 +70,8 @@ from cookbook.connectors.connector_manager import ConnectorManager, ActionType
 from cookbook.forms import ImportForm, ImportExportBase
 from cookbook.helper import recipe_url_import as helper
 from cookbook.helper.HelperFunctions import str2bool, safe_request
+from cuaderno.media import can_download_user_file
+from cuaderno.services.uploads import ImportUploadTooLarge, import_upload_buffers
 from cookbook.helper.ai_helper import can_perform_ai_request, AiCallbackHandler
 from cookbook.helper.batch_edit_helper import add_to_relation, remove_from_relation, remove_all_from_relation, set_relation
 from cookbook.helper.image_processing import handle_image
@@ -2460,7 +2462,7 @@ class ImportLogViewSet(LoggingMixin, viewsets.ModelViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        return self.queryset.filter(space=self.request.space)
+        return self.queryset.filter(space=self.request.space, created_by=self.request.user)
 
 
 class ExportLogViewSet(LoggingMixin, viewsets.ModelViewSet):
@@ -2497,7 +2499,17 @@ class UserFileViewSet(LoggingMixin, StandardFilterModelViewSet, DeleteRelationMi
     parser_classes = [MultiPartParser]
 
     def get_queryset(self):
-        self.queryset = self.queryset.filter(space=self.request.space).all()
+        from cuaderno.services.costing import visible_recipes
+        from django.db.models import Exists, OuterRef
+        rows = self.queryset.filter(space=self.request.space)
+        if self.request.method not in ('GET', 'HEAD', 'OPTIONS'):
+            self.queryset = rows.filter(created_by=self.request.user)
+        else:
+            references = Recipe.objects.filter(space=self.request.space, steps__file=OuterRef('pk'))
+            visible = visible_recipes(self.request.user, self.request.space).filter(steps__file=OuterRef('pk'))
+            self.queryset = rows.annotate(
+                has_recipe_reference=Exists(references), has_visible_recipe=Exists(visible),
+            ).filter(Q(created_by=self.request.user) | Q(has_recipe_reference=False) | Q(has_visible_recipe=True))
         return super().get_queryset()
 
 
@@ -3055,12 +3067,10 @@ class AppImportView(APIView):
         form = ImportForm(request.POST, request.FILES)
         if form.is_valid() and request.FILES != {}:
             try:
+                files = import_upload_buffers(request.FILES.getlist('files'))
                 integration = get_integration(request, form.cleaned_data['type'])
 
                 il = ImportLog.objects.create(type=form.cleaned_data['type'], created_by=request.user, space=request.space)
-                files = []
-                for f in request.FILES.getlist('files'):
-                    files.append({'file': io.BytesIO(f.read()), 'name': f.name})
                 t = threading.Thread(target=integration.do_import,
                                      args=[files, il, form.cleaned_data['duplicates']],
                                      kwargs={'meal_plans': form.cleaned_data['meal_plans'],
@@ -3072,6 +3082,8 @@ class AppImportView(APIView):
                 t.start()
 
                 return Response({'import_id': il.pk}, status=status.HTTP_200_OK)
+            except ImportUploadTooLarge as exc:
+                return Response({'error': True, 'msg': str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
             except NotImplementedError:
                 return Response({'error': True, 'msg': _('Importing is not implemented for this provider')},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -3196,8 +3208,11 @@ def download_file(request, file_id):
     function to download a user file securely (wrapping as zip to prevent any context based XSS problems)
     temporary solution until a real file manager is implemented
     """
+    uf = get_object_or_404(UserFile, space=request.space, pk=file_id)
+    if not can_download_user_file(request.user, request.space, uf):
+        return Response({}, status=status.HTTP_404_NOT_FOUND)
+
     try:
-        uf = UserFile.objects.get(space=request.space, pk=file_id)
 
         in_memory = io.BytesIO()
         zf = ZipFile(in_memory, mode="w")
@@ -3227,17 +3242,17 @@ def import_files(request):
     form = ImportForm(request.POST, request.FILES)
     if form.is_valid() and request.FILES != {}:
         try:
+            files = import_upload_buffers(request.FILES.getlist('files'))
             integration = get_integration(request, form.cleaned_data['type'])
 
             il = ImportLog.objects.create(type=form.cleaned_data['type'], created_by=request.user, space=request.space)
-            files = []
-            for f in request.FILES.getlist('files'):
-                files.append({'file': io.BytesIO(f.read()), 'name': f.name})
             t = threading.Thread(target=integration.do_import, args=[files, il, form.cleaned_data['duplicates']])
             t.setDaemon(True)
             t.start()
 
             return Response({'import_id': il.pk}, status=status.HTTP_200_OK)
+        except ImportUploadTooLarge as exc:
+            return Response({'error': True, 'msg': str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         except NotImplementedError:
             return Response({'error': True, 'msg': _('Importing is not implemented for this provider')},
                             status=status.HTTP_400_BAD_REQUEST)

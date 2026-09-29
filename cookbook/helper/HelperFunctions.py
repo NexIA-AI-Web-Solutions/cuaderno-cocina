@@ -24,10 +24,35 @@ def str2bool(v):
         return v.lower() in ("yes", "true", "1")
 
 
-def safe_request(method, url, **kwargs):
+DEFAULT_MAX_RESPONSE_BYTES = 10 * 1024 * 1024
+DEFAULT_RESPONSE_CHUNK_SIZE = 64 * 1024
+
+
+def safe_request(
+    method,
+    url,
+    *,
+    max_response_bytes=DEFAULT_MAX_RESPONSE_BYTES,
+    response_chunk_size=DEFAULT_RESPONSE_CHUNK_SIZE,
+    **kwargs,
+):
     """
-    use requests-hardened to make external requests SSRF safe
+    Use requests-hardened to make external requests SSRF safe and keep the
+    response body within a fixed in-memory limit.
+
+    The body is buffered before the underlying stream is closed so existing
+    callers can continue using ``response.content`` and ``response.json()``.
     """
+    if (
+        isinstance(max_response_bytes, bool)
+        or not isinstance(max_response_bytes, int)
+        or max_response_bytes <= 0
+        or isinstance(response_chunk_size, bool)
+        or not isinstance(response_chunk_size, int)
+        or response_chunk_size <= 0
+    ):
+        raise ValueError("Response limits must be positive integers")
+
     http_manager = Manager(
         Config(
             default_timeout=(2, 10),
@@ -37,7 +62,34 @@ def safe_request(method, url, **kwargs):
             ip_filter_allow_loopback_ips=False,
         )
     )
-    return http_manager.send_request(method, url, **kwargs)
+    kwargs["stream"] = True
+    response = http_manager.send_request(method, url, **kwargs)
+    try:
+        content_length = response.headers.get("Content-Length")
+        if content_length is not None:
+            try:
+                if int(content_length) > max_response_bytes:
+                    raise ValidationError("External response exceeds the allowed size")
+            except ValueError:
+                # An invalid or attacker-controlled header is not trusted; the
+                # streamed byte counter below remains authoritative.
+                pass
+
+        chunks = []
+        received = 0
+        for chunk in response.iter_content(chunk_size=response_chunk_size):
+            if not chunk:
+                continue
+            received += len(chunk)
+            if received > max_response_bytes:
+                raise ValidationError("External response exceeds the allowed size")
+            chunks.append(chunk)
+
+        response._content = b"".join(chunks)
+        response._content_consumed = True
+        return response
+    finally:
+        response.close()
 
 
 def match_or_fuzzymatch(check_string: str, key_dict: dict) -> tuple[str, int]:

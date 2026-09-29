@@ -10,6 +10,18 @@ from cookbook.models import Recipe, UserFile
 from cuaderno.services.costing import visible_recipes
 
 
+def can_download_user_file(user, space, uploaded):
+    """Use the native recipe attachment ACL for every delivery route."""
+    if not user.is_authenticated or uploaded.space_id != space.pk:
+        return False
+    references = Recipe.objects.filter(space=space, steps__file=uploaded)
+    return (
+        uploaded.created_by_id == user.pk
+        or not references.exists()
+        or visible_recipes(user, space).filter(steps__file=uploaded).exists()
+    )
+
+
 def authorized_media(request, path):
     normalized = PurePosixPath(path)
     if normalized.is_absolute() or ".." in normalized.parts or "\\" in path or ":" in path:
@@ -22,8 +34,7 @@ def authorized_media(request, path):
         if not allowed:
             uploaded = UserFile.objects.filter(space=request.space, file=path).first()
             if uploaded:
-                references = Recipe.objects.filter(space=request.space, steps__file=uploaded)
-                allowed = not references.exists() or uploaded.created_by_id == request.user.pk or visible.filter(steps__file=uploaded).exists()
+                allowed = can_download_user_file(request.user, request.space, uploaded)
     if not allowed and request.GET.get("share"):
         from cookbook.helper.permission_helper import share_link_valid
         from django_scopes import scopes_disabled

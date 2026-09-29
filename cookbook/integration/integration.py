@@ -1,6 +1,8 @@
+import stat
 import traceback
 import uuid
 from io import BytesIO
+from pathlib import PurePosixPath
 from zipfile import BadZipFile, ZipFile
 
 from bs4 import Tag
@@ -21,6 +23,8 @@ from recipes.settings import DEBUG, EXPORT_FILE_CACHE_DURATION, MAX_ZIP_FILE_COU
 
 
 class Integration:
+    MAX_ZIP_COMPRESSION_RATIO = 100
+
     request = None
     keyword = None
     files = None
@@ -63,13 +67,43 @@ class Integration:
         :return: ZipFile object
         """
         zip_file = ZipFile(file)
-        if len(zip_file.infolist()) > MAX_ZIP_FILE_COUNT:
-            raise Exception(_('Too many files in zip') + ' ' + str(len(zip_file.infolist())) + '/' + str(MAX_ZIP_FILE_COUNT))
+        try:
+            members = zip_file.infolist()
+            if len(members) > MAX_ZIP_FILE_COUNT:
+                raise Exception(_('Too many files in zip') + ' ' + str(len(members)) + '/' + str(MAX_ZIP_FILE_COUNT))
 
-        total_size = sum([z.file_size for z in zip_file.infolist()])
-        if total_size > MAX_ZIP_TOTAL_SIZE:
-            raise Exception(_('Zip file too large') + ' ' + str(total_size) + '/' + str(MAX_ZIP_TOTAL_SIZE))
-        return zip_file
+            total_size = sum(z.file_size for z in members)
+            if total_size > MAX_ZIP_TOTAL_SIZE:
+                raise Exception(_('Zip file too large') + ' ' + str(total_size) + '/' + str(MAX_ZIP_TOTAL_SIZE))
+
+            for member in members:
+                self._validate_zip_member(member)
+            return zip_file
+        except Exception:
+            zip_file.close()
+            raise
+
+    def _validate_zip_member(self, info):
+        """Reject archive members that are unsafe even without extraction."""
+        filename = info.filename
+        path = PurePosixPath(filename)
+        if (
+            not filename
+            or "\x00" in filename
+            or "\\" in filename
+            or path.is_absolute()
+            or ".." in path.parts
+            or (path.parts and ":" in path.parts[0])
+        ):
+            raise Exception(_('Invalid path in zip'))
+
+        unix_mode = info.external_attr >> 16
+        if unix_mode and stat.S_ISLNK(unix_mode):
+            raise Exception(_('Symbolic links are not allowed in zip files'))
+
+        if info.file_size:
+            if info.compress_size <= 0 or info.file_size / info.compress_size > self.MAX_ZIP_COMPRESSION_RATIO:
+                raise Exception(_('Suspicious compression ratio in zip'))
 
     def safe_read(self, zip_file, filename, depth=0):
         """
@@ -87,6 +121,8 @@ class Integration:
             info = zip_file.getinfo(filename)
         else:
             info = filename
+
+        self._validate_zip_member(info)
 
         if info.file_size > MAX_ZIP_FILE_SIZE:
             raise Exception(_('File in zip too large') + ' ' + str(info.file_size) + '/' + str(MAX_ZIP_FILE_SIZE) )

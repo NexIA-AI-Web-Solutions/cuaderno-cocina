@@ -10,7 +10,9 @@ server {
   listen [::]:${TANDOOR_PORT} ipv6only=on;
   server_name localhost;
 
-  client_max_body_size 512M;
+  # Bound ingress/spooling as well as the application's 50 MiB import buffers.
+  # Allow multipart overhead; oversized bodies are rejected by nginx before Django.
+  client_max_body_size 52M;
 
   # serve media files
   location /media {

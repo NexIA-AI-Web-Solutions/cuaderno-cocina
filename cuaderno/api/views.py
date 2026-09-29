@@ -78,8 +78,14 @@ class PackageListView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
     def get(self, request):
-        rows = PackageFormat.objects.filter(space=request.space).select_related("food", "unit")
-        return Response([_package_payload(row) for row in rows])
+        rows = list(PackageFormat.objects.filter(space=request.space).select_related("food", "unit").order_by("pk"))
+        latest_by_package = {
+            price.package_id: price
+            for price in PriceVersion.objects.filter(
+                space=request.space, package_id__in=[row.pk for row in rows], valid_from__lte=timezone.now(),
+            ).order_by("package_id", "-valid_from", "-id").distinct("package_id")
+        }
+        return Response([_package_payload(row, latest_by_package.get(row.pk)) for row in rows])
 
     @transaction.atomic
     def post(self, request):
@@ -159,8 +165,12 @@ def _price_payload(price: PriceVersion) -> dict:
     }
 
 
-def _package_payload(package: PackageFormat) -> dict:
-    latest = package.prices.order_by("-valid_from", "-id").first()
+_UNSET_PRICE = object()
+
+
+def _package_payload(package: PackageFormat, latest=_UNSET_PRICE) -> dict:
+    if latest is _UNSET_PRICE:
+        latest = package.prices.filter(valid_from__lte=timezone.now()).order_by("-valid_from", "-id").first()
     return {
         "id": package.id,
         "food": package.food_id,
