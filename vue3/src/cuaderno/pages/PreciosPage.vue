@@ -9,25 +9,27 @@
                 </p>
                 <v-row>
                     <v-col cols="12" md="4">
-                        <v-text-field v-model="foodId" label="Id de ingrediente" type="number" />
+                        <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-text-field v-model="unitId" label="Id de unidad" type="number" />
+                        <v-model-select v-model="unit" model="Unit" label="Unidad del contenido" search-on-load />
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-text-field v-model="label" label="Formato" placeholder="Garrafa 5 L" />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-text-field v-model="quantity" label="Contenido" placeholder="5" />
+                        <v-text-field v-model="quantity" label="Contenido" placeholder="5" inputmode="decimal" />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-text-field v-model="price" label="Precio EUR" placeholder="32,00" />
+                        <v-text-field v-model="price" label="Precio EUR" placeholder="32,00" inputmode="decimal" hint="Déjalo vacío si todavía no conoces el precio." persistent-hint />
                     </v-col>
                     <v-col cols="12" md="4" class="d-flex align-center">
-                        <v-btn color="primary" @click="save">Guardar precio</v-btn>
+                        <v-btn color="primary" :loading="saving" min-height="44" @click="save">Guardar precio</v-btn>
                     </v-col>
                 </v-row>
-                <p v-if="message" class="mt-2">{{ message }}</p>
+                <p v-if="message" class="mt-2" role="status">{{ message }}</p>
+                <v-progress-linear v-if="loading" indeterminate aria-label="Cargando precios" />
+                <p v-else-if="!packages.length" class="my-4">Todavía no hay formatos. Selecciona un ingrediente y su unidad para guardar el primero.</p>
                 <v-list v-if="packages.length">
                     <v-list-item v-for="item in packages" :key="item.id">
                         <v-list-item-title>{{ item.food_name }} — {{ item.label }}</v-list-item-title>
@@ -45,10 +47,14 @@
 
 <script setup lang="ts">
 import {onMounted, ref} from "vue"
-import {getCookie} from "@/utils/cookie"
+import VModelSelect from '@/components/inputs/VModelSelect.vue'
+import {cuadernoFetch, readJson} from '@/cuaderno/api'
+import {apiError, decimalInput} from '@/cuaderno/forms'
 
-const foodId = ref("")
-const unitId = ref("")
+const food = ref<any>(null)
+const unit = ref<any>(null)
+const saving = ref(false)
+const loading = ref(false)
 const label = ref("")
 const quantity = ref("")
 const price = ref("")
@@ -56,31 +62,41 @@ const message = ref("")
 const packages = ref<any[]>([])
 
 async function load() {
-    const response = await fetch("/api/cuaderno/packages/", {credentials: "same-origin"})
+    loading.value = true
+    const response = await cuadernoFetch("/api/cuaderno/packages/")
     if (response.ok) {
         packages.value = await response.json()
+    } else {
+        const result = await readJson(response)
+        message.value = apiError(result.status, result.data)
     }
+    loading.value = false
 }
 
 async function save() {
     message.value = ""
-    const response = await fetch("/api/cuaderno/packages/", {
+    if (saving.value) return
+    const content = decimalInput(quantity.value)
+    const amount = price.value.trim() === '' ? null : decimalInput(price.value, true)
+    if (!food.value?.id || !unit.value?.id || !label.value.trim() || !content || (price.value.trim() !== '' && amount === null)) {
+        message.value = 'Selecciona ingrediente y unidad; indica un formato, contenido positivo y un precio válido o vacío.'
+        return
+    }
+    saving.value = true
+    const response = await cuadernoFetch("/api/cuaderno/packages/", {
         method: "POST",
-        credentials: "same-origin",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-        },
         body: JSON.stringify({
-            food: Number(foodId.value),
-            unit: Number(unitId.value),
-            label: label.value,
-            quantity: quantity.value.replace(",", "."),
-            price: price.value.trim() === "" ? null : price.value.replace(",", "."),
+            food: food.value.id,
+            unit: unit.value.id,
+            label: label.value.trim(),
+            quantity: content,
+            price: amount,
         }),
     })
+    saving.value = false
     if (!response.ok) {
-        message.value = "No se ha guardado. Revisa ingrediente, unidad y precio."
+        const result = await readJson(response)
+        message.value = apiError(result.status, result.data)
         return
     }
     message.value = "Precio guardado."

@@ -1,5 +1,6 @@
 <template>
     <v-container>
+        <exchange-panel />
         <v-row>
             <v-col>
 
@@ -599,6 +600,7 @@ import bookmarkletJs from '@/assets/bookmarklet_v3?url'
 import StepIngredientSorterDialog from "@/components/dialogs/StepIngredientSorterDialog.vue";
 import {mergeAllSteps, splitAllSteps, splitStep} from "@/utils/step_utils.ts";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import ExchangePanel from "@/cuaderno/components/ExchangePanel.vue";
 
 function doListImport() {
     urlList.value = urlListImportInput.value.split('\n')

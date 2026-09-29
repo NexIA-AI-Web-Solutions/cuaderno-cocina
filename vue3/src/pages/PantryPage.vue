@@ -2,6 +2,11 @@
 
 
     <v-container>
+        <div class="d-flex flex-wrap ga-2 mb-3">
+            <v-btn :to="{name: 'CuadernoAlmacenPage'}" variant="text" prepend-icon="fa-solid fa-boxes-stacked" min-height="44">
+                Pedidos y movimientos
+            </v-btn>
+        </div>
         <v-row dense>
             <v-col>
                 <v-card prepend-icon="$pantry" :title="$t('Pantry')">

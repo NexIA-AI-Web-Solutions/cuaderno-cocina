@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue'
+import {computed, onMounted, provide, ref, watch} from 'vue'
 import {ApiApi, ApiRecipeRetrieveRequest, Recipe, ViewLog} from "@/openapi";
 import RecipeView from "@/components/display/RecipeView.vue";
 import {useDisplay} from "vuetify";
@@ -23,6 +23,7 @@ import {useTitle, useUrlSearchParams} from "@vueuse/core";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ImportTandoorDialog from "@/components/dialogs/ImportTandoorDialog.vue";
+import {RECIPE_SHARE_TOKEN_KEY} from "@/cuaderno/sharedMedia";
 
 const props = defineProps({
     id: {type: String, required: true}
@@ -32,9 +33,9 @@ const params = useUrlSearchParams('history')
 const {mobile} = useDisplay()
 const title = useTitle()
 
-const isShared = computed(() => {
-    return params.share && typeof params.share == "string"
-})
+const shareToken = computed(() => typeof params.share === 'string' && params.share.length > 0 ? params.share : undefined)
+const isShared = computed(() => shareToken.value !== undefined)
+provide(RECIPE_SHARE_TOKEN_KEY, shareToken)
 
 const servings = computed(() => {
     const value = params.servings
@@ -59,7 +60,7 @@ function refreshData(recipeId: string) {
 
     let requestParameters: ApiRecipeRetrieveRequest = {id: props.id}
     if (isShared.value) {
-        requestParameters.share = params.share
+        requestParameters.share = shareToken.value!
     }
 
     api.apiRecipeRetrieve(requestParameters).then(r => {

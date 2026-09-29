@@ -1,170 +1,138 @@
 <template>
     <v-container>
-        <h1 class="text-h5 mb-3">Almacén</h1>
-        <p class="mb-4">
-            Pedir no cambia el saldo. Recibir, consumir y desperdiciar escriben el inventario nativo.
-            Reintentar la misma clave no duplica el movimiento.
-        </p>
+        <v-btn :to="{name: 'PantryPage'}" variant="text" prepend-icon="fa-solid fa-arrow-left" min-height="44" class="mb-3">Despensa y existencias</v-btn>
+        <h1 class="text-h5 mb-3">Compras y movimientos</h1>
+        <p class="mb-4">Los pedidos no cambian el saldo. Una recepción confirmada sí actualiza la existencia nativa y conserva su documento.</p>
         <v-alert v-if="editionError" type="info" class="mb-4" role="status">{{ editionError }}</v-alert>
+
+        <purchasing-panel class="mb-6" />
 
         <v-row>
             <v-col cols="12" md="6">
-                <v-card class="print-card">
-                    <v-card-title>Pedido</v-card-title>
+                <v-card class="print-card h-100">
+                    <v-card-title>Movimiento manual</v-card-title>
+                    <v-card-subtitle>Para recepciones de pedidos usa el flujo de compra superior.</v-card-subtitle>
                     <v-card-text>
-                        <v-text-field v-model="order.food" label="Id de alimento" type="number" />
-                        <v-text-field v-model="order.unit" label="Id de unidad" type="number" />
-                        <v-text-field v-model="order.quantity" label="Cantidad" />
-                        <v-text-field v-model="order.supplier" label="Proveedor" />
-                        <v-btn color="primary" @click="placeOrder">Registrar pedido</v-btn>
-                        <p class="mt-2" role="status">{{ orderMessage }}</p>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-                <v-card class="print-card">
-                    <v-card-title>Movimiento</v-card-title>
-                    <v-card-text>
-                        <v-text-field v-model="move.entry" label="Id de existencia" type="number" />
+                        <v-model-select v-model="move.entry" model="InventoryEntry" label="Existencia del inventario" search-on-load />
+                        <v-btn :to="{name: 'PantryPage'}" variant="text" min-height="44" class="mb-3">Crear o consultar existencias en la despensa</v-btn>
                         <v-select v-model="move.kind" label="Tipo" :items="kinds" item-title="title" item-value="value" />
-                        <v-text-field v-model="move.quantity" label="Cantidad" />
-                        <v-text-field v-model="move.key" label="Clave de reintento" />
-                        <v-btn color="primary" class="mr-2" @click="sendMove">Aplicar</v-btn>
-                        <v-btn variant="text" @click="loadHistory">Actualizar historial</v-btn>
-                        <p class="mt-2" role="status">{{ moveMessage }}</p>
+                        <v-text-field v-model="move.quantity" label="Cantidad" inputmode="decimal" />
+                        <v-btn color="primary" class="mr-2" :loading="moving" min-height="44" @click="requestMove">Aplicar movimiento</v-btn>
+                        <v-btn variant="text" :loading="loadingHistory" min-height="44" @click="loadHistory">Actualizar historial</v-btn>
+                        <p class="mt-2" role="status" aria-live="polite">{{ moveMessage }}</p>
                     </v-card-text>
                 </v-card>
             </v-col>
             <v-col cols="12" md="6">
-                <v-card>
-                    <v-card-title>Reposición</v-card-title>
-                    <v-card-text>
-                        <v-text-field v-model="buy.required" label="Necesario" />
-                        <v-text-field v-model="buy.stock" label="Stock útil" />
-                        <v-text-field v-model="buy.pack" label="Tamaño de envase" />
-                        <v-btn color="primary" @click="calcBuy">Calcular envases</v-btn>
-                        <p class="mt-2" role="status">{{ buyMessage }}</p>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-                <v-card>
-                    <v-card-title>Historial</v-card-title>
+                <v-card class="h-100">
+                    <v-card-title>Historial de existencias</v-card-title>
                     <v-card-text>
                         <v-list v-if="history.length">
                             <v-list-item v-for="row in history" :key="row.id">
-                                <v-list-item-title>{{ row.kind }} · {{ row.quantity }}</v-list-item-title>
-                                <v-list-item-subtitle>
+                                <v-list-item-title>{{ kindLabel(row.kind) }} · {{ row.quantity }}</v-list-item-title>
+                                <v-list-item-subtitle class="text-wrap">
                                     existencia {{ row.entry }} · saldo {{ row.balance }}
                                     <span v-if="row.reverses"> · revierte {{ row.reverses }}</span>
+                                    <span v-if="isPurchaseMovement(row)"> · recepción de pedido {{ row.metadata_snapshot.origin.id }}</span>
                                 </v-list-item-subtitle>
                                 <template #append>
-                                    <v-btn size="small" variant="text" @click="reverse(row)">Revertir</v-btn>
+                                    <v-btn v-if="canReverseGeneric(row)" variant="text" min-height="44" :disabled="moving" @click="reversal = row; confirmation = 'reverse'">Revertir</v-btn>
                                 </template>
                             </v-list-item>
                         </v-list>
-                        <p v-else>Todavía no hay movimientos de esta sesión.</p>
+                        <p v-else-if="!loadingHistory && !editionError">Todavía no hay movimientos registrados.</p>
                     </v-card-text>
                 </v-card>
             </v-col>
         </v-row>
+
+        <v-dialog :model-value="!!confirmation" max-width="480" @update:model-value="confirmation = null">
+            <v-card>
+                <v-card-title>{{ confirmation === 'reverse' ? 'Revertir movimiento' : 'Registrar desperdicio' }}</v-card-title>
+                <v-card-text>{{ confirmation === 'reverse' ? 'Se registrará un movimiento compensatorio. El original seguirá en el historial.' : `Se descontarán ${move.quantity} de la existencia seleccionada. Comprueba la cantidad antes de confirmar.` }}</v-card-text>
+                <v-card-actions>
+                    <v-btn min-height="44" @click="confirmation = null">Cancelar</v-btn>
+                    <v-btn color="primary" min-height="44" @click="confirmMovement">Confirmar</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref} from "vue"
-import {cuadernoFetch, readJson} from "@/cuaderno/api"
+import {onMounted, reactive, ref} from 'vue'
+import VModelSelect from '@/components/inputs/VModelSelect.vue'
+import PurchasingPanel from '@/cuaderno/components/PurchasingPanel.vue'
+import {cuadernoFetch, readJson} from '@/cuaderno/api'
+import {apiError, decimalInput} from '@/cuaderno/forms'
+import {inventoryRequests} from '@/cuaderno/inventoryRequests'
 
 const kinds = [
-    {title: "Recepción", value: "receipt"},
-    {title: "Consumo", value: "consume"},
-    {title: "Desperdicio", value: "waste"},
+    {title: 'Recepción sin pedido', value: 'receipt'},
+    {title: 'Consumo', value: 'consume'},
+    {title: 'Desperdicio', value: 'waste'},
 ]
-const editionError = ref("")
-const orderMessage = ref("")
-const moveMessage = ref("")
-const buyMessage = ref("")
+const editionError = ref('')
+const moveMessage = ref('')
 const history = ref<any[]>([])
-const order = reactive({food: "", unit: "", quantity: "", supplier: ""})
-const move = reactive({entry: "", kind: "receipt", quantity: "", key: ""})
-const buy = reactive({required: "", stock: "", pack: ""})
+const move = reactive({entry: null as any, kind: 'receipt', quantity: ''})
+const moving = ref(false)
+const loadingHistory = ref(false)
+const confirmation = ref<'waste' | 'reverse' | null>(null)
+const reversal = ref<any>(null)
+const pendingMovement = inventoryRequests()
 
-function explain(status: number, data: any) {
-    if (status === 403) {
-        return "Esta pantalla es de la edición Integral."
-    }
-    if (status === 409) {
-        return "La misma clave llegó con otra cantidad. El saldo no se ha duplicado."
-    }
-    return data?.detail || data?.idempotency_key || "No se ha podido guardar."
+function movementKey(payload: unknown) {
+    return pendingMovement.key('cuaderno-stock', payload)
 }
+function kindLabel(kind: string) { return kinds.find(item => item.value === kind)?.title || (kind === 'reversal' ? 'Reversión' : kind) }
+function isPurchaseMovement(row: any) { return row.metadata_snapshot?.origin?.type === 'purchase_order' }
+function canReverseGeneric(row: any) { return !isPurchaseMovement(row) && !row.reverses && !history.value.some(item => item.reverses === row.id) }
 
-async function placeOrder() {
-    const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/orders/", {
-        method: "POST",
-        body: JSON.stringify({
-            food: Number(order.food),
-            unit: Number(order.unit),
-            quantity: order.quantity.replace(",", "."),
-            supplier_name: order.supplier,
-        }),
-    }))
-    orderMessage.value = ok
-        ? `Pedido ${data.id}. El stock ${data.stock_unchanged ? "no ha cambiado" : "ha cambiado"}.`
-        : explain(status, data)
-    if (status === 403) editionError.value = orderMessage.value
+function requestMove() {
+    if (moving.value) return
+    if (!move.entry?.id || !decimalInput(move.quantity)) { moveMessage.value = 'Selecciona una existencia e indica una cantidad positiva.'; return }
+    if (move.kind === 'waste') confirmation.value = 'waste'
+    else sendMove()
 }
-
+function confirmMovement() {
+    const action = confirmation.value
+    confirmation.value = null
+    if (action === 'reverse') reverse(reversal.value)
+    else sendMove()
+}
 async function sendMove() {
-    const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/movements/", {
-        method: "POST",
-        body: JSON.stringify({
-            entry: Number(move.entry),
-            kind: move.kind,
-            quantity: move.quantity.replace(",", "."),
-            idempotency_key: move.key,
-        }),
+    if (moving.value) return
+    moving.value = true
+    const payload = {entry: move.entry.id, kind: move.kind, quantity: decimalInput(move.quantity)}
+    const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/', {
+        method: 'POST', body: JSON.stringify({...payload, idempotency_key: movementKey(payload)}),
     }))
-    moveMessage.value = ok ? `Saldo ${data.balance}.` : explain(status, data)
-    if (ok) await loadHistory()
+    moving.value = false
+    moveMessage.value = ok ? `Saldo ${data.balance}.` : apiError(status, data)
+    if (ok) { move.quantity = ''; pendingMovement.complete('cuaderno-stock', payload); await loadHistory() }
 }
-
 async function reverse(row: any) {
-    const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/movements/", {
-        method: "POST",
-        body: JSON.stringify({reverse_of: row.id, idempotency_key: `rev-${row.id}-${Date.now()}`}),
+    if (moving.value || !row || isPurchaseMovement(row)) return
+    moving.value = true
+    const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/', {
+        method: 'POST', body: JSON.stringify({reverse_of: row.id, idempotency_key: `cuaderno-ui-reverse-${row.id}`}),
     }))
-    moveMessage.value = ok ? `Revertido. Saldo ${data.balance}.` : explain(status, data)
+    moving.value = false
+    moveMessage.value = ok ? `Revertido. Saldo ${data.balance}.` : apiError(status, data)
     if (ok) await loadHistory()
 }
-
-async function calcBuy() {
-    const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/replenishment/", {
-        method: "POST",
-        body: JSON.stringify({
-            required: buy.required.replace(",", "."),
-            usable_stock: buy.stock.replace(",", "."),
-            pack_size: buy.pack.replace(",", "."),
-        }),
-    }))
-    buyMessage.value = ok ? `${data.packs} envases (${data.quantity}).` : explain(status, data)
-}
-
 async function loadHistory() {
-    const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/movements/"))
-    if (ok) {
-        history.value = data
-        editionError.value = ""
-    } else if (status === 403) {
-        editionError.value = "El historial de almacén pertenece a Integral. Esencial sigue calculando costes."
-    }
+    loadingHistory.value = true
+    const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/'))
+    loadingHistory.value = false
+    if (ok) { history.value = data; editionError.value = '' }
+    else editionError.value = apiError(status, data)
 }
 
 onMounted(loadHistory)
 </script>
 
 <style scoped>
-@media print {
-    .print-card { break-inside: avoid; }
-}
+@media print { .print-card { break-inside: avoid; } }
 </style>

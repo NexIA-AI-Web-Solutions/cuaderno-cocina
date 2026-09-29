@@ -47,8 +47,8 @@
                 </v-card>
             </template>
             <template v-if="step.file">
-                <v-img :src="step.file.preview" v-if="step.file.preview"></v-img>
-                <a :href="step.file.fileDownload" v-else>{{ $t('Download') }}</a>
+                <v-img :src="stepPreview" v-if="step.file.preview"></v-img>
+                <a :href="stepDownload" v-else>{{ $t('Download') }}</a>
             </template>
         </template>
 
@@ -56,15 +56,17 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineComponent, PropType, ref} from 'vue'
+import {computed, inject, ref, type Ref} from 'vue'
 import IngredientsTable from "@/components/display/IngredientsTable.vue";
 import {Step} from "@/openapi";
 
 import Instructions from "@/components/display/Instructions.vue";
 import Timer from "@/components/display/Timer.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
+import {RECIPE_SHARE_TOKEN_KEY, sharedMediaUrl} from "@/cuaderno/sharedMedia.ts";
 
 const step = defineModel<Step>({required: true})
+const shareToken = inject<Readonly<Ref<string | undefined>>>(RECIPE_SHARE_TOKEN_KEY)
 
 const props = defineProps({
     stepNumber: {
@@ -80,6 +82,9 @@ const props = defineProps({
 
 const timerRunning = ref(false)
 const stepChecked = ref(false)
+
+const stepPreview = computed(() => sharedMediaUrl(step.value.file?.preview, shareToken?.value, window.location.origin))
+const stepDownload = computed(() => sharedMediaUrl(step.value.file?.fileDownload, shareToken?.value, window.location.origin))
 
 const hasDetails = computed(() => {
     return step.value.ingredients.length > 0 || (step.value.instruction != undefined && step.value.instruction.length > 0) || step.value.stepRecipeData != undefined || step.value.file != undefined

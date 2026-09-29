@@ -8,9 +8,10 @@
 
 <script setup lang="ts">
 
-import {computed, PropType, watch} from "vue";
+import {computed, inject, PropType, type Ref} from "vue";
 import {Recipe, RecipeOverview} from "@/openapi";
 import recipeDefaultImage from '../../assets/recipe_no_image.svg'
+import {RECIPE_SHARE_TOKEN_KEY, sharedMediaUrl} from "@/cuaderno/sharedMedia";
 
 const props = defineProps({
     recipe: {type: {} as PropType<Recipe | RecipeOverview | undefined>, required: false, default: undefined},
@@ -20,10 +21,12 @@ const props = defineProps({
     rounded: {type: [Boolean, String], default: false},
 })
 
+const shareToken = inject<Readonly<Ref<string | undefined>>>(RECIPE_SHARE_TOKEN_KEY)
+
 const image = computed(() => {
 
     if (props.recipe != undefined && props.recipe.image != undefined) {
-        return props.recipe.image
+        return sharedMediaUrl(props.recipe.image, shareToken?.value, window.location.origin)
     } else {
         return recipeDefaultImage
     }

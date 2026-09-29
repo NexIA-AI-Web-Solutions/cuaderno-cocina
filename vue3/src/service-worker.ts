@@ -1,149 +1,73 @@
-// These JavaScript module imports need to be bundled:
+// Cache only built/public assets. Authenticated data is always network-only.
 import {precacheAndRoute, cleanupOutdatedCaches} from 'workbox-precaching';
 import {registerRoute, setCatchHandler} from 'workbox-routing';
 import {CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate} from 'workbox-strategies';
 import {ExpirationPlugin} from 'workbox-expiration';
-import {BackgroundSyncPlugin, Queue} from "workbox-background-sync";
-import { clientsClaim } from 'workbox-core'
-
-
-
-cleanupOutdatedCaches()
+import {Queue} from 'workbox-background-sync';
+import {clientsClaim} from 'workbox-core';
 
 declare let self: ServiceWorkerGlobalScope
+cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
-
 self.skipWaiting()
 clientsClaim()
 
-const OFFLINE_CACHE_NAME = 'offline-html';
-const scope = self.registration?.scope ? new URL(self.registration.scope).pathname : '/'
-const OFFLINE_PAGE_URL = scope.endsWith('/') ? scope + 'offline/' : scope + '/offline/';
+// Keep the legacy identity only to discard pending writes, never to replay them.
+async function discardQueuedWrites({queue}: {queue: Queue}) {
+    while (await queue.shiftRequest()) { /* intentionally no fetch/replay */ }
+}
+const queue = new Queue('shopping-sync-queue', {onSync: discardQueuedWrites})
+self.addEventListener('activate', event => {
+    event.waitUntil(Promise.all([
+        ...['images', 'api', 'api-recipe', 'html', 'offline-html'].map(name => caches.delete(name)),
+        discardQueuedWrites({queue}),
+    ]))
+})
 
-self.addEventListener('install', async (event) => {
-    event.waitUntil(
-        caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.add(new Request(OFFLINE_PAGE_URL, {cache: "reload"})))
-    );
-});
-
-// default handler if everything else fails
-setCatchHandler(({event}) => {
-    switch (event.request.destination) {
-        case 'document':
-            console.log('Triggered fallback HTML')
-            return caches.open(OFFLINE_CACHE_NAME).then((cache) => cache.match(OFFLINE_PAGE_URL))
-        default:
-            console.log('Triggered response ERROR')
-            return Response.error();
-    }
-});
-
-registerRoute(
-    ({request}) => request.destination === 'image',
-    new CacheFirst({
-        cacheName: 'images',
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 20,
-            }),
-        ],
-    }),
-);
-
-registerRoute(
-    ({request}) => (request.destination === 'script' || request.destination === 'style'),
-    new NetworkFirst({
-        cacheName: 'assets',
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
-            }),
-        ],
-    })
-)
-
-registerRoute(
-    new RegExp('jsreverse'),
-    new StaleWhileRevalidate({
-        cacheName: 'assets'
-    })
-)
-
-registerRoute(
-    new RegExp('jsi18n'),
-    new StaleWhileRevalidate({
-        cacheName: 'assets'
-    })
-)
-
-registerRoute(
-    new RegExp('api/recipe/([0-9]+)'),
-    new NetworkFirst({
-        cacheName: 'api-recipe',
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 50,
-            }),
-        ],
-    })
-)
-
-const queue = new Queue('shopping-sync-queue', {
-    maxRetentionTime: 7 * 24 * 60,
-});
-
-registerRoute(
-    new RegExp('api/shopping-list-entry/([0-9]+)'),
-    new NetworkOnly({
-        plugins: [
-            {
-                fetchDidFail: async ({request}) => {
-                    await queue.pushRequest({request});
-                },
-            }
-        ],
-    }),
-    'PATCH'
-)
-
-addEventListener('message', (event) => {
-    if (event.data.type === 'BGSYNC_REPLAY_REQUESTS') {
-        queue.replayRequests().then((r) => {
-            event.ports[0].postMessage('REPLAY_SUCCESS SW');
-        }).catch((err) => {
-            event.ports[0].postMessage('REPLAY_FAILURE');
-        });
-    }
-    if (event.data.type === 'BGSYNC_COUNT_QUEUE') {
-        queue.getAll().then((r) => {
-            event.ports[0].postMessage(r.length);
+setCatchHandler(async ({event}) => {
+    if (event.request.destination === 'document') {
+        return new Response('<!doctype html><html lang="es"><meta charset="utf-8">' +
+            '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+            '<title>Sin conexión · Cuaderno Cocina</title><main><h1>Sin conexión</h1>' +
+            '<p>Conéctate para consultar tus recetas o guardar cambios. No se han encolado cambios.</p></main></html>', {
+            status: 503, headers: {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'},
         })
     }
-});
+    return Response.error()
+})
 
+// Must precede asset routes: protected data must never reach a runtime cache.
 registerRoute(
-    new RegExp('api/*'),
-    new NetworkFirst({
-        cacheName: 'api',
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 50
-            }),
-        ],
-    })
+    ({request, url}) => request.destination === 'document' ||
+        url.pathname.startsWith('/api/') || url.pathname.startsWith('/media/') ||
+        (request.destination === 'image' &&
+            (url.origin !== self.location.origin || !url.pathname.startsWith('/static/'))),
+    new NetworkOnly(),
 )
-
+for (const method of ['POST', 'PATCH', 'PUT', 'DELETE'] as const) {
+    registerRoute(({url}) => url.origin === self.location.origin, new NetworkOnly(), method)
+}
 registerRoute(
-    ({request}) => request.destination === 'document',
-    new NetworkFirst({
-        cacheName: 'html',
-        plugins: [
-            new ExpirationPlugin({
-                maxAgeSeconds: 60 * 60 * 24 * 30,
-                maxEntries: 50,
-            }),
-        ],
-    })
+    ({request, url}) => request.destination === 'image' &&
+        url.origin === self.location.origin && url.pathname.startsWith('/static/'),
+    new CacheFirst({cacheName: 'public-images', plugins: [new ExpirationPlugin({maxEntries: 20})]}),
 )
-
+registerRoute(
+    ({request, url}) => url.origin === self.location.origin && url.pathname.startsWith('/static/') &&
+        (request.destination === 'script' || request.destination === 'style'),
+    new NetworkFirst({cacheName: 'assets', plugins: [new ExpirationPlugin({
+        maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7,
+    })]}),
+)
+registerRoute(
+    ({url}) => url.origin === self.location.origin && /\/(jsreverse|jsi18n)\//.test(url.pathname),
+    new StaleWhileRevalidate({cacheName: 'assets'}),
+)
+self.addEventListener('message', event => {
+    const port = event.ports[0]
+    if (event.data?.type === 'BGSYNC_REPLAY_REQUESTS') {
+        event.waitUntil(discardQueuedWrites({queue}).then(() => port?.postMessage('REPLAY_DISABLED')))
+    } else if (event.data?.type === 'BGSYNC_COUNT_QUEUE') {
+        event.waitUntil(discardQueuedWrites({queue}).then(() => port?.postMessage(0)))
+    }
+})

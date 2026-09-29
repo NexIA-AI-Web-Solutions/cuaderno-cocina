@@ -9,7 +9,11 @@ export async function cuadernoFetch(url: string, options: RequestInit = {}) {
     if (token) {
         headers.set("X-CSRFToken", token)
     }
-    return fetch(url, {...options, credentials: "same-origin", headers})
+    try {
+        return await fetch(url, {...options, credentials: "same-origin", headers})
+    } catch {
+        return new Response(JSON.stringify({detail: 'No hay conexión con el servidor. Los datos siguen en el formulario; comprueba la conexión y reintenta.'}), {status: 503, headers: {'Content-Type': 'application/json'}})
+    }
 }
 
 export async function readJson(response: Response) {

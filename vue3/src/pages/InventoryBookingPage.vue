@@ -22,7 +22,7 @@
                         {{ $t('InventoryBooking') }}
                     </v-card-title>
                     <v-card-text>
-                        <v-form>
+                        <v-form :disabled="formLoading">
                             <v-btn-toggle v-model="bookingMode" class="mb-5" border divided>
                                 <v-btn value="add" prepend-icon="$create">{{ $t('Add') }}</v-btn>
                                 <v-btn value="remove" prepend-icon="fa-solid fa-minus">{{ $t('Remove') }}</v-btn>
@@ -76,9 +76,10 @@
                         </v-form>
                     </v-card-text>
                     <v-card-actions>
-                        <v-btn color="warning" prepend-icon="$reset" @click="resetForm()">{{ $t('Reset') }}</v-btn>
-                        <v-btn color="create" prepend-icon="$save" @click="save()">{{ $t('Save') }}</v-btn>
+                        <v-btn color="warning" :disabled="formLoading" prepend-icon="$reset" @click="resetForm()">{{ $t('Reset') }}</v-btn>
+                        <v-btn color="create" :loading="formLoading" prepend-icon="$save" @click="save()">{{ $t('Save') }}</v-btn>
                     </v-card-actions>
+                    <v-alert v-if="saveError" type="error" role="alert" class="ma-3">{{ saveError }}</v-alert>
                 </v-card>
             </v-col>
 
@@ -212,11 +213,16 @@ import InventoryEntryLogTable from "@/components/tables/InventoryEntryLogTable.v
 import {TInventoryLocation} from "@/types/Models.ts";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {cuadernoFetch, readJson} from '@/cuaderno/api'
+import {apiError, decimalInput} from '@/cuaderno/forms'
 
 const {t} = useI18n()
 
 // form
 const formLoading = ref(false)
+const requests = inventoryRequests()
+const saveError = ref('')
 const freezerExpiryDialog = ref(false)
 
 const bookingMode = useRouteQuery('bookingMode', 'add')
@@ -274,6 +280,8 @@ onMounted(() => {
  * save form depending on selected booking mode
  */
 function save() {
+    if (formLoading.value) return
+    saveError.value = ''
     if (bookingMode.value == 'add') {
         addInventory()
     } else if (bookingMode.value == 'remove') {
@@ -305,7 +313,8 @@ function addInventory() {
         code: code.value,
     } as InventoryEntry
 
-    api.apiInventoryEntryCreate({inventoryEntry: inventoryEntry}).then(r => {
+    api.apiInventoryEntryCreate({inventoryEntry: inventoryEntry}, requests.override('create', inventoryEntry)).then(r => {
+        requests.complete('create', inventoryEntry)
         useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
         bookingConfirmEntry.value = r
         bookingConfirmDialog.value = true
@@ -320,31 +329,22 @@ function addInventory() {
 /**
  * subtract amount from inventory entry and save to DB
  */
-function removeInventory() {
-    let api = new ApiApi()
-
-    if (inventoryEntry.value != null) {
-        formLoading.value = true
-
-        if (inventoryEntry.value.amount != undefined && amount.value != undefined) {
-            inventoryEntry.value.amount = Math.max(inventoryEntry.value.amount - amount.value, 0)
-        }
-
-        api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
-            useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-            if (inventoryEntry.value && inventoryEntry.value.amount == 0) {
-                bookingMode.value = 'add'
-                resetForm(true, true)
-            } else {
-                inventoryEntrySelected()
-            }
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-        }).finally(() => {
-            formLoading.value = false
-            logUpdateTrigger.value = !logUpdateTrigger.value
-        })
-    }
+async function removeInventory() {
+    const entryId = inventoryEntry.value?.id
+    const quantity = decimalInput(String(amount.value ?? ''))
+    if (!entryId || !quantity) { saveError.value = 'Selecciona una existencia y una cantidad positiva.'; return }
+    const payload = {quantity}
+    const operation = `consume:${entryId}`
+    formLoading.value = true
+    const {ok, status, data} = await readJson(await cuadernoFetch(`/api/inventory-entry/${entryId}/consume/`, {
+        method: 'POST', headers: {'Idempotency-Key': requests.key(operation, payload)}, body: JSON.stringify(payload),
+    }))
+    formLoading.value = false
+    if (!ok) { saveError.value = apiError(status, data); return }
+    requests.complete(operation, payload)
+    useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
+    resetForm(false, false)
+    logUpdateTrigger.value = !logUpdateTrigger.value
 }
 
 function moveInventory() {
@@ -352,21 +352,28 @@ function moveInventory() {
 
     if (inventoryEntry.value != null) {
         formLoading.value = true
+        const updated = {...inventoryEntry.value}
         let changed = false
 
         if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
-            inventoryEntry.value.inventoryLocation = inventoryLocation.value
+            updated.inventoryLocation = inventoryLocation.value
             changed = true
         }
         if (subLocation.value != null && inventoryEntry.value.subLocation != subLocation.value) {
-            inventoryEntry.value.subLocation = subLocation.value
+            updated.subLocation = subLocation.value
             changed = true
         }
 
         if (changed) {
-            api.apiInventoryEntryUpdate({id: inventoryEntry.value.id!, inventoryEntry: inventoryEntry.value}).then(r => {
+            const operation = `move:${updated.id}`
+            const payload = {inventoryLocation: updated.inventoryLocation, subLocation: updated.subLocation}
+            api.apiInventoryEntryPartialUpdate({id: updated.id!, patchedInventoryEntry: payload}, requests.override(operation, payload)).then(r => {
+                requests.complete(operation, payload)
+                inventoryEntry.value = r
                 useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
                 inventoryEntrySelected()
+                loadItems({page: page.value, itemsPerPage: pageSize.value})
+                logUpdateTrigger.value = !logUpdateTrigger.value
             }).catch(err => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             }).finally(() => {
