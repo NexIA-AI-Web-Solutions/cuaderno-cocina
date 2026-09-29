@@ -8,6 +8,7 @@ from cookbook.models import Recipe, UnitConversion
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.production import assert_no_cycle
 from cuaderno.domain.units import convert_quantity, to_base
+from cuaderno.domain.ingredient_yields import ingredient_quantities
 from cuaderno.models import RecipeYield
 
 
@@ -91,7 +92,7 @@ def native_recipe_graph(recipe_ids, space, user=None):
 def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
     roots, cache, edges = native_recipe_graph(recipe_ids, space, user)
     yields = {row.recipe_id: row for row in RecipeYield.objects.filter(space=space, recipe_id__in=cache).select_related("unit")}
-    totals, warnings = {}, []
+    totals, warnings, yield_details = {}, [], []
     units = {}
 
     def walk(recipe, factor):
@@ -104,7 +105,9 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
                 if not ingredient.food_id or ingredient.amount <= 0:
                     warnings.append({"code": "ingredient_incomplete", "ingredient": ingredient.pk})
                     continue
-                amount = Decimal(ingredient.amount) * factor
+                amount, yield_detail = ingredient_quantities(ingredient, factor)
+                if ingredient.yield_ratio is not None or ingredient.quantity_basis != "gross":
+                    yield_details.append(yield_detail)
                 child_id = ingredient.food.recipe_id
                 if child_id:
                     declared = yields.get(child_id)
@@ -129,4 +132,5 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
             raise DomainError("invalid_scale", "El factor de producción debe ser positivo.")
         walk(recipe, factor)
     return {"needs": {key: format(value, "f") for key, value in totals.items()}, "edges": edges,
-            "warnings": warnings, "units": {key: unit.name if unit else None for key, unit in units.items()}}
+            "warnings": warnings, "units": {key: unit.name if unit else None for key, unit in units.items()},
+            "ingredient_yields": yield_details}

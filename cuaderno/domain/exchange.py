@@ -7,7 +7,8 @@ import json
 from datetime import datetime
 
 from cuaderno.domain.errors import DomainError
-from cuaderno.domain.money import parse_decimal
+from cuaderno.domain.money import parse_decimal, validate_explicit_price
+from cuaderno.domain.ingredient_yields import parse_yield_ratio, validate_yield_policy
 
 
 def _fields(value, allowed):
@@ -71,7 +72,7 @@ def parse_recipe_document(payload: dict) -> list[dict]:
                 raise DomainError("invalid_import", "Cada paso necesita una lista de ingredientes.")
             step_ingredients = []
             for item in raw_step.get("ingredients", []):
-                _fields(item, "food food_id food_ref quantity unit unit_id unit_ref note original_text is_header no_amount")
+                _fields(item, "food food_id food_ref quantity unit unit_id unit_ref note original_text is_header no_amount quantity_basis yield_ratio")
                 if not isinstance(item, dict):
                     raise DomainError("invalid_import", "Ingrediente inválido.")
                 food = str(item.get("food") or "").strip()
@@ -87,7 +88,10 @@ def parse_recipe_document(payload: dict) -> list[dict]:
                     "note": item.get("note"), "original_text": item.get("original_text"),
                     "is_header": item.get("is_header") is True, "no_amount": item.get("no_amount") is True,
                     "food_ref": item.get("food_ref"), "unit_ref": item.get("unit_ref"),
+                    "quantity_basis": item.get("quantity_basis", "gross"),
+                    "yield_ratio": None if item.get("yield_ratio") is None else parse_yield_ratio(item["yield_ratio"]),
                 }
+                validate_yield_policy(parsed["quantity_basis"], parsed["yield_ratio"])
                 step_ingredients.append(parsed)
                 ingredients.append(parsed)
             if len(ingredients) > 10000:
@@ -178,6 +182,10 @@ def parse_portable_catalog(payload, recipes):
                 raise DomainError("invalid_import", "Precio inválido.")
             price["amount"] = _number(price.get("amount"), allow_zero=price["explicit_free"])
             try:
+                validate_explicit_price(price["amount"], price["explicit_free"])
+            except DomainError as exc:
+                raise DomainError("invalid_import", exc.message) from exc
+            try:
                 price["valid_from"] = datetime.fromisoformat(price["valid_from"])
                 if price["valid_from"].utcoffset() is None:
                     raise ValueError("timezone required")
@@ -203,6 +211,7 @@ def parse_portable_catalog(payload, recipes):
                         raise DomainError("invalid_import", "El nombre y la referencia del catálogo no coinciden.")
                 if ingredient["food_ref"]:
                     child = result["foods"][ingredient["food_ref"]].get("recipe")
+                    validate_yield_policy(ingredient["quantity_basis"], ingredient["yield_ratio"], is_subrecipe=bool(child))
                     if child:
                         edges[recipe["external_id"]].append(child)
     # Bound depth independently of cycle checks to avoid Python recursion limits.

@@ -11,6 +11,7 @@ from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
 from cuaderno.models import PackageFormat, PriceVersion, SpaceProfile
 from cuaderno.services.costing import cost_recipe, visible_recipes
+from cuaderno.api.prices import PackageWriteSerializer, PriceWriteSerializer, validate_free_flag
 
 
 def _profile(space) -> SpaceProfile:
@@ -104,26 +105,23 @@ class PackageListView(APIView):
 
     @transaction.atomic
     def post(self, request):
-        food = get_object_or_404(Food, pk=request.data.get("food"), space=request.space)
-        unit = get_object_or_404(Unit, pk=request.data.get("unit"), space=request.space)
-        try:
-            quantity = parse_decimal(request.data.get("quantity"), allow_zero=False)
-        except DomainError as exc:
-            raise ValidationError({"quantity": exc.message}) from exc
-        label = (request.data.get("label") or "").strip()
-        if not label:
-            raise ValidationError({"label": "Indica el formato de compra."})
+        serializer = PackageWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        food = get_object_or_404(Food, pk=data["food"], space=request.space)
+        unit = get_object_or_404(Unit, pk=data["unit"], space=request.space)
+        type(request.space).objects.select_for_update().get(pk=request.space.pk)
         has_reference = PackageFormat.objects.filter(space=request.space, food=food, is_reference=True).exists()
         package = PackageFormat.objects.create(
             space=request.space,
             food=food,
             unit=unit,
-            label=label,
-            quantity=quantity,
+            label=data["label"],
+            quantity=data["quantity"],
             is_reference=not has_reference,
         )
-        if "price" in request.data and request.data.get("price") is not None:
-            _add_price(request, package, request.data.get("price"), bool(request.data.get("explicit_free")))
+        if data.get("price") is not None:
+            _add_price(request, package, data["price"], data["explicit_free"])
         return Response(_package_payload(package), status=201)
 
 
@@ -133,7 +131,10 @@ class PriceCreateView(APIView):
     @transaction.atomic
     def post(self, request, pk):
         package = get_object_or_404(PackageFormat, pk=pk, space=request.space)
-        price = _add_price(request, package, request.data.get("amount"), bool(request.data.get("explicit_free")))
+        serializer = PriceWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        price = _add_price(request, package, data["amount"], data["explicit_free"])
         return Response(_price_payload(price), status=201)
 
 
@@ -159,8 +160,7 @@ def _add_price(request, package, amount, explicit_free: bool) -> PriceVersion:
         parsed = parse_decimal(amount, allow_zero=explicit_free)
     except DomainError as exc:
         raise ValidationError({"amount": exc.message}) from exc
-    if parsed == 0 and not explicit_free:
-        raise ValidationError({"amount": "Un precio cero solo vale si marcas el ingrediente como gratuito."})
+    validate_free_flag(parsed, explicit_free)
     return PriceVersion.objects.create(
         space=request.space,
         package=package,

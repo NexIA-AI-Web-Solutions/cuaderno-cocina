@@ -1,0 +1,15 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [("cuaderno", "0013_offer_free_equivalence")]
+
+    operations = [
+        migrations.AddConstraint(
+            model_name="priceversion",
+            constraint=models.CheckConstraint(
+                condition=models.Q(amount__gt=0, explicit_free=False) | models.Q(amount=0, explicit_free=True),
+                name="cuaderno_price_explicit_free",
+            ),
+        ),
+    ]

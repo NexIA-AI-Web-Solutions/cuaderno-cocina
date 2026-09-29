@@ -32,6 +32,7 @@ from cookbook.helper.image_processing import is_file_type_allowed
 from cookbook.helper.permission_helper import above_space_limit, create_space_for_user, get_household_user_ids, CustomRecipePermission
 from cookbook.helper.property_helper import FoodPropertyHelper
 from cookbook.helper.shopping_helper import RecipeShoppingEditor
+from cuaderno.api.yield_fields import IngredientYieldValidationMixin, YieldRatioField
 from cookbook.helper.unit_conversion_helper import UnitConversionHelper
 from cookbook.models import (Automation, BookmarkletImport, Comment, CookLog, CustomFilter,
                              ExportLog, Food, FoodInheritField, ImportLog, Ingredient, InviteLink,
@@ -996,10 +997,11 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
         read_only_fields = ('id', 'numchild', 'parent', 'image', 'numrecipe')
 
 
-class IngredientSimpleSerializer(WritableNestedModelSerializer):
+class IngredientSimpleSerializer(IngredientYieldValidationMixin, WritableNestedModelSerializer):
     food = FoodSimpleSerializer(allow_null=True)
     unit = UnitSerializer(allow_null=True)
     amount = CustomDecimalField()
+    yield_ratio = YieldRatioField(required=False, allow_null=True)
     checked = serializers.BooleanField(read_only=True, default=False, help_text='Just laziness to have a checked field on the frontend API client')
 
     def create(self, validated_data):
@@ -1014,7 +1016,7 @@ class IngredientSimpleSerializer(WritableNestedModelSerializer):
         model = Ingredient
         fields = (
             'id', 'food', 'unit', 'amount', 'note', 'order',
-            'is_header', 'no_amount', 'original_text', 'checked',
+            'is_header', 'no_amount', 'original_text', 'checked', 'quantity_basis', 'yield_ratio',
         )
 
 
@@ -1047,7 +1049,7 @@ class IngredientSerializer(IngredientSimpleSerializer):
         model = Ingredient
         fields = (
             'id', 'food', 'unit', 'amount', 'conversions', 'note', 'order',
-            'is_header', 'no_amount', 'original_text', 'used_in_recipes', 'checked',
+            'is_header', 'no_amount', 'original_text', 'used_in_recipes', 'checked', 'quantity_basis', 'yield_ratio',
         )
         read_only_fields = ['conversions', ]
 
@@ -2153,10 +2155,11 @@ class FoodExportSerializer(FoodSerializer):
         fields = ('name', 'plural_name', 'ignore_shopping', 'supermarket_category',)
 
 
-class IngredientExportSerializer(WritableNestedModelSerializer):
+class IngredientExportSerializer(IngredientYieldValidationMixin, WritableNestedModelSerializer):
     food = FoodExportSerializer(allow_null=True)
     unit = UnitExportSerializer(allow_null=True)
     amount = CustomDecimalField()
+    yield_ratio = YieldRatioField(required=False, allow_null=True)
 
     def create(self, validated_data):
         validated_data['space'] = self.context['request'].space
@@ -2164,7 +2167,7 @@ class IngredientExportSerializer(WritableNestedModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ('food', 'unit', 'amount', 'note', 'order', 'is_header', 'no_amount')
+        fields = ('food', 'unit', 'amount', 'note', 'order', 'is_header', 'no_amount', 'quantity_basis', 'yield_ratio')
 
 
 class StepExportSerializer(WritableNestedModelSerializer):

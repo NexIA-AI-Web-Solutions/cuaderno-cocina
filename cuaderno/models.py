@@ -66,6 +66,12 @@ class PriceVersion(models.Model):
 
     class Meta:
         ordering = ("-valid_from", "-id")
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0, explicit_free=False) | models.Q(amount=0, explicit_free=True),
+                name="cuaderno_price_explicit_free",
+            ),
+        ]
         indexes = [
             models.Index(fields=["package", "valid_from"]),
         ]

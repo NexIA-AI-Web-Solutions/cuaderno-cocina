@@ -13,6 +13,7 @@ from cookbook.models import UnitConversion
 from cuaderno.domain.costing import CostResult, line_cost, scale_amount
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
+from cuaderno.domain.ingredient_yields import ingredient_quantities
 from cuaderno.models import PackageFormat, PriceVersion, RecipeYield
 
 
@@ -126,6 +127,10 @@ def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context):
             else:
                 lines.extend(_cost_recipe_lines(child, factor, as_of, warnings, (*path, recipe.pk), context))
         for ingredient in step.ingredients.all():
+            if not ingredient.is_header and not ingredient.no_amount:
+                # Validate before descending into a Food.recipe as well: its
+                # declared output must not acquire a second yield adjustment.
+                ingredient_quantities(ingredient, factor)
             if ingredient.food_id and ingredient.food.recipe_id and not ingredient.is_header and not ingredient.no_amount:
                 child = context.recipes.get(ingredient.food.recipe_id)
                 if child is None:
@@ -186,7 +191,7 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context
         return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
     if ingredient.amount is None:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
-    used = Decimal(ingredient.amount) * factor
+    used, _trace = ingredient_quantities(ingredient, factor)
     if used == 0:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
     package = context.packages.get(ingredient.food_id)
@@ -239,4 +244,4 @@ def visible_recipes(user, space):
 
     return Recipe.objects.filter(space=space).filter(
         Q(private=False) | Q(private=True, created_by=user) | Q(private=True, shared=user)
-    )
+    ).distinct()

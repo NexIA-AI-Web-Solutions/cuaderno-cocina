@@ -955,6 +955,9 @@ class Ingredient(ExportModelOperationsMixin('ingredient'), models.Model, Permiss
     is_header = models.BooleanField(default=False)
     no_amount = models.BooleanField(default=False)
 
+    quantity_basis = models.CharField(max_length=16, choices=(("gross", "Bruta"), ("net_usable", "Neta útil")), default="gross")
+    yield_ratio = models.DecimalField(max_digits=17, decimal_places=16, null=True, blank=True)
+
     order = models.IntegerField(default=0)
     original_text = models.CharField(max_length=512, null=True, blank=True, default=None)
 
@@ -966,6 +969,13 @@ class Ingredient(ExportModelOperationsMixin('ingredient'), models.Model, Permiss
 
     class Meta:
         ordering = ['order', 'pk']
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(quantity_basis="gross") | models.Q(quantity_basis="net_usable", yield_ratio__isnull=False))
+                & (models.Q(yield_ratio__isnull=True) | models.Q(yield_ratio__gt=0, yield_ratio__lte=1)),
+                name="cuaderno_ingredient_yield_policy",
+            ),
+        ]
         indexes = (
             Index(fields=['id']),
         )

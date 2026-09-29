@@ -18,6 +18,7 @@ from cuaderno.domain.errors import DomainError
 from cuaderno.domain.exchange import export_recipe_document, parse_recipe_document
 from cuaderno.domain.margin import food_cost_gap
 from cuaderno.domain.money import parse_decimal
+from cuaderno.domain.ingredient_yields import validate_yield_policy
 from cuaderno.domain.production import assert_no_cycle, consolidate, scale_covers
 from cuaderno.domain.stock import packs_to_buy, waste_value
 from cuaderno.models import AllergenDeclaration, RecipeExchangeRecord, RecipeYield, ServicePlan, SpaceProfile, StockMovement
@@ -432,6 +433,8 @@ class RecipeExchangeView(APIView):
                             "food": ingredient.food.name if ingredient.food_id else "",
                             "food_id": ingredient.food_id,
                             "quantity": _dec(ingredient.amount),
+                            "quantity_basis": ingredient.quantity_basis,
+                            "yield_ratio": None if ingredient.yield_ratio is None else _dec(ingredient.yield_ratio),
                             "unit": ingredient.unit.name if ingredient.unit_id else "",
                             "unit_id": ingredient.unit_id,
                             "note": ingredient.note,
@@ -551,9 +554,14 @@ class RecipeExchangeView(APIView):
                 for position, ingredient in enumerate(step_data["ingredients"]):
                     food = resolved["foods"].get(ingredient["food_ref"]) if resolved else _exchange_resolve(request, ingredient, "food", Food)
                     unit = resolved["units"].get(ingredient["unit_ref"]) if resolved else _exchange_resolve(request, ingredient, "unit", Unit)
+                    try:
+                        validate_yield_policy(ingredient["quantity_basis"], ingredient["yield_ratio"], is_subrecipe=bool(food and food.recipe_id))
+                    except DomainError as exc:
+                        raise ValidationError({exc.code: exc.message}) from exc
                     row = Ingredient.objects.create(food=food, unit=unit, amount=ingredient["quantity"], space=request.space,
                                                     order=position, note=ingredient["note"], original_text=ingredient["original_text"],
-                                                    is_header=ingredient["is_header"], no_amount=ingredient["no_amount"])
+                                                    is_header=ingredient["is_header"], no_amount=ingredient["no_amount"],
+                                                    quantity_basis=ingredient["quantity_basis"], yield_ratio=ingredient["yield_ratio"])
                     step.ingredients.add(row)
                 recipe.steps.add(step)
             if item["yield"]:
@@ -593,6 +601,8 @@ def _exchange_item_payload(item: dict) -> dict:
             {
                 "food": ingredient["food"],
                 "quantity": format(ingredient["quantity"], "f"),
+                "quantity_basis": ingredient["quantity_basis"],
+                "yield_ratio": None if ingredient["yield_ratio"] is None else _dec(ingredient["yield_ratio"]),
                 "unit": ingredient["unit"],
                 "food_id": ingredient["food_id"], "unit_id": ingredient["unit_id"],
                 "note": ingredient["note"], "original_text": ingredient["original_text"],
@@ -603,7 +613,8 @@ def _exchange_item_payload(item: dict) -> dict:
     }
     payload["steps"] = [
         {"name": step["name"], "instruction": step["instruction"], "step_recipe": step["step_recipe"], "ingredients": [
-            {**ingredient, "quantity": format(ingredient["quantity"], "f")} for ingredient in step["ingredients"]
+            {**ingredient, "quantity": format(ingredient["quantity"], "f"),
+             "yield_ratio": None if ingredient["yield_ratio"] is None else _dec(ingredient["yield_ratio"])} for ingredient in step["ingredients"]
         ]} for step in item["steps"]
     ]
     payload["yield"] = {**item["yield"], "quantity": _dec(item["yield"]["quantity"])} if item["yield"] else None

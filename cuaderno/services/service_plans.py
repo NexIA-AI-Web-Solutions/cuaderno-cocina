@@ -164,7 +164,7 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         raise ValidationError({"service_date": "El servicio heredado necesita una fecha antes de confirmarse."})
     recipe = plan.meal_plan.recipe if plan.meal_plan_id else None
     confirmed_at = timezone.now()
-    needs, cost, graph, warnings, versions, finance = [], None, {}, [], {}, None
+    needs, cost, graph, warnings, versions, finance, yield_details = [], None, {}, [], {}, None, []
     if recipe is not None:
         base_servings = Decimal(str(recipe.servings))
         if base_servings <= 0:
@@ -178,6 +178,7 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         needs = _snapshot_needs(sheet, plan.space)
         graph = sheet.get("edges", {})
         warnings = sheet.get("warnings", [])
+        yield_details = sheet.get("ingredient_yields", [])
         versions = _source_versions(recipe, needs, confirmed_at)
         from cuaderno.services.recipe_finance import read_recipe_finance
         profile, _ = SpaceProfile.objects.get_or_create(space=plan.space)
@@ -186,7 +187,7 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         except DomainError as exc:
             raise ValidationError({exc.code: exc.message}) from exc
     plan.snapshot = {
-        "schema_version": 1,
+        "schema_version": 2 if yield_details else 1,
         "confirmed_at": confirmed_at.isoformat(),
         "service_date": plan.service_date.isoformat(),
         "covers": decimal_string(plan.covers),
@@ -198,6 +199,8 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         "warnings": warnings,
         "source_versions": versions,
     }
+    if yield_details:
+        plan.snapshot["ingredient_yields"] = yield_details
     plan.state = ServicePlan.CONFIRMED
     plan.confirmed_at = confirmed_at
     plan.save(update_fields=["snapshot", "state", "confirmed_at"])
