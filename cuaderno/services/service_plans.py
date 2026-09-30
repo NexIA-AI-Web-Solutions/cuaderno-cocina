@@ -184,6 +184,7 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
     recipe = plan.meal_plan.recipe if plan.meal_plan_id else None
     confirmed_at = timezone.now()
     needs, cost, graph, warnings, versions, finance, yield_details = [], None, {}, [], {}, None, []
+    allergens = None
     if recipe is not None:
         base_servings = Decimal(str(recipe.servings))
         if base_servings <= 0:
@@ -200,6 +201,11 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         warnings = sheet.get("warnings", [])
         yield_details = sheet.get("ingredient_yields", [])
         versions = _source_versions(recipe, needs, confirmed_at)
+        from cuaderno.services.allergens import recipe_allergens
+        try:
+            allergens = recipe_allergens(user=user, space=plan.space, recipe_id=recipe.pk)
+        except DomainError as exc:
+            raise ValidationError({exc.code: exc.message}) from exc
         from cuaderno.services.recipe_finance import read_recipe_finance
         profile, _ = SpaceProfile.objects.get_or_create(space=plan.space)
         try:
@@ -218,6 +224,7 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         "recipe_graph": graph,
         "warnings": warnings,
         "source_versions": versions,
+        "allergens": allergens,
     }
     if yield_details:
         plan.snapshot["ingredient_yields"] = yield_details
@@ -351,6 +358,8 @@ def reverse_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan,
     production = plan.snapshot.get("production")
     if not isinstance(production, dict):
         invalid()
+    from cuaderno.services.production_waste import validate_frozen_classification
+    validate_frozen_classification(plan)
     audit = production.get("reversal")
     if audit is not None:
         if not isinstance(audit, dict) or plan.state != ServicePlan.CANCELLED:
@@ -504,6 +513,8 @@ def produce_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan,
     if plan.state == ServicePlan.PRODUCED:
         if plan.produced_key != produced_key:
             raise IdempotencyConflict({"idempotency_key": "El servicio ya se produjo con otra clave."})
+        from cuaderno.services.production_waste import validate_frozen_classification
+        validate_frozen_classification(plan)
         production = plan.snapshot.get("production") or {}
         return plan, list(production.get("movement_ids") or []), bool(production.get("stock_changed"))
     if plan.state != ServicePlan.CONFIRMED:
@@ -521,6 +532,8 @@ def produce_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan,
             {"production_sheet": "Completa los ingredientes y rendimientos pendientes antes de producir."}
         )
 
+    from cuaderno.services.production_waste import classify_declared_loss
+    classification = classify_declared_loss(plan.snapshot, user.pk, timezone.now())
     profile = SpaceProfile.objects.select_for_update().get(space=plan.space)
     movement_ids = []
     stock_changed = False
@@ -544,12 +557,15 @@ def produce_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan,
         stock_changed = bool(movement_ids)
 
     produced_at = timezone.now()
+    classification["recorded_at"] = produced_at.isoformat()
     snapshot = dict(plan.snapshot)
     snapshot["production"] = {
+        "schema_version": 2,
         "produced_at": produced_at.isoformat(),
         "edition": profile.edition,
         "movement_ids": movement_ids,
         "stock_changed": stock_changed,
+        "waste_classification": classification,
     }
     plan.snapshot = snapshot
     plan.state = ServicePlan.PRODUCED

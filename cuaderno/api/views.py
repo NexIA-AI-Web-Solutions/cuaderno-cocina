@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -7,11 +6,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from cookbook.helper.permission_helper import CustomIsAdmin, CustomIsGuest, CustomIsUser, CustomRecipePermission, CustomTokenHasReadWriteScope
-from cookbook.models import Food, Unit
+from cookbook.models import Unit
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
 from cuaderno.models import PackageFormat, PriceVersion, SpaceProfile
 from cuaderno.services.costing import cost_recipe, visible_recipes
+from cuaderno.services.visibility import visible_foods, visible_packages
+from cuaderno.services.roles import operational_role
 from cuaderno.api.prices import PackageWriteSerializer, PriceWriteSerializer, validate_free_flag
 
 
@@ -39,6 +40,7 @@ class EditionView(APIView):
                 "target_food_cost_ratio": None if profile.target_food_cost_ratio is None else format(profile.target_food_cost_ratio, "f"),
                 "prices_are_metadata": True,
                 "net_profit": None,
+                "operational_role": operational_role(request),
             }
         )
 
@@ -72,6 +74,7 @@ class EditionView(APIView):
                 "price_policy": profile.price_policy,
                 "target_food_cost_ratio": None if profile.target_food_cost_ratio is None else format(profile.target_food_cost_ratio, "f"),
                 "net_profit": None,
+                "operational_role": operational_role(request),
             }
         )
 
@@ -80,12 +83,7 @@ class PackageListView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
     def get(self, request):
-        packages = PackageFormat.objects.filter(
-            space=request.space, food__space=request.space, unit__space=request.space,
-        ).filter(
-            Q(food__recipe_id__isnull=True)
-            | Q(food__recipe_id__in=visible_recipes(request.user, request.space).values("pk"))
-        )
+        packages = visible_packages(request.user, request.space)
         rows = list(packages.order_by("pk").values(
             "id", "food_id", "food__name", "unit_id", "unit__name", "label", "quantity", "is_reference",
         ))
@@ -115,9 +113,9 @@ class PackageListView(APIView):
         serializer = PackageWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        food = get_object_or_404(Food, pk=data["food"], space=request.space)
-        unit = get_object_or_404(Unit, pk=data["unit"], space=request.space)
         type(request.space).objects.select_for_update().get(pk=request.space.pk)
+        food = get_object_or_404(visible_foods(request.user, request.space), pk=data["food"])
+        unit = get_object_or_404(Unit, pk=data["unit"], space=request.space)
         has_reference = PackageFormat.objects.filter(space=request.space, food=food, is_reference=True).exists()
         package = PackageFormat.objects.create(
             space=request.space,
@@ -138,12 +136,13 @@ class PriceCreateView(APIView):
     def get(self, request, pk):
         from cuaderno.api.price_history import package_price_history_payload
 
-        package = get_object_or_404(PackageFormat, pk=pk, space=request.space)
+        package = get_object_or_404(visible_packages(request.user, request.space), pk=pk)
         return Response(package_price_history_payload(request, package))
 
     @transaction.atomic
     def post(self, request, pk):
-        package = get_object_or_404(PackageFormat, pk=pk, space=request.space)
+        type(request.space).objects.select_for_update().get(pk=request.space.pk)
+        package = get_object_or_404(visible_packages(request.user, request.space), pk=pk)
         serializer = PriceWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data

@@ -6,28 +6,27 @@ import hashlib
 from decimal import Decimal, ROUND_CEILING, localcontext
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from cookbook.helper.permission_helper import has_group_permission
-from cookbook.models import Food, Household, InventoryEntry, Supermarket, Unit
+from cookbook.models import Household, InventoryEntry, Supermarket, Unit
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import canonical_decimal
 from cuaderno.models import (
     InventoryWriteRequest,
-    PackageFormat,
     PurchaseOffer,
     PurchaseOrder,
     PurchaseReceipt,
     ServicePlan,
     StockMovement,
-    StockMinimum,
 )
-from cuaderno.services.costing import current_price, reference_package
+from cuaderno.services.costing import current_price
 from cuaderno.services.ledger import IdempotencyConflict, apply_movement, reverse_movement
 from cuaderno.services.service_plans import accessible_service_plans
 from cuaderno.services.subrecipes import convert_native_quantity
+from cuaderno.services.visibility import visible_foods, visible_minimums, visible_packages
 
 
 def _decimal(value) -> str:
@@ -50,7 +49,16 @@ def _membership_household(request, requested_id=None) -> Household:
 
 
 def accessible_orders(request):
-    rows = PurchaseOrder.objects.filter(space=request.space)
+    rows = PurchaseOrder.objects.filter(
+        space=request.space, food_id__in=visible_foods(request.user, request.space).values("pk"),
+        unit__space=request.space, household__space=request.space,
+    ).filter(
+        Q(package_id__isnull=True)
+        | Q(package_id__in=visible_packages(request.user, request.space).values("pk"),
+            package__food_id=F("food_id"), package__unit_id=F("unit_id")),
+    ).filter(Q(supplier_id__isnull=True) | Q(supplier__space=request.space)).filter(
+        Q(package_unit_snapshot_id__isnull=True) | Q(package_unit_snapshot__space=request.space),
+    )
     if has_group_permission(request, ["admin"]):
         return rows
     membership = getattr(request, "user_space", None)
@@ -73,8 +81,16 @@ def serialize_offer(offer: PurchaseOffer) -> dict:
     }
 
 
+def accessible_offers(user, space):
+    return PurchaseOffer.objects.filter(
+        space=space, package_id__in=visible_packages(user, space).values("pk"), supplier__space=space,
+    )
+
+
+@transaction.atomic
 def create_offer(*, space, user, data) -> PurchaseOffer:
-    package = PackageFormat.objects.filter(pk=data["package"], space=space).first()
+    type(space).objects.select_for_update().get(pk=space.pk)
+    package = visible_packages(user, space).filter(pk=data["package"]).first()
     supplier = Supermarket.objects.filter(pk=data["supplier"], space=space).first()
     if package is None:
         raise NotFound("El formato no está disponible en este espacio.")
@@ -124,14 +140,14 @@ def create_order(*, request, data) -> PurchaseOrder:
     household = _membership_household(request)
     package = None
     if data.get("package") is not None:
-        package = PackageFormat.objects.select_related("food", "unit").filter(
-            pk=data["package"], space=request.space
+        package = visible_packages(request.user, request.space).select_related("food", "unit").filter(
+            pk=data["package"],
         ).first()
         if package is None:
             raise NotFound("El formato no está disponible en este espacio.")
     food_id = data.get("food") or (package.food_id if package else None)
     unit_id = data.get("unit") or (package.unit_id if package else None)
-    food = Food.objects.filter(pk=food_id, space=request.space).first()
+    food = visible_foods(request.user, request.space).filter(pk=food_id).first()
     unit = Unit.objects.filter(pk=unit_id, space=request.space).first()
     if food is None or unit is None:
         raise ValidationError({"food": "El pedido necesita alimento y unidad del mismo espacio."})
@@ -145,8 +161,8 @@ def create_order(*, request, data) -> PurchaseOrder:
             raise NotFound("El proveedor no está disponible en este espacio.")
     offer = None
     if data.get("offer") is not None:
-        offer = PurchaseOffer.objects.select_related("package", "supplier").filter(
-            pk=data["offer"], space=request.space
+        offer = accessible_offers(request.user, request.space).select_related("package", "supplier").filter(
+            pk=data["offer"],
         ).first()
         if offer is None:
             raise NotFound("La oferta no está disponible en este espacio.")
@@ -187,9 +203,11 @@ def create_order(*, request, data) -> PurchaseOrder:
 
 
 @transaction.atomic
-def transition_order(*, order: PurchaseOrder, action: str) -> PurchaseOrder:
-    type(order.space).objects.select_for_update().get(pk=order.space_id)
-    order = PurchaseOrder.objects.select_for_update().get(pk=order.pk, space=order.space)
+def transition_order(*, request, order: PurchaseOrder, action: str) -> PurchaseOrder:
+    type(request.space).objects.select_for_update().get(pk=request.space.pk)
+    order = accessible_orders(request).select_for_update(of=("self",)).filter(pk=order.pk).first()
+    if order is None:
+        raise NotFound("El pedido no está disponible.")
     if action == "order":
         if order.state == PurchaseOrder.ORDERED:
             return order
@@ -232,8 +250,14 @@ def serialize_receipt(receipt: PurchaseReceipt) -> dict:
 
 @transaction.atomic
 def receive_order(*, request, order: PurchaseOrder, entry: InventoryEntry, quantity, raw_key: str):
+    from cuaderno.services.inventory_access import household_inventory
     type(request.space).objects.select_for_update().get(pk=request.space.pk)
-    order = PurchaseOrder.objects.select_for_update().get(pk=order.pk, space=request.space)
+    order = accessible_orders(request).select_for_update(of=("self",)).filter(pk=order.pk).first()
+    entry = household_inventory(request, InventoryEntry.objects).select_for_update(of=("self",)).select_related(
+        "food", "unit", "inventory_location",
+    ).filter(pk=entry.pk).first()
+    if order is None or entry is None:
+        raise NotFound("El pedido o la existencia no están disponibles.")
     fingerprint = _receipt_fingerprint(order.pk, entry.pk, quantity)
     prior = PurchaseReceipt.objects.select_for_update().filter(
         space=request.space, idempotency_key=raw_key
@@ -246,9 +270,6 @@ def receive_order(*, request, order: PurchaseOrder, entry: InventoryEntry, quant
         raise IdempotencyConflict({"idempotency_key": "La clave ya pertenece a otra operación de inventario."})
     if order.state not in (PurchaseOrder.ORDERED, PurchaseOrder.PART_RECEIVED):
         raise ValidationError({"state": "Solo se reciben pedidos enviados y no cancelados."})
-    entry = InventoryEntry.objects.select_for_update(of=("self",)).select_related(
-        "food", "unit", "inventory_location"
-    ).get(pk=entry.pk, space=request.space)
     if order.household_id is None or entry.inventory_location.household_id != order.household_id:
         raise NotFound("La existencia no pertenece al hogar del pedido.")
     if entry.food_id != order.food_id:
@@ -291,16 +312,20 @@ def receive_order(*, request, order: PurchaseOrder, entry: InventoryEntry, quant
 
 @transaction.atomic
 def reverse_receipt(*, request, receipt: PurchaseReceipt, raw_key: str):
+    from cuaderno.services.inventory_access import household_inventory
     type(request.space).objects.select_for_update().get(pk=request.space.pk)
-    receipt = PurchaseReceipt.objects.select_for_update().select_related("order", "movement").get(
-        pk=receipt.pk, space=request.space
-    )
+    receipt = PurchaseReceipt.objects.filter(
+        space=request.space, order_id__in=accessible_orders(request).values("pk"),
+        entry_id__in=household_inventory(request, InventoryEntry.objects).values("pk"),
+    ).select_for_update(of=("self",)).select_related("order", "movement").filter(pk=receipt.pk).first()
+    if receipt is None:
+        raise NotFound("La recepción no está disponible.")
     ledger_key = f"purchase-reversal:{raw_key}"
     if receipt.reversed_by_id:
         if receipt.reversed_by.idempotency_key != ledger_key:
             raise IdempotencyConflict({"idempotency_key": "La recepción ya se revirtió con otra clave."})
         return receipt, True
-    order = PurchaseOrder.objects.select_for_update().get(pk=receipt.order_id, space=request.space)
+    order = accessible_orders(request).select_for_update(of=("self",)).get(pk=receipt.order_id)
     movement = reverse_movement(
         movement_id=receipt.movement_id,
         space=request.space,
@@ -346,7 +371,7 @@ def replenishment(*, request, data) -> list[dict]:
             needs_by_food.setdefault(food_id, []).append((unit_id, quantity))
 
     minimums_by_food = {}
-    for row in StockMinimum.objects.filter(space=request.space, household=household).select_related("unit", "location").order_by("food_id", "location_id", "pk"):
+    for row in visible_minimums(request.user, request.space).filter(household=household).select_related("unit", "location").order_by("food_id", "location_id", "pk"):
         if row.unit.space_id != request.space.pk or (row.location_id and (row.location.space_id != request.space.pk or row.location.household_id != household.pk)):
             raise ValidationError({"minimum": "El mínimo tiene una unidad o ubicación fuera de su hogar y espacio."})
         minimums_by_food.setdefault(row.food_id, []).append(row)
@@ -355,13 +380,15 @@ def replenishment(*, request, data) -> list[dict]:
     for food_id in sorted(set(needs_by_food) | set(minimums_by_food)):
         needs = needs_by_food.get(food_id, [])
         minimums = minimums_by_food.get(food_id, [])
-        food = Food.objects.filter(pk=food_id, space=request.space).first()
+        food = visible_foods(request.user, request.space).filter(pk=food_id).first()
         need_units = {
             row.pk: row for row in Unit.objects.filter(pk__in={unit_id for unit_id, _ in needs}, space=request.space)
         }
         if food is None or len(need_units) != len({unit_id for unit_id, _ in needs}):
             raise ValidationError({"snapshot": "Un alimento o unidad confirmados ya no están disponibles."})
-        package = reference_package(food)
+        package = visible_packages(request.user, request.space).filter(
+            food=food, is_reference=True,
+        ).select_related("unit").first()
         target_unit = package.unit if package else (need_units[needs[0][0]] if needs else minimums[0].unit)
         try:
             with localcontext() as context:
@@ -382,7 +409,9 @@ def replenishment(*, request, data) -> list[dict]:
         entries = InventoryEntry.objects.filter(
             space=request.space,
             inventory_location__household=household,
+            inventory_location__space=request.space,
             food=food,
+            unit__space=request.space,
             amount__gt=0,
         ).filter(Q(expires__isnull=True) | Q(expires__gte=cutoff)).select_related("unit")
         for entry in entries:

@@ -1,5 +1,6 @@
 """Preserve native conversions/properties when merging native Foods."""
 from django.db import transaction
+from django.db.models import Q
 from cookbook.models import Food, FoodProperty, Space, UnitConversion
 from cuaderno.domain.errors import DomainError
 
@@ -30,6 +31,19 @@ def preserve_native_food_relations(source, target):
         else:
             conversion.food = target
             conversion.save(update_fields=["food"])
+    # Native batch editing can contain only one direction of this symmetric
+    # relation. Preserve actual incoming and outgoing references before the
+    # source deletion cascades through the self-M2M table.
+    substitutes = Food.substitute.through
+    source_links = substitutes.objects.filter(Q(from_food_id=source.pk) | Q(to_food_id=source.pk))
+    remapped = {
+        (target.pk if left == source.pk else left, target.pk if right == source.pk else right)
+        for left, right in source_links.values_list("from_food_id", "to_food_id")
+    }
+    substitutes.objects.bulk_create([
+        substitutes(from_food_id=left, to_food_id=right) for left, right in remapped if left != right
+    ], ignore_conflicts=True)
+    source_links.delete()
     existing_properties = target.properties.values_list("pk", flat=True)
     duplicates = FoodProperty.objects.filter(food=source, property_id__in=existing_properties)
     duplicates.delete()

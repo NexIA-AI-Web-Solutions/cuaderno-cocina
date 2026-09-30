@@ -13,7 +13,7 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope
+from cookbook.helper.permission_helper import CustomIsGuest, CustomIsUser, CustomTokenHasReadWriteScope
 from cookbook.models import Food, Ingredient, InventoryEntry, MealPlan, MealType, Recipe, Step, Unit, UnitConversion
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.exchange import MAX_CATALOG_ITEMS, MAX_EXCHANGE_RECIPES, export_recipe_document, parse_recipe_document, validate_exchange_limits
@@ -77,9 +77,11 @@ class MovementView(APIView):
             ]
         )
 
+    @transaction.atomic
     def post(self, request):
         from cuaderno.services.inventory_access import household_inventory
         _require(request.space, SpaceProfile.INTEGRAL)
+        type(request.space).objects.select_for_update().get(pk=request.space.pk)
         try:
             if request.data.get("reverse_of"):
                 get_object_or_404(household_inventory(request, StockMovement.objects.all(), "entry__inventory_location__household_id"),
@@ -410,19 +412,64 @@ class RecipeYieldView(APIView):
 class AllergenView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
+    def get_permissions(self):
+        permissions = self.permission_classes
+        if self.request.method in ("GET", "HEAD", "OPTIONS"):
+            permissions = [CustomIsGuest & CustomTokenHasReadWriteScope]
+        return [permission() for permission in permissions]
+
+    def get(self, request):
+        from cuaderno.services.allergens import food_allergens, recipe_allergens
+        from rest_framework.exceptions import NotFound
+        selectors = [field for field in ("food", "recipe") if field in request.query_params]
+        if len(selectors) != 1:
+            raise ValidationError({"scope": "Indica exactamente un alimento o una receta."})
+        field = selectors[0]
+        values = request.query_params.getlist(field)
+        raw = values[0] if len(values) == 1 else ""
+        if not raw or not raw.isascii() or not raw.isdecimal() or len(raw) > 19:
+            raise ValidationError({field: "Indica un identificador entero positivo."})
+        identifier = int(raw)
+        if not 0 < identifier <= 9223372036854775807:
+            raise ValidationError({field: "Indica un identificador entero positivo."})
+        try:
+            if field == "food":
+                payload = food_allergens(user=request.user, space=request.space, food_id=identifier)
+            else:
+                payload = recipe_allergens(user=request.user, space=request.space, recipe_id=identifier)
+        except DomainError as exc:
+            if exc.code == "recipe_missing":
+                raise NotFound("La receta no está disponible.") from exc
+            raise ValidationError({exc.code: exc.message}) from exc
+        return Response(payload)
+
+    @transaction.atomic
     def post(self, request):
         _require(request.space, SpaceProfile.PROFESIONAL)
-        food = get_object_or_404(Food, pk=request.data.get("food"), space=request.space)
-        name = (request.data.get("name") or "").strip()
-        state = request.data.get("state") or AllergenDeclaration.UNKNOWN
-        if not name:
-            raise ValidationError({"name": "Indica el alérgeno declarado."})
-        if state not in dict(AllergenDeclaration.STATES):
+        type(request.space).objects.select_for_update().get(pk=request.space.pk)
+        from cuaderno.services.visibility import visible_foods
+        if not isinstance(request.data, dict):
+            raise ValidationError({"body": "Envía un objeto con alimento, nombre y estado."})
+        identifier = request.data.get("food")
+        if type(identifier) is not int or not 0 < identifier <= 9223372036854775807:
+            raise ValidationError({"food": "Indica un identificador entero positivo."})
+        raw_name = request.data.get("name")
+        if not isinstance(raw_name, str):
+            raise ValidationError({"name": "Indica el alérgeno declarado como texto."})
+        name = raw_name.strip()
+        if not name or len(name) > 128 or any(
+            ord(character) < 32 or 127 <= ord(character) <= 159
+            or 0xD800 <= ord(character) <= 0xDFFF for character in raw_name
+        ):
+            raise ValidationError({"name": "Indica un nombre de 1 a 128 caracteres, sin caracteres de control."})
+        state = request.data.get("state", AllergenDeclaration.UNKNOWN)
+        if not isinstance(state, str) or state not in dict(AllergenDeclaration.STATES):
             raise ValidationError({"state": "Estado de alérgeno desconocido."})
+        food = get_object_or_404(visible_foods(request.user, request.space), pk=identifier)
         row = AllergenDeclaration.objects.create(
             space=request.space,
             food=food,
-            name=name[:128],
+            name=name,
             state=state,
         )
         return Response(

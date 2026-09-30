@@ -7,12 +7,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope, has_group_permission
-from cookbook.models import Food, InventoryLocation, Unit
+from cookbook.models import InventoryLocation, Unit
 from cuaderno.api.prices import JsonIdentifierField
 from cuaderno.api.purchasing import DecimalStringField, _integral
 from cuaderno.domain.money import canonical_decimal
 from cuaderno.models import StockMinimum
 from cuaderno.services.purchasing import _membership_household
+from cuaderno.services.visibility import visible_foods, visible_minimums
 
 
 class MinimumScopeConflict(APIException):
@@ -32,7 +33,7 @@ class StockMinimumView(APIView):
 
     @staticmethod
     def payload(request, household):
-        rows = StockMinimum.objects.filter(space=request.space, household=household).select_related("food", "unit", "location").order_by("food_id", "location_id", "pk")
+        rows = visible_minimums(request.user, request.space).filter(household=household).select_related("food", "unit", "location").order_by("food_id", "location_id", "pk")
         return Response({
             "edition": "integral", "household": {"id": household.pk, "name": household.name},
             "locations": list(InventoryLocation.objects.filter(space=request.space, household=household).order_by("name", "pk").values("id", "name")),
@@ -65,7 +66,7 @@ class StockMinimumView(APIView):
         data = serializer.validated_data
         type(request.space).objects.select_for_update().get(pk=request.space.pk)
         household = _membership_household(request)
-        food = get_object_or_404(Food.objects.filter(space=request.space), pk=data["food"])
+        food = get_object_or_404(visible_foods(request.user, request.space), pk=data["food"])
         unit = get_object_or_404(Unit.objects.filter(space=request.space), pk=data["unit"])
         location = None
         if data["location"] is not None:

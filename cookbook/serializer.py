@@ -879,6 +879,76 @@ class FoodSimpleSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'plural_name')
 
 
+class VisibleFoodListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        from cuaderno.services.visibility import visible_foods
+        request = self.context.get('request')
+        if request is not None:
+            owner = getattr(data, 'instance', None)
+            prefetched = getattr(owner, '_visible_substitutes', None)
+            if prefetched is not None:
+                data = prefetched
+            else:
+                rows = data.all() if hasattr(data, 'all') else data
+                identifiers = rows.values('pk') if isinstance(rows, QuerySet) else [row.pk for row in rows]
+                policy = self.context.get('_cuaderno_recipe_policy')
+                available = policy['foods'] if policy else visible_foods(request.user, request.space)
+                data = available.filter(pk__in=identifiers)
+        return super().to_representation(data)
+
+
+class VisibleFoodSimpleSerializer(FoodSimpleSerializer):
+    def to_internal_value(self, data):
+        # ListSerializer children have no initial_data attribute. Preserve the
+        # raw reference before ModelSerializer discards its read-only id field.
+        if isinstance(data, dict) and 'id' in data:
+            return {'id': data['id']}
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        from cuaderno.services.visibility import visible_foods
+        request = self.context['request']
+        raw_id = attrs.get('id')
+        available = visible_foods(request.user, request.space)
+        if raw_id is not None:
+            if type(raw_id) is not int or not 0 < raw_id <= 9223372036854775807:
+                raise ValidationError({'id': _('The identifier is not valid.')})
+            food = available.filter(pk=raw_id).first()
+            if food is None:
+                raise ValidationError({'id': _('The item is not available in this space.')})
+            return {'id': food.pk}
+        name = attrs.get('name', '').strip()
+        existing = Food.objects.filter(space=request.space).filter(
+            Q(name__iexact=name) | Q(plural_name__iexact=name),
+        ).first()
+        if existing is not None:
+            if not available.filter(pk=existing.pk).exists():
+                raise ValidationError({'name': _('The item is not available in this space.')})
+            return {'id': existing.pk}
+        return attrs
+
+    def create(self, validated_data):
+        if 'id' in validated_data:
+            from cuaderno.services.visibility import visible_foods
+            request = self.context['request']
+            food = visible_foods(request.user, request.space).filter(pk=validated_data['id']).first()
+            if food is None:
+                raise ValidationError({'id': _('The item is not available in this space.')})
+            return food
+        return FoodSerializer(context=self.context).create(validated_data)
+
+    def update(self, instance, validated_data):
+        # A substitute is a reference, not an alternate Food editing endpoint.
+        from cuaderno.services.visibility import visible_foods
+        request = self.context['request']
+        if not visible_foods(request.user, request.space).filter(pk=instance.pk).exists():
+            raise ValidationError({'id': _('The item is not available in this space.')})
+        return instance
+
+    class Meta(FoodSimpleSerializer.Meta):
+        list_serializer_class = VisibleFoodListSerializer
+
+
 class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedRecipeMixin, OpenDataModelMixin):
     supermarket_category = SupermarketCategorySerializer(allow_null=True, required=False)
     recipe = RecipeSimpleSerializer(allow_null=True, required=False)
@@ -887,7 +957,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
     child_inherit_fields = FoodInheritFieldSerializer(many=True, allow_null=True, required=False)
     food_onhand = CustomOnHandField(required=False, allow_null=True)
     substitute_onhand = serializers.SerializerMethodField('get_substitute_onhand')
-    substitute = FoodSimpleSerializer(many=True, allow_null=True, required=False)
+    substitute = VisibleFoodSimpleSerializer(many=True, allow_null=True, required=False)
     parent = IntegerField(read_only=True)
     shopping_lists = ShoppingListSerializer(many=True, required=False)
     properties = PropertySerializer(many=True, allow_null=True, required=False)
@@ -902,7 +972,8 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
         if attrs.get('recipe') is not None:
             from cuaderno.services.costing import visible_recipes
             request = self.context.get('request')
-            raw = self.initial_data.get('recipe') if isinstance(self.initial_data, dict) else None
+            initial = getattr(self, 'initial_data', None)
+            raw = initial.get('recipe') if isinstance(initial, dict) else None
             identifier = raw.get('id') if isinstance(raw, dict) else None
             if request is None:
                 raise serializers.ValidationError({'recipe': 'No se puede validar la receta sin su espacio.'})
@@ -921,6 +992,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
 
     @extend_schema_field(bool)
     def get_substitute_onhand(self, obj):
+        from cuaderno.services.visibility import visible_foods
         try:
             if not self.context["request"].user.is_authenticated:
                 return []
@@ -933,17 +1005,42 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
                 filter |= Q(path__startswith=obj.path[:Food.steplen * (obj.depth - 1)], depth=obj.depth)
             if obj.substitute_children:
                 filter |= Q(path__startswith=obj.path, depth__gt=obj.depth)
-            return Food.objects.filter(filter).filter(onhand_users__id__in=shared_users).exists()
+            policy = self.context.get('_cuaderno_recipe_policy')
+            available = policy['foods'] if policy else visible_foods(self.context['request'].user, self.context['request'].space)
+            return available.filter(
+                filter, onhand_users__id__in=shared_users,
+            ).exists()
         except AttributeError:
             return []
 
+    def _revalidate_relations(self, validated_data):
+        from cuaderno.services.costing import visible_recipes
+        from cuaderno.services.visibility import visible_foods
+        request = self.context['request']
+        recipe = validated_data.get('recipe')
+        if recipe is not None:
+            identifier = recipe.get('id') if isinstance(recipe, dict) else recipe.pk
+            if not visible_recipes(request.user, request.space).filter(pk=identifier).exists():
+                raise ValidationError({'recipe': _('The recipe is not available in this space.')})
+        for substitute in validated_data.get('substitute') or []:
+            identifier = substitute.get('id') if isinstance(substitute, dict) else substitute.pk
+            if identifier is not None and not visible_foods(request.user, request.space).filter(pk=identifier).exists():
+                raise ValidationError({'substitute': _('The item is not available in this space.')})
+
+    @transaction.atomic
     def create(self, validated_data):
+        from cuaderno.services.visibility import visible_foods
+        request = self.context['request']
+        Space.objects.select_for_update().get(pk=request.space.pk)
+        self._revalidate_relations(validated_data)
         name = validated_data['name'].strip()
 
         if plural_name := validated_data.pop('plural_name', None):
             plural_name = plural_name.strip()
 
-        if food := Food.objects.filter(Q(name__iexact=name) | Q(plural_name__iexact=name)).first():
+        if food := Food.objects.filter(space=request.space).filter(Q(name__iexact=name) | Q(plural_name__iexact=name)).first():
+            if not visible_foods(request.user, request.space).filter(pk=food.pk).exists():
+                raise ValidationError({'name': _('The item is not available in this space.')})
             return food
 
         space = validated_data.pop('space', self.context['request'].space)
@@ -988,13 +1085,28 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        from cuaderno.services.visibility import visible_foods
+        request = self.context['request']
+        Space.objects.select_for_update().get(pk=request.space.pk)
+        instance = visible_foods(request.user, request.space).select_for_update(of=('self',)).filter(
+            pk=instance.pk,
+        ).first()
+        if instance is None:
+            raise NotFound(_('The item is not available in this space.'))
+        if Food.objects.filter(space=request.space, path__startswith=instance.path).exclude(
+            pk__in=visible_foods(request.user, request.space).values('pk'),
+        ).exists():
+            raise ValidationError({'detail': _('The branch is not available.')})
+        self.instance = instance
+        self._revalidate_relations(validated_data)
         if name := validated_data.get('name', None):
             validated_data['name'] = name.strip()
         if plural_name := validated_data.get('plural_name', None):
             validated_data['plural_name'] = plural_name.strip()
         # assuming if on hand for user also onhand for household members
         onhand = validated_data.get('food_onhand', None)
-        reset_inherit = self.initial_data.get('reset_inherit', False)
+        initial = getattr(self, 'initial_data', {})
+        reset_inherit = initial.get('reset_inherit', False) if isinstance(initial, dict) else False
         if onhand is not None:
             shared_user_ids = get_household_user_ids(self.context["request"].user_space)
             shared_users = list(User.objects.filter(id__in=shared_user_ids))
@@ -1012,6 +1124,8 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
             raise serializers.ValidationError({'recipe': exc.message}) from exc
         if reset_inherit and (r := self.context.get('request', None)):
             Food.reset_inheritance(food=saved_instance, space=r.space)
+        if hasattr(saved_instance, '_visible_substitutes'):
+            del saved_instance._visible_substitutes
         return saved_instance
 
     class Meta:
@@ -1030,6 +1144,17 @@ class IngredientSimpleSerializer(IngredientYieldValidationMixin, WritableNestedM
     amount = CustomDecimalField()
     yield_ratio = YieldRatioField(required=False, allow_null=True)
     checked = serializers.BooleanField(read_only=True, default=False, help_text='Just laziness to have a checked field on the frontend API client')
+
+    def to_representation(self, instance):
+        from cuaderno.services.visibility import visible_foods
+        request = self.context.get('request')
+        policy = self.context.get('_cuaderno_recipe_policy')
+        if request is not None and policy is None:
+            if (instance.space_id != getattr(request.space, 'pk', None)
+                    or (instance.unit_id and instance.unit.space_id != instance.space_id)
+                    or (instance.food_id and not visible_foods(request.user, request.space).filter(pk=instance.food_id).exists())):
+                raise NotFound(_('The ingredient is not available.'))
+        return super().to_representation(instance)
 
     def create(self, validated_data):
         validated_data['space'] = self.context['request'].space
@@ -1054,16 +1179,21 @@ class IngredientSerializer(IngredientSimpleSerializer):
 
     @extend_schema_field(list)
     def get_used_in_recipes(self, obj):
-        used_in = []
+        from cuaderno.services.costing import visible_recipes
+        request = self.context['request']
+        policy = self.context.get('_cuaderno_recipe_policy')
+        available = policy['recipes'] if policy else visible_recipes(request.user, request.space)
+        identifiers = set()
         for s in obj.step_set.all():
             for r in s.recipe_set.all():
-                used_in.append({'id': r.id, 'name': r.name})
-        return used_in
+                identifiers.add(r.pk)
+        return list(available.filter(pk__in=identifiers).order_by('pk').values('id', 'name'))
 
     @extend_schema_field(list)
     def get_conversions(self, obj):
         if obj.unit and obj.food:
-            uch = UnitConversionHelper(self.context['request'].space)
+            policy = self.context.get('_cuaderno_recipe_policy')
+            uch = UnitConversionHelper(policy['space'] if policy else self.context['request'].space)
             conversions = []
             for c in uch.get_conversions(obj):
                 conversions.append(
@@ -1088,6 +1218,16 @@ class StepSerializer(WritableNestedModelSerializer, ExtendedRecipeMixin):
     step_recipe_data = serializers.SerializerMethodField('get_step_recipe_data')
     recipe_filter = 'steps'
 
+    def to_representation(self, instance):
+        from cuaderno.services.costing import visible_recipes
+        request = self.context.get('request')
+        policy = self.context.get('_cuaderno_recipe_policy')
+        if request is not None and policy is None:
+            if (instance.space_id != getattr(request.space, 'pk', None)
+                    or (instance.step_recipe_id and not visible_recipes(request.user, request.space).filter(pk=instance.step_recipe_id).exists())):
+                raise NotFound(_('The step is not available.'))
+        return super().to_representation(instance)
+
     def create(self, validated_data):
         validated_data['space'] = self.context['request'].space
         return super().create(validated_data)
@@ -1105,8 +1245,8 @@ class StepSerializer(WritableNestedModelSerializer, ExtendedRecipeMixin):
     def get_step_recipe_data(self, obj):
         # check if root type is recipe to prevent infinite recursion
         # can be improved later to allow multi level embedding
-        if obj.step_recipe and isinstance(self.parent.root, RecipeSerializer):
-            return StepRecipeSerializer(obj.step_recipe, context={'request': self.context['request']}).data
+        if obj.step_recipe and isinstance(self.root, RecipeSerializer):
+            return StepRecipeSerializer(obj.step_recipe, context=self.context).data
 
     class Meta:
         model = Step
@@ -1277,6 +1417,14 @@ class RecipeSerializer(RecipeBaseSerializer):
     last_cooked = serializers.DateTimeField(required=False, allow_null=True, read_only=True)
     food_properties = serializers.SerializerMethodField('get_food_properties')
     created_by = UserSerializer(read_only=True)
+
+    def to_representation(self, instance):
+        from cuaderno.services.visibility import native_recipe_read_policy
+        request = self.context.get('request')
+        policy = self.context.get('_cuaderno_recipe_policy')
+        if request is not None and (policy is None or policy['root_id'] != instance.pk):
+            self.context['_cuaderno_recipe_policy'] = native_recipe_read_policy(instance, request)
+        return super().to_representation(instance)
 
     @extend_schema_field(serializers.JSONField)
     def get_food_properties(self, obj):
@@ -1842,12 +1990,41 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
     unit = UnitSerializer()
     label = serializers.SerializerMethodField('get_label')
 
-    def to_internal_value(self, data):
+    def _validate_operational_relations(self, data):
         from cuaderno.services.inventory_access import household_inventory
+        from cuaderno.services.visibility import visible_foods
+        request = self.context['request']
+        for field, available in (
+            ('food', visible_foods(request.user, request.space)),
+            ('unit', Unit.objects.filter(space=request.space)),
+        ):
+            raw_relation = data.get(field)
+            identifier = raw_relation.get('id') if isinstance(raw_relation, dict) else raw_relation
+            if identifier is not None:
+                if type(identifier) is not int or not 0 < identifier <= 9223372036854775807:
+                    raise ValidationError({field: _('The identifier is not valid.')})
+                if not available.filter(pk=identifier).exists():
+                    raise ValidationError({field: _('The item is not available in this space.')})
+            # FoodSerializer resolves existing names before creating a row.
+            # A name-only payload must not bypass the same visibility rule.
+            if field == 'food' and isinstance(raw_relation, dict):
+                name = raw_relation.get('name')
+                if isinstance(name, str):
+                    matches = Food.objects.filter(space=request.space).filter(
+                        Q(name__iexact=name.strip()) | Q(plural_name__iexact=name.strip()),
+                    )
+                    if matches.exclude(pk__in=available.values('pk')).exists():
+                        raise ValidationError({field: _('The item is not available in this space.')})
         raw = data.get('inventory_location')
         location_id = raw if isinstance(raw, int) else raw.get('id') if isinstance(raw, dict) else None
-        if location_id is not None and not household_inventory(self.context['request'], InventoryLocation.objects, 'household_id').filter(pk=location_id).exists():
-            raise ValidationError({'inventory_location': _('The location is not available to this household.')})
+        if location_id is not None:
+            if type(location_id) is not int or not 0 < location_id <= 9223372036854775807:
+                raise ValidationError({'inventory_location': _('The identifier is not valid.')})
+            if not household_inventory(request, InventoryLocation.objects, 'household_id').filter(pk=location_id).exists():
+                raise ValidationError({'inventory_location': _('The location is not available to this household.')})
+
+    def to_internal_value(self, data):
+        self._validate_operational_relations(data)
         return super().to_internal_value(data)
 
     def _native_request(self, operation):
@@ -1889,7 +2066,7 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
         text = f'#{obj.code} - {round(obj.amount, 2)}'
         if obj.unit:
             text += f' ({obj.unit})'
-        text += f' {obj.food.name}'
+        text += f' {obj.food.name if obj.food_id else "sin alimento"}'
         return text
 
     @transaction.atomic
@@ -1905,8 +2082,12 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
 
         # Keep the lock order identical to the Cuaderno stock service.
         Space.objects.select_for_update().get(pk=space.pk)
+        self._validate_operational_relations(request.data)
         prior_request, request_key, request_digest = self._native_request('create')
         if prior_request:
+            from cuaderno.services.inventory_access import household_inventory
+            if not household_inventory(request, InventoryEntry.objects).filter(pk=prior_request.entry_id).exists():
+                raise NotFound(_('The inventory entry is not available.'))
             return prior_request.entry
         idempotency_key = request.headers.get('Idempotency-Key')
         validated_data['amount'] = Decimal('0')
@@ -1952,11 +2133,17 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
                 raise ValidationError({'amount': _('The amount cannot be negative.')})
 
         Space.objects.select_for_update().get(pk=space.pk)
+        self._validate_operational_relations(request.data)
+        from cuaderno.services.inventory_access import household_inventory
+        instance = household_inventory(request, InventoryEntry.objects).select_for_update(of=('self',)).filter(
+            pk=instance.pk,
+        ).first()
+        if instance is None:
+            raise NotFound(_('The inventory entry is not available.'))
         operation = f'update:{instance.pk}'
         prior_request, request_key, request_digest = self._native_request(operation)
         if prior_request:
             return prior_request.entry
-        instance = InventoryEntry.objects.select_for_update().get(pk=instance.pk, space=space)
         before = inventory_metadata(instance)
         for field in ('food', 'unit'):
             nested = validated_data.get(field)

@@ -355,9 +355,14 @@ class MergeMixin(ViewSetMixin):
     @transaction.atomic
     def merge(self, request, pk, target: int):
         self.description = f"Merge {self.basename} onto target {self.basename} with ID of [int]."
+        available = self.model.objects.filter(space=request.space)
+        if self.model is Food:
+            from cuaderno.services.visibility import visible_foods
+            Space.objects.select_for_update().get(pk=request.space.pk)
+            available = visible_foods(request.user, request.space)
 
         try:
-            source = self.model.objects.get(pk=pk, space=self.request.space)
+            source = available.get(pk=pk)
         except (self.model.DoesNotExist):
             content = {'error': True, 'msg': _(f'No {self.basename} with id {pk} exists')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
@@ -368,7 +373,7 @@ class MergeMixin(ViewSetMixin):
 
         else:
             try:
-                target = self.model.objects.get(pk=target, space=self.request.space)
+                target = available.get(pk=target)
             except (self.model.DoesNotExist):
                 content = {'error': True, 'msg': _(f'No {self.basename} with id {target} exists')}
                 return Response(content, status=status.HTTP_404_NOT_FOUND)
@@ -383,6 +388,19 @@ class MergeMixin(ViewSetMixin):
                 isTree = False
 
             try:
+                if self.model is Food:
+                    for branch in (source, target):
+                        if Food.objects.filter(
+                            space=request.space, path__startswith=branch.path,
+                        ).exclude(pk__in=available.values('pk')).exists():
+                            return Response({'detail': _('The branch is not available.')}, status=400)
+                    links = Food.substitute.through.objects.filter(
+                        Q(from_food_id=source.pk) | Q(to_food_id=source.pk),
+                    )
+                    if links.exclude(
+                        from_food_id__in=available.values('pk'), to_food_id__in=available.values('pk'),
+                    ).exists():
+                        return Response({'detail': _('The related items are not available.')}, status=400)
                 # TODO these checks could be improved to merge existing properties and conversion in a smart way. For now it will just loose them to prevent duplicates
                 if isinstance(source, Food):
                     from cuaderno.services.food_merge import preserve_native_food_relations
@@ -453,6 +471,9 @@ class MergeMixin(ViewSetMixin):
 class TreeMixin(MergeMixin, FuzzyFilterMixin):
     model = None
 
+    def filter_tree_queryset(self, queryset):
+        return queryset
+
     def get_queryset(self):
         root = self.request.query_params.get('root', None)
         tree = self.request.query_params.get('tree', None)
@@ -483,10 +504,11 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
                     self.queryset = self.model.objects.none()
 
         else:
+            self.queryset = self.filter_tree_queryset(self.queryset)
             return self.annotate_recipe(queryset=super().get_queryset(), request=self.request,
                                         serializer=self.serializer_class, tree=True)
 
-        self.queryset = self.queryset.filter(space=self.request.space)
+        self.queryset = self.filter_tree_queryset(self.queryset.filter(space=self.request.space))
         # only order if not root_tree or tree mde because in these modes the sorting is relevant for the client
         if not root_tree and not tree:
             self.queryset = self.queryset.order_by(Lower('name').asc())
@@ -496,6 +518,7 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
 
     @decorators.action(detail=True, url_path='move/(?P<parent>[^/.]+)', methods=['PUT'], )
     @decorators.renderer_classes((TemplateHTMLRenderer, JSONRenderer))
+    @transaction.atomic
     def move(self, request, pk, parent: int):
         self.description = f"Move {self.basename} to be a child of {self.basename} with ID of [int].  Use ID: 0 to move {self.basename} to the root."
         if self.model.node_order_by:
@@ -503,12 +526,21 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
         else:
             node_location = 'last'
 
+        available = self.model.objects.filter(space=request.space)
+        if self.model is Food:
+            from cuaderno.services.visibility import visible_foods
+            Space.objects.select_for_update().get(pk=request.space.pk)
+            available = visible_foods(request.user, request.space)
         try:
-            child = self.model.objects.get(pk=pk, space=self.request.space)
+            child = available.get(pk=pk)
         except (self.model.DoesNotExist):
             content = {'error': True, 'msg': _(f'No {self.basename} with id {pk} exists')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
 
+        if self.model is Food and Food.objects.filter(
+            space=request.space, path__startswith=child.path,
+        ).exclude(pk__in=available.values('pk')).exists():
+            return Response({'detail': _('The branch is not available.')}, status=400)
         parent = int(parent)
         # parent 0 is root of the tree
         if parent == 0:
@@ -525,11 +557,15 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
             return Response(content, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            parent = self.model.objects.get(pk=parent, space=self.request.space)
+            parent = available.get(pk=parent)
         except (self.model.DoesNotExist):
             content = {'error': True, 'msg': _(f'No {self.basename} with id {parent} exists')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
 
+        if self.model is Food and Food.objects.filter(
+            space=request.space, path__startswith=parent.path,
+        ).exclude(pk__in=available.values('pk')).exists():
+            return Response({'detail': _('The branch is not available.')}, status=400)
         try:
             with scopes_disabled():
                 child.move(parent, f'{node_location}-child')
@@ -899,10 +935,12 @@ class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationM
         return super().destroy(request, *args, **kwargs)
 
     @decorators.action(detail=True, methods=['POST'])
+    @transaction.atomic
     def consume(self, request, pk=None):
         from cuaderno.models import StockMovement
         from cuaderno.services.ledger import apply_movement
 
+        Space.objects.select_for_update().get(pk=request.space.pk)
         entry = self.get_object()
         movement = apply_movement(
             entry_id=entry.pk, space=request.space, user=request.user,
@@ -1120,12 +1158,22 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
             qs = qs.annotate(shopping_status=Value(False, output_field=BooleanField()))
 
         return qs \
-            .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields', 'substitute') \
+            .prefetch_related('onhand_users', 'inherit_fields', 'child_inherit_fields',
+                             Prefetch('substitute', queryset=self._visible_foods(), to_attr='_visible_substitutes')) \
             .select_related('recipe', 'supermarket_category')
 
+    def _visible_foods(self):
+        from cuaderno.services.visibility import visible_foods
+        return visible_foods(self.request.user, self.request.space)
+
     def get_queryset(self):
-        self.queryset = super().get_queryset()
-        return self._annotate_and_prefetch(self.queryset)
+        return self._annotate_and_prefetch(super().get_queryset())
+
+    def filter_tree_queryset(self, queryset):
+        from cuaderno.services.visibility import visible_foods
+        return queryset.filter(
+            pk__in=visible_foods(self.request.user, self.request.space).values('pk'),
+        )
 
     def get_serializer_class(self):
         if self.request and self.request.query_params.get('simple', False):
@@ -1351,12 +1399,44 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
             return Response(content, status=status.HTTP_403_FORBIDDEN)
 
     @decorators.action(detail=False, methods=['PUT'], serializer_class=FoodBatchUpdateSerializer)
+    @transaction.atomic
     def batch_update(self, request):
         serializer = self.serializer_class(data=request.data, partial=True)
 
         if serializer.is_valid():
-            foods = Food.objects.filter(id__in=serializer.validated_data['foods'], space=self.request.space)
-            safe_food_ids = Food.objects.filter(id__in=serializer.validated_data['foods'], space=self.request.space).values_list('id', flat=True)
+            from rest_framework.exceptions import ValidationError as DRFValidationError
+            Space.objects.select_for_update().get(pk=request.space.pk)
+            available = self._visible_foods()
+            for field in ('foods', 'substitute_add', 'substitute_remove', 'substitute_set', 'parent_set'):
+                if field not in serializer.validated_data:
+                    continue
+                identifiers = serializer.validated_data[field]
+                if identifiers is None:
+                    continue
+                if field == 'parent_set':
+                    identifiers = [identifiers]
+                if available.filter(pk__in=identifiers).count() != len(set(identifiers)):
+                    raise DRFValidationError({field: _('The items are not available in this space.')})
+            foods = available.filter(id__in=serializer.validated_data['foods'])
+            safe_food_ids = foods.values_list('id', flat=True)
+            category = serializer.validated_data.get('category')
+            if category is not None and not SupermarketCategory.objects.filter(
+                pk=category, space=request.space,
+            ).exists():
+                raise DRFValidationError({'category': _('The category is not available in this space.')})
+            for field in ('shopping_lists_add', 'shopping_lists_remove', 'shopping_lists_set'):
+                identifiers = serializer.validated_data.get(field, [])
+                if ShoppingList.objects.filter(space=request.space, pk__in=identifiers).count() != len(set(identifiers)):
+                    raise DRFValidationError({field: _('The lists are not available in this space.')})
+            if serializer.validated_data.get('parent_remove') or serializer.validated_data.get('parent_set') is not None:
+                branches = list(foods)
+                if serializer.validated_data.get('parent_set') is not None:
+                    branches.append(available.get(pk=serializer.validated_data['parent_set']))
+                for branch in branches:
+                    if Food.objects.filter(space=request.space, path__startswith=branch.path).exclude(
+                        pk__in=available.values('pk'),
+                    ).exists():
+                        raise DRFValidationError({'parent': _('The branch is not available.')})
 
             if 'category' in serializer.validated_data:
                 foods.update(supermarket_category_id=serializer.validated_data['category'])
@@ -1445,7 +1525,7 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
                     f.move(Food.get_first_root_node(), f'{node_location}-sibling')
 
             if 'parent_set' in serializer.validated_data:
-                parent_food = Food.objects.filter(space=request.space, id=serializer.validated_data['parent_set']).first()
+                parent_food = available.filter(id=serializer.validated_data['parent_set']).first()
                 if parent_food:
                     for f in foods:
                         f.move(parent_food, f'{node_location}-child')
@@ -1692,6 +1772,8 @@ class IngredientViewSet(LoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Use Prefetch with select_related for UnitConversion ForeignKeys to avoid N+1 queries
+        from cuaderno.services.costing import visible_recipes
+        from cuaderno.services.visibility import coherent_ingredients
         unit_conversion_qs = UnitConversion.objects.select_related('base_unit', 'converted_unit', 'food')
         queryset = self.queryset.prefetch_related('food',
                                                   'food__properties',
@@ -1704,8 +1786,11 @@ class IngredientViewSet(LoggingMixin, viewsets.ModelViewSet):
                                                   Prefetch('unit__unit_conversion_base_relation', queryset=unit_conversion_qs),
                                                   Prefetch('unit__unit_conversion_converted_relation', queryset=unit_conversion_qs),
                                                   'step_set',
-                                                  'step_set__recipe_set', ).filter(step__recipe__space=self.request.space).filter(
-            Q(step__recipe__private=False) | (Q(step__recipe__private=True) & (Q(step__recipe__created_by=self.request.user) | Q(step__recipe__shared=self.request.user))))
+                                                  'step_set__recipe_set', ).filter(
+            pk__in=coherent_ingredients(self.request.user, self.request.space).values('pk'),
+            step__space=self.request.space,
+            step__recipe__in=visible_recipes(self.request.user, self.request.space),
+        ).distinct()
 
         food = self.request.query_params.get('food', None)
         if food and re.match(r'^(\d)+$', food):
@@ -1730,8 +1815,12 @@ class StepViewSet(LoggingMixin, viewsets.ModelViewSet):
     pagination_class = DefaultPagination
 
     def get_queryset(self):
-        self.queryset = self.queryset.prefetch_related('recipe_set').filter(recipe__space=self.request.space).filter(
-            Q(recipe__private=False) | (Q(recipe__private=True) & (Q(recipe__created_by=self.request.user) | Q(recipe__shared=self.request.user))))
+        from cuaderno.services.costing import visible_recipes
+        from cuaderno.services.visibility import coherent_steps
+        self.queryset = self.queryset.prefetch_related('recipe_set').filter(
+            pk__in=coherent_steps(self.request.user, self.request.space).values('pk'),
+            recipe__in=visible_recipes(self.request.user, self.request.space),
+        ).distinct()
 
         recipes = self.request.query_params.getlist('recipe', [])
         query = self.request.query_params.get('query', None)
@@ -1823,6 +1912,13 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     permission_classes = [CustomRecipePermission & CustomTokenHasReadWriteScope]
     pagination_class = RecipePagination
 
+    def retrieve(self, request, *args, **kwargs):
+        from cuaderno.services.visibility import native_recipe_read_policy
+        instance = self.get_object()
+        context = self.get_serializer_context()
+        context['_cuaderno_recipe_policy'] = native_recipe_read_policy(instance, request)
+        return Response(self.get_serializer(instance, context=context).data)
+
     def get_queryset(self):
         share = self.request.GET.get('share', None)
 
@@ -1880,7 +1976,9 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
             return RecipeOverviewSerializer
         return self.serializer_class
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
+        Space.objects.select_for_update().get(pk=request.space.pk)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -1890,6 +1988,13 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         serializer = self.get_serializer(instance)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        from cuaderno.services.visibility import native_recipe_read_policy
+        Space.objects.select_for_update().get(pk=request.space.pk)
+        native_recipe_read_policy(self.get_object(), request)
+        return super().update(request, *args, **kwargs)
 
     @decorators.action(detail=True, methods=['PUT'], serializer_class=RecipeImageSerializer,
                        parser_classes=[MultiPartParser], )
@@ -2168,10 +2273,15 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
 
     @extend_schema(responses=RecipeSerializer(many=False))
     @decorators.action(detail=True, pagination_class=None, methods=['PATCH'], serializer_class=RecipeSerializer)
+    @transaction.atomic
     def delete_external(self, request, pk):
+        Space.objects.select_for_update().get(pk=request.space.pk)
         obj = self.get_object()
         if obj.get_space() != request.space and has_group_permission(request, ['user']):
             raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+
+        from cuaderno.services.visibility import native_recipe_read_policy
+        native_recipe_read_policy(obj, request)
 
         if obj.storage:
             get_recipe_provider(obj).delete_file(obj)
@@ -3197,10 +3307,17 @@ class FdcSearchView(APIView):
 # TODO add rate limiting
 # TODO add api tests
 # TODO initial request should include some sort of data, inadvertently doing a naked POST could make changes that weren't intended
+@transaction.atomic
 def reset_food_inheritance(request):
     """
     function to reset inheritance from api, see food method for docs
     """
+    from cuaderno.services.visibility import visible_foods
+    Space.objects.select_for_update().get(pk=request.space.pk)
+    if Food.objects.filter(space=request.space).exclude(
+        pk__in=visible_foods(request.user, request.space).values('pk'),
+    ).exists():
+        return Response({'detail': _('The foods are not available.')}, status=status.HTTP_400_BAD_REQUEST)
     try:
         Food.reset_inheritance(space=request.space)
         return Response({'message': 'success', }, status=status.HTTP_200_OK)

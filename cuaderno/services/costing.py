@@ -6,7 +6,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 
 from cookbook.models import UnitConversion
@@ -103,7 +103,9 @@ def _load_costing_context(recipe_cache, space_id, as_of) -> _CostingContext:
 def cost_recipe(recipe, servings, as_of=None, user=None) -> dict:
     from cuaderno.services.subrecipes import native_recipe_graph
 
-    roots, recipe_cache, _ = native_recipe_graph([recipe.pk], recipe.space_id, user or recipe.created_by)
+    roots, recipe_cache, _ = native_recipe_graph(
+        [recipe.pk], recipe.space_id, user or recipe.created_by, strict_leaf_scope=False,
+    )
     as_of = as_of or timezone.now()
     base_servings = recipe.servings or 1
     if base_servings <= 0:
@@ -135,6 +137,16 @@ def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context, *, factor
                     child, 1, as_of, warnings, (*path, recipe.pk), context, factor_ratio=factor_ratio,
                 ))
         for ingredient in step.ingredients.all():
+            # Keep the established incomplete/conversion contract for corrupt
+            # leaves before validation, headers or following Food.recipe.
+            # Never expose their labels or derive a zero cost from exclusion.
+            if (ingredient.space_id != context.space_id
+                    or (ingredient.food_id and ingredient.food.space_id != context.space_id)
+                    or (ingredient.unit_id and ingredient.unit.space_id != context.space_id)):
+                lines.append(_cost_ingredient(
+                    ingredient, 1, as_of, warnings, context, factor_ratio=factor_ratio,
+                ))
+                continue
             if not ingredient.is_header and not ingredient.no_amount:
                 # Validate before descending into a Food.recipe as well: its
                 # declared output must not acquire a second yield adjustment.
@@ -193,6 +205,10 @@ def _convert_native_quantity(amount, from_unit, to_unit, food, context):
 
 
 def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context, *, factor_ratio=None) -> CostResult:
+    if ingredient.space_id != context.space_id or (ingredient.food_id and ingredient.food.space_id != context.space_id):
+        return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
+    if ingredient.unit_id and ingredient.unit.space_id != context.space_id:
+        return CostResult("needs_conversion", None, None, None, ("sin_unidad",))
     if ingredient.is_header:
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("encabezado",))
     if ingredient.no_amount:
@@ -200,10 +216,6 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("excluido",))
     if ingredient.food_id is None:
         return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
-    if ingredient.space_id != context.space_id or ingredient.food.space_id != context.space_id:
-        return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
-    if ingredient.unit_id and ingredient.unit.space_id != context.space_id:
-        return CostResult("needs_conversion", None, None, None, ("sin_unidad",))
     if ingredient.amount is None:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
     used, _trace = ingredient_quantities(ingredient, factor, factor_ratio=factor_ratio)
@@ -274,6 +286,9 @@ def _sheet(lines: list[CostResult], warnings: list, base_servings: int, target: 
 def visible_recipes(user, space):
     from cookbook.models import Recipe
 
+    if not getattr(user, "is_authenticated", False):
+        return Recipe.objects.filter(space=space, private=False)
+    shared = Recipe.shared.through.objects.filter(recipe_id=OuterRef("pk"), user_id=user.pk)
     return Recipe.objects.filter(space=space).filter(
-        Q(private=False) | Q(private=True, created_by=user) | Q(private=True, shared=user)
-    ).distinct()
+        Q(private=False) | Q(created_by_id=user.pk) | Exists(shared)
+    )

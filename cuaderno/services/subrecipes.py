@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from decimal import Decimal, localcontext
 
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 
-from cookbook.models import Recipe, UnitConversion
+from cookbook.models import Ingredient, Recipe, Step, UnitConversion
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.production import assert_no_cycle
 from cuaderno.domain.units import convert_quantity, to_base
@@ -83,7 +83,7 @@ def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversi
     raise DomainError("yield_conversion_missing", f"No hay conversión de {from_unit.name} a {to_unit.name}.")
 
 
-def native_recipe_graph(recipe_ids, space, user=None):
+def native_recipe_graph(recipe_ids, space, user=None, *, strict_leaf_scope=True):
     from cuaderno.services.costing import visible_recipes
 
     allowed = visible_recipes(user, space) if user else Recipe.objects.filter(space=space)
@@ -95,16 +95,33 @@ def native_recipe_graph(recipe_ids, space, user=None):
             raise DomainError("recipe_graph_limit", "La ficha supera el límite de subrecetas.")
         if recipe_id in cache:
             return cache[recipe_id]
-        recipe = allowed.filter(pk=recipe_id).prefetch_related("steps__ingredients__food", "steps__ingredients__unit").first()
+        recipe = allowed.filter(pk=recipe_id).prefetch_related(Prefetch(
+            "steps", queryset=Step._base_manager.prefetch_related(Prefetch(
+                "ingredients", queryset=Ingredient._base_manager.select_related("food", "unit"),
+            )),
+        )).first()
         if recipe is None:
             raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
         cache[recipe_id] = recipe
         links = []
         for step in recipe.steps.all():
+            space_id = getattr(space, "pk", space)
+            if step.space_id != space_id:
+                raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
             if step.step_recipe_id:
                 links.append(step.step_recipe_id)
             for ingredient in step.ingredients.all():
-                if ingredient.food_id and ingredient.food.recipe_id:
+                foreign_leaf = (
+                    ingredient.space_id != space_id
+                    or (ingredient.food_id and ingredient.food.space_id != space_id)
+                    or (ingredient.unit_id and ingredient.unit.space_id != space_id)
+                )
+                if strict_leaf_scope and foreign_leaf:
+                    raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
+                # Costing degrades corrupt leaves to unknown, never follows a
+                # foreign Food's graph. Production must reject every FK.
+                if (ingredient.space_id == space_id and ingredient.food_id
+                        and ingredient.food.space_id == space_id and ingredient.food.recipe_id):
                     links.append(ingredient.food.recipe_id)
         edges[str(recipe.pk)] = [str(value) for value in links]
         for link in links:
@@ -130,6 +147,11 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None, *, factor_rat
             if step.step_recipe_id:
                 walk(cache[step.step_recipe_id], factor_ratio)
             for ingredient in step.ingredients.all():
+                space_id = getattr(space, "pk", space)
+                if (ingredient.space_id != space_id
+                        or (ingredient.food_id and ingredient.food.space_id != space_id)
+                        or (ingredient.unit_id and ingredient.unit.space_id != space_id)):
+                    raise DomainError("ingredient_scope", "Un ingrediente no está disponible en este espacio.")
                 if ingredient.is_header or ingredient.no_amount:
                     continue
                 if not ingredient.food_id or ingredient.amount <= 0:
@@ -137,6 +159,12 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None, *, factor_rat
                     continue
                 amount, yield_detail = ingredient_quantities(ingredient, factor_ratio=factor_ratio)
                 if ingredient.yield_ratio is not None or ingredient.quantity_basis != "gross":
+                    yield_detail.update({
+                        "food_id": ingredient.food_id,
+                        "food_name": ingredient.food.name if ingredient.food_id else None,
+                        "unit_id": ingredient.unit_id,
+                        "unit_name": ingredient.unit.name if ingredient.unit_id else None,
+                    })
                     yield_details.append(yield_detail)
                 child_id = ingredient.food.recipe_id
                 if child_id:

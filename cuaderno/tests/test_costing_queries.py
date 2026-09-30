@@ -54,8 +54,8 @@ class CostingQueryTests(TestCase):
                 )
             self.recipe.steps.add(step)
 
-    def test_fifteen_ingredients_are_costed_with_nine_batched_queries(self):
-        with scopes_disabled(), self.assertNumQueries(9):
+    def test_fifteen_ingredients_are_costed_with_seven_joined_queries(self):
+        with scopes_disabled(), self.assertNumQueries(7):
             result = cost_recipe(self.recipe, "1", user=self.user)
 
         self.assertEqual(result["status"], "complete")

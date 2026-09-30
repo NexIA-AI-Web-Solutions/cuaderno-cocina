@@ -17,6 +17,7 @@ from cuaderno.domain.errors import DomainError
 from cuaderno.models import PackageFormat
 from cuaderno.services.costing import visible_recipes
 from cuaderno.services.price_history import price_history_payload, recipe_price_impact_payload
+from cuaderno.services.visibility import visible_packages
 
 
 _ASCII_POSITIVE_ID = re.compile(r"^[1-9][0-9]*$")
@@ -107,7 +108,7 @@ class RecipePriceImpactView(APIView):
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data
         package = get_object_or_404(
-            PackageFormat.objects.filter(space=request.space),
+            visible_packages(request.user, request.space),
             pk=values["package"],
         )
         as_of = timezone.now()

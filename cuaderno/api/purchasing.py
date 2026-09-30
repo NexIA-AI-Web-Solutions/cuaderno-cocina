@@ -19,10 +19,11 @@ from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWr
 from cookbook.models import InventoryEntry
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import canonical_decimal, parse_decimal
-from cuaderno.models import PurchaseOffer, PurchaseReceipt, SpaceProfile
+from cuaderno.models import PurchaseReceipt, SpaceProfile
 from cuaderno.services.inventory_access import household_inventory
 from cuaderno.services.purchasing import (
     accessible_orders,
+    accessible_offers,
     create_offer,
     create_order,
     receive_order,
@@ -135,7 +136,7 @@ class PurchaseOfferView(APIView):
 
     def get(self, request):
         _integral(request.space)
-        rows = PurchaseOffer.objects.filter(space=request.space).select_related("package", "supplier").order_by(
+        rows = accessible_offers(request.user, request.space).select_related("package", "supplier").order_by(
             "-valid_from", "-pk"
         )[:100]
         return Response([serialize_offer(row) for row in rows])
@@ -168,7 +169,7 @@ class PurchaseOrderView(APIView):
         order = get_object_or_404(accessible_orders(request), pk=order_id)
         serializer = OrderActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        order = transition_order(order=order, action=serializer.validated_data["action"])
+        order = transition_order(request=request, order=order, action=serializer.validated_data["action"])
         return Response(serialize_order(order))
 
 

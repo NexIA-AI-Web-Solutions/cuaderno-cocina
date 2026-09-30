@@ -2,11 +2,10 @@ import json
 
 import pytest
 from django.contrib import auth
-from django.db.models import OuterRef, Subquery
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
-from cookbook.models import Ingredient, Step
+from cookbook.models import Food, Ingredient, Step, Unit
 
 LIST_URL = 'api:step-list'
 DETAIL_URL = 'api:step-detail'
@@ -28,10 +27,17 @@ def test_list_space(recipe_1_s1, u1_s1, u1_s2, space_2):
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 0
 
     with scopes_disabled():
+        step_ids = list(recipe_1_s1.steps.values_list('pk', flat=True))
+        ingredients = Ingredient.objects.filter(step__pk__in=step_ids).distinct()
+        ingredient_ids = list(ingredients.values_list('pk', flat=True))
+        food_ids = list(ingredients.exclude(food_id=None).values_list('food_id', flat=True).distinct())
+        unit_ids = list(ingredients.exclude(unit_id=None).values_list('unit_id', flat=True).distinct())
         recipe_1_s1.space = space_2
         recipe_1_s1.save()
-        Step.objects.update(space=Subquery(Step.objects.filter(pk=OuterRef('pk')).values('recipe__space')[:1]))
-        Ingredient.objects.update(space=Subquery(Ingredient.objects.filter(pk=OuterRef('pk')).values('step__recipe__space')[:1]))
+        Step.objects.filter(pk__in=step_ids).update(space=space_2)
+        Ingredient.objects.filter(pk__in=ingredient_ids).update(space=space_2)
+        Food.objects.filter(pk__in=food_ids).update(space=space_2)
+        Unit.objects.filter(pk__in=unit_ids).update(space=space_2)
 
     assert json.loads(u1_s1.get(reverse(LIST_URL)).content)['count'] == 0
     assert json.loads(u1_s2.get(reverse(LIST_URL)).content)['count'] == 2
