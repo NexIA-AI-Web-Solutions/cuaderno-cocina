@@ -31,6 +31,8 @@ def coherent_steps(user, space):
 
 
 def visible_foods(user, space, *, recipes=None):
+    foods = Food.objects.filter(space=space)
+    linked_foods = foods.filter(recipe_id__isnull=False)
     # Native full_name and parent expose ancestry. Hide the whole inaccessible
     # branch rather than returning a descendant with a private ancestor label.
     hidden_ancestors = Food.objects.filter(space=space, recipe_id__isnull=False).exclude(
@@ -38,7 +40,9 @@ def visible_foods(user, space, *, recipes=None):
     ).annotate(_descendant_prefix=Substr(OuterRef("path"), 1, Length("path"))).filter(
         path=F("_descendant_prefix"),
     )
-    return Food.objects.filter(space=space).filter(~Exists(hidden_ancestors))
+    # Keep the fast path inside the same statement/snapshot as the ACL. A
+    # Python exists() check would race with a newly linked private ancestor.
+    return foods.filter(~Exists(linked_foods) | ~Exists(hidden_ancestors))
 
 
 def native_recipe_read_policy(root, request):
