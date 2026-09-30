@@ -1,11 +1,14 @@
 import unittest
+from unittest.mock import patch
 
 from scripts.cuaderno.release_http_smoke import SmokeFailure
 from scripts.cuaderno.release_preparation_smoke import (
     _assert_previous_services,
     _find_or_create_service,
     _frozen_signature,
+    _inventory_amount_rows,
     _non_target_state,
+    _native_stock_amount_token,
     _preparation_path,
     _preparation_payload,
     _restore_original,
@@ -44,6 +47,22 @@ def preparation_payload(*, revision=REVISION_A, checked=False, extra=None, **ite
 
 
 class ReleasePreparationSmokeUnitTests(unittest.TestCase):
+    def test_inventory_adapter_preserves_native_numeric_rows_for_read_only_comparison(self):
+        rows = {"results": [{"id": 2, "amount": 5.0}, {"id": 1, "amount": 3}]}
+        with patch("scripts.cuaderno.release_preparation_smoke._snapshot", return_value=rows):
+            self.assertEqual(
+                _inventory_amount_rows(object()),
+                [(1, ("int", "3")), (2, ("float", "5.0"))],
+            )
+
+    def test_native_inventory_amount_token_accepts_only_finite_json_numbers_without_decimal_claims(self):
+        self.assertEqual(_native_stock_amount_token(0), ("int", "0"))
+        self.assertEqual(_native_stock_amount_token(2.5), ("float", "2.5"))
+        self.assertEqual(_native_stock_amount_token(-0.0), ("float", "-0.0"))
+        for value in (True, False, "2.5", None, float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value), self.assertRaises(SmokeFailure):
+                _native_stock_amount_token(value)
+
     def test_complete_typed_preparation_contract_is_accepted(self):
         revision, items = _preparation_payload(preparation_payload(), 11, checked=False)
         self.assertEqual(revision, REVISION_A)

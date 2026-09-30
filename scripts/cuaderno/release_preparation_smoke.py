@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from datetime import datetime
@@ -153,15 +154,23 @@ def _assert_previous_services(previous: dict[int, dict], current_rows: list[dict
             raise SmokeFailure("El smoke alteró un servicio que ya estaba confirmado.")
 
 
-def _inventory_amount_rows(session: HttpSession) -> list[tuple[int, str]]:
+def _native_stock_amount_token(value) -> tuple[str, str]:
+    """Preserve the decoded native JSON number; this is identity, not money math."""
+    if type(value) is int:
+        return "int", json.dumps(value, allow_nan=False, separators=(",", ":"))
+    if type(value) is float and math.isfinite(value):
+        return "float", json.dumps(value, allow_nan=False, separators=(",", ":"))
+    raise SmokeFailure("inventory.amount no es un número JSON nativo finito.")
+
+
+def _inventory_amount_rows(session: HttpSession) -> list[tuple[int, tuple[str, str]]]:
     rows = _items(_snapshot(session, INVENTORY_PATH))
     result = []
     for row in rows:
         if not isinstance(row, dict):
             raise SmokeFailure("Inventario devolvió una fila inválida.")
         identifier = _positive_id(row.get("id"), "inventory.id")
-        amount = _decimal(row.get("amount"), "inventory.amount")
-        result.append((identifier, format(amount, "f")))
+        result.append((identifier, _native_stock_amount_token(row.get("amount"))))
     return sorted(result)
 
 
