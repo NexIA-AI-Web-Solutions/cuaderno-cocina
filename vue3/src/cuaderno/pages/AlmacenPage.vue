@@ -13,11 +13,21 @@
                     <v-card-title>Movimiento manual</v-card-title>
                     <v-card-subtitle>Para recepciones de pedidos usa el flujo de compra superior.</v-card-subtitle>
                     <v-card-text>
-                        <v-model-select v-model="move.entry" model="InventoryEntry" label="Existencia del inventario" search-on-load />
+                        <v-model-select v-model="move.entry" model="InventoryEntry" label="Existencia del inventario" search-on-load :disabled="moving" />
                         <v-btn :to="{name: 'PantryPage'}" variant="text" min-height="44" class="mb-3">Crear o consultar existencias en la despensa</v-btn>
-                        <v-select v-model="move.kind" label="Tipo" :items="kinds" item-title="title" item-value="value" />
-                        <v-text-field v-model="move.quantity" label="Cantidad" inputmode="decimal" />
-                        <v-btn color="primary" class="mr-2" :loading="moving" min-height="44" @click="requestMove">Aplicar movimiento</v-btn>
+                        <v-select v-model="move.kind" label="Tipo" :items="kinds" item-title="title" item-value="value" :disabled="moving" />
+                        <v-text-field v-model="move.quantity" label="Cantidad" inputmode="decimal" :disabled="moving" />
+                        <v-text-field
+                            v-if="move.kind === 'waste'"
+                            v-model="move.cause"
+                            label="Motivo del desperdicio"
+                            aria-describedby="waste-cause-counter"
+                            :disabled="moving"
+                        />
+                        <p v-if="move.kind === 'waste'" id="waste-cause-counter" class="text-caption mt-n3 mb-3" aria-live="polite">
+                            {{ standaloneWasteCauseLength(move.cause) }}/256 caracteres
+                        </p>
+                        <v-btn color="primary" class="mr-2" :loading="moving" :disabled="moving" min-height="44" @click="requestMove">Aplicar movimiento</v-btn>
                         <v-btn variant="text" :loading="loadingHistory" min-height="44" @click="loadHistory">Actualizar historial</v-btn>
                         <p class="mt-2" role="status" aria-live="polite">{{ moveMessage }}</p>
                     </v-card-text>
@@ -34,8 +44,9 @@
                                     existencia {{ row.entry }} · saldo {{ row.balance }}
                                     <span v-if="row.reverses"> · revierte {{ row.reverses }}</span>
                                     <span v-if="isPurchaseMovement(row)"> · recepción de pedido {{ row.metadata_snapshot.origin.id }}</span>
-                                    <span v-if="replacementValuationLabel(row)" class="d-block mt-1">{{ replacementValuationLabel(row) }}</span>
-                                    <span v-if="isServiceProductionMovement(row)" class="d-block mt-1">
+                                    <span v-if="replacementValuationLabel(row)" class="movement-detail d-block mt-1">{{ replacementValuationLabel(row) }}</span>
+                                    <span v-if="standaloneWasteCause(row)" class="movement-detail d-block mt-1">Motivo: {{ standaloneWasteCause(row) }}</span>
+                                    <span v-if="isServiceProductionMovement(row)" class="movement-detail d-block mt-1">
                                         Movimiento de producción: la reversión completa del servicio aún no está disponible.
                                     </span>
                                 </v-list-item-subtitle>
@@ -74,11 +85,14 @@ import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError, decimalInput} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
 import {
+    buildStandaloneWasteCause,
     canReverseGeneric,
     hasReplacementValuation,
     isPurchaseMovement,
     isServiceProductionMovement,
     replacementValuationLabel,
+    standaloneWasteCause,
+    standaloneWasteCauseLength,
 } from '@/cuaderno/stockMovementUi'
 
 const kinds = [
@@ -89,7 +103,7 @@ const kinds = [
 const editionError = ref('')
 const moveMessage = ref('')
 const history = ref<any[]>([])
-const move = reactive({entry: null as any, kind: 'receipt', quantity: ''})
+const move = reactive({entry: null as any, kind: 'receipt', quantity: '', cause: ''})
 const moving = ref(false)
 const loadingHistory = ref(false)
 const confirmation = ref<'waste' | 'reverse' | null>(null)
@@ -104,25 +118,62 @@ function kindLabel(kind: string) { return kinds.find(item => item.value === kind
 function requestMove() {
     if (moving.value) return
     if (!move.entry?.id || !decimalInput(move.quantity)) { moveMessage.value = 'Selecciona una existencia e indica una cantidad positiva.'; return }
+    if (move.kind === 'waste' && !buildStandaloneWasteCause(move.cause)) {
+        moveMessage.value = 'Indica un motivo del desperdicio de 1 a 256 caracteres.'
+        return
+    }
     if (move.kind === 'waste') confirmation.value = 'waste'
     else sendMove()
 }
 function confirmMovement() {
     const action = confirmation.value
     confirmation.value = null
-    if (action === 'reverse') reverse(reversal.value)
-    else sendMove()
+    if (action === 'reverse') return reverse(reversal.value)
+    return sendMove()
 }
 async function sendMove() {
     if (moving.value) return
+    const quantity = decimalInput(move.quantity)
+    const cause = move.kind === 'waste' ? buildStandaloneWasteCause(move.cause) : null
+    if (!move.entry?.id || !quantity) { moveMessage.value = 'Selecciona una existencia e indica una cantidad positiva.'; return }
+    if (move.kind === 'waste' && !cause) {
+        moveMessage.value = 'Indica un motivo del desperdicio de 1 a 256 caracteres.'
+        return
+    }
     moving.value = true
-    const payload = {entry: move.entry.id, kind: move.kind, quantity: decimalInput(move.quantity)}
-    const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/', {
-        method: 'POST', body: JSON.stringify({...payload, idempotency_key: movementKey(payload)}),
-    }))
-    moving.value = false
-    moveMessage.value = ok ? `Saldo ${data.balance}.` : apiError(status, data)
-    if (ok) { move.quantity = ''; pendingMovement.complete('cuaderno-stock', payload); await loadHistory() }
+    const payload = {
+        entry: move.entry.id,
+        kind: move.kind,
+        quantity,
+        ...(cause ? {cause} : {}),
+    }
+    const submittedDraft = {
+        entry: move.entry,
+        kind: move.kind,
+        quantity: move.quantity,
+        cause: move.cause,
+    }
+    let reload = false
+    try {
+        const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/', {
+            method: 'POST', body: JSON.stringify({...payload, idempotency_key: movementKey(payload)}),
+        }))
+        moveMessage.value = ok ? `Saldo ${data.balance}.` : apiError(status, data)
+        if (ok) {
+            const draftUnchanged = move.entry === submittedDraft.entry
+                && move.kind === submittedDraft.kind
+                && move.quantity === submittedDraft.quantity
+                && move.cause === submittedDraft.cause
+            if (draftUnchanged) { move.quantity = ''; move.cause = '' }
+            pendingMovement.complete('cuaderno-stock', payload)
+            reload = true
+        }
+    } catch {
+        moveMessage.value = 'No se pudo registrar el movimiento. Conservamos los datos para que puedas volver a intentarlo.'
+    } finally {
+        moving.value = false
+    }
+    if (reload) await loadHistory()
 }
 async function reverse(row: any) {
     if (moving.value || !canReverseGeneric(row, history.value)) return
@@ -146,5 +197,6 @@ onMounted(loadHistory)
 </script>
 
 <style scoped>
+.movement-detail { overflow-wrap: anywhere; }
 @media print { .print-card { break-inside: avoid; } }
 </style>

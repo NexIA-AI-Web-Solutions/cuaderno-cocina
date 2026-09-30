@@ -14,6 +14,22 @@ function decimalText(value: unknown): value is string {
     return typeof value === 'string' && /^\d+(?:\.\d+)?$/.test(value)
 }
 
+export function buildStandaloneWasteCause(value: unknown): string | null {
+    if (typeof value !== 'string') return null
+    if (Array.from(value).some(character => {
+        const codePoint = character.codePointAt(0) ?? -1
+        return codePoint <= 0x1f
+            || (codePoint >= 0x7f && codePoint <= 0x9f)
+            || (codePoint >= 0xd800 && codePoint <= 0xdfff)
+    })) return null
+    const cause = value.trim()
+    return cause && Array.from(cause).length <= 256 ? cause : null
+}
+
+export function standaloneWasteCauseLength(value: unknown): number {
+    return typeof value === 'string' ? Array.from(value.trim()).length : 0
+}
+
 export function movementOriginType(row: unknown): string | null {
     const movement = record(row)
     const metadata = record(movement?.metadata_snapshot)
@@ -27,6 +43,14 @@ export function isPurchaseMovement(row: unknown): boolean {
 
 export function isServiceProductionMovement(row: unknown): boolean {
     return movementOriginType(row) === 'service_plan'
+}
+
+export function standaloneWasteCause(row: unknown): string | null {
+    if (movementOriginType(row) !== 'standalone_waste') return null
+    const movement = record(row)
+    const metadata = record(movement?.metadata_snapshot)
+    const origin = record(metadata?.origin)
+    return buildStandaloneWasteCause(origin?.cause)
 }
 
 export function canReverseGeneric(row: unknown, history: unknown): boolean {

@@ -6,12 +6,56 @@ import ts from 'typescript'
 const source = readFileSync(new URL('./stockMovementUi.ts', import.meta.url), 'utf8')
 const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
 const {
+    buildStandaloneWasteCause,
     canReverseGeneric,
     hasReplacementValuation,
     isPurchaseMovement,
     isServiceProductionMovement,
     replacementValuationLabel,
+    standaloneWasteCause,
+    standaloneWasteCauseLength,
 } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+
+test('standalone waste cause is trimmed, required and bounded to 256 characters', () => {
+    assert.equal(buildStandaloneWasteCause('  Rotura durante el emplatado  '), 'Rotura durante el emplatado')
+    for (const invalid of ['', '   ', 'x'.repeat(257), null, true]) {
+        assert.equal(buildStandaloneWasteCause(invalid), null)
+    }
+    assert.equal(buildStandaloneWasteCause('x'.repeat(256)), 'x'.repeat(256))
+})
+
+test('standalone cause rejects controls and isolated surrogates but counts Unicode code points', () => {
+    for (const invalid of [
+        'limpieza\u0000',
+        'limpieza\u001fpendiente',
+        'limpieza\u007fpendiente',
+        'limpieza\u0085pendiente',
+        '\ud800',
+        '\udc00',
+        `válido${'\ud800'}final`,
+    ]) {
+        assert.equal(buildStandaloneWasteCause(invalid), null)
+    }
+    assert.equal(buildStandaloneWasteCause('🙂'.repeat(256)), '🙂'.repeat(256))
+    assert.equal(buildStandaloneWasteCause('🙂'.repeat(257)), null)
+    assert.equal(standaloneWasteCauseLength('  ' + '🙂'.repeat(256) + '  '), 256)
+    assert.equal(standaloneWasteCauseLength(null), 0)
+})
+
+test('history exposes only the standalone cause field from frozen origin metadata', () => {
+    const standalone = movement({
+        metadata_snapshot: {
+            origin: {
+                type: 'standalone_waste',
+                cause: '  Envase roto  ',
+                original_recipe: {private_instruction: '<script>secret</script>'},
+            },
+        },
+    })
+    assert.equal(standaloneWasteCause(standalone), 'Envase roto')
+    assert.equal(standaloneWasteCause(movement({metadata_snapshot: {origin: {type: 'service_plan', cause: 'x'}}})), null)
+    assert.equal(standaloneWasteCause(movement()), null)
+})
 
 function movement(overrides = {}) {
     return {id: 7, kind: 'waste', reverses: null, metadata_snapshot: {}, ...overrides}
