@@ -1,27 +1,31 @@
 # Aceptación final
 
-Snapshot local del 2026-09-30: imagen efectiva `59172af037da`, build `063934Z-local-up-97392261`, cookbook0243/cuaderno0016. Source ref y digest completos en STATUS. G7 abierto: no es el artefacto final del scope. Las casillas compuestas quedan abiertas si falta cualquier parte.
+Checkpoint local del 30 de septiembre de 2026: base funcional `cb474ccf9`. Preview933 healthy, build `185612Z-local-up-31ecfe42` PASS1266.065s; fuente exacta en STATUS. PyJWT2.15.0 observado y4securityPASS185753Z. Audit185939Z exit1 conserva únicamente advisory OAuthlib por versión, con backport exacto aplicado. Restore933190523Z y rollback933191050Z PASS sobre destinos nuevos. G7 abierto; guardFood/Package/JIT/cierrePython153/scanner nuevos commits todavía fuera de preview. Regresión89PG PASS202249Z/390.970s; último benchmark203010Z RED5, no proceso activo.
 
-- [x] Base del SHA fijado, historia y avisos preservados.
-- [ ] UI Tandoor preservada y módulos visuales verificados en navegador.
+- [x] Base SHA fijado, historia y avisos preservados.
+- [ ] UI Tandoor y módulos verificados en navegador.
 - [x] Sin runtime de Mealie/KitchenOwl/Grocy.
-- [ ] Flujo Esencial500/17 completo, sin stock obligatorio, incluido recorrido visual.
+- [ ] Esencial500/17 completo, incluido recorrido visual y sin stock obligatorio.
 - [ ] Profesional1000/20 e Integral1500/30 completos.
-- [ ] Dominio, PostgreSQL real, regresión nativa vigente y navegadores pasan.
-- [ ] Matriz completa de privacidad/Spaces/export/media/roles verificada.
-- [ ] Ningún API/producto mock en entrega; montaje SFC unitario no equivale a E2E.
+- [ ] Dominio, PostgreSQL real, regresión nativa final y navegadores pasan.
+- [ ] Matriz completa privacidad/Spaces/export/media/roles verificada.
+- [ ] Ningún API/producto mock; montaje SFC unitario no equivale a E2E.
 - [ ] Concurrentes/retries de todos los escritores no duplican movimientos.
-- [ ] Build del artefacto final y migración desde baseline pasan. Candidato591: build PASS; `070137Z-migrations-c39da16a` PASS hasta0016, con conservación de datos nativos y checklist real. No baseline socketHTTP/browser.
-- [ ] Backup/restore del artefacto final y rollback comprobados. Candidato591: `065043Z-restore-84bdbe5b` PASS,114 tablas/931 filas/110 secuencias/3 media; dos ítems reales de preparación y par desperdicio/reversión. Rollback completo pendiente.
-- [ ] Precios comerciales/ediciones y traducciones completos y revisados.
-- [ ] SBOM empacado, licencias/procedencia y patches completos. Estructura CycloneDX validada:453 componentes frontend stageLinux preservado en591,451 host y153 Python runtime; no equivale al cierreJS empacado ni a escaneo OS.
-- [ ] Performance/storage cumplen presupuestos. Benchmark concurrente RED3 conservado.
-- [ ] Comandos exactos de arranque y tests finales reproducidos.
-- [ ] Revisión independiente final aprobada con evidencia.
-- [x] Alcances externos identificados y separados de la aceptación local; no se ejecutaron iPad físico, migración de cliente ni despliegue VPS.
+- [ ] Build final y migration-from-pin pasan. Build933 PASS; upgrade desde pin hasta591070137Z histórico, repetir sobre933.
+- [ ] Backup/restore y rollback del artefacto final comprobados.933190523Z/191050Z PASS114tablas/945filas/110secuencias/3media/fingerprint idéntico; repetir si se cambia artefacto. Destinos nuevos, no activación/downgrade vivo.
+- [ ] Precios metadata comercial, ediciones y traducciones completos/revisados.
+- [ ] SBOM empacado, licencias/procedencia/patches completos.933153Python191311Z/453frontend191332Z PASS; no cierreJS. Cierre153versions3ea8bf323/test7GREEN195519Z, nuevo build pendiente; no bytes/OS congelados. Grype0.119.0/DBhash fijos y auditor11GREEN195812Z/reviewfresh; escaneo real pendiente.
+- [ ] Performance/storage cumplen.203010Z RED5 conjitoff+Packagepolicy directo: coste303.960/15SQL falla300; servicios226.423seq y movimientos213.380seq cumplen500; concurrentes1026.090/1398.686 y formatos530.232seq/2158.155conc fallan500. Dataset/umbrales/outliers intactos. PredicadoPackage reduce EXPLAIN712.464→53.789ms, no P95global.
+- [ ] Comandos exactos finales de arranque y tests reproducidos.
+- [ ] Revisión independiente final aprobada.
+- [x] Externos separados: no iPad físico, migración cliente ni despliegue VPS ejecutados.
 
-Resultados del candidato: integración250/250 PASS; permisos17/17 PASS; preparación17 y helpersUI10/SFCvirtual3 PASS; causaAPI13/helpers7/SFC3 PASS. HTTP desperdicio PASS sobre591; preparación/precios históricos PASS sobre c07. Typecheck efectivo RED626, cero Cuaderno/service-worker; lint Cuaderno exit0. Regresión nativa050917Z exit124timeout1200 pese a salida1279passed en1243.57s; nuevo perfil18606 en curso, no se presenta como PASS. Runtime audit070438Z exit1 sobre591 por aviso OAuthlib conservado por versión pese al backport exacto; sin consultas PyPI irresueltas; SBOM153 validado070555Z.
+Backend focal206PASS170621Z, merma15/roles8/grupos17PASS40 170945Z, ratios91PASS164752Z. UI merma21/roles6PASS170844Z/170825Z son SFCvirtual sin DOM. Lint171100Z exit0. API674PASS180222Z/other571PASS174727Z con backend2e/PyJWT2.14; views34PASS181023Z con2e/PyJWT2.15. Particiones disjuntas, no todos1279 bajo dependencia idéntica. OAuth50PASS180814Z después de instalar2.15 enG0. Integración341PASS115316Z histórica, ampliación/rerun pendientes.
 
-Faltan valoración/desperdicio vinculado, matriz operativa de roles, batching/rendimiento, intercambio completo, rollback, cierre exactoJS/escaneo OS, capturas y firma G7. El SBOM del stage453 sí está empacado en591, no es el cierreJS. B04 impide navegador autorizado; no certificación física iPad. Export antiguo bloquea solo su extractor.
+HTTP real en anteriored4: genérico173400Z/precios174053Z/preparación174430Z/reversión181056Z/waste181249Z/lecturas181533Z PASS. Reversión root23unitPASS180809Z/reviewfresh/commit0c6123402 y nuevosservicios/movimientos conservados; lecturas12unitPASS181505Z/HTTP181533Z/reviewfresh/commitbb6a6f7f9. Estos resultados no se atribuyen automáticamente a933.
 
-No marcar por intención. Adjuntar commit, entorno, comandos, exit codes y revisión. Evidencia: [continuación](evidence/2026-09-30-continuacion.md), [estado](STATUS.md), [reanudación](RESUME.md) y [procedencia](SBOM_PROVENANCE.md).
+Typecheck626RED/ceroCuaderno frente baseline650; ningún PASS vacuo. Browser autorizado B04 no disponible, sin capturas/responsive/impresión comprobadas. Importador genérico operativo: antiguo export bloquea solo extractor. **Node frontend no se copia, pero la dependencia Python nativa nodejs-wheel-binaries contiene un binario Node24.19.0**; no repetir «Node ausente» sin ese matiz.
+
+Pendientes ejecutables: upgrade/HTTP serial y nuevo build con cambios revisados, recuperación y auditorías de ese artefacto; integración ampliada; concurrentes y coste/listaformatos aúnRED203010Z (regresión89PASS202249Z); cierreJS, escaneoOS y reconciliación final de manuales/registro/tasks. No marcado por intención ni aprobación global derivada de focos.
+
+Resultados y limitaciones: [evidencia](evidence/2026-09-30-continuacion.md), [estado](STATUS.md), [checkpoint operativo](RESUME.md), [procedencia](SBOM_PROVENANCE.md). No publicar ni probar contra datos reales.

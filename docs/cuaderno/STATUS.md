@@ -1,73 +1,57 @@
 # Estado del producto
 
-Actualización: 30 de septiembre de 2026. G7 sigue abierto. El propietario autorizó trabajo local; no hubo push, publicación, acceso a datos reales ni despliegue VPS. Los agentes de esta ronda son GPT-6.1 Sol, conforme a la restricción Sol6.1/Luna6. No se atribuye un modelo efectivo a la sesión principal sin evidencia del cliente.
+Actualización local del 30 de septiembre de 2026. HEAD `cb474ccf9`, rama `cuaderno/main`; G7 no firmado. Solo agentes hijos GPT-6.1 Sol, según la restricción Sol6.1/Luna6 del propietario; modelo efectivo de raíz no atribuido. Sin push, publicación, VPS, migración del cliente ni datos reales.
 
-## Preview y código
+## Preview y código efectivo
 
-Abre http://127.0.0.1:18081. La aplicación ejecuta Tandoor derivado, Django/DRF, Vue/Vuetify y PostgreSQL; las referencias donantes no participan en runtime.
+Abre http://127.0.0.1:18081. Producto real derivado de Tandoor: Django/DRF, Vue/Vuetify y PostgreSQL. Los donantes no participan en runtime. Esencial500€+17€/mes, Profesional1000€+20€/mes e Integral1500€+30€/mes son metadata comercial; no se retiran funciones nativas útiles.
 
-- Imagen: `sha256:59172af037dad2c4cc5762ecd5df24396de23b6bb05b78e5ac3d11d9d0edad9f`.
-- Código efectivo: `88be31ec5a689699277c7e9c55aa10552344fb47+worktree.e9babaf9a96dce8dffbb87680f19d695a1e11d2e5d9c618f4baf07e8b4f734cc`.
-- Build/arranque: `063934Z-local-up-97392261` PASS256.5s. Inspecciones de web e imagen coinciden; readiness healthy, tests de cookbook/cuaderno excluidos.
-- Esquema: cookbook0243 y cuaderno0016. Incluye inventario de build8231ee566, protección de reversión413abf14e, valoraciónd4e29a10b y causa53e2c0671/UI88be31ec5. Cambios posteriores de documentación/herramientas no alteran esa identidad compilada.
+- Imagen vigente: `sha256:9330b8cc446d9ef2924f4153b042fc578497aefad7443ad799baf2006554ae06`.
+- Fuente efectiva: `bb6a6f7f9930080d0ad2b5c333d43f0e9a7cbc3b+worktree.024c8ef20ad7005cf4fab4a9ddd1719deef04e1c892a0f21671d7ebda26a71c2`.
+- Build/arranque `185612Z-local-up-31ecfe42` PASS1266.065s, healthy. Reinstalación completa de dependencias Python y pip check correcto; frontend previamente construido desde lock reutilizado por cache. Fuente congelada hasta terminar; hash reobservado024c8 durante el build, identidad runtime coincidente.
+- Incluye privacidad nativa, conversiones, densidad, precisión, alérgenos, merma teórica, roles y reversión completa revisados; ahora PyJWT2.15.0 comprobado dentro de runtime. Comprobación de esquema cookbook0243/cuaderno0016 en anterior imagened4; nueva imagen no añade migraciones. Upgrade desde pin del artefacto nuevo aún pendiente.
+- No se copian Git, fuentes Vue, node_modules ni tests cookbook/cuaderno, comprobado dentro del runtime. **Corrección de alcance:** la dependencia Python nativa nodejs-wheel-binaries24.19.0 sí incluye `venv/lib/python3.13/site-packages/nodejs_wheel/bin/node`. La afirmación anterior «Node ausente» era demasiado amplia; el stage frontend no se copia, pero existe ese binario transitivo nativo.
+- ed4 y591 se conservan como imágenes anteriores. Restore933190523Z y rollback933191050Z PASS, bundle190117Z-1dc8f603:114tablas/945filas/110secuencias/3media y fingerprint funcional idéntico. Siempre BD/media nuevas; no activar rollback ni downgrade de esquema vivo. Upgrade933 desde pin todavía pendiente.
 
-Cuentas DEMO de uso local: `demo-esencial`, `demo-profesional`, `demo-integral`. Contraseña e instrucciones en [MANUAL_ES](MANUAL_ES.md). El entorno separado G0/18080 sirve para tests y no es el artefacto de entrega.
+Cuentas SOLO DEMO locales: `demo-esencial`, `demo-profesional`, `demo-integral`; contraseña en [MANUAL_ES](MANUAL_ES.md). Spaces sintéticos independientes; seis servicios conservados y saldo Integral aceite5L tras reversión. G0/18080 es entorno separado de tests, no el artefacto de entrega.
 
-## Resultado vigente
+## Resultados reales
 
 | Comprobación | Resultado y alcance |
 |---|---|
-| Integración PostgreSQL candidata | `062615Z-integration-32108451` PASS250/250 en317.377s; incluye causa13/permisos17/reversión4/valoración11. No atribuir al runtime c07 anterior. |
-| Autorización entre Spaces | `043447Z-group-cache-isolation-0b9eea69` PASS17/17, incluidos cuatro casos de caracterización posteriores. No sumar17 a218 como suites disjuntas. |
-| Valoración WASTE | `053556Z-waste-valuation-4d88d0fa` PASS11/11; reposición congelada, unknown=null, gratis explícito0, scope y metadata legacy. Review independiente, commitd4e29a10b compilado en591. |
-| Reversión parcial candidata | RED3/4→`052148Z-production-reversal-integrity-71a44aa3` PASS4; compras documental `053141Z-purchase-documents-a246a118` PASS2. Commit413abf14e; reversión completa del servicio sigue pendiente. |
-| API causa candidata | `061901Z-waste-api-4b2417f8` PASS13, review independiente y commit53e2c0671. Reintentos legacy preservados sin crear nuevos desperdicios sin motivo. |
-| UI historial/formulario | Helpers7 `063255Z-stock-movement-ui-3015d95b` y SFCvirtual3 `063252Z-almacen-panel-a7b784e7` PASS; draft/key/error/carrera de POST, review independiente y commit88be31ec5 compilado. No DOM/browser. |
-| HTTP desperdicio | `064607Z-release-waste-3096d45b` PASS591:0.125L→0.8EUR, replay/conflicto/CSRF/ediciones y movimiento4/reversal5; saldo5 restaurado sin borrar logs. |
-| Preparación persistente | PostgreSQL17, helperUI10 y SFCvirtual3 pasan. El montaje virtual no prueba DOM, Vuetify real ni navegador. |
-| HTTP preparación | `043636Z-release-preparation-cf59c1d3` PASS tres cuentas/c07; reutiliza dos servicios DEMO, cuatro cambios de checklist, saldos/snapshots intactos. Auditoría no verificada por ese HTTP. |
-| HTTP precios | `043854Z-release-prices-0381a794` PASS tres cuentas/c07; coste2.56, anterior desconocido, vacíos400/extremos414, cero escrituras del dominio. |
-| Migración desde pin | `070137Z-migrations-c39da16a` PASS513.173s: pin689 sin Cuaderno→imagen591 hasta0016; login/GET200/POST201/reopen200 mediante DjangoClient y PostgreSQL real, receta creada por API preservada; privada/Step/stock5.125/hash financiero y checklist check/stale/noop. No socketHTTP/browser. |
-| Backup/restore | `065043Z-restore-84bdbe5b` PASS591:114tablas/931filas/110secuencias/3media;3usuarios/5costes/3saldos/4finanzas/4servicios/4preparaciones con2ítems; incluye par desperdicio/reversión en hash de tablas. |
-| Suite nativa | `050917Z-native-regression-5d9c2d8b` exit124timeout1200, salida1279passed/1warning en1243.57s, ejecutada sola. Resultado no aceptado; diagnóstico de duración pendiente. |
-| Typecheck efectivo | `063242Z-typecheck-3ac97691` RED626, cero Cuaderno/service-worker; baseline pin650. Los antiguos PASS sin `-p` eran vacuos. |
-| Lint Cuaderno | `061907Z-format-83245b91` PASS0; no equivale a lint de todo upstream. |
-| Rendimiento | `013745Z-performance-307f57cd` RED3: secuencial cumple, p95 concurrentes808.857/673.347/2237.400ms supera500. No se elevó umbral. |
-| Inventario/SBOM | Stage Linux453 validado `064245Z-image-frontend-sbom-cc41423f`; JSON preservado en591, Node/generador ausentes. Host451/Python anterior153 también validados. No cierre JS ni escaneo OS. |
-| Auditoría runtime | `070438Z-runtime-audit-84c067b1` exit1 sobre591:153Python/63Alpine, cero consultas irresueltas, advisory OAuthlib por versión conservado; backport exacto comprobado. SBOM153 válido `070555Z-runtime-sbom-validate-b158f91f`, no escaneoOS. |
-| Navegador | Reintento B04: no browser disponible/list=[]; capturas, impresión y responsive sin verificar. |
+| Seguridad PyJWT | `185753Z-pyjwt-security-b78a46d8` PASS4/4 en933/PyJWT2.15.0; RED2RecursionError/4 previo ened4. EnG0 security4PASS180654Z y OAuth/social50PASS180814Z. No bypass de firma ni explotación real afirmados. |
+| Audit runtime actual | `185939Z-runtime-audit-8981818f` exit1:153Python/63Alpine/unresolved0, solo OAuthlib3.3.1 GHSA-xpv3-w29h-x7cv; PyJWT ya no aparece. Backport OAuthlib exacto en build, no ocultar advisory por versión. No escaneo OS por este script. |
+| Native API | `180222Z-native-api-ae3b4c36` PASS674/674,757.15s sobre backend2e/PyJWT2.14. |
+| Native other | `174727Z-native-other-51d9b26c` PASS571/571,735.74s;1warning Pillow. Backend2e/PyJWT2.14. |
+| Native views | `181023Z-native-views-f11dfa0a` PASS34/34,64.85s sobre backend2e/PyJWT2.15. Particiones disjuntas; NO todos1279 bajo dependencia idéntica. |
+| Regresión privacidad PostgreSQL | `170621Z-privacy-hardening-regression-ff8b9d80` PASS206/206,673.378s: Food28/locks19/Recipe15/allergens13, operaciones, SQL, roles y reversión. Review independiente aprobada. |
+| Producción/roles/grupos | `170945Z-production-role-regression-e296de31` PASS40/40:15 merma/8roles/17grupos. Subreceta repetida conserva trazas, consume1.875 una vez, sin WASTE adicional. |
+| Precisión | `164752Z-ratio-regression-5078e68f` PASS91/91; costes unknown/incomplete conservados, scope estricto para producción/alérgenos. |
+| Integración ampliada | 341PASS115316Z es HISTÓRICO y no cubre todos los módulos posteriores. Ampliación y rerun pendientes. No sumar suites solapadas. |
+| UI | Merma21PASS170844Z y roles6PASS170825Z, SFC virtual y revisión independiente. Otros contratos UI históricos en evidencia. No DOM/Vuetify real/browser. |
+| Typecheck | `083231Z-typecheck-8df18f93` RED626, baseline650/ceroCuaderno-service-worker; antiguos PASS sin `-p` eran vacuos. |
+| Lint Cuaderno | `171100Z-format-916932d3` exit0; no lint global upstream. |
+| Rendimiento SOLO | `182336Z-performance-db94defa` RED5,359.062s tests. Coste250.363ms P95/15SQL cumple300; servicios145.135seq cumple500/1172.425concurrente falla; movimientos1283.217seq/4329.549concurrente y formatos1981.986seq/4033.174concurrente fallan500. Dataset/status/cardinalidades exactos, umbrales/muestras intactos. |
+| SBOM | Runtime933: Python153PASS191311Z canónico fc0b18c2; frontend stageLinux453PASS191332Z canónico359a23f4. Host451 histórico. Inventario instalado NO cierreJS. Cierre153versiones candidato/root7unitPASS195519Z y SBOM153PASS195521Z; nuevo build pendiente, no congela bytes/OS. |
+| Recuperación histórica591 | Upgrade070137Z PASS513.173s, restore065043Z PASS114tablas/931filas/110secuencias/3media; rollback completo aislado164259Z PASS171.554s. Nuevos destinos, hashes/fingerprint idénticos; sin reemplazar preview ni downgrade vivo. |
+| Browser | B04: cliente autorizado devuelve No browser is available/list=[]; capturas, responsive e impresión pendientes. Sin bypass ni claim iPad físico. |
 
-El restore recuperó el snapshot del bundle `data/cuaderno/backups/20260930T064711Z-99941210` en `cuaderno_restore_d4106c41d8a9467ca9696d0efd4dad21`. Conserva hashes de tablas/secuencias/media y fingerprint funcional, incluido el par desperdicio/reversión. Dump SHA256 `154af8ea8c89db65439fa383eca481e0c7c8c905580f1689176f5ab7e17a0a4f`; fingerprint `b8fca9bf6bb85039ad65d2ba2f4788271f3d01d6dbeb12a90c1dde902dfd7430`. No se compara una BD viva posterior con el punto del dump. Restore93.097s, pausa11.907s; no SLA ni rollback completo.
+HTTP sobre **933**: genérico191420Z PASS, tres ediciones/costes, dosfinanzasPUTCSRF y dosservicios existentes con ficha, sin moverstock. Sobre anterior **ed4**: precios174053Z, preparación174430Z, reversión181056Z, desperdicio181249Z y lecturas181533Z PASS, repetir el artefacto final. Reversión creó Pro5/Integral6 cancelled y movimientos6/7; Integral5→4.6→5, V2/replay/conflicto/CSRF/ACL verificados. Waste revalida par4/5 antiguo, NO creación nueva. Lecturas admin/Responsable/allergensunknown, seis pares cruzados404 y stock/sheets intactos; no Guest/Cocina/downgradeHTTP. Preparación modifica cuatro checks y restaura sus estados, pero no verifica lectura de auditoría.
 
-## Correcciones revisadas de esta ronda
+Smokes comprometidos/revisados: reversión root23unitPASS180809Z/commit0c6123402, lecturas12unitPASS181505Z/commitbb6a6f7f9. Recuperación solo producción propia verificable, saldo final releído; cancelled propio no provoca segundo POST. Su transporte fake unitario no es la aplicación.
 
-Se conserva la interfaz y el dominio nativos. Los precios comerciales siguen como metadata: Esencial500€+17€/mes, Profesional1000€+20€/mes e Integral1500€+30€/mes. No se quitaron funciones nativas para justificar ediciones.
+## Correcciones y procedencia
 
-- Preparación: pasos canónicos Step congelados al confirmar ServicePlan, estados independientes y revisión/auditoría nativa. Los servicios anteriores a0016 no reciben instrucciones históricas inventadas. Commits9274ea4bb/0665234c3.
-- Permisos: el caché global por usuario permitía usar el rol de otro Space o sobrevivir a una revocación. RED11/13→GREEN; snapshot fresco vinculado al request y1SQL, sin señales incompletas. Commit955cad4d7 y [ADR0006](adr/0006-request-local-group-permissions.md).
-- Consultas: la autorización fresca añadió una consulta a preparación; integración204/205 detectó15>14. Middleware carga Space con membresía, conserva el presupuesto. Commitf6d2b474d.
-- Entrega: arnés stock compara JSON numérico nativo sin afirmar precisión Decimal; upgrade retiene imagen exacta antes del ensayo largo. Fallos por pausa de backup y retag de imagen conservados en evidencia; se repitieron de forma secuencial.
-- Procedencia: inventario instalado y validación real CycloneDX, límites de lectura/red y rechazo de JSONNaN/Infinity. Commit5908ae590. Revisiones independientes por bloque; no firma global.
+Backend2e27bd8ab aplica visibilidad de Food/Recipe/grafo **antes** de paginación, Space-first antes de lookup/write/proveedor/reset y base managers para detectar FK contaminadas. Compartir Space o ser admin no concede recetas privadas. Dos fixtures nativos se corrigen solo en nodos exclusivos; expectativas10/2 intactas. **141829Z falló1/17, no PASS**; la cronología completa conserva todos los RED.
 
-Mermas versionadas, precios/historial/impacto, propiedades financieras, reservas/mínimos, compras, servicios y stock idempotente ya tienen código, persistencia y pruebas. Sus resultados históricos y límites están en [evidencia](evidence/2026-09-30-continuacion.md); no certifican cada writer nativo futuro.
+Dinero y cantidades Decimal, contextos locales64, gratis explícito distinto de unknown. Producción descuenta bruto una vez; clasificación de merma es teórica y congelada, no otro movimiento. IDs de ingrediente repetidos son trazas legítimas, no sumar unidades distintas. Roles Consulta/Cocina/Responsable son aliases de grupos nativos, no RBAC nuevo ni Guest globalmente readonly.
 
-## Gates y trabajo pendiente
+Cambios funcionales con TDD/revisión independiente y registros en [UPSTREAM_PATCHES](UPSTREAM_PATCHES.md), [REUSE_LEDGER](REUSE_LEDGER.md) y [evidencia cronológica](evidence/2026-09-30-continuacion.md). Donantes auditados, sin portar carpetas enteras ni ejecutarlos en producción. Menos consultas no demuestra P95.
 
-| Gate | Estado | Falta para aceptación |
-|---|---|---|
-| G0 | PARCIAL | Capturas del baseline; resto de auditorías y pin documentados. |
-| G1 | EN REVERIFICACIÓN | Cierre final de contratos y revisión de dependencias de tareas. |
-| G2 | PREVIEW LOCAL UTILIZABLE / PARCIAL | Comprobar interacción visual, responsive e impresión; no certificación iPad. |
-| G3 | PARCIAL | Completar scope profesional y validación visual de servicios/preparación. |
-| G4 | PARCIAL | Valoración de stock/desperdicio vinculado y alcance de producción resultante. |
-| G5 | PARCIAL | Matriz de roles operativos, rendimiento concurrente, escaneo OS/imagen y cierre de writers/permisos. |
-| G6 | PARCIAL | Rollback completo, cierre exacto de JS empacado y handoff final. El inventario453 del stage sí está preservado en591. Build/migración/restore local actuales pasan. |
-| G7 | NO FIRMADO | Scope completo, checks pendientes y revisión final de la entrega. |
+## Gates abiertos y continuidad
 
-Quedan batching del grafo, rendimiento concurrente y comprobación completa del intercambio de densidad/alérgenos/media/finanzas. El importador genérico no depende del export del programa antiguo. B01 bloquea solo su extractor; B02 iPad físico, B03 VPS sin autorización/destino y B04 navegador afectan sus comprobaciones concretas.
+G0 capturas; G1/G3/G4 aceptación final de contratos y flujos; G2 preview utilizable pero impresión/responsive pendientes; G5 rendimiento/seguridad integral; G6 upgrade933 pendiente, restore/rollback933 PASARON y deben repetirse sobre el próximo artefacto; cierreJS/manual final pendientes; G7 revisión final no firmada. HTTP de producción/reversión pasó ened4: no es una carencia del backend.
 
-Desperdicio independiente con causa y valoración tiene código y tests reales, compilado en591 y verificado por HTTP `064607Z-release-waste-3096d45b`. No desperdicio adicional vinculado al servicio porque la producción ya descuenta la cantidad bruta. Clasificación atómica y reversión documental completa faltan. Smoke local revisado commit620015607 y unitarias7 `062524Z-release-waste-unit-0b8bd7a7`.
+T032: guard SQL Food f8186 y predicadoPackage directo cb474ccf9, conjunta89PGPASS202249Z/390.970s/reviewfresh. SinPythonTOCTOU/IDs/cambioACL, todavía fuera933. NativeJIToff b1b7ab3b7/SHOWjit2GREEN. Último `203010Z-performance-profile-35cb6393` RED5,320.490s SOLO: coste303.960/15SQL falla300; servicios226.423seq ymovimientos213.380seq cumplen500, concurrentes1026.090/1398.686 fallan; formatos530.232seq/2158.155conc fallan500. Dataset/umbrales intactos. EXPLAIN formatos53.789ms frente712.464 previo, mejoraSQL sí/noP95 global. Sin procesos activos; próximo build. Cierre153Python3ea8bf323/unit7/SBOM153GREEN, VERSIONESno bytes/OS. Grypebf4df540d/unit11GREEN/reviewfresh, escaneo real pendiente.
 
-T003/T004: mapas revisados independientemente por integrity_review_sol (Sol6.1) y aceptados como auditorías documentales, sin atribuir ejecución a suites donantes. T002 sigue parcial: el baseline PostgreSQL/DjangoClient es trazable, falta baseline servido/visual. Perfil nativo18606 en curso, namespace nuevo y timeout1200 intacto; todavía no PASS.
-
-`tasks.json` conserva dependencias y estados: REVIEW no es DONE. Consulta [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md), [BLOCKERS](BLOCKERS.md) y el [checkpoint](RESUME.md) antes de continuar. No publicar ni probar contra una base real.
+B01 export antiguo bloquea SOLOextractor, no importador genérico; B02 iPad físico/B03VPS no ejecutados; B04 afecta navegador autorizado. `tasks.json` conserva dependencias y REVIEW no es DONE. Próximos comandos/procesos en [RESUME](RESUME.md); aceptación en [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md). No publicar ni usar BD real.

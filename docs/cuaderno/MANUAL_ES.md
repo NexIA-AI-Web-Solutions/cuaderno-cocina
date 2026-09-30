@@ -1,6 +1,6 @@
 # Cuaderno Cocina — uso local
 
-La aplicación es Tandoor con módulos Cuaderno integrados. Preview local: `http://127.0.0.1:18081`, imagen591 con merma/mínimos, precios, preparación persistente y desperdicio con causa/valoración. Consulta STATUS para la identidad probada. La demo de desarrollo anterior sigue en `18080` y no sustituye la imagen recompilada. G7 permanece abierto.
+La aplicación es Tandoor con módulos Cuaderno integrados. Preview local: `http://127.0.0.1:18081`, imagen933 del30 de septiembre, con costes, conversiones, alérgenos, producción, roles, almacén y PyJWT2.15. Build y smoke HTTP191420Z pasan; consulta STATUS para identidad y controles pendientes. La demo de desarrollo sigue en `18080` y no sustituye la imagen recompilada. G7 permanece abierto.
 
 Cuentas sintéticas, solo locales: `demo-esencial`, `demo-profesional` y `demo-integral`, contraseña de este ensayo `Demo-Cocina-2026!`. Cada una tiene su Space; no son cuentas de producción. El seed exige contraseña explícita y solo funciona sobre `cuaderno_demo` en entorno local.
 
@@ -11,7 +11,7 @@ $env:CUADERNO_DEMO_PASSWORD='Demo-Cocina-2026!'
 docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_demo
 ```
 
-Docker Desktop debe estar disponible. El script reconstruye las dependencias Python desde los requisitos del checkout, compila el frontend desde `yarn.lock` y usa únicamente los contenedores/volúmenes `cuaderno-release`. No exige la antigua imagen local del pin. El primer build y las migraciones pueden tardar varios minutos. La identidad del build incluye HEAD y hash del contenido local, no presenta cambios sin commit como si fueran HEAD puro.
+Docker Desktop debe estar disponible. El script construye dependencias Python desde requisitos y constraints del checkout y el frontend desde `yarn.lock`, pudiendo reutilizar stages de Docker cacheados (como el frontend de933). Usa únicamente los contenedores/volúmenes `cuaderno-release`, no exige la antigua imagen local del pin. El primer build y las migraciones pueden tardar varios minutos. La identidad incluye HEAD y hash del contenido local, no presenta cambios sin commit como HEAD puro.
 
 ## Esencial
 
@@ -40,7 +40,13 @@ En Almacén, registra proveedores con el selector nativo y ofertas por formato. 
 
 Reposición consulta servicios confirmados y stock utilizable del hogar, consolidando unidades y descontando el saldo una sola vez. Redondea envases hacia arriba. Sin precio declarado muestra desconocido, no cero. El precio de la oferta del pedido queda congelado; no es valoración FIFO del almacén ni beneficio neto.
 
-Para desperdicio independiente, elige una existencia, cantidad y causa obligatoria (1–256 caracteres, sin controles). El historial conserva una estimación de reposición al precio declarado en ese momento; sin precio muestra desconocido. Una reversión añade una compensación, no borra el original. No registres además como desperdicio la merma ya incluida en la cantidad bruta de un servicio producido: duplicaría el consumo. La reversión genérica no admite movimientos vinculados a producción; la reversión completa documental del servicio sigue pendiente.
+Para desperdicio independiente, elige una existencia, cantidad y causa obligatoria (1–256 caracteres, sin controles). El historial conserva una estimación de reposición al precio declarado en ese momento; sin precio muestra desconocido. Una reversión añade una compensación, no borra el original. No registres además como desperdicio la merma ya incluida en la cantidad bruta de un servicio producido: duplicaría el consumo. La reversión genérica no admite movimientos vinculados a producción: utiliza la reversión completa del servicio en Producción, que conserva la ficha y añade auditoría. El ensayo HTTP181056Z verificó Integral5→4.6→5 y Profesional sin modificar stock; no sustituye la revisión visual del formulario.
+
+La producción conserva las trazas de merma declarada: comprado, útil y merma teórica por ingrediente, sin sumarlas entre unidades. Esta clasificación está incluida en las necesidades brutas; no crea otro movimiento ni mide desperdicio real. Si falta rendimiento o identidad histórica se muestra incompleto/desconocido, no cero. Revertir conserva estas trazas congeladas.
+
+Los alérgenos declarados se consultan por alimento o receta. No declarado significa desconocido, nunca ausencia ni garantía de seguridad. Confirmar congela la evaluación disponible; cambiar declaraciones no reescribe fichas anteriores. Los servicios antiguos sin evaluación conservan ese estado desconocido.
+
+Costes muestra el rol nativo del Space: Consulta (guest), Cocina (user), Responsable (admin). El aviso es informativo: Consulta mantiene las escrituras nativas que le correspondan como propietario; Cocina puede operar los módulos habilitados y Responsable gestionar la edición. Ningún rol concede acceso automático a recetas privadas ajenas. No hay un segundo sistema de permisos.
 
 Sin conexión no se guardan ni encolan cambios. Recetas, media y páginas privadas requieren conexión. La actualización del service worker elimina sus cachés privadas antiguas y descarta la cola offline heredada sin reproducirla; no elimina datos del servidor. Una respuesta fallida conserva el formulario y la clave para reintentar la misma operación.
 
@@ -52,7 +58,7 @@ Las subidas del importador nativo tienen límite agregado de 50 MiB y 100 archiv
 
 Previsualiza con `POST /api/cuaderno/exchange/?preview=1`: no escribe datos. Envía en la confirmación el mismo documento y el `preview_sha256` recibido; si cambia el documento o el mapping, se rechaza con 409 y debes previsualizar de nuevo. La API mantiene importación directa sin esa huella para clientes programáticos compatibles: valida igualmente el documento y los permisos, pero **no ofrece la garantía de comparación con una previsualización previa**. El flujo recomendado es preview y confirmación con huella.
 
-Fotos, archivos y metadatos nativos avanzados se transfieren mediante la exportación ZIP nativa de Tandoor; este JSON declara que no los incluye y no descarga URLs. Tampoco incluye conversiones personalizadas, alérgenos ni ajustes fiscales del Space: no lo uses como backup completo. Para eso utiliza el procedimiento siguiente.
+Fotos, archivos y metadatos nativos avanzados se transfieren mediante la exportación ZIP nativa de Tandoor; este JSON no los incluye ni descarga URLs. El catálogo opcional `conversions` permite transferir conversiones nativas con referencias de alimento y unidades explícitas, cantidades base/convertida y mapping validado. Una densidad necesita un alimento específico: no se infiere una conversión universal masa-volumen. No incluye alérgenos ni ajustes fiscales del Space; no lo uses como backup completo. Para eso utiliza el procedimiento siguiente.
 
 ## Arranque de la demo existente
 
@@ -85,6 +91,8 @@ La comprobación incluye las propiedades financieras y los documentos de servici
 
 El ensayo065043Z del30 de septiembre sobre imagen591 comparó mermas, reserva sintética de6L, reposición, preparación y desperdicio/reversión:114 tablas,931 filas,110 secuencias,3 media y dos tareas reales. Bundle `data/cuaderno/backups/20260930T064711Z-99941210`, destino nuevo conservado. No acredita recuperación en producción ni rollback completo. Los smokes posteriores añaden auditoría legítima: la BD viva no debe compararse con el punto del dump.
 
+Ensayo más reciente933 `190523Z-restore-9f9e8042`: PASS114tablas/945filas/110secuencias/3media, restore113.656s y pausa13.316s. Bundle `data/cuaderno/backups/20260930T190117Z-1dc8f603`, nuevo destino conservado; incluye6servicios y4tareas de preparación. Rollback aislado del mismo bundle/digest `191050Z-rollback-current-a1f15ae9` PASS106.046s con hash funcional idéntico. `check.py rollback-current --allow-isolated-mutations` apunta a ese bundle actual; `rollback` conserva el ensayo591 histórico. Ninguno sustituye el preview ni prueba recuperación en producción.
+
 El bundle queda en `data/cuaderno/backups/<fecha-identificador>/`: `database.dump`, `media.tar`, `manifest.json` y `restore-result.json`. Se comprueban hashes de los archivos, contenido/conteos de cada tabla, secuencias y hashes de cada media extraído. No edites el manifiesto para hacer pasar una copia dañada. Ante error se conserva el destino para diagnóstico.
 
 Para recuperar otra vez un bundle local confiable:
@@ -95,6 +103,23 @@ python scripts/cuaderno/delivery_restore.py 'data/cuaderno/backups/<fecha-identi
 ```
 
 Sustituye el marcador por un bundle real. Cada ejecución crea otro destino nuevo. El procedimiento está limitado a los contenedores demo fijados; no sirve como orden de restore sobre producción. Las copias contienen usuarios, recetas y media: mantenlas fuera de Git y del intercambio público. El ensayo local no implementa retención, cifrado externo ni copias remotas automáticas.
+
+### Rollback completo a versión antigua, en destino aislado
+
+Para ensayar la recuperación del backup sintético591 con su imagen antigua exacta:
+
+```powershell
+$env:CUADERNO_ENV='local'
+$env:CUADERNO_DEMO_PASSWORD='Demo-Cocina-2026!'
+python scripts/cuaderno/check.py rollback-unit
+python scripts/cuaderno/check.py rollback --allow-isolated-mutations
+```
+
+El registry fija el bundle `data/cuaderno/backups/20260930T064711Z-99941210`. Para otro bundle confiable utiliza `python scripts/cuaderno/delivery_rollback.py 'data/cuaderno/backups/<bundle>'`. Debe estar dentro de esta raíz, registrar un digest de imagen disponible localmente y conservar el verificador `restore_smoke.py` con el hash del backup. Si el checkout ya cambió ese verificador, el procedimiento rechaza el ensayo; usa un checkout compatible, no alteres el manifiesto ni rebajes la validación.
+
+Se crea una base `cuaderno_restore_rollback_<id>`, media nueva dentro de `data/cuaderno/rollbacks/` y un contenedor de verificación con la imagen fijada. Se comprueban hashes/contenido de tablas, secuencias, media, permisos, costes y saldos. No aplica migraciones inversas, no sustituye el preview y no publica puertos. El contenedor ejecuta la comprobación Django, no una interfaz web de recuperación ya activada. Conserva destinos y resultado para diagnóstico; no elimina bases ni volúmenes.
+
+Ensayo real `164259Z-rollback-2d6a4560`: PASS, imagen591 exacta,114 tablas/3 media y fingerprint funcional idéntico; operación171.554s. Destino conservado `cuaderno_restore_rollback_85865b647a50`, informe `data/cuaderno/rollbacks/rollback-85865b647a50/rollback-result.json`. No acredita rollback de una imagen final posterior ni recuperación en producción.
 
 ## Comprobaciones y límites
 
