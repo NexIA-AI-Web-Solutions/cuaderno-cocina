@@ -6,6 +6,121 @@ export type IngredientYieldBody = {
     yield_ratio: string | null
 }
 
+export type IngredientYield = {
+    id: number
+    food_name: string | null
+    amount: string
+    unit: string | null
+    quantity_basis: QuantityBasis
+    yield_ratio: string | null
+    is_subrecipe: boolean
+}
+
+export type IngredientYieldResponse = {
+    recipe_id: number
+    edition: 'esencial' | 'profesional' | 'integral'
+    can_edit: boolean
+    revision: string
+    ingredients: IngredientYield[]
+}
+
+export type IngredientYieldWriteBody = IngredientYieldBody & {revision: string}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isPositiveId(value: unknown): value is number {
+    return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
+}
+
+function isRevision(value: unknown): value is string {
+    return typeof value === 'string' && /^[0-9a-f]{64}$/.test(value)
+}
+
+function isFixedDecimal(value: unknown): value is string {
+    if (typeof value !== 'string') return false
+    const match = /^-?(\d+)(?:\.(\d+))?$/.exec(value)
+    if (!match) return false
+    const whole = match[1] || ''
+    const fraction = match[2] || ''
+    return whole.length <= 16 && fraction.length <= 16 && whole.length + fraction.length <= 32
+}
+
+function isYieldRatio(value: unknown): value is string {
+    if (typeof value !== 'string') return false
+    const belowOne = /^0\.(\d{1,16})$/.exec(value)
+    if (belowOne) return /[1-9]/.test(belowOne[1] || '')
+    return /^1(?:\.0{1,16})?$/.test(value)
+}
+
+export function ingredientYieldEnvelope(data: unknown): IngredientYieldResponse | null {
+    if (!isRecord(data)
+        || !isPositiveId(data.recipe_id)
+        || (data.edition !== 'esencial' && data.edition !== 'profesional' && data.edition !== 'integral')
+        || typeof data.can_edit !== 'boolean'
+        || !isRevision(data.revision)
+        || !Array.isArray(data.ingredients)) return null
+    if (data.edition === 'esencial' && data.can_edit) return null
+    const ingredients: IngredientYield[] = []
+    const ingredientIds = new Set<number>()
+    for (const ingredient of data.ingredients) {
+        if (!isRecord(ingredient)
+            || !isPositiveId(ingredient.id)
+            || (ingredient.food_name !== null && typeof ingredient.food_name !== 'string')
+            || !isFixedDecimal(ingredient.amount)
+            || (ingredient.unit !== null && typeof ingredient.unit !== 'string')
+            || (ingredient.quantity_basis !== 'gross' && ingredient.quantity_basis !== 'net_usable')
+            || typeof ingredient.is_subrecipe !== 'boolean') return null
+        if (ingredientIds.has(ingredient.id)) return null
+        ingredientIds.add(ingredient.id)
+        if (ingredient.is_subrecipe) {
+            if (ingredient.quantity_basis !== 'gross' || ingredient.yield_ratio !== null) return null
+        } else if (ingredient.yield_ratio === null) {
+            if (ingredient.quantity_basis === 'net_usable') return null
+        } else if (!isYieldRatio(ingredient.yield_ratio)) return null
+        ingredients.push({
+            id: ingredient.id, food_name: ingredient.food_name, amount: ingredient.amount,
+            unit: ingredient.unit, quantity_basis: ingredient.quantity_basis,
+            yield_ratio: ingredient.yield_ratio, is_subrecipe: ingredient.is_subrecipe,
+        })
+    }
+    return {
+        recipe_id: data.recipe_id,
+        edition: data.edition,
+        can_edit: data.can_edit,
+        revision: data.revision,
+        ingredients,
+    }
+}
+
+export function ingredientYieldSaveEnvelope(
+    data: unknown,
+    recipeId: unknown,
+    ingredientId: unknown,
+): IngredientYieldResponse | null {
+    if (!isPositiveId(recipeId) || !isPositiveId(ingredientId)) return null
+    const envelope = ingredientYieldEnvelope(data)
+    if (envelope === null || envelope.recipe_id !== recipeId) return null
+    return envelope.ingredients.filter(ingredient => ingredient.id === ingredientId).length === 1 ? envelope : null
+}
+
+export function withYieldRevision(
+    body: IngredientYieldBody,
+    revision: unknown,
+): {body: IngredientYieldWriteBody | null; error: string} {
+    if (!isRevision(revision)) {
+        return {body: null, error: 'La versión de las mermas no es válida; recarga los datos antes de guardar.'}
+    }
+    return {body: {...body, revision}, error: ''}
+}
+
+export function ingredientYieldConflictMessage(status: number): string {
+    return status === 409
+        ? 'Otra persona cambió las mermas de esta receta. Conservamos tus cambios; recarga los datos cuando quieras compararlos.'
+        : ''
+}
+
 const YIELD_SCALE = BigInt('10000000000000000')
 
 export function ingredientYieldBody(

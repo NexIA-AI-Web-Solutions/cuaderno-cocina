@@ -9,7 +9,7 @@
         <v-alert v-else-if="loadError" type="error" variant="tonal" role="alert" class="mb-3">
             {{ loadError }}
             <template #append>
-                <v-btn variant="text" min-height="44" @click="load">Reintentar</v-btn>
+                <v-btn variant="text" min-height="44" @click="load(false)">Reintentar</v-btn>
             </template>
         </v-alert>
         <template v-else-if="payload">
@@ -78,10 +78,19 @@
                                     variant="tonal"
                                     min-height="44"
                                     :loading="savingIngredient === ingredient.id"
-                                    :disabled="savingIngredient !== null || !drafts[ingredient.id]?.dirty"
+                                    :disabled="savingIngredient !== null || !drafts[ingredient.id]?.dirty || drafts[ingredient.id]?.conflict"
                                     @click="save(ingredient)"
                                 >
                                     Guardar merma
+                                </v-btn>
+                                <v-btn
+                                    v-if="drafts[ingredient.id]?.conflict"
+                                    variant="text"
+                                    min-height="44"
+                                    :disabled="savingIngredient !== null || loading"
+                                    @click="load(true)"
+                                >
+                                    Recargar datos (descarta cambios sin guardar)
                                 </v-btn>
                                 <span v-if="draftMessage(ingredient.id)" role="status" class="text-body-2">
                                     {{ draftMessage(ingredient.id) }}
@@ -100,28 +109,17 @@ import {onBeforeUnmount, ref, watch} from 'vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
 import {
+    ingredientYieldConflictMessage,
     ingredientYieldBody,
+    ingredientYieldEnvelope,
+    ingredientYieldSaveEnvelope,
     quantityBasisLabel,
+    withYieldRevision,
     yieldSummary,
+    type IngredientYield,
+    type IngredientYieldResponse,
     type QuantityBasis,
 } from '@/cuaderno/ingredientYieldUi'
-
-type IngredientYield = {
-    id: number
-    food_name: string | null
-    amount: string
-    unit: string | null
-    quantity_basis: QuantityBasis
-    yield_ratio: string | null
-    is_subrecipe: boolean
-}
-
-type IngredientYieldResponse = {
-    recipe_id: number
-    edition: string
-    can_edit: boolean
-    ingredients: IngredientYield[]
-}
 
 type YieldDraft = {
     quantityBasis: QuantityBasis
@@ -129,7 +127,8 @@ type YieldDraft = {
     error: string
     message: string
     dirty: boolean
-    revision: number
+    inputVersion: number
+    conflict: boolean
 }
 
 const props = defineProps<{recipeId: number}>()
@@ -155,16 +154,17 @@ function serverDraft(ingredient: IngredientYield): YieldDraft {
         error: '',
         message: '',
         dirty: false,
-        revision: 0,
+        inputVersion: 0,
+        conflict: false,
     }
 }
 
-function applyPayload(data: IngredientYieldResponse, savedId: number | null = null, savedRevision = -1) {
+function applyPayload(data: IngredientYieldResponse, savedId: number | null = null, savedInputVersion = -1, discardChanges = false) {
     const previous = drafts.value
     const next: Record<number, YieldDraft> = {}
     for (const ingredient of data.ingredients) {
         const current = previous[ingredient.id]
-        if (current?.dirty && !(ingredient.id === savedId && current.revision === savedRevision)) {
+        if (!discardChanges && current?.dirty && !(ingredient.id === savedId && current.inputVersion === savedInputVersion)) {
             next[ingredient.id] = current
         } else {
             const fresh = serverDraft(ingredient)
@@ -176,7 +176,7 @@ function applyPayload(data: IngredientYieldResponse, savedId: number | null = nu
     drafts.value = next
 }
 
-async function load() {
+async function load(discardChanges = false) {
     const generation = ++requestGeneration
     const recipeAtLoad = props.recipeId
     loadController?.abort()
@@ -197,31 +197,36 @@ async function load() {
     ))
     if (controller.signal.aborted || generation !== requestGeneration || recipeAtLoad !== props.recipeId) return
     loading.value = false
-    if (!ok || data?.recipe_id !== recipeAtLoad || !Array.isArray(data?.ingredients)) {
+    if (!ok) {
         loadError.value = apiError(status, data)
         return
     }
-    applyPayload(data as IngredientYieldResponse)
+    const envelope = ingredientYieldEnvelope(data)
+    if (envelope === null || envelope.recipe_id !== recipeAtLoad) {
+        loadError.value = 'El servidor devolvió rendimientos incompletos. Conservamos los cambios sin guardar.'
+        return
+    }
+    applyPayload(envelope, null, -1, discardChanges)
 }
 
 function updateBasis(id: number, value: unknown) {
     const draft = drafts.value[id]
     if (!draft || (value !== 'gross' && value !== 'net_usable')) return
     draft.quantityBasis = value
-    draft.error = ''
+    if (!draft.conflict) draft.error = ''
     draft.message = ''
     draft.dirty = true
-    draft.revision += 1
+    draft.inputVersion += 1
 }
 
 function updateRatio(id: number, value: string) {
     const draft = drafts.value[id]
     if (!draft) return
     draft.ratio = value
-    draft.error = ''
+    if (!draft.conflict) draft.error = ''
     draft.message = ''
     draft.dirty = true
-    draft.revision += 1
+    draft.inputVersion += 1
 }
 
 function draftSummary(ingredient: IngredientYield) {
@@ -237,34 +242,48 @@ function draftMessage(id: number) {
 
 async function save(ingredient: IngredientYield) {
     const draft = drafts.value[ingredient.id]
-    if (!payload.value?.can_edit || !draft || savingIngredient.value !== null) return
+    if (!payload.value?.can_edit || !draft || draft.conflict || savingIngredient.value !== null) return
     const parsed = ingredientYieldBody(ingredient.id, draft.quantityBasis, draft.ratio, ingredient.is_subrecipe)
     draft.error = parsed.error
     draft.message = ''
     if (!parsed.body) return
+    const versioned = withYieldRevision(parsed.body, payload.value.revision)
+    draft.error = versioned.error
+    if (!versioned.body) return
 
     const generation = requestGeneration
     const recipeAtSave = props.recipeId
-    const revision = draft.revision
+    const inputVersion = draft.inputVersion
     saveController?.abort()
     saveController = new AbortController()
     const controller = saveController
     savingIngredient.value = ingredient.id
     const {ok, status, data} = await readJson(await cuadernoFetch(
         `/api/cuaderno/recipes/${recipeAtSave}/ingredient-yields/`,
-        {method: 'PUT', body: JSON.stringify(parsed.body), signal: controller.signal},
+        {method: 'PUT', body: JSON.stringify(versioned.body), signal: controller.signal},
     ))
     if (controller.signal.aborted || generation !== requestGeneration || recipeAtSave !== props.recipeId) return
     savingIngredient.value = null
-    if (!ok || data?.recipe_id !== recipeAtSave || !Array.isArray(data?.ingredients)) {
+    if (!ok) {
+        const conflict = ingredientYieldConflictMessage(status)
+        if (conflict) {
+            draft.error = conflict
+            draft.conflict = true
+            return
+        }
         draft.error = apiError(status, data)
         return
     }
-    applyPayload(data as IngredientYieldResponse, ingredient.id, revision)
+    const envelope = ingredientYieldSaveEnvelope(data, recipeAtSave, ingredient.id)
+    if (envelope === null) {
+        draft.error = 'El servidor no confirmó el ingrediente guardado. Conservamos tus cambios para que puedas reintentarlo.'
+        return
+    }
+    applyPayload(envelope, ingredient.id, inputVersion)
     emit('saved')
 }
 
-watch(() => props.recipeId, load, {immediate: true})
+watch(() => props.recipeId, () => load(false), {immediate: true})
 onBeforeUnmount(() => {
     ++requestGeneration
     loadController?.abort()

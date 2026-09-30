@@ -83,12 +83,18 @@ class IngredientYieldApiTests(TestCase):
         self.client = self.client_for(self.owner)
 
     def put_policy(self, *, basis="net_usable", ratio="0.8", client=None, ingredient=None):
+        current = self.client.get(self.url)
+        self.assert_json(current)
+        revision = current.data.get("revision")
+        self.assertIsInstance(revision, str)
+        self.assertRegex(revision, r"^[0-9a-f]{64}$")
         return (client or self.client).put(
             self.url,
             {
                 "ingredient": (ingredient or self.ingredient).pk,
                 "quantity_basis": basis,
                 "yield_ratio": ratio,
+                "revision": revision,
             },
             format="json",
         )
