@@ -10,6 +10,7 @@ scripts
 !scripts/cuaderno/
 !scripts/cuaderno/patch_oauthlib.py
 !scripts/cuaderno/frontend_inventory.mjs
+!scripts/cuaderno/python_lock.py
 **/node_modules
 **/__pycache__
 **/*.pyc
