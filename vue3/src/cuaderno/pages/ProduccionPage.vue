@@ -122,6 +122,7 @@
                                 <v-list-item v-for="line in plan.snapshot.needs" :key="line.food_id" :title="line.food_name" :subtitle="`${line.quantity} ${line.unit_name || '(sin unidad)'}`" />
                             </v-list>
                             <p v-if="plan.state === 'confirmed'" class="mt-2">La ficha no cambia al actualizar precios o recetas. Producir no registra stock de producto terminado ni descuenta subelaboraciones además de sus ingredientes.</p>
+                            <service-preparation-panel class="mt-4" :service-id="plan.id" :service-state="plan.state" />
                         </v-card-text>
                         <v-card-actions class="flex-wrap ga-2 no-print">
                             <v-btn v-if="plan.state === 'draft'" color="primary" :loading="busyPlan === plan.id" :disabled="busyPlan !== null" min-height="44" @click="transition(plan, 'confirm')">Confirmar ficha</v-btn>
@@ -153,6 +154,7 @@
 import {onMounted, reactive, ref, watch} from "vue"
 import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
+import ServicePreparationPanel from '@/cuaderno/components/ServicePreparationPanel.vue'
 import {apiError, productionUsage, productionWarning, serviceBody, yieldBody, confirmedCostLabel} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
 import {
