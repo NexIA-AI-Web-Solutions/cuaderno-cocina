@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+from copy import deepcopy
+from datetime import datetime
 from decimal import Decimal
 
 from django.db import transaction
@@ -14,9 +16,9 @@ from cookbook.helper.permission_helper import has_group_permission
 from cookbook.models import Food, InventoryEntry, Unit
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import canonical_decimal
-from cuaderno.models import ServicePlan, SpaceProfile
+from cuaderno.models import ServicePlan, SpaceProfile, StockMovement
 from cuaderno.services.costing import cost_recipe, current_price, reference_package
-from cuaderno.services.ledger import IdempotencyConflict, apply_movement
+from cuaderno.services.ledger import IdempotencyConflict, apply_movement, movement_fingerprint
 from cuaderno.services.subrecipes import convert_native_quantity, sheet_from_recipes
 
 
@@ -320,6 +322,170 @@ def _locked_allocations(plan: ServicePlan) -> list[tuple[InventoryEntry, Decimal
 def _movement_key(plan: ServicePlan, produced_key: str, index: int, entry_id: int) -> str:
     digest = hashlib.sha256(f"{plan.pk}:{produced_key}:{index}:{entry_id}".encode()).hexdigest()
     return f"service:{plan.pk}:{digest}"
+
+
+def _reversal_key(plan, key, index, movement_id):
+    digest = hashlib.sha256(f"{plan.pk}:{key}:{index}:{movement_id}".encode("utf-8")).hexdigest()
+    return f"service-reversal:{plan.pk}:{digest}"
+
+
+@transaction.atomic
+def reverse_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan, list[int], bool]:
+    """Compensate the complete production, never an isolated allocation.
+
+    Cancellation is terminal: preserve the original production and frozen
+    financial/needs documents, adding only the reversal audit. A Space lock
+    serializes replay, competing reversals and all native stock writers.
+    """
+    key = _production_key(plan, raw_key)
+    key_sha256 = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    type(plan.space).objects.select_for_update().only("pk").get(pk=plan.space_id)
+    plan = ServicePlan.objects.select_for_update().get(pk=plan.pk, space_id=plan.space_id)
+
+    def invalid():
+        raise ValidationError({"production": "El historial de producción no permite una reversión completa segura."})
+
+    if not isinstance(plan.snapshot, dict):
+        invalid()
+    production = plan.snapshot.get("production")
+    if not isinstance(production, dict):
+        invalid()
+    audit = production.get("reversal")
+    if audit is not None:
+        if not isinstance(audit, dict) or plan.state != ServicePlan.CANCELLED:
+            invalid()
+        if audit.get("key_sha256") != key_sha256:
+            raise IdempotencyConflict({"idempotency_key": "El servicio ya se revirtió con otra clave."})
+    elif plan.state != ServicePlan.PRODUCED:
+        raise ValidationError({"state": "Solo se puede revertir la producción completa de un servicio producido."})
+    if not plan.produced_key or plan.produced_at is None:
+        invalid()
+    if ServicePlan.objects.filter(
+        space_id=plan.space_id, snapshot__production__reversal__key_sha256=key_sha256,
+    ).exclude(pk=plan.pk).exists():
+        raise IdempotencyConflict({"idempotency_key": "La clave ya pertenece a la reversión de otro servicio."})
+
+    original_ids = production.get("movement_ids")
+    if (not isinstance(original_ids, list) or len(original_ids) > 10000
+            or any(type(value) is not int or not 0 < value <= 9223372036854775807 for value in original_ids)
+            or len(set(original_ids)) != len(original_ids)):
+        invalid()
+    edition = production.get("edition")
+    if (edition not in (SpaceProfile.PROFESIONAL, SpaceProfile.INTEGRAL)
+            or type(production.get("stock_changed")) is not bool
+            or production["stock_changed"] != bool(original_ids)
+            or (edition == SpaceProfile.PROFESIONAL and original_ids)
+            or (edition == SpaceProfile.INTEGRAL and plan.household_id is None)):
+        invalid()
+
+    # A shortened snapshot must not restore only a subset of allocations.
+    actual_ids = set(StockMovement.objects.filter(
+        space_id=plan.space_id, kind=StockMovement.CONSUME, reverses__isnull=True,
+        metadata_snapshot__origin__type="service_plan", metadata_snapshot__origin__id=plan.pk,
+    ).order_by("pk").values_list("pk", flat=True)[:10001])
+    if actual_ids != set(original_ids):
+        invalid()
+    originals = {
+        row.pk: row for row in StockMovement.objects.select_for_update()
+        .filter(space_id=plan.space_id, pk__in=original_ids).order_by("pk")
+    }
+    reversals = list(StockMovement.objects.select_for_update().filter(
+        space_id=plan.space_id, reverses_id__in=original_ids,
+    ).order_by("pk"))
+    if len(originals) != len(original_ids) or (audit is None and reversals):
+        invalid()
+    entries = {
+        row.pk: row for row in InventoryEntry.objects.select_for_update(of=("self",))
+        .filter(space_id=plan.space_id, pk__in=[row.entry_id for row in originals.values()])
+        .select_related("inventory_location", "unit", "food").order_by("pk")
+    }
+    for index, identifier in enumerate(original_ids):
+        original = originals[identifier]
+        metadata = original.metadata_snapshot
+        entry = entries.get(original.entry_id)
+        if not isinstance(metadata, dict) or entry is None:
+            invalid()
+        origin = metadata.get("origin")
+        if (not isinstance(origin, dict) or origin.get("type") != "service_plan"
+                or type(origin.get("id")) is not int or origin["id"] != plan.pk
+                or origin.get("service_date") != plan.snapshot.get("service_date")
+                or original.kind != StockMovement.CONSUME or original.reverses_id is not None
+                or not original.quantity.is_finite() or original.quantity <= 0
+                or original.idempotency_key != _movement_key(plan, plan.produced_key, index, entry.pk)
+                or type(metadata.get("household_id")) is not int
+                or metadata.get("household_id") != plan.household_id
+                or entry.inventory_location.space_id != plan.space_id
+                or entry.inventory_location.household_id != plan.household_id
+                or type(metadata.get("unit_id")) is not int or type(metadata.get("food_id")) is not int
+                or metadata.get("unit_id") != entry.unit_id or metadata.get("food_id") != entry.food_id
+                or entry.unit_id is None or entry.unit.space_id != plan.space_id
+                or entry.food_id is None or entry.food.space_id != plan.space_id):
+            invalid()
+        if original.fingerprint != movement_fingerprint(
+            entry_id=entry.pk, kind=StockMovement.CONSUME,
+            canonical_quantity=canonical_decimal(original.quantity), origin=origin,
+        ):
+            invalid()
+
+    if audit is not None:
+        ids = audit.get("movement_ids")
+        audit_originals = audit.get("original_movement_ids")
+        if (set(audit) != {"key_sha256", "reversed_at", "reversed_by", "original_movement_ids", "movement_ids"}
+                or not isinstance(ids, list) or len(ids) != len(original_ids)
+                or any(type(value) is not int or not 0 < value <= 9223372036854775807 for value in ids)
+                or len(set(ids)) != len(ids) or set(ids) & set(original_ids)
+                or not isinstance(audit_originals, list)
+                or any(type(value) is not int for value in audit_originals) or audit_originals != original_ids
+                or type(audit.get("reversed_by")) is not int or audit["reversed_by"] <= 0
+                or not isinstance(audit.get("reversed_at"), str)):
+            invalid()
+        try:
+            reversed_at = datetime.fromisoformat(audit["reversed_at"])
+        except ValueError:
+            invalid()
+        if timezone.is_naive(reversed_at) or reversed_at < plan.produced_at:
+            invalid()
+        by_id = {row.pk: row for row in reversals}
+        if set(by_id) != set(ids):
+            invalid()
+        for index, (original_id, reversal_id) in enumerate(zip(original_ids, ids)):
+            original, reversal = originals[original_id], by_id[reversal_id]
+            if (reversal.reverses_id != original_id or reversal.entry_id != original.entry_id
+                    or reversal.kind != StockMovement.RECEIPT or reversal.quantity != original.quantity
+                    or reversal.created_by_id != audit["reversed_by"] or reversal.created_at > reversed_at
+                    or reversal.idempotency_key != _reversal_key(plan, key, index, original_id)
+                    or not isinstance(reversal.metadata_snapshot, dict)):
+                invalid()
+            metadata = reversal.metadata_snapshot
+            if any(metadata.get(field) != original.metadata_snapshot.get(field)
+                   for field in ("food_id", "unit_id", "household_id", "origin")):
+                invalid()
+            if reversal.fingerprint != movement_fingerprint(
+                entry_id=original.entry_id, kind=StockMovement.RECEIPT,
+                canonical_quantity=canonical_decimal(original.quantity), reverses_id=original_id,
+                origin=original.metadata_snapshot["origin"],
+            ):
+                invalid()
+        return plan, ids, bool(ids)
+
+    reversal_ids = []
+    for index, identifier in enumerate(original_ids):
+        original = originals[identifier]
+        movement = apply_movement(
+            entry_id=original.entry_id, space=plan.space, user=user, kind=StockMovement.RECEIPT,
+            quantity=original.quantity, idempotency_key=_reversal_key(plan, key, index, identifier),
+            reverses_id=identifier, origin=original.metadata_snapshot["origin"],
+        )
+        reversal_ids.append(movement.pk)
+    snapshot = deepcopy(plan.snapshot)
+    snapshot["production"]["reversal"] = {
+        "key_sha256": key_sha256, "reversed_at": timezone.now().isoformat(),
+        "reversed_by": user.pk, "original_movement_ids": list(original_ids), "movement_ids": reversal_ids,
+    }
+    plan.snapshot = snapshot
+    plan.state = ServicePlan.CANCELLED
+    plan.save(update_fields=["snapshot", "state"])
+    return plan, reversal_ids, bool(reversal_ids)
 
 
 @transaction.atomic

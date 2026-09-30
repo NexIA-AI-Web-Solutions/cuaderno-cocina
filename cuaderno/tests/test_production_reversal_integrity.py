@@ -81,7 +81,7 @@ class ProductionReversalIntegrityTests(ServiceFixtureMixin, TestCase):
         self.assertEqual(response.status_code, 400, getattr(response, "data", response.content))
         self.assertIn("reverse_of", response.data)
         self.assertIn("reversión completa", str(response.data["reverse_of"]))
-        self.assertIn("aún no está disponible", str(response.data["reverse_of"]))
+        self.assertIn("desde el servicio", str(response.data["reverse_of"]))
         self.assertEqual(self.integrity_snapshot(entry, plan), before)
 
     def test_direct_helper_rejects_production_movement_without_any_mutation(self):

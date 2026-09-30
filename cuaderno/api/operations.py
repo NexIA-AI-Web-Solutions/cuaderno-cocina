@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope
 from cookbook.models import Food, Ingredient, InventoryEntry, MealPlan, MealType, Recipe, Step, Unit, UnitConversion
 from cuaderno.domain.errors import DomainError
-from cuaderno.domain.exchange import export_recipe_document, parse_recipe_document
+from cuaderno.domain.exchange import MAX_CATALOG_ITEMS, MAX_EXCHANGE_RECIPES, export_recipe_document, parse_recipe_document, validate_exchange_limits
 from cuaderno.domain.margin import food_cost_gap
 from cuaderno.domain.money import parse_decimal
 from cuaderno.domain.ingredient_yields import validate_yield_policy
@@ -29,6 +29,7 @@ from cuaderno.services.service_plans import (
     cancel_service_plan,
     confirm_service_plan,
     produce_service_plan,
+    reverse_service_plan,
     serialize_service_plan,
 )
 from cuaderno.services.subrecipes import sheet_from_recipes
@@ -197,7 +198,11 @@ class ServicePlanView(APIView):
     @transaction.atomic
     def post(self, request, plan_id=None):
         _require(request.space, SpaceProfile.PROFESIONAL)
+        if not isinstance(request.data, dict):
+            raise ValidationError({"service": "Envía un objeto JSON para el servicio."})
         if plan_id is not None:
+            if request.data.get("action") == "reverse":
+                type(request.space).objects.select_for_update().only("pk").get(pk=request.space.pk)
             plan = get_object_or_404(accessible_service_plans(request, plan_id).select_related("space"), pk=plan_id)
             action = request.data.get("action")
             if action == "confirm":
@@ -219,6 +224,16 @@ class ServicePlanView(APIView):
                     return Response(exc.detail, status=409)
                 payload = serialize_service_plan(plan)
                 payload.update({"movement_ids": movement_ids, "stock_changed": stock_changed})
+                return Response(payload)
+            if action == "reverse":
+                try:
+                    plan, movement_ids, stock_changed = reverse_service_plan(
+                        plan, request.user, request.data.get("idempotency_key"),
+                    )
+                except IdempotencyConflict as exc:
+                    return Response(exc.detail, status=409)
+                payload = serialize_service_plan(plan)
+                payload.update({"reversal_movement_ids": movement_ids, "stock_changed": stock_changed})
                 return Response(payload)
             raise ValidationError({"action": "Acción de servicio desconocida."})
 
@@ -418,13 +433,23 @@ class AllergenView(APIView):
 class RecipeExchangeView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
+    @staticmethod
+    def export_limit_response():
+        return Response({
+            "export_limit": "La exportación JSON supera los límites de importación "
+                            "(1000 recetas, 2 MB o catálogo de 10000 elementos). "
+                            "Utiliza la exportación nativa de Tandoor o una copia de seguridad completa.",
+        }, status=413)
+
     def get(self, request):
         recipes = []
         from cuaderno.services.costing import visible_recipes
         from cuaderno.services.subrecipes import native_recipe_graph
         from cuaderno.models import PackageFormat
 
-        visible = list(visible_recipes(request.user, request.space))
+        visible = list(visible_recipes(request.user, request.space)[:MAX_EXCHANGE_RECIPES + 1])
+        if len(visible) > MAX_EXCHANGE_RECIPES:
+            return self.export_limit_response()
         try:
             native_recipe_graph([recipe.pk for recipe in visible], request.space, request.user)
         except DomainError as exc:
@@ -495,7 +520,10 @@ class RecipeExchangeView(APIView):
                                          "valid_from": price.valid_from.isoformat(), "note": price.note}
                                         for price in package.prices.filter(space=request.space).order_by("valid_from", "id")]})
         payload["format"] = "cuaderno-recipes-v2"
-        conversions = _export_exchange_conversions(request.space, foods, units, add_unit)
+        try:
+            conversions = _export_exchange_conversions(request.space, foods, units, add_unit)
+        except DomainError:
+            return self.export_limit_response()
         payload["catalog"] = {"foods": list(foods.values()), "units": list(units.values()), "packages": packages,
                               "conversions": conversions}
         payload["source_space"] = request.space.pk
@@ -504,6 +532,10 @@ class RecipeExchangeView(APIView):
                                "Para fotos, archivos, etiquetas y otros metadatos nativos utiliza también la exportación ZIP de Tandoor. "
                                "Incluye las conversiones de unidades alcanzables del catálogo. "
                                "Los alérgenos y ajustes fiscales del espacio no están incluidos."]
+        try:
+            validate_exchange_limits(payload)
+        except DomainError:
+            return self.export_limit_response()
         return HttpResponse(json.dumps(payload, ensure_ascii=False), content_type="application/json")
 
     @transaction.atomic
@@ -666,7 +698,12 @@ def _export_exchange_conversions(space, foods, units, add_unit):
     """Native conversion graph reachable from exported units, never hidden foods."""
     rows = list(UnitConversion.objects.filter(space=space).filter(
         Q(food__isnull=True) | Q(food_id__in=foods),
-    ).select_related("base_unit", "converted_unit").order_by("pk"))
+    ).select_related("base_unit", "converted_unit").order_by("pk")[:MAX_CATALOG_ITEMS + 1])
+    # Bound candidates, not just the reachable result. Conservatively reject
+    # oversized graphs instead of reading an unbounded disconnected catalog
+    # or silently dropping conversions that change the native PK precedence.
+    if len(rows) > MAX_CATALOG_ITEMS:
+        raise DomainError("export_limit", "El catálogo de conversiones supera el límite seguro de exportación.")
     adjacency = {}
     for row in rows:
         adjacency.setdefault(row.base_unit_id, []).append(row)

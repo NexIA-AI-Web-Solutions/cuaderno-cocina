@@ -11,6 +11,24 @@ from cuaderno.domain.money import parse_decimal, validate_explicit_price
 from cuaderno.domain.ingredient_yields import parse_yield_ratio, validate_yield_policy
 
 
+MAX_EXCHANGE_RECIPES = 1000
+MAX_EXCHANGE_BYTES = 2_000_000
+MAX_CATALOG_ITEMS = 10000
+
+
+def validate_exchange_limits(payload):
+    """Shared, non-mutating envelope limits for portable export and import."""
+    if (len(payload["recipes"]) > MAX_EXCHANGE_RECIPES
+            or len(json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")) > MAX_EXCHANGE_BYTES):
+        raise DomainError("import_limit", "La importación supera 1000 recetas o 2 MB.")
+    catalog = payload.get("catalog")
+    if isinstance(catalog, dict):
+        for kind in ("foods", "units", "packages", "conversions"):
+            values = catalog.get(kind, [])
+            if isinstance(values, list) and len(values) > MAX_CATALOG_ITEMS:
+                raise DomainError("invalid_import", "Catálogo inválido o demasiado grande.")
+
+
 def _fields(value, allowed):
     if not isinstance(value, dict) or set(value) - set(allowed.split()):
         raise DomainError("unsupported_import", "El documento contiene campos no soportados; utiliza la exportación nativa para esos datos.")
@@ -41,8 +59,7 @@ def parse_recipe_document(payload: dict) -> list[dict]:
         _fields(payload["media"], "included method url_downloads")
         if payload["media"] != {"included": False, "method": "native-tandoor-zip", "url_downloads": False}:
             raise DomainError("unsupported_import", "Las fotografías se transfieren mediante la exportación ZIP nativa, sin descargar URLs.")
-    if len(payload["recipes"]) > 1000 or len(json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")) > 2_000_000:
-        raise DomainError("import_limit", "La importación supera 1000 recetas o 2 MB.")
+    validate_exchange_limits(payload)
     source = str(payload.get("source") or payload.get("format") or "cuaderno-recipes-v1").strip()
     if not source or len(source) > 64:
         raise DomainError("invalid_import", "Indica la fuente o formato de la importación.")
@@ -134,7 +151,7 @@ def parse_portable_catalog(payload, recipes):
     }
     for kind, fields in allowed.items():
         values = catalog.get(kind, [])
-        if not isinstance(values, list) or len(values) > 10000:
+        if not isinstance(values, list) or len(values) > MAX_CATALOG_ITEMS:
             raise DomainError("invalid_import", "Catálogo inválido o demasiado grande.")
         result[kind] = {}
         names = set()

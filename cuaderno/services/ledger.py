@@ -52,6 +52,17 @@ def _reversal_metadata(original):
     return metadata
 
 
+def movement_fingerprint(*, entry_id, kind, canonical_quantity, reverses_id=None, origin=None):
+    """Hash the existing ledger contract after quantity/origin validation."""
+    origin_suffix = ""
+    if origin is not None:
+        canonical_origin = json.dumps(origin, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        origin_suffix = f";origin={canonical_origin}"
+    return hashlib.sha256(
+        f"entry={entry_id};kind={kind};quantity={canonical_quantity};reverses={reverses_id or ''}{origin_suffix}".encode()
+    ).hexdigest()
+
+
 def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempotency_key: str, reverses_id: int | None = None, origin: dict | None = None) -> StockMovement:
     if not isinstance(idempotency_key, str) or not idempotency_key or len(idempotency_key) > 128:
         raise ValidationError({"idempotency_key": "La operación de stock necesita una clave."})
@@ -63,7 +74,6 @@ def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempoten
         raise ValidationError({"quantity": exc.message}) from exc
     _storage_decimal(parsed_quantity)
     canonical_quantity = canonical_decimal(parsed_quantity)
-    origin_suffix = ""
     if origin is not None:
         if not isinstance(origin, dict):
             raise ValidationError({"origin": "El origen debe ser un documento estructurado."})
@@ -80,10 +90,10 @@ def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempoten
         if origin_bytes > 2048:
             raise ValidationError({"origin": "El documento de origen es demasiado grande."})
         origin = json.loads(canonical_origin)
-        origin_suffix = f";origin={canonical_origin}"
-    fingerprint = hashlib.sha256(
-        f"entry={entry_id};kind={kind};quantity={canonical_quantity};reverses={reverses_id or ''}{origin_suffix}".encode()
-    ).hexdigest()
+    fingerprint = movement_fingerprint(
+        entry_id=entry_id, kind=kind, canonical_quantity=canonical_quantity,
+        reverses_id=reverses_id, origin=origin,
+    )
     with transaction.atomic():
         # Serializa las claves de idempotencia y las operaciones de inventario
         # dentro de un Space. Así dos peticiones concurrentes no pueden leer
@@ -189,7 +199,7 @@ def reverse_movement(*, movement_id: int, space, user, idempotency_key: str, pur
             # one entry would leave its produced state and snapshot untrue.
             # Fail closed even when the referenced service is missing.
             raise ValidationError({
-                "reverse_of": "No se puede revertir un movimiento aislado de producción. La reversión completa del servicio aún no está disponible."
+                "reverse_of": "No se puede revertir un movimiento aislado de producción. Realiza la reversión completa desde el servicio."
             })
         from cuaderno.models import PurchaseReceipt
         receipt = PurchaseReceipt.objects.select_for_update().filter(space=space, movement=original).first()
