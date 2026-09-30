@@ -24,7 +24,7 @@ def decimal_string(value) -> str:
     return canonical_decimal(value)
 
 
-def accessible_service_plans(request, plan_id=None):
+def accessible_service_plans(request, plan_id=None, *, as_list=False):
     rows = ServicePlan.objects.filter(space=request.space)
     if plan_id is not None:
         rows = rows.filter(pk=plan_id)
@@ -44,7 +44,17 @@ def accessible_service_plans(request, plan_id=None):
     # MealPlan root. Re-evaluate native recipe ACLs for list, detail and every
     # transition. Admin oversight does not override a private recipe.
     # Detail/transition inspects one candidate; list is capped to latest 100.
-    candidates = list(rows.order_by("-pk")[:100].values("pk", "meal_plan__recipe_id", "snapshot"))
+    materialized = None
+    if as_list:
+        # The list response needs the same bounded rows that ACLs inspect.
+        # Keep detail/transitions as querysets, but do not fetch list snapshots twice.
+        materialized = list(rows.order_by("-pk").annotate(_root_recipe_id=F("meal_plan__recipe_id"))[:100])
+        candidates = [
+            {"pk": plan.pk, "meal_plan__recipe_id": plan._root_recipe_id, "snapshot": plan.snapshot}
+            for plan in materialized
+        ]
+    else:
+        candidates = list(rows.order_by("-pk")[:100].values("pk", "meal_plan__recipe_id", "snapshot"))
     required_by_plan: dict[int, set[int] | None] = {}
     all_recipe_ids: set[int] = set()
 
@@ -92,6 +102,13 @@ def accessible_service_plans(request, plan_id=None):
         for plan_id, required in required_by_plan.items()
         if required is not None and required.issubset(visible_ids)
     ]
+    if materialized is not None:
+        allowed = set(allowed_ids)
+        # Match PostgreSQL ASC NULLS LAST for legacy undated services.
+        return sorted(
+            (plan for plan in materialized if plan.pk in allowed),
+            key=lambda plan: (plan.service_date is None, plan.service_date, plan.pk),
+        )
     return rows.filter(pk__in=allowed_ids)
 
 

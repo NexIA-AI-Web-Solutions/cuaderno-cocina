@@ -55,18 +55,20 @@ class MovementView(APIView):
     def get(self, request):
         from cuaderno.services.inventory_access import household_inventory
         _require(request.space, SpaceProfile.INTEGRAL)
-        rows = household_inventory(request, StockMovement.objects.all(), "entry__inventory_location__household_id").select_related("entry").order_by("-id")[:100]
+        rows = household_inventory(request, StockMovement.objects.all(), "entry__inventory_location__household_id").order_by("-id").values(
+            "id", "kind", "quantity", "entry_id", "balance_after", "reverses_id", "created_at", "metadata_snapshot",
+        )[:100]
         return Response(
             [
                 {
-                    "id": row.id,
-                    "kind": row.kind,
-                    "quantity": _dec(row.quantity),
-                    "entry": row.entry_id,
-                    "balance": _dec(row.balance_after) if row.balance_after is not None else None,
-                    "reverses": row.reverses_id,
-                    "created_at": row.created_at.isoformat(),
-                    "metadata_snapshot": row.metadata_snapshot,
+                    "id": row["id"],
+                    "kind": row["kind"],
+                    "quantity": _dec(row["quantity"]),
+                    "entry": row["entry_id"],
+                    "balance": _dec(row["balance_after"]) if row["balance_after"] is not None else None,
+                    "reverses": row["reverses_id"],
+                    "created_at": row["created_at"].isoformat(),
+                    "metadata_snapshot": row["metadata_snapshot"],
                 }
                 for row in rows
             ]
@@ -186,10 +188,10 @@ class ServicePlanView(APIView):
 
     def get(self, request, plan_id=None):
         _require(request.space, SpaceProfile.PROFESIONAL)
-        rows = accessible_service_plans(request, plan_id).select_related("meal_plan").order_by("service_date", "id")
         if plan_id is not None:
+            rows = accessible_service_plans(request, plan_id).select_related("meal_plan").order_by("service_date", "id")
             return Response(serialize_service_plan(get_object_or_404(rows, pk=plan_id)))
-        return Response([serialize_service_plan(plan) for plan in rows])
+        return Response([serialize_service_plan(plan) for plan in accessible_service_plans(request, as_list=True)])
 
     @transaction.atomic
     def post(self, request, plan_id=None):
