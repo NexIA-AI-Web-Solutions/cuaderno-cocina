@@ -31,7 +31,7 @@ def main():
         if not users:
             users = [get_user_model().objects.get(username="demo")]
         password = os.environ.get("CUADERNO_DEMO_PASSWORD")
-        profiles, costs = [], []
+        profiles, costs, finances, services = [], [], [], []
         for user in users:
             if not password or not user.check_password(password):
                 raise ValueError("La contraseña DEMO no autentica el usuario restaurado.")
@@ -43,11 +43,24 @@ def main():
                 raise ValueError("Perfil/permiso del usuario restaurado no accesible.")
             membership = UserSpace.objects.get(user=user, active=True)
             profiles.append({"user": user.pk, "space": membership.space_id, "edition": response.json()})
+            edition = response.json()["edition"]
             for recipe in visible_recipes(user, membership.space).order_by("pk"):
                 costs.append({"recipe": recipe.pk, "cost": cost_recipe(recipe, recipe.servings, user=user)})
                 api = client.get(f"/api/cuaderno/recipes/{recipe.pk}/cost/")
                 if api.status_code != 200:
                     raise ValueError("Escandallo restaurado no accesible por API.")
+                if edition in {"profesional", "integral"}:
+                    finance = client.get(f"/api/cuaderno/recipes/{recipe.pk}/finance/")
+                    if finance.status_code != 200:
+                        raise ValueError("Propiedades financieras restauradas no accesibles por API.")
+                    finances.append({"recipe": recipe.pk, "finance": finance.json()})
+            if edition in {"profesional", "integral"}:
+                from cuaderno.models import ServicePlan
+                for service in ServicePlan.objects.filter(space=membership.space).order_by("pk"):
+                    api = client.get(f"/api/cuaderno/services/{service.pk}/")
+                    if api.status_code != 200:
+                        raise ValueError("Servicio restaurado no accesible por API.")
+                    services.append({"user": user.pk, "service": service.pk, "document": api.json()})
             foreign = Recipe.objects.exclude(space=membership.space).first()
             if foreign and client.get(f"/api/cuaderno/recipes/{foreign.pk}/cost/").status_code != 404:
                 raise ValueError("La API restaurada expone una receta de otro Space.")
@@ -59,11 +72,12 @@ def main():
             last = StockMovement.objects.filter(entry=entry).order_by("-pk").first()
             if last and last.balance_after is not None and last.balance_after != entry.amount:
                 raise ValueError("La proyección de saldo no coincide con el último movimiento restaurado.")
-        payload = {"profiles": profiles, "costs": costs, "stocks": stocks}
+        payload = {"profiles": profiles, "costs": costs, "stocks": stocks, "finances": finances, "services": services}
         digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
         transaction.set_rollback(True)
     print("CUADERNO_SMOKE=" + json.dumps({"passed": True, "sha256": digest, "login": True, "anonymous_denied": True,
-                                         "users_verified": len(users), "costs_verified": len(costs), "balances_verified": len(stocks)}))
+                                         "users_verified": len(users), "costs_verified": len(costs), "balances_verified": len(stocks),
+                                         "finances_verified": len(finances), "services_verified": len(services)}))
 
 
 if __name__ == "__main__":
