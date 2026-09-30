@@ -17,7 +17,7 @@ from typing import NamedTuple
 ROOT = Path(__file__).resolve().parents[2]
 CONTAINER = "cuaderno-release-web"
 GRYPE_VERSION = "0.119.0"
-GRYPE_COMMIT = "b6f51945"
+GRYPE_COMMIT = "b6f5194537747ee7f705f4113069ac9eb269919f"
 GRYPE_SHA256 = "5fa9104fb0630b9cd8049b12cb7b29713ce58fcaf586a26b3ad93d418982a52c"
 GRYPE_ZIP_SHA256 = "1db5c23b8ba0038a04acebed9c17945e1ade68d9f83e2fe1c101e4fb1feb9a48"
 VULNERABILITY_DB_SHA256 = "04d141a255a18805a25dae81566dd3696c551be38bfe17929fd1008b338228d4"
@@ -197,7 +197,7 @@ def _verify_grype(paths, runner, expected_tool_hash, expected_zip_hash):
     output = completed.stdout or ""
     if (completed.returncode != 0
             or re.search(r"(?m)^Version:\s*0\.119\.0\s*$", output) is None
-            or re.search(r"(?m)^GitCommit:\s*b6f51945\s*$", output) is None):
+            or re.search(rf"(?m)^GitCommit:\s*{re.escape(GRYPE_COMMIT)}\s*$", output) is None):
         raise ImageAuditFailure("La versión/commit del scanner local no coincide con el pin.")
     _verify_grype_hashes(paths, expected_tool_hash, expected_zip_hash)
 

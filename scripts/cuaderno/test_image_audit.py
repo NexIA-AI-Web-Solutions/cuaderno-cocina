@@ -17,6 +17,7 @@ else:
 
 IMAGE_ID = "sha256:" + "a" * 64
 SOURCE_REF = "b" * 40 + "+worktree." + "c" * 64
+GRYPE_COMMIT = "b6f5194537747ee7f705f4113069ac9eb269919f"
 
 
 def container_document(**changes):
@@ -35,7 +36,8 @@ def container_document(**changes):
 class FakeRunner:
     def __init__(self, paths, *, report=None, scanner_status=2, container=None, source_ref=SOURCE_REF,
                  final_container=None, mutate_archive=False, mutate_database=False,
-                 mutate_tool_before_scan=False, mutate_tool_after_scan=False):
+                 mutate_tool_before_scan=False, mutate_tool_after_scan=False,
+                 grype_commit=GRYPE_COMMIT):
         self.paths = paths
         self.report = {
             "matches": [
@@ -55,6 +57,7 @@ class FakeRunner:
         self.mutate_database = mutate_database
         self.mutate_tool_before_scan = mutate_tool_before_scan
         self.mutate_tool_after_scan = mutate_tool_after_scan
+        self.grype_commit = grype_commit
         self.container_inspections = 0
         self.calls = []
 
@@ -79,7 +82,7 @@ class FakeRunner:
         if argv[0] == str(self.paths.tool) and argv[1:] == ["version"]:
             return subprocess.CompletedProcess(
                 argv, 0,
-                stdout="Application: grype\nVersion: 0.119.0\nGitCommit: b6f51945\n",
+                stdout=f"Application: grype\nVersion: 0.119.0\nGitCommit: {self.grype_commit}\n",
                 stderr="",
             )
         if argv[0] == str(self.paths.tool) and argv[1:] == ["db", "status", "-o", "json"]:
@@ -183,6 +186,19 @@ class ImageAuditTests(unittest.TestCase):
                 expected_db_hash=self.db_hash,
             )
         self.assertFalse(self.paths.scan_dir.exists())
+
+        for reported_commit in (
+            "b6f51945",
+            "b6f5194537747ee7f705f4113069ac9e0000000",
+        ):
+            with self.subTest(reported_commit=reported_commit), self.assertRaises(subject.ImageAuditFailure):
+                subject.run_audit(
+                    root=self.root, scan_id=self.scan_id,
+                    runner=FakeRunner(self.paths, grype_commit=reported_commit),
+                    environ={"CUADERNO_ENV": "local"}, expected_tool_hash=self.tool_hash,
+                    expected_zip_hash=self.zip_hash, expected_db_hash=self.db_hash,
+                )
+            self.assertFalse(self.paths.scan_dir.exists())
         self.assertEqual(runner.calls, [])
 
         def wrong_version(argv, **kwargs):
