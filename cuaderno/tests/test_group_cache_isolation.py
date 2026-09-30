@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.test import TestCase, override_settings
@@ -24,6 +25,7 @@ class GroupCacheIsolationTests(TestCase):
             SearchFields.objects.get_or_create(name="Name", defaults={"field": "name"})
             self.admin_group = Group.objects.get_or_create(name="admin")[0]
             self.guest_group = Group.objects.get_or_create(name="guest")[0]
+            self.user_group = Group.objects.get_or_create(name="user")[0]
             self.space_a = Space.objects.create(name="Cache Space A")
             self.space_b = Space.objects.create(name="Cache Space B")
             self.user = get_user_model().objects.create_user(
@@ -211,3 +213,31 @@ class GroupCacheIsolationTests(TestCase):
         with self.assertNumQueries(1):
             self.assertIs(has_group_permission(request, ["guest"]), True)
             self.assertIs(has_group_permission(request, ["admin"]), True)
+
+    def test_legacy_request_with_only_user_uses_its_unique_active_membership(self):
+        legacy_request = SimpleNamespace(user=self.user)
+
+        self.assertIs(has_group_permission(legacy_request, ["admin"]), True)
+
+    def test_anonymous_request_denies_without_querying_memberships(self):
+        anonymous_request = SimpleNamespace(user=AnonymousUser())
+
+        with self.assertNumQueries(0):
+            self.assertIs(has_group_permission(anonymous_request, ["guest"]), False)
+
+    def test_one_membership_with_three_group_rows_remains_unique_in_one_query(self):
+        self.member_a.groups.add(self.user_group, self.guest_group)
+        request = self.request_snapshot()
+
+        with self.assertNumQueries(1):
+            self.assertIs(has_group_permission(request, ["admin"]), True)
+
+    def test_mutated_request_snapshot_after_helper_switch_reloads_groups_once(self):
+        request = self.request_snapshot()
+        self.assertIs(has_group_permission(request, ["admin"]), True)
+        self.assertEqual(switch_user_active_space(self.user, self.space_b), self.member_b)
+        request.space = self.space_b
+        request.user_space = self.member_b
+
+        with self.assertNumQueries(1):
+            self.assertIs(has_group_permission(request, ["admin"]), False)
