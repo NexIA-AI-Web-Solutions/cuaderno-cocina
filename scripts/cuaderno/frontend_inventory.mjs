@@ -129,7 +129,7 @@ function packageComponent(packageDirectory, root) {
     }
 }
 
-export function buildInventory(nodeModulesPath) {
+function installedPackageRecords(nodeModulesPath) {
     const requestedRoot = resolve(nodeModulesPath)
     if (!existsSync(requestedRoot) || !lstatSync(requestedRoot).isDirectory()) {
         throw new InventoryFailure('El node_modules de Vue no existe o no es un directorio.')
@@ -137,7 +137,7 @@ export function buildInventory(nodeModulesPath) {
     const root = realpathSync.native(requestedRoot)
     const visitedNodeModules = new Set()
     const visitedPackages = new Set()
-    const components = []
+    const records = []
 
     function scanPackage(candidate) {
         const packageDirectory = secureRealpath(candidate, root, 'paquete instalado')
@@ -146,7 +146,7 @@ export function buildInventory(nodeModulesPath) {
         }
         if (visitedPackages.has(packageDirectory)) return
         visitedPackages.add(packageDirectory)
-        components.push(packageComponent(packageDirectory, root))
+        records.push({directory: packageDirectory, component: packageComponent(packageDirectory, root)})
         const nested = join(packageDirectory, 'node_modules')
         if (existsSync(nested)) scanNodeModules(nested)
     }
@@ -177,11 +177,20 @@ export function buildInventory(nodeModulesPath) {
     }
 
     scanNodeModules(root)
-    components.sort((left, right) => {
-        const first = `${left.purl}\u0000${left.properties[1].value}`
-        const second = `${right.purl}\u0000${right.properties[1].value}`
+    records.sort((left, right) => {
+        const first = `${left.component.purl}\u0000${left.component.properties[1].value}`
+        const second = `${right.component.purl}\u0000${right.component.properties[1].value}`
         return first < second ? -1 : first > second ? 1 : 0
     })
+    return records
+}
+
+export function buildInventoryIndex(nodeModulesPath) {
+    return new Map(installedPackageRecords(nodeModulesPath).map(record => [record.directory, record.component]))
+}
+
+export function buildInventory(nodeModulesPath) {
+    const components = installedPackageRecords(nodeModulesPath).map(record => record.component)
     return {
         bomFormat: 'CycloneDX',
         specVersion: '1.6',

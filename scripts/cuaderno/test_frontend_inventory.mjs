@@ -2,12 +2,26 @@ import assert from 'node:assert/strict'
 import {afterEach, test} from 'node:test'
 import {spawnSync} from 'node:child_process'
 import {createHash} from 'node:crypto'
-import {copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync} from 'node:fs'
+import {
+    copyFileSync,
+    existsSync,
+    mkdirSync,
+    mkdtempSync,
+    readFileSync,
+    realpathSync,
+    rmSync,
+    symlinkSync,
+    writeFileSync,
+} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {fileURLToPath} from 'node:url'
 
-import {InventoryFailure, buildInventory, packagePurl} from './frontend_inventory.mjs'
+import {InventoryFailure, buildInventory, buildInventoryIndex, packagePurl} from './frontend_inventory.mjs'
+import {
+    BuildProvenanceFailure,
+    createBuildProvenance,
+} from './frontend_build_provenance.mjs'
 
 
 const temporaryRoots = []
@@ -46,10 +60,12 @@ test('walks normal, scoped and nested installed packages with deterministic sort
 
     const first = buildInventory(modules)
     const second = buildInventory(modules)
+    const index = buildInventoryIndex(modules)
 
     assert.deepEqual(second, first)
     assert.deepEqual(first.components.map(component => component.name), ['@scope/alpha', 'nested', 'zeta'])
     assert.equal(first.components[0].purl, 'pkg:npm/%40scope/alpha@1.0.0')
+    assert.equal(index.get(realpathSync.native(join(modules, '@scope', 'alpha'))).purl, first.components[0].purl)
     assert.deepEqual(first.components[0].licenses, [{license: {name: 'Apache-2.0'}}])
     assert.equal(
         first.components[0].properties.find(property => property.name === 'cuaderno:package_json_sha256').value,
@@ -175,4 +191,140 @@ test('CLI inventories the Docker build layout and rejects caller-controlled path
     assert.equal(rejected.status, 1)
     assert.equal(rejected.stdout, '')
     assert.match(rejected.stderr, /no acepta rutas ni argumentos externos/i)
+})
+
+function provenanceFixture() {
+    const root = mkdtempSync(join(tmpdir(), 'cuaderno-frontend-provenance-'))
+    temporaryRoots.push(root)
+    const vueRoot = join(root, 'vue3')
+    const modules = join(vueRoot, 'node_modules')
+    const outDir = join(root, 'cookbook', 'static', 'vue3')
+    const source = join(vueRoot, 'src', 'main.ts')
+    const packageDirectory = join(modules, '@scope', 'runtime')
+    const packageModule = join(packageDirectory, 'dist', 'index.js')
+    mkdirSync(join(vueRoot, 'src'), {recursive: true})
+    mkdirSync(join(packageDirectory, 'dist'), {recursive: true})
+    mkdirSync(join(outDir, 'assets'), {recursive: true})
+    writeFileSync(source, 'export const app = true\n', 'utf8')
+    packageFixture(packageDirectory, {name: '@scope/runtime', version: '2.3.4', license: 'MIT'})
+    writeFileSync(packageModule, 'export const runtime = true\n', 'utf8')
+    return {root, vueRoot, modules, outDir, source, packageModule}
+}
+
+function chunk(fileName, code, modules, changes = {}) {
+    return {
+        type: 'chunk',
+        fileName,
+        name: fileName,
+        code,
+        isEntry: true,
+        isDynamicEntry: false,
+        facadeModuleId: Object.keys(modules)[0] ?? null,
+        imports: [],
+        dynamicImports: [],
+        implicitlyLoadedBefore: [],
+        modules: Object.fromEntries(Object.keys(modules).map(id => [id, {
+            code: null, originalLength: 10, renderedLength: 8, removedExports: [], renderedExports: [],
+        }])),
+        ...changes,
+    }
+}
+
+test('records main and service-worker Rollup graphs and hashes final post-Workbox bytes honestly', () => {
+    const fixture = provenanceFixture()
+    const plugins = createBuildProvenance({
+        projectRoot: fixture.root,
+        vueRoot: fixture.vueRoot,
+        nodeModulesRoot: fixture.modules,
+        outDir: fixture.outDir,
+    })
+    assert.equal(plugins.finalizePlugin.closeBundle.order, 'post')
+    assert.equal(plugins.finalizePlugin.closeBundle.sequential, true)
+
+    plugins.mainPlugin.generateBundle({}, {
+        'assets/main.js': chunk('assets/main.js', 'main bundle', {
+            [fixture.source]: {},
+            [`${fixture.packageModule}?commonjs-proxy`]: {},
+            '\u0000vite/preload-helper.js': {},
+            'bare-unresolved': {},
+        }, {imports: ['external-runtime'], dynamicImports: ['assets/lazy.js']}),
+        'assets/logo.svg': {type: 'asset', fileName: 'assets/logo.svg', source: '<svg/>', names: ['logo.svg']},
+    })
+    plugins.serviceWorkerPlugin.generateBundle({}, {
+        'service-worker.js': chunk('service-worker.js', 'pre-injection worker', {[fixture.source]: {}}),
+    })
+
+    writeFileSync(join(fixture.outDir, 'assets', 'main.js'), 'main bundle', 'utf8')
+    writeFileSync(join(fixture.outDir, 'assets', 'logo.svg'), '<svg/>', 'utf8')
+    writeFileSync(join(fixture.outDir, 'service-worker.js'), 'post-Workbox worker', 'utf8')
+    plugins.finalizePlugin.closeBundle.handler()
+
+    const reportPath = join(fixture.outDir, 'cuaderno-build-provenance.json')
+    const reportText = readFileSync(reportPath, 'utf8')
+    const report = JSON.parse(reportText)
+    assert.equal(report.schema_version, 1)
+    assert.match(report.claims.rollup_graph, /observed/i)
+    assert.match(report.claims.final_assets, /final/i)
+    assert.match(report.limitations.join(' '), /not.*exact.*closure/i)
+    assert.deepEqual(report.final_assets.map(row => row.file_name), [
+        'assets/logo.svg', 'assets/main.js', 'service-worker.js',
+    ])
+    assert.equal(
+        report.final_assets.find(row => row.file_name === 'service-worker.js').sha256,
+        createHash('sha256').update('post-Workbox worker').digest('hex'),
+    )
+    const modules = report.rollup.main.chunks[0].modules
+    assert.equal(modules.find(row => row.kind === 'package').package.purl, 'pkg:npm/%40scope/runtime@2.3.4')
+    assert.equal(modules.find(row => row.kind === 'source').id, 'vue:src/main.ts')
+    assert.ok(modules.some(row => row.kind === 'virtual'))
+    assert.ok(report.rollup.main.unresolved.includes('unresolved:bare-unresolved'))
+    assert.ok(report.rollup.main.externals.includes('external:external-runtime'))
+    assert.ok(!reportText.includes(fixture.root))
+    assert.ok(!report.final_assets.some(row => row.file_name === 'cuaderno-build-provenance.json'))
+})
+
+test('fails closed for absolute module IDs outside the project and output symlinks', () => {
+    const fixture = provenanceFixture()
+    const plugins = createBuildProvenance({
+        projectRoot: fixture.root,
+        vueRoot: fixture.vueRoot,
+        nodeModulesRoot: fixture.modules,
+        outDir: fixture.outDir,
+    })
+    const outside = join(fixture.root, '..', 'foreign-module.js')
+    assert.throws(() => plugins.mainPlugin.generateBundle({}, {
+        'assets/main.js': chunk('assets/main.js', 'x', {[outside]: {}}),
+    }), BuildProvenanceFailure)
+
+    const externalDirectory = mkdtempSync(join(tmpdir(), 'cuaderno-foreign-output-'))
+    temporaryRoots.push(externalDirectory)
+    writeFileSync(join(externalDirectory, 'secret.txt'), 'secret', 'utf8')
+    symlinkSync(externalDirectory, join(fixture.outDir, 'escape'), 'junction')
+    assert.throws(() => plugins.finalizePlugin.closeBundle.handler(), BuildProvenanceFailure)
+    assert.equal(existsSync(join(externalDirectory, 'cuaderno-build-provenance.json')), false)
+})
+
+test('revalidates a configured output root before reading and writing the report', () => {
+    for (const existedAtConfiguration of [false, true]) {
+        const fixture = provenanceFixture()
+        if (!existedAtConfiguration) rmSync(fixture.outDir, {recursive: true, force: true})
+        const plugins = createBuildProvenance({
+            projectRoot: fixture.root,
+            vueRoot: fixture.vueRoot,
+            nodeModulesRoot: fixture.modules,
+            outDir: fixture.outDir,
+        })
+        if (existedAtConfiguration) rmSync(fixture.outDir, {recursive: true, force: true})
+        const externalDirectory = mkdtempSync(join(tmpdir(), 'cuaderno-replaced-output-'))
+        temporaryRoots.push(externalDirectory)
+        writeFileSync(join(externalDirectory, 'outside.js'), 'outside', 'utf8')
+        symlinkSync(externalDirectory, fixture.outDir, 'junction')
+
+        assert.throws(
+            () => plugins.finalizePlugin.closeBundle.handler(),
+            BuildProvenanceFailure,
+            `outDir existed at configuration: ${existedAtConfiguration}`,
+        )
+        assert.equal(existsSync(join(externalDirectory, 'cuaderno-build-provenance.json')), false)
+    }
 })
