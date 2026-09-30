@@ -58,11 +58,14 @@ with scopes_disabled():
     assert recipe.steps.get().instruction == "Synthetic original step"
     ingredient = recipe.steps.get().ingredients.get()
     assert ingredient.amount == Decimal("0.4")
+    assert ingredient.quantity_basis == "gross" and ingredient.yield_ratio is None
     entry = InventoryEntry.objects.get(space=space)
     assert entry.amount == Decimal("5.125") and entry.inventory_location.household_id == membership.household_id
     assert ingredient.food_id == entry.food_id and ingredient.unit_id == entry.unit_id
     with connection.cursor() as cursor:
-        cursor.execute("SELECT 1 FROM django_migrations WHERE app='cuaderno' AND name='0013_offer_free_equivalence'")
+        cursor.execute("SELECT 1 FROM django_migrations WHERE app='cuaderno' AND name='0015_stockminimum'")
+        assert cursor.fetchone()
+        cursor.execute("SELECT 1 FROM django_migrations WHERE app='cookbook' AND name='0243_ingredient_yield_policy'")
         assert cursor.fetchone()
     package = PackageFormat.objects.create(space=space, food=entry.food, unit=entry.unit, label="Synthetic 5L", quantity=5)
     PriceVersion.objects.create(space=space, package=package, amount=32, valid_from=timezone.now(), created_by=user)
