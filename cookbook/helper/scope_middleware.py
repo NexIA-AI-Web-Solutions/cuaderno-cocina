@@ -53,11 +53,11 @@ class ScopeMiddleware:
                 return self.get_response(request)
 
             # get active user space, if for some reason more than one space is active select first (group permission checks will fail, this is not intended at this point)
-            user_space = request.user.userspace_set.filter(active=True).first()
+            user_space = request.user.userspace_set.filter(active=True).select_related('space').first()
 
             if not user_space and request.user.userspace_set.count() > 0:
                 # if the users has a userspace but nothing is active, activate the first one
-                user_space = request.user.userspace_set.first()
+                user_space = request.user.userspace_set.select_related('space').first()
                 if user_space:
                     user_space.active = True
                     user_space.save()
@@ -82,7 +82,7 @@ class ScopeMiddleware:
             if request.path.startswith(prefix + '/api/'):
                 try:
                     if auth := OAuth2Authentication().authenticate(request):
-                        user_space = auth[0].userspace_set.filter(active=True).first()
+                        user_space = auth[0].userspace_set.filter(active=True).select_related('space').first()
                         if user_space:
                             request.space = user_space.space
                             request.user_space = user_space
