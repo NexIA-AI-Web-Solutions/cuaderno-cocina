@@ -209,6 +209,14 @@ def main():
     if not release_image.startswith("sha256:") or len(release_image) != 71:
         raise ValueError("Identidad de imagen release no válida.")
     suffix = uuid.uuid4().hex[:12]
+    # Docker Desktop/containerd can stop resolving an untagged manifest-list
+    # ID when a concurrent build replaces :local. Retain this exact inspected
+    # artifact under a unique project-local tag before the long pin phase.
+    release_tag = f"cuaderno-cocina:upgrade-{suffix}"
+    run(["docker", "tag", release_image, release_tag])
+    retained = run(["docker", "image", "inspect", release_tag, "--format", "{{.Id}}"])
+    if retained.stdout.strip() != release_image:
+        raise ValueError("La imagen retenida no coincide con el artefacto inspeccionado.")
     namespace = f"cuaderno-upgrade-{suffix}"
     database = f"cuaderno_upgrade_{suffix}"
     db_container = f"{namespace}-db"
@@ -234,7 +242,7 @@ def main():
         f"assert database['HOST']=={db_container!r}; assert database['NAME']=={database!r}; "
         "print('UPGRADE_PREFLIGHT_OK: exact isolated host/database verified before migrations')"
     )
-    for phase, image, source in (("pin", PIN_IMAGE_ID, PIN_FIXTURE), ("release", release_image, UPGRADE_ASSERTIONS)):
+    for phase, image, source in (("pin", PIN_IMAGE_ID, PIN_FIXTURE), ("release", release_tag, UPGRADE_ASSERTIONS)):
         container = f"{namespace}-{phase}"
         run(["docker", "run", "--name", f"{container}-preflight", "--network", namespace, *environment,
              "--entrypoint", "/opt/recipes/venv/bin/python", image, "-c", preflight])
@@ -244,7 +252,7 @@ def main():
         # A separate shell container uses the same newly created, exclusively synthetic database.
         run(["docker", "run", "--name", f"{container}-assert", "--network", namespace, *environment,
              "--entrypoint", "/opt/recipes/venv/bin/python", image, "manage.py", "shell", "-c", source])
-    print(f"Retained isolated upgrade: network={namespace}, DB={database}, container={db_container}. No volumes removed.")
+    print(f"Retained isolated upgrade: network={namespace}, DB={database}, container={db_container}, image={release_tag} ({release_image}). No volumes removed.")
     return 0
 
 
