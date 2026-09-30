@@ -30,7 +30,11 @@
 
             <v-divider class="my-4" />
 
-            <IngredientYieldPanel :recipe-id="recipeId" @saved="loadAll" />
+            <RecipePriceImpactPanel :key="impactRefreshToken" :recipe-id="recipeId" :servings="servings" />
+
+            <v-divider class="my-4" />
+
+            <IngredientYieldPanel :recipe-id="recipeId" @saved="reloadAfterYieldEdit" />
 
             <v-divider class="my-4" />
 
@@ -107,6 +111,7 @@ import {computed, onBeforeUnmount, ref, watch} from "vue"
 import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import {apiError} from "@/cuaderno/forms"
 import IngredientYieldPanel from "@/cuaderno/components/IngredientYieldPanel.vue"
+import RecipePriceImpactPanel from "@/cuaderno/components/RecipePriceImpactPanel.vue"
 import {
     financeBody,
     financeMoneyLabel,
@@ -131,6 +136,12 @@ const props = defineProps<{
     recipeId: number
     servings: number
 }>()
+
+const impactRefreshToken = ref(0)
+function reloadAfterYieldEdit() {
+    impactRefreshToken.value += 1
+    void loadAll()
+}
 
 const cost = ref<CostResult | null>(null)
 const finance = ref<RecipeFinance | null>(null)
