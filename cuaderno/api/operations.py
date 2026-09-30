@@ -22,7 +22,7 @@ from cuaderno.domain.ingredient_yields import validate_yield_policy
 from cuaderno.domain.production import assert_no_cycle, consolidate, scale_covers
 from cuaderno.domain.stock import packs_to_buy, waste_value
 from cuaderno.models import AllergenDeclaration, RecipeExchangeRecord, RecipeYield, ServicePlan, SpaceProfile, StockMovement
-from cuaderno.services.ledger import IdempotencyConflict, apply_movement, reverse_movement
+from cuaderno.services.ledger import IdempotencyConflict, apply_movement, replay_legacy_waste, reverse_movement
 from cuaderno.services.service_plans import (
     accessible_service_plans,
     cancel_service_plan,
@@ -87,14 +87,34 @@ class MovementView(APIView):
                 )
             else:
                 entry = get_object_or_404(household_inventory(request, InventoryEntry.objects.all()), pk=request.data.get("entry"))
-                movement = apply_movement(
-                    entry_id=entry.id,
-                    space=request.space,
-                    user=request.user,
-                    kind=request.data.get("kind"),
-                    quantity=request.data.get("quantity"),
-                    idempotency_key=request.data.get("idempotency_key", ""),
-                )
+                origin = None
+                movement = None
+                if request.data.get("kind") == StockMovement.WASTE:
+                    movement = replay_legacy_waste(
+                        entry_id=entry.id, space=request.space, user=request.user,
+                        quantity=request.data.get("quantity"), idempotency_key=request.data.get("idempotency_key", ""),
+                    )
+                if request.data.get("kind") == StockMovement.WASTE and movement is None:
+                    raw_cause = request.data.get("cause")
+                    if not isinstance(raw_cause, str):
+                        raise ValidationError({"cause": "Indica un motivo del desperdicio de 1 a 256 caracteres."})
+                    cause = raw_cause.strip()
+                    if not cause or len(cause) > 256 or any(
+                        ord(character) < 32 or 127 <= ord(character) <= 159
+                        or 0xD800 <= ord(character) <= 0xDFFF for character in raw_cause
+                    ):
+                        raise ValidationError({"cause": "Indica un motivo de 1 a 256 caracteres, sin caracteres de control."})
+                    origin = {"type": "standalone_waste", "cause": cause}
+                if movement is None:
+                    movement = apply_movement(
+                        entry_id=entry.id,
+                        space=request.space,
+                        user=request.user,
+                        kind=request.data.get("kind"),
+                        quantity=request.data.get("quantity"),
+                        idempotency_key=request.data.get("idempotency_key", ""),
+                        origin=origin,
+                    )
         except IdempotencyConflict as exc:
             return Response(exc.detail, status=409)
         except StockMovement.DoesNotExist:

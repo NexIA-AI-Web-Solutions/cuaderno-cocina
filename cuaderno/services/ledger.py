@@ -69,9 +69,15 @@ def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempoten
             raise ValidationError({"origin": "El origen debe ser un documento estructurado."})
         try:
             canonical_origin = json.dumps(origin, sort_keys=True, separators=(",", ":"), allow_nan=False)
+            # Keep the historical ASCII-escaped fingerprint contract. Bound
+            # actual UTF-8 JSON size separately so a valid emoji cause does
+            # not exceed the cap merely because it is escaped for hashing.
+            origin_bytes = len(json.dumps(
+                origin, sort_keys=True, separators=(",", ":"), allow_nan=False, ensure_ascii=False,
+            ).encode("utf-8"))
         except (TypeError, ValueError) as exc:
             raise ValidationError({"origin": "El documento de origen no es válido."}) from exc
-        if len(canonical_origin) > 2048:
+        if origin_bytes > 2048:
             raise ValidationError({"origin": "El documento de origen es demasiado grande."})
         origin = json.loads(canonical_origin)
         origin_suffix = f";origin={canonical_origin}"
@@ -145,6 +151,28 @@ def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempoten
             },
             reverses_id=reverses_id,
             created_by=user,
+        )
+
+
+def replay_legacy_waste(*, entry_id: int, space, user, quantity, idempotency_key):
+    """Replay pre-cause API payloads, never create a cause-less movement.
+
+    That endpoint ignored cause entirely. Only an existing WASTE whose
+    snapshot has no origin qualifies; apply_movement still checks its exact
+    historical fingerprint while the Space lock remains held.
+    """
+    if not isinstance(idempotency_key, str) or not idempotency_key or len(idempotency_key) > 128:
+        return None
+    with transaction.atomic():
+        type(space).objects.select_for_update().get(pk=space.pk)
+        prior = StockMovement.objects.select_for_update().filter(
+            space=space, idempotency_key=idempotency_key, kind=StockMovement.WASTE,
+        ).first()
+        if prior is None or not isinstance(prior.metadata_snapshot, dict) or "origin" in prior.metadata_snapshot:
+            return None
+        return apply_movement(
+            entry_id=entry_id, space=space, user=user, kind=StockMovement.WASTE,
+            quantity=quantity, idempotency_key=idempotency_key,
         )
 
 
