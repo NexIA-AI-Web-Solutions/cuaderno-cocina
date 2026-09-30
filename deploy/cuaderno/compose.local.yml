@@ -24,6 +24,8 @@ services:
     environment:
       SECRET_KEY: ${CUADERNO_LOCAL_SECRET_KEY:?Run local_up.py}
       DB_ENGINE: django.db.backends.postgresql
+      # Native Tandoor libpq options: disable JIT only for this OLTP connection.
+      DB_OPTIONS: "{'options': '-c jit=off'}"
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
       POSTGRES_DB: cuaderno_demo
