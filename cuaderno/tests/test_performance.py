@@ -8,21 +8,24 @@ not claim browser, Internet, LCP, INP, iPad, or production-host performance.
 
 from __future__ import annotations
 
+import cProfile
+import hashlib
 import json
 import math
 import os
 import platform
+import pstats
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from threading import Barrier
-from time import perf_counter
+from time import perf_counter, process_time
 
 import django
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import cache
-from django.db import close_old_connections, connection, connections
+from django.db import close_old_connections, connection, connections, transaction
 from django.test import TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
@@ -84,6 +87,21 @@ def _memory_limit_bytes():
         return None if value == "max" else int(value)
     except (OSError, ValueError):
         return None
+
+
+def _rss_facts():
+    """Read Linux process memory without adding a measurement dependency."""
+    result = {"rss_bytes": None, "rss_peak_bytes": None}
+    try:
+        with open("/proc/self/status", encoding="ascii") as status:
+            for line in status:
+                if line.startswith("VmRSS:"):
+                    result["rss_bytes"] = int(line.split()[1]) * 1024
+                elif line.startswith("VmHWM:"):
+                    result["rss_peak_bytes"] = int(line.split()[1]) * 1024
+    except (OSError, ValueError, IndexError):
+        pass
+    return result
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
@@ -344,6 +362,7 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             query_item_counts.append(self._response_items(response))
         return {
             **_percentiles(samples),
+            "raw_samples_ms": [round(sample, 3) for sample in samples],
             "samples": len(samples),
             "items": item_counts[-1],
             "warmup_items": self._response_items(warmup),
@@ -385,6 +404,7 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
                         errors.append(type(exc).__name__)
         return {
             **_percentiles(samples),
+            "raw_samples_ms": [round(sample, 3) for sample in samples],
             "samples": len(samples),
             "users": CONCURRENT_USERS,
             "repetitions": CONCURRENT_REPETITIONS,
@@ -392,6 +412,110 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             "item_counts": item_counts,
             "statuses": sorted(set(statuses)),
             "errors": errors,
+        }
+
+    @staticmethod
+    def _profile_rows(profile):
+        stats = pstats.Stats(profile)
+        rows = []
+        for (filename, line, function), values in sorted(
+            stats.stats.items(), key=lambda item: item[1][3], reverse=True,
+        )[:30]:
+            primitive_calls, total_calls, total_time, cumulative_time, _callers = values
+            rows.append({
+                "file": filename,
+                "line": line,
+                "function": function,
+                "primitive_calls": primitive_calls,
+                "total_calls": total_calls,
+                "total_time_ms": round(total_time * 1000, 3),
+                "cumulative_time_ms": round(cumulative_time * 1000, 3),
+            })
+        return rows
+
+    def _profile_request(self, client, path):
+        profile = cProfile.Profile()
+        rss_before = _rss_facts()
+        wall_started = perf_counter()
+        cpu_started = process_time()
+        with CaptureQueriesContext(connection) as captured:
+            profile.enable()
+            try:
+                response = client.get(path)
+                payload_bytes = len(response.content)
+            finally:
+                profile.disable()
+        cpu_ms = (process_time() - cpu_started) * 1000
+        wall_ms = (perf_counter() - wall_started) * 1000
+        queries = [dict(query) for query in captured.captured_queries]
+        sql_ms = sum(float(query.get("time") or 0) * 1000 for query in queries)
+        return {
+            "status": response.status_code,
+            "items": self._response_items(response),
+            "wall_ms": round(wall_ms, 3),
+            "process_cpu_ms": round(cpu_ms, 3),
+            "sql_ms": round(sql_ms, 3),
+            "sql_count": len(queries),
+            "payload_bytes": payload_bytes,
+            "is_rendered": getattr(response, "is_rendered", None),
+            "rss_before": rss_before,
+            "rss_after": _rss_facts(),
+            "top_cumulative": self._profile_rows(profile),
+        }, queries
+
+    @staticmethod
+    def _representative_sql(profile_queries):
+        specifications = {
+            "packages_rows": ("packages_1500", 'from "cuaderno_packageformat"'),
+            "packages_latest_prices": ("packages_1500", 'from "cuaderno_priceversion"'),
+            "services_candidates": ("services_100", 'from "cuaderno_serviceplan"'),
+            "services_visible_recipe_acl": ("services_100", 'from "cookbook_recipe"'),
+            "movements_household_order": ("movements_100_of_100000", 'from "cuaderno_stockmovement"'),
+        }
+        selected = {}
+        for label, (endpoint, marker) in specifications.items():
+            matches = [
+                query["sql"] for query in profile_queries[endpoint]
+                if isinstance(query.get("sql"), str)
+                and marker in query["sql"].lower()
+                and query["sql"].lstrip().lower().startswith("select")
+            ]
+            if not matches:
+                raise AssertionError(f"No se capturó SQL representativo para {label}.")
+            # Prefer the longest SELECT: it retains ACL/order/price predicates rather
+            # than selecting an incidental existence check on the same relation.
+            selected[label] = max(matches, key=len)
+        return selected
+
+    @staticmethod
+    def _explain_representative_sql(selected):
+        plans = {}
+        # EXPLAIN ANALYZE executes each captured SELECT. The explicit read-only
+        # transaction prevents this diagnostic lane from becoming a write path.
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute("SET TRANSACTION READ ONLY")
+                for label, sql in selected.items():
+                    cursor.execute("EXPLAIN (ANALYZE TRUE, BUFFERS TRUE, FORMAT JSON) " + sql)
+                    plan = cursor.fetchone()[0]
+                    plans[label] = {
+                        "sql_sha256": hashlib.sha256(sql.encode("utf-8")).hexdigest(),
+                        "plan": plan,
+                    }
+        return plans
+
+    def _diagnostic_report(self, endpoints):
+        profiles = {}
+        captured = {}
+        for name, path in endpoints.items():
+            profiles[name], captured[name] = self._profile_request(self.clients[0], path)
+        selected = self._representative_sql(captured)
+        return {
+            "schema_version": 1,
+            "acceptance_samples_excluded": True,
+            "instrumented_requests": 1,
+            "profiles": profiles,
+            "explain": self._explain_representative_sql(selected),
         }
 
     def _database_facts(self):
@@ -469,6 +593,7 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             name: self._measure_concurrent(endpoints[name])
             for name in ("services_100", "movements_100_of_100000", "packages_1500")
         }
+        diagnostic = self._diagnostic_report(endpoints) if os.environ.get("CUADERNO_PROFILE") == "1" else None
         report = {
             "schema_version": 1,
             "measured_at": timezone.now().isoformat(),
@@ -500,6 +625,8 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             "claims_excluded": ["LCP", "INP", "iPad físico", "latencia de Internet", "hardware comercial"],
         }
         print("CUADERNO_PERFORMANCE " + json.dumps(report, sort_keys=True, separators=(",", ":")))
+        if diagnostic is not None:
+            print("CUADERNO_DIAGNOSTIC " + json.dumps(diagnostic, sort_keys=True, separators=(",", ":")))
 
         for name, metrics in sequential.items():
             with self.subTest(endpoint=name, check="query_count_stability"):
