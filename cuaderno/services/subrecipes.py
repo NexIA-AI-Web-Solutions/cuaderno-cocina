@@ -10,7 +10,7 @@ from cookbook.models import Recipe, UnitConversion
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.production import assert_no_cycle
 from cuaderno.domain.units import convert_quantity, to_base
-from cuaderno.domain.ingredient_yields import ingredient_quantities
+from cuaderno.domain.ingredient_yields import compose_scale_ratio, ingredient_quantities, validate_scale_ratio
 from cuaderno.models import RecipeYield
 
 
@@ -117,23 +117,25 @@ def native_recipe_graph(recipe_ids, space, user=None):
     return roots, cache, edges
 
 
-def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
+def sheet_from_recipes(recipe_ids, space, user=None, factors=None, *, factor_ratios=None) -> dict:
+    if factors is not None and factor_ratios is not None:
+        raise DomainError("invalid_scale", "Indica factores o ratios de producción, no ambos.")
     roots, cache, edges = native_recipe_graph(recipe_ids, space, user)
     yields = {row.recipe_id: row for row in RecipeYield.objects.filter(space=space, recipe_id__in=cache).select_related("unit")}
     totals, warnings, yield_details = {}, [], []
     units = {}
 
-    def walk(recipe, factor):
+    def walk(recipe, factor_ratio):
         for step in recipe.steps.all():
             if step.step_recipe_id:
-                walk(cache[step.step_recipe_id], factor)
+                walk(cache[step.step_recipe_id], factor_ratio)
             for ingredient in step.ingredients.all():
                 if ingredient.is_header or ingredient.no_amount:
                     continue
                 if not ingredient.food_id or ingredient.amount <= 0:
                     warnings.append({"code": "ingredient_incomplete", "ingredient": ingredient.pk})
                     continue
-                amount, yield_detail = ingredient_quantities(ingredient, factor)
+                amount, yield_detail = ingredient_quantities(ingredient, factor_ratio=factor_ratio)
                 if ingredient.yield_ratio is not None or ingredient.quantity_basis != "gross":
                     yield_details.append(yield_detail)
                 child_id = ingredient.food.recipe_id
@@ -144,8 +146,12 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
                     else:
                         if declared.quantity <= 0:
                             raise DomainError("invalid_yield", "El rendimiento de la subreceta debe ser positivo.")
-                        needed = convert_native_quantity(amount, ingredient.unit, declared.unit, ingredient.food, space)
-                        walk(cache[child_id], _scale_native_quantity(needed, Decimal("1"), declared.quantity))
+                        # Convert the native amount, not its pre-divided scale.
+                        # The child ingredient can cancel the output denominator.
+                        needed = convert_native_quantity(
+                            ingredient.amount, ingredient.unit, declared.unit, ingredient.food, space,
+                        )
+                        walk(cache[child_id], compose_scale_ratio(factor_ratio, needed, declared.quantity))
                         continue
                 key = ingredient.food.name
                 if key in units and units[key] != ingredient.unit:
@@ -157,10 +163,11 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
                     totals[key] = totals.get(key, Decimal("0")) + amount
 
     for recipe in roots:
-        factor = Decimal(str((factors or {}).get(recipe.pk, "1")))
-        if not factor.is_finite() or factor <= 0:
-            raise DomainError("invalid_scale", "El factor de producción debe ser positivo.")
-        walk(recipe, factor)
+        factor_ratio = (
+            (factor_ratios or {}).get(recipe.pk, (1, 1)) if factor_ratios is not None
+            else ((factors or {}).get(recipe.pk, "1"), 1)
+        )
+        walk(recipe, validate_scale_ratio(factor_ratio))
     return {"needs": {key: format(value, "f") for key, value in totals.items()}, "edges": edges,
             "warnings": warnings, "units": {key: unit.name if unit else None for key, unit in units.items()},
             "ingredient_yields": yield_details}

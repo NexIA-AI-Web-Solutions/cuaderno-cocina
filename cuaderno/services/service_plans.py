@@ -188,9 +188,10 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
         base_servings = Decimal(str(recipe.servings))
         if base_servings <= 0:
             raise ValidationError({"recipe": "Las raciones base de la receta deben ser positivas."})
-        factor = Decimal(plan.covers) / base_servings
         try:
-            sheet = sheet_from_recipes([recipe.pk], plan.space, user, factors={recipe.pk: factor})
+            sheet = sheet_from_recipes(
+                [recipe.pk], plan.space, user, factor_ratios={recipe.pk: (plan.covers, base_servings)},
+            )
             cost = cost_recipe(recipe, plan.covers, as_of=confirmed_at, user=user)
         except DomainError as exc:
             raise ValidationError({exc.code: exc.message}) from exc

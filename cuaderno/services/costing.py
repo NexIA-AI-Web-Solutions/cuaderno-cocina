@@ -10,10 +10,10 @@ from django.db.models import Q
 from django.utils import timezone
 
 from cookbook.models import UnitConversion
-from cuaderno.domain.costing import CostResult, line_cost, scale_amount
+from cuaderno.domain.costing import CostResult, line_cost
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import parse_decimal
-from cuaderno.domain.ingredient_yields import ingredient_quantities
+from cuaderno.domain.ingredient_yields import compose_scale_ratio, ingredient_quantities, validate_scale_ratio
 from cuaderno.models import PackageFormat, PriceVersion, RecipeYield
 
 
@@ -109,14 +109,16 @@ def cost_recipe(recipe, servings, as_of=None, user=None) -> dict:
     if base_servings <= 0:
         raise DomainError("invalid_servings", "Las raciones base deben ser mayores que cero.")
     target = parse_decimal(servings, allow_zero=False)
-    factor = scale_amount(1, base_servings, target)
     warnings = []
     context = _load_costing_context(recipe_cache, recipe.space_id, as_of)
-    lines = _cost_recipe_lines(roots[0], factor, as_of, warnings, (), context)
+    lines = _cost_recipe_lines(
+        roots[0], 1, as_of, warnings, (), context, factor_ratio=(target, base_servings),
+    )
     return _sheet(lines, warnings, base_servings, target)
 
 
-def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context):
+def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context, *, factor_ratio=None):
+    factor_ratio = validate_scale_ratio((factor, 1) if factor_ratio is None else factor_ratio)
     if recipe.pk in path:
         route = " → ".join(str(value) for value in (*path, recipe.pk))
         raise DomainError("recipe_cycle", f"Referencia circular: {route}")
@@ -129,12 +131,14 @@ def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context):
             if child is None:
                 raise DomainError("recipe_missing", "Una subreceta no está disponible en este espacio.")
             else:
-                lines.extend(_cost_recipe_lines(child, factor, as_of, warnings, (*path, recipe.pk), context))
+                lines.extend(_cost_recipe_lines(
+                    child, 1, as_of, warnings, (*path, recipe.pk), context, factor_ratio=factor_ratio,
+                ))
         for ingredient in step.ingredients.all():
             if not ingredient.is_header and not ingredient.no_amount:
                 # Validate before descending into a Food.recipe as well: its
                 # declared output must not acquire a second yield adjustment.
-                ingredient_quantities(ingredient, factor)
+                ingredient_quantities(ingredient, factor_ratio=factor_ratio)
             if ingredient.food_id and ingredient.food.recipe_id and not ingredient.is_header and not ingredient.no_amount:
                 child = context.recipes.get(ingredient.food.recipe_id)
                 if child is None:
@@ -162,15 +166,18 @@ def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context):
                 lines.extend(
                     _cost_recipe_lines(
                         child,
-                        scale_amount(amount, declared.quantity, factor),
+                        1,
                         as_of,
                         warnings,
                         (*path, recipe.pk),
                         context,
+                        factor_ratio=compose_scale_ratio(factor_ratio, amount, declared.quantity),
                     )
                 )
             else:
-                lines.append(_cost_ingredient(ingredient, factor, as_of, warnings, context))
+                lines.append(_cost_ingredient(
+                    ingredient, 1, as_of, warnings, context, factor_ratio=factor_ratio,
+                ))
     return lines
 
 
@@ -185,7 +192,7 @@ def _convert_native_quantity(amount, from_unit, to_unit, food, context):
     )
 
 
-def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context) -> CostResult:
+def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context, *, factor_ratio=None) -> CostResult:
     if ingredient.is_header:
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("encabezado",))
     if ingredient.no_amount:
@@ -199,7 +206,7 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context
         return CostResult("needs_conversion", None, None, None, ("sin_unidad",))
     if ingredient.amount is None:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
-    used, _trace = ingredient_quantities(ingredient, factor)
+    used, _trace = ingredient_quantities(ingredient, factor, factor_ratio=factor_ratio)
     if used == 0:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
     package = context.packages.get(ingredient.food_id)

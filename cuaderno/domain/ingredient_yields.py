@@ -1,5 +1,5 @@
 """One gross/useful adjustment on each native ingredient, not on its Food."""
-from decimal import Decimal, localcontext
+from decimal import Decimal, InvalidOperation, localcontext
 import re
 
 from cuaderno.domain.errors import DomainError
@@ -30,14 +30,37 @@ def validate_yield_policy(quantity_basis, yield_ratio, *, is_subrecipe=False):
     return ratio
 
 
-def ingredient_quantities(ingredient, factor=Decimal("1")):
+def validate_scale_ratio(value):
+    """Keep a positive scale as two Decimals, without pre-rounding division."""
+    try:
+        if not isinstance(value, (tuple, list)) or len(value) != 2:
+            raise ValueError("scale requires numerator and denominator")
+        numerator, denominator = (Decimal(str(part)) for part in value)
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise DomainError("invalid_scale", "El factor de producción debe ser positivo y finito.") from exc
+    if not all(part.is_finite() and part > 0 for part in (numerator, denominator)):
+        raise DomainError("invalid_scale", "El factor de producción debe ser positivo y finito.")
+    return numerator, denominator
+
+
+def compose_scale_ratio(factor_ratio, numerator, denominator):
+    """Carry native subrecipe output ratios to the leaf before dividing."""
+    parent_numerator, parent_denominator = validate_scale_ratio(factor_ratio)
+    numerator, denominator = validate_scale_ratio((numerator, denominator))
+    with localcontext() as context:
+        context.prec = 64
+        return parent_numerator * numerator, parent_denominator * denominator
+
+
+def ingredient_quantities(ingredient, factor=Decimal("1"), *, factor_ratio=None):
     ratio = validate_yield_policy(
         ingredient.quantity_basis, ingredient.yield_ratio,
         is_subrecipe=bool(ingredient.food_id and ingredient.food.recipe_id),
     )
+    numerator, denominator = validate_scale_ratio((factor, 1) if factor_ratio is None else factor_ratio)
     with localcontext() as context:
         context.prec = 64
-        amount = Decimal(ingredient.amount) * Decimal(factor)
+        amount = Decimal(ingredient.amount) * numerator / denominator
         purchased = amount / ratio if ingredient.quantity_basis == "net_usable" else amount
         useful = amount if ingredient.quantity_basis == "net_usable" else None if ratio is None else amount * ratio
         waste = None if useful is None else purchased - useful

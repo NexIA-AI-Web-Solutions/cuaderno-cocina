@@ -6,7 +6,6 @@ from copy import deepcopy
 from dataclasses import replace
 from decimal import Decimal, localcontext
 
-from cuaderno.domain.costing import scale_amount
 from cuaderno.domain.errors import DomainError
 from cuaderno.models import PackageFormat, PriceVersion, SpaceProfile
 from cuaderno.services.costing import _cost_recipe_lines, _load_costing_context, _sheet
@@ -92,9 +91,11 @@ class _TrackingPrices(dict):
         return super().get(key, default)
 
 
-def _cost_sheet(recipe, factor, as_of, base_servings, servings, context) -> dict:
+def _cost_sheet(recipe, as_of, base_servings, servings, context) -> dict:
     warnings: list[str] = []
-    lines = _cost_recipe_lines(recipe, factor, as_of, warnings, (), context)
+    lines = _cost_recipe_lines(
+        recipe, 1, as_of, warnings, (), context, factor_ratio=(servings, base_servings),
+    )
     return _sheet(lines, warnings, base_servings, servings)
 
 
@@ -119,15 +120,14 @@ def recipe_price_impact_payload(recipe, package: PackageFormat, servings: Decima
 
     with localcontext() as decimal_context:
         decimal_context.prec = 64
-        factor = scale_amount(1, base_servings, servings)
         captured_after_context = _context_with_price(context, package.pk, current)
         tracked_prices = _TrackingPrices(captured_after_context.prices)
         after_context = replace(captured_after_context, prices=tracked_prices)
-        after = _cost_sheet(roots[0], factor, as_of, base_servings, servings, after_context)
+        after = _cost_sheet(roots[0], as_of, base_servings, servings, after_context)
         affected = package.pk in tracked_prices.read_keys
         if affected:
             before_context = _context_with_price(context, package.pk, previous)
-            before = _cost_sheet(roots[0], factor, as_of, base_servings, servings, before_context)
+            before = _cost_sheet(roots[0], as_of, base_servings, servings, before_context)
         else:
             before = deepcopy(after)
 
