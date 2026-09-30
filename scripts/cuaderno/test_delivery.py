@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from delivery_backup import media_manifest
 import local_up
+import restore_smoke
 
 
 class MediaValidationTest(unittest.TestCase):
@@ -53,6 +54,80 @@ class SourceIdentityTest(unittest.TestCase):
     def test_untrusted_build_identity_is_rejected(self):
         with self.assertRaises(ValueError):
             local_up.build_identity('unsafe";command', "b" * 64)
+
+
+class RestoreFingerprintSchemaTest(unittest.TestCase):
+    def test_extended_documents_each_change_the_restore_fingerprint(self):
+        payload = {
+            "ingredient_yields": [{"recipe": 1, "document": {"ingredients": []}}],
+            "stock_minimums": [{"space": 1, "document": {"items": []}}],
+            "replenishments": [{"space": 1, "document": {"items": []}}],
+        }
+        original = restore_smoke.payload_sha256(payload)
+        for key in ("ingredient_yields", "stock_minimums", "replenishments"):
+            changed = {name: list(rows) for name, rows in payload.items()}
+            changed[key] = [*changed[key], {"changed": True}]
+            with self.subTest(key=key):
+                self.assertNotEqual(restore_smoke.payload_sha256(changed), original)
+
+    def test_stock_minimum_envelope_requires_household_locations_and_audit_metadata(self):
+        document = {
+            "edition": "integral",
+            "household": {"id": 7, "name": "Cocina sintética"},
+            "locations": [{"id": 8, "name": "Seco"}],
+            "items": [{
+                "id": 9,
+                "household": 7,
+                "food": 10,
+                "food_name": "Harina",
+                "unit": 11,
+                "unit_name": "kg",
+                "quantity": "2",
+                "location": 8,
+                "location_name": "Seco",
+                "updated_by": 12,
+                "updated_at": "2026-09-30T00:00:00+00:00",
+            }],
+        }
+        self.assertIs(restore_smoke.validate_stock_minimums(document), document)
+        for section, field in (("household", "name"), ("locations", "name"), ("items", "updated_at")):
+            broken = {
+                **document,
+                "household": dict(document["household"]),
+                "locations": [dict(document["locations"][0])],
+                "items": [dict(document["items"][0])],
+            }
+            if section == "household":
+                del broken[section][field]
+            else:
+                del broken[section][0][field]
+            with self.subTest(section=section, field=field), self.assertRaises(ValueError):
+                restore_smoke.validate_stock_minimums(broken)
+
+    def test_yield_and_replenishment_envelopes_are_not_optional(self):
+        yields = {
+            "recipe_id": 4,
+            "edition": "esencial",
+            "can_edit": False,
+            "ingredients": [{
+                "id": 5,
+                "food_name": "Patata",
+                "amount": "1",
+                "unit": "kg",
+                "quantity_basis": "gross",
+                "yield_ratio": None,
+                "is_subrecipe": False,
+            }],
+        }
+        self.assertIs(restore_smoke.validate_ingredient_yields(yields, 4, "esencial"), yields)
+        self.assertEqual(restore_smoke.validate_replenishment({"items": []}), {"items": []})
+        editable_esencial = {**yields, "can_edit": True}
+        with self.assertRaises(ValueError):
+            restore_smoke.validate_ingredient_yields(editable_esencial, 4, "esencial")
+        with self.assertRaises(ValueError):
+            restore_smoke.validate_ingredient_yields({"ingredients": []}, 4, "esencial")
+        with self.assertRaises(ValueError):
+            restore_smoke.validate_replenishment({})
 
 
 if __name__ == "__main__":
