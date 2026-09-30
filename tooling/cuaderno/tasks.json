@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "progress_notice": "Estados de avance técnico, no aceptación de gates. Se trabaja en partes independientes aunque las dependencias sigan abiertas; solo DONE satisface dependencia. T034 requiere nuevo artefacto; T037 final no iniciado, hay revisiones parciales por bloques.",
   "tasks": [
     {
       "id": "T001",
@@ -31,7 +32,7 @@
       "depends_on": [
         "T001"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "devcontainer/compose propuesto"
       ],
@@ -39,7 +40,10 @@
         "Login y receta nativa funcionan; comandos y versiones grabados"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/T002-baseline.md",
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T003",
@@ -49,13 +53,17 @@
       "depends_on": [
         "T001"
       ],
-      "status": "TODO",
+      "status": "DONE",
       "allowed_paths_hint": [],
       "acceptance": [
         "Mapa de Recipe/Food/Unit/Spaces/props/Inventory y mutaciones con rutas reales"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/T003-map.md",
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": ["docs/cuaderno/evidence/T003-T004-review.md"]
     },
     {
       "id": "T004",
@@ -65,13 +73,17 @@
       "depends_on": [
         "T001"
       ],
-      "status": "TODO",
+      "status": "DONE",
       "allowed_paths_hint": [],
       "acceptance": [
         "Matriz native/partial/absent, donor SHA/símbolos/tests; nada copiado aún"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/T004-donors.md",
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": ["docs/cuaderno/evidence/T003-T004-review.md"]
     },
     {
       "id": "T005",
@@ -81,7 +93,7 @@
       "depends_on": [
         "T002"
       ],
-      "status": "TODO",
+      "status": "BLOCKED",
       "allowed_paths_hint": [
         "tests/cuaderno",
         "docs/cuaderno/evidence"
@@ -90,7 +102,9 @@
         "Upstream tests y UI baseline; errores preexistentes identificados"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T006",
@@ -102,7 +116,7 @@
         "T004",
         "T005"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "docs/cuaderno/adr",
         "cuaderno",
@@ -112,7 +126,9 @@
         "Sin entidades duplicadas; source ownership decidido; registry con comandos reales"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T007",
@@ -122,7 +138,7 @@
       "depends_on": [
         "T006"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno"
       ],
@@ -130,7 +146,9 @@
         "Privado, EUR/política precios, es-ES, menú simple; sin borrar native"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T008",
@@ -140,7 +158,7 @@
       "depends_on": [
         "T006"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/domain",
         "cuaderno/tests"
@@ -149,7 +167,9 @@
         "Golden casos exactos; desconocidos/ambiguos rechazados; precio sin stock"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T009",
@@ -159,7 +179,7 @@
       "depends_on": [
         "T008"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/services",
         "cuaderno/api"
@@ -168,7 +188,9 @@
         "Food nativo, historial, permisos y conflictos; migración nueva revisada"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T010",
@@ -178,7 +200,7 @@
       "depends_on": [
         "T009"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/domain",
         "cuaderno/services",
@@ -188,7 +210,9 @@
         "Recipe nativa, escala sin guardar, invalidación de precios y completeness"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T011",
@@ -198,7 +222,7 @@
       "depends_on": [
         "T009"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -206,7 +230,9 @@
         "Crear envase y precio en móvil; validation conserva entrada; API real"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T012",
@@ -217,7 +243,7 @@
         "T010",
         "T011"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -225,7 +251,9 @@
         "Tandoor reconocible, selector raciones, coste/ración y warnings; no placeholders"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T013",
@@ -236,7 +264,7 @@
         "T007",
         "T012"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "tests/cuaderno"
       ],
@@ -244,7 +272,9 @@
         "5L/32→400mL=2.56; editar 35→2.80; reopen; privado; guardar receta"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T014",
@@ -254,7 +284,7 @@
       "depends_on": [
         "T013"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "cuaderno/importers",
         "cuaderno/tests"
@@ -263,7 +293,9 @@
         "Native primero; mapping, replay, informe, round-trip; sin datos reales"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T015",
@@ -273,7 +305,7 @@
       "depends_on": [
         "T013"
       ],
-      "status": "TODO",
+      "status": "BLOCKED",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -281,7 +313,9 @@
         "Imprimir costes completos/incompletos; cuatro viewports; keyboard"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T016",
@@ -291,7 +325,7 @@
       "depends_on": [
         "T014"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "scripts/cuaderno"
       ],
@@ -299,7 +333,9 @@
         "DB+media restaurados nuevos, hashes y login/recetas correctos"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T017",
@@ -310,7 +346,7 @@
         "T015",
         "T016"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "docs/cuaderno"
       ],
@@ -318,7 +354,9 @@
         "Revisor independiente y guía ejecutada; G2 evidencia, continuar desarrollo"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T018",
@@ -328,7 +366,7 @@
       "depends_on": [
         "T017"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/domain",
         "cuaderno/services"
@@ -337,7 +375,9 @@
         "Food.recipe nativo auditado, output units, ciclos y cache correctos"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T019",
@@ -347,7 +387,7 @@
       "depends_on": [
         "T018"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "cuaderno/domain",
         "cuaderno/api"
@@ -356,7 +396,9 @@
         "Merma una vez, precio base homogéneo, no beneficio neto falso"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T020",
@@ -366,7 +408,7 @@
       "depends_on": [
         "T017"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/services",
         "cuaderno/api"
@@ -375,7 +417,12 @@
         "Extiende MealPlan, comensales/estado/snapshot, timezone correcta"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T021",
@@ -385,7 +432,7 @@
       "depends_on": [
         "T020"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -393,7 +440,9 @@
         "Agrupación/rápido/deshacer, estado explícito y conflicto; sin offline writes"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T022",
@@ -404,7 +453,7 @@
         "T019",
         "T020"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -412,7 +461,9 @@
         "Necesidades consolidadas y desconocidos visibles; no afirmación seguridad alimentaria"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T023",
@@ -423,7 +474,7 @@
         "T021",
         "T022"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "tests/cuaderno"
       ],
@@ -431,7 +482,9 @@
         "Servicio 45 personas, salsa compartida, presupuesto/fichas; sin consumo automático"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T024",
@@ -441,7 +494,7 @@
       "depends_on": [
         "T023"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "docs/cuaderno/adr",
         "cuaderno"
@@ -450,7 +503,10 @@
         "InventoryEntry/Log existentes y todos escritores cubiertos; sin doble autoridad"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/adr/0002-ledger.md",
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T025",
@@ -460,7 +516,7 @@
       "depends_on": [
         "T024"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/services",
         "cuaderno/api"
@@ -469,7 +525,12 @@
         "Food nativo, pedido no altera stock; cantidades/precios por formato"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T026",
@@ -479,7 +540,7 @@
       "depends_on": [
         "T025"
       ],
-      "status": "TODO",
+      "status": "REVIEW",
       "allowed_paths_hint": [
         "cuaderno/services",
         "cuaderno/api"
@@ -488,7 +549,12 @@
         "Transacciones/locks, retry mismo payload vs diferente, parcial/reversión"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T027",
@@ -498,7 +564,7 @@
       "depends_on": [
         "T026"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "cuaderno/services"
       ],
@@ -506,7 +572,12 @@
         "No doble consumo subreceta; permisos; saldo/ledger coherente con concurrencia"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T028",
@@ -516,7 +587,7 @@
       "depends_on": [
         "T027"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "cuaderno/services",
         "cuaderno/api"
@@ -525,7 +596,12 @@
         "Disponible útil, envases al alza, precios nuevos sin reescribir snapshots"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T029",
@@ -535,7 +611,7 @@
       "depends_on": [
         "T028"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -543,7 +619,12 @@
         "Recibir distinto pedir, stocks mínimos, historial; roles y mobile"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T030",
@@ -553,7 +634,7 @@
       "depends_on": [
         "T029"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "tests/cuaderno"
       ],
@@ -561,7 +642,9 @@
         "Recibir/reintentar/consumir simultáneo/desperdicio/revertir; T1/T2 no rompen"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T031",
@@ -571,7 +654,7 @@
       "depends_on": [
         "T030"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "tests/cuaderno"
       ],
@@ -579,7 +662,12 @@
         "Regresiones advisories y rutas nuevas, csrf/idor/zip/ssrf; sin secretos"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ],
+      "review_evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T032",
@@ -589,7 +677,7 @@
       "depends_on": [
         "T030"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "cuaderno",
         "scripts/cuaderno"
@@ -598,7 +686,8 @@
         "Dataset declarado, métricas antes/después, no regresión ocultada"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": ["docs/cuaderno/evidence/2026-09-30-continuacion.md"],
+      "review_evidence": ["docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"]
     },
     {
       "id": "T033",
@@ -609,7 +698,7 @@
         "T031",
         "T032"
       ],
-      "status": "TODO",
+      "status": "BLOCKED",
       "allowed_paths_hint": [
         "vue3/src/cuaderno"
       ],
@@ -627,7 +716,7 @@
       "depends_on": [
         "T033"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "deploy/cuaderno",
         "scripts/cuaderno"
@@ -636,7 +725,10 @@
         "Build limpio, prod profile local, no donantes/tooling de test en runtime"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md",
+        "docs/cuaderno/evidence/2026-09-30-continuacion.md"
+      ]
     },
     {
       "id": "T035",
@@ -646,7 +738,7 @@
       "depends_on": [
         "T034"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "scripts/cuaderno",
         "docs/cuaderno"
@@ -655,7 +747,9 @@
         "Conteos/hashes/costes/saldos restaurados en destino nuevo; rollback ensayado"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T036",
@@ -665,7 +759,7 @@
       "depends_on": [
         "T035"
       ],
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "allowed_paths_hint": [
         "docs/cuaderno"
       ],
@@ -673,7 +767,9 @@
         "Comandos reales, screenshots sintéticas, source ledger y external pending"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+      ]
     },
     {
       "id": "T037",
@@ -689,7 +785,9 @@
         "Inspección diffs, tests, claims, UX y datos; hallazgos cerrados o gate falla"
       ],
       "review_required": true,
-      "evidence": []
+      "evidence": [
+        "docs/cuaderno/evidence/2026-09-29-reviewed-blocks.md"
+      ]
     },
     {
       "id": "T038",

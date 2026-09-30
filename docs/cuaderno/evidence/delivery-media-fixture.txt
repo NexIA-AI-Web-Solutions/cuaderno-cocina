@@ -1,0 +1,2 @@
+Archivo sintético local para verificar copia y restauración de media con SHA-256.
+No contiene datos de cliente.

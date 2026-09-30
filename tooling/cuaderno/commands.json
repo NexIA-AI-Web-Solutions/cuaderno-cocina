@@ -1,37 +1,535 @@
 {
   "schema_version": 1,
-  "notice": "Contratos de comandos; la app aún no está implementada. G0 debe rellenar y comprobar cada argv. verified:false NUNCA significa PASS.",
+  "notice": "Comandos ejecutados en snapshots identificados en cada run. verified NO implica PASS ni cierre G7. Preview59172af037da, source88be31ec5+worktree identificado en STATUS. Incluye preparación0016, permisos request-local, causa/valoración WASTE y SBOM del stage Linux453, no cierre JS. DockerG0 debe contener código actual; runtime-audit requiere script /tmp según manual. Typecheck -p tsconfig.app.json efectivo RED626; PASS antiguos sin -p eran vacuos. Tests PostgreSQL solo namespaces declarados, sin solapar suites pesadas. Serializar build/upgrade/backup/restore/HTTP del preview. Backups anteriores requieren script/imagen compatibles.",
   "commands": {
-    "baseline": {
-      "purpose": "Pruebas upstream sin nuevas funciones; separar fallos heredados.",
-      "argv": null,
+    "release-waste": {
+      "purpose": "HTTP loopback18081 DEMO Integral: desperdicio0.125L/valor0.8EUR, causa/replay/conflicto/CSRF/ediciones y reversión compensatoria; conserva movimientos/logs, saldo vuelve5.",
+      "argv": ["python", "scripts/cuaderno/release_waste_smoke.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "620015607"
+    },
+    "image-frontend-sbom": {
+      "purpose": "Lee el inventario instalado del stage Linux preservado en runtime y valida CycloneDX1.6; NO cierre de módulos JS ni scan OS.",
+      "argv": ["pwsh.exe", "-NoProfile", "-Command", "$inventoryText = & docker exec cuaderno-release-web cat /opt/recipes/SBOM.frontend.cdx.json; if ($LASTEXITCODE -ne 0) { throw 'No se pudo leer SBOM de la imagen' }; $inventoryText | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "88be31ec5"
+    },
+    "almacen-panel": {
+      "purpose": "SFC AlmacenPage compilado/montado en renderer virtual Vue: causa/key/error/draft y POST in-flight; widgets/API unitarios, no DOM ni navegador.",
+      "argv": ["node", "--test", "src/cuaderno/almacenPage.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "88be31ec5"
+    },
+    "release-waste-unit": {
+      "purpose": "Guardas smoke local de desperdicio: identidad, stock JSON nativo, Decimal textual, recuperación y snapshots; transporte simulado, no HTTP/BD.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_release_waste_smoke", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "620015607"
+    },
+    "waste-api": {
+      "purpose": "API PostgreSQL: causa segura de desperdicio, idempotencia, ACL Spaces/Hogares/ediciones/CSRF y reversión; mismo namespace ledger solo secuencialmente.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_production_reversal_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_waste_api", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "53e2c0671"
+    },
+    "stock-movement-ui": {
+      "purpose": "Helper UI de historial: bloqueo de reversión parcial y presentación Decimal textual de estimación de reposición; no navegador.",
+      "argv": ["node", "--test", "src/cuaderno/stockMovementUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "88be31ec5"
+    },
+    "waste-valuation": {
+      "purpose": "PostgreSQL real: valoración estimada de reposición congelada en WASTE, unknown distinto de0; namespace ledger compartido solo secuencialmente con production-reversal-integrity.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_production_reversal_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_waste_valuation", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "d4e29a10b"
+    },
+    "production-reversal-integrity": {
+      "purpose": "PostgreSQL real: impedir reversión parcial de servicio producido y conservar reversión standalone; aislamiento de test, no BD preview.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_production_reversal_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_production_reversal_integrity", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "413abf14e"
+    },
+    "runtime-sbom-validate": {
+      "purpose": "Valida solo el SBOM Python del último audit local registrado; no borra ni aprueba findings/advisories, no escanea SO/imagen.",
+      "argv": ["pwsh.exe", "-NoProfile", "-Command", "$ErrorActionPreference='Stop'; $auditRecord = Get-ChildItem .cuaderno-runs -Filter '*-runtime-audit-*.log' | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1; if (-not $auditRecord) { throw 'Falta audit runtime registrado' }; Write-Host ('SOURCE_AUDIT_LOG=' + $auditRecord.Name); $auditDocument = Get-Content -LiteralPath $auditRecord.FullName -TotalCount 1 | ConvertFrom-Json; $auditDocument.sbom | ConvertTo-Json -Depth 100 | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "88be31ec5+worktree",
+      "last_result": "20260930T070555Z-runtime-sbom-validate-b158f91f PASS153; audit070438imagen591, no apruebaadvisories."
+    },
+    "upgrade-unit": {
+      "purpose": "Retención de imagen para ensayo de upgrade: orden, identidad, namespace y abortos; solo transporte Docker simulado, no prueba de migración.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_upgrade_smoke", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "b4db700cf"
+    },
+    "sbom-validator-unit": {
+      "purpose": "Validación JSONSchema real con fixtures, límites y referencias cerradas; transporte schema mock, sin red/BD.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_validate_sbom", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "10ab4be3a+worktree"
+    },
+    "frontend-sbom-validate": {
+      "purpose": "Valida inventario instalado Vue contra schemas oficiales CycloneDX1.6 fijados por SHA; solo metadatos de dependencias/red pública, sin BD/datos app.",
+      "argv": ["pwsh.exe", "-NoProfile", "-Command", "$inventoryText = & node scripts/cuaderno/frontend_inventory.mjs; $inventoryExit = $LASTEXITCODE; if ($inventoryExit -ne 0) { exit $inventoryExit }; $inventoryText | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "10ab4be3a+worktree"
+    },
+    "frontend-inventory-unit": {
+      "purpose": "Inventario instalado confinado: paquetes scoped/anidados, purl, hashes, licencias declaradas y rechazos seguros; fixtures temporales.",
+      "argv": ["node", "--test", "scripts/cuaderno/test_frontend_inventory.mjs"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "10ab4be3a+worktree"
+    },
+    "frontend-inventory": {
+      "purpose": "Inventario READONLY de vue3/node_modules instalado, incluyendo build/dev; NO prueba de contenido de imagen ni validación oficial del esquema.",
+      "argv": ["node", "scripts/cuaderno/frontend_inventory.mjs"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "10ab4be3a+worktree"
+    },
+    "group-cache-isolation": {
+      "purpose": "Permisos nativos entre Spaces y revocación inmediata por request; PostgreSQL sintético exclusivo, sin mocks de autorización.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_group_cache_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_group_cache_isolation", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "d9cbdf8f2+worktree"
+    },
+    "release-preparation-unit": {
+      "purpose": "Guardas del smoke de preparación: contrato persistido, identidad, recuperación CAS y destino exclusivamente local; sin HTTP/BD.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_release_preparation_smoke", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "7932eb3e3+worktree"
+    },
+    "release-preparation": {
+      "purpose": "HTTP loopback18081 tres DEMO: hasta2servicios confirmados nuevos, checklist A-B-A/noop/conflicto/CSRF/ACL y snapshot/stock intactos; auditoría persistente.",
+      "argv": ["python", "scripts/cuaderno/release_preparation_smoke.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "7932eb3e3+worktree"
+    },
+    "service-preparation-panel": {
+      "purpose": "SFC real de preparación compilado y montado en renderer virtual Vue; API/widgets unitarios, carreras/conflicto/identidad/texto, NO DOM/navegador.",
+      "argv": ["node", "--test", "src/cuaderno/servicePreparationPanel.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "7932eb3e3+worktree"
+    },
+    "service-preparation-ui": {
+      "purpose": "Helper de checklist real: identidad, revisión, metadatos congelados y envelopes PUT estrictos; sin navegador.",
+      "argv": ["node", "--test", "src/cuaderno/servicePreparationUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "7932eb3e3+worktree"
+    },
+    "service-preparation": {
+      "purpose": "Checklist persistido desde Step nativo al confirmar ServicePlan: revisión, ACL, no-op y carrera PostgreSQL; namespace exclusivo.",
+      "argv": ["docker", "exec", "-e", "PYTHONDONTWRITEBYTECODE=1", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_service_preparation_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_service_preparation", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "73198621a+worktree"
+    },
+    "release-prices-unit": {
+      "purpose": "Guardas exactas del smoke GET DEMO historial/impacto, validación temporal/Decimal y rechazo de envelopes ambiguos; sin HTTP/BD.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_release_prices_smoke", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "f10279004+worktree"
+    },
+    "release-prices": {
+      "purpose": "HTTP loopback18081 tres DEMO: historial e impacto GET de solo lectura, Decimal, permisos y entradas inválidas; no actualiza precios.",
+      "argv": ["python", "scripts/cuaderno/release_prices_smoke.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "f10279004+worktree"
+    },
+    "price-impact-ui": {
+      "purpose": "Helper real de comparación por receta: Decimal textual, desconocidos, ACL contextual/envelopes y shape sin coerción.",
+      "argv": ["node", "--test", "src/cuaderno/priceImpactUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "3e4f5be80+worktree"
+    },
+    "price-history-ui": {
+      "purpose": "Actualizar precio del formato existente y validar historial paginado por selección explícita; helpers sin navegador.",
+      "argv": ["node", "--test", "src/cuaderno/priceHistoryUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "3e4f5be80+worktree"
+    },
+    "release-yields-unit": {
+      "purpose": "Guardas del smoke DEMO de mermas y recuperación versionada sin sobrescribir estados ajenos; sin HTTP ni BD.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_release_yields_smoke", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "a24b1bac8+worktree"
+    },
+    "release-yields": {
+      "purpose": "HTTP loopback18081 DEMO tres ediciones: merma versionada A-B-A, stale409/missing428/CSRF403, coste exacto y saldos/snapshots intactos.",
+      "argv": ["python", "scripts/cuaderno/release_yields_smoke.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "a24b1bac8+worktree"
+    },
+    "price-history-impact": {
+      "purpose": "Historial temporal de PriceVersion e impacto local exacto en Recipe nativa; ACL, desconocidos, subrecetas, snapshot y consultas PostgreSQL.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_price_history_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_price_history_impact", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "a24b1bac8+worktree"
+    },
+    "yield-edit-conflicts": {
+      "purpose": "Edición de merma con revisión semántica, autor/auditoría nativa, no-op, ABA por API y carrera PostgreSQL sin sobreescritura.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_yield_conflicts_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_yield_edit_conflicts", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "543346630+worktree"
+    },
+    "release-reserves": {
+      "purpose": "HTTP loopback18081 DEMO Integral: reserva persistente, repetición sin nueva auditoría, CSRF y reposición Decimal sin alterar stock/pedidos.",
+      "argv": ["python", "scripts/cuaderno/release_reserves_smoke.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "73caf2701+worktree"
+    },
+    "release-reserves-unit": {
+      "purpose": "Guardas y redondeo Decimal del smoke de reservas, sin HTTP ni BD.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_release_reserves_smoke", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "73caf2701+worktree"
+    },
+    "markdown-vue": {
+      "purpose": "Renderer Django real a compilador/montaje Vue virtual y sentinel sintético; no navegador ni componentes nativos completos.",
+      "argv": ["node", "--test", "src/cuaderno/markdownSecurity.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "99e14c316"
+    },
+    "markdown-native": {
+      "purpose": "Snapshot nativo revisado manualmente, sin autogeneración y namespace PostgreSQL dedicado.",
+      "argv": ["docker", "exec", "-e", "TEST_POSTGRES_DB=cuaderno_native_regression_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-q", "cookbook/tests/other/test_markdown_renderer.py", "--reuse-db"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "ae6f64082"
+    },
+    "markdown-security": {
+      "purpose": "Renderer Tandoor real sin DB; HTMLParser independiente, formato y rechazo de HTML/props no finitas/directivas activas.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-q", "cuaderno/tests/test_markdown_security.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "ae6f64082"
+    },
+    "runner-timeout": {
+      "purpose": "Salida parcial de timeout bytes/texto saneada y fallo124 persistido sin alterar presupuesto.",
+      "argv": ["python", "-m", "unittest", "tests.cuaderno.test_runner_timeout", "-v"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "59509f7ce"
+    },
+    "unit-merge-integrity": {
+      "purpose": "Fusiones de alias nativos sin perder inventario/conversiones ni cambiar identidad de documentos congelados; colisiones y rollback PostgreSQL.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_minimum_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_unit_merge_integrity", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "59509f7ce"
+    },
+    "stock-minimum-ui": {
+      "purpose": "Entrada Decimal española, scope y envelope real de API de mínimos, excedente de envases exacto sin float.",
+      "argv": ["node", "--test", "src/cuaderno/stockMinimumUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "59509f7ce"
+    },
+    "yield-upgrade-integrity": {
+      "purpose": "Regresión Food PATCH/ambos merges y digest de imports premerma; PostgreSQL aislado, namespace compartido con merma solo en secuencial.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_ingredient_yields_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_yield_upgrade_integrity", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "59509f7ce"
+    },
+    "stock-minimum": {
+      "purpose": "Mínimos como metadata nativa Food/Hogar/Ubicación; reposición Decimal, caducidad, permisos y ausencia de escrituras de stock/pedidos.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_minimum_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_stock_minimum", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "e7128fea5"
+    },
+    "ingredient-yield-ui": {
+      "purpose": "Cinco checks del helper real de merma: coma, base bruta/útil, ratio exacto, evitar doble rendimiento y textos sin float.",
+      "argv": ["node", "--test", "src/cuaderno/ingredientYieldUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "998ba22a9"
+    },
+    "ingredient-yields": {
+      "purpose": "Merma persistida en Ingredient nativo, base bruta/útil, ACL, necesidades, escala y snapshot financiero/producción congelado.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_ingredient_yields_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_ingredient_yields", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "998ba22a9"
+    },
+    "price-validation": {
+      "purpose": "Contrato PostgreSQL real de formatos/precios: JSON tipado, gratis explícito, precisión sin redondeo, atomicidad y Spaces.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_price_validation_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_price_validation", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "998ba22a9"
+    },
+    "release-http": {
+      "purpose": "HTTP real solo loopback18081: tres DEMO, login/logout, costes, persistencia financiera protegida por CSRF y dos servicios sintéticos confirmados sin stock.",
+      "argv": ["python", "scripts/cuaderno/release_http_smoke.py", "--confirm-service"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "998ba22a9"
+    },
+    "release-http-unit": {
+      "purpose": "Seis checks puros del smoke: destino loopback, rechazo de redirecciones, CSRF, entorno y Decimal textual.",
+      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_release_http_smoke"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "998ba22a9"
+    },
+    "cooklang-native": {
+      "purpose": "Regresión heredada Cooklang posterior a normalización de saltos; namespace PostgreSQL dedicado.",
+      "argv": ["docker", "exec", "-e", "TEST_POSTGRES_DB=cuaderno_native_regression_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-q", "cookbook/tests/other/test_cooklang_integration.py", "--reuse-db"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "0e6e076c6"
+    },
+    "cooklang-newlines": {
+      "purpose": "Parser nativo con LF/CRLF/CR: prueba pura, Django inicializado sin crear ni usar BD.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_cooklang_newlines", "--noinput", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "406ed12f9"
+    },
+    "costing-queries": {
+      "purpose": "Presupuesto de consultas con 15 alimentos distintos y coste Decimal real; namespace PostgreSQL exclusivo.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_cost_queries_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_costing_queries", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "d3a7849cb"
+    },
+    "finance-ui": {
+      "purpose": "Contrato real del helper financiero: decimales exactos, desconocidos y respuestas obsoletas.",
+      "argv": ["node", "--test", "src/cuaderno/financeUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "d3a7849cb"
+    },
+    "finance-properties": {
+      "purpose": "Persistencia PostgreSQL en propiedades nativas, cambios auditados y coste periódico sin redondeo de storage.",
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_finance_root_20260930a", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_recipe_finance", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "d3a7849cb"
+    },
+    "oauthlib-patch": {
+      "purpose": "Verificar backport real exacto, RFC7636, compare_digest, idempotencia y fail-closed en venv local.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "/tmp/test_oauthlib_patch.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "d3a7849cb"
+    },
+    "oauth-native": {
+      "purpose": "Regresión OAuth/social nativa después del backport, en BD test dedicada nueva.",
+      "argv": ["docker", "exec", "-e", "TEST_POSTGRES_DB=cuaderno_native_regression_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-q", "cookbook/tests/api/test_api_access_token.py", "cookbook/tests/other/test_social_auth.py", "--reuse-db"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "d3a7849cb"
+    },
+    "finance-api": {
+      "purpose": "Persistencia nativa de presupuesto/venta, ACL privada y snapshot financiero congelado en PostgreSQL.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_finance_api", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "b66593cc9"
+    },
+    "native-regression": {
+      "purpose": "Suite upstream en BD test separada; evita reusar grupos eliminados por flush de TransactionTestCase.",
+      "argv": ["docker", "exec", "-e", "TEST_POSTGRES_DB=cuaderno_native_regression_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-vv", "-o", "faulthandler_timeout=60", "cookbook/tests", "--reuse-db"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "b66593cc9"
+    },
+    "native-profile": {
+      "purpose": "Misma suite upstream1279, namespace nuevo y durations para diagnosticar timeout sin skips ni elevar1200; correr sola.",
+      "argv": ["docker", "exec", "-e", "TEST_POSTGRES_DB=cuaderno_native_profile_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-q", "cookbook/tests", "--reuse-db", "--durations=100", "--durations-min=0.25"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "b4db700cf+worktree",
+      "verification_note": "CLIhelp durations/reuse-db comprobado; primera ejecución registrada activa18606. Resultado pendiente, no PASS."
+    },
+    "import-hardening-red": {
+      "purpose": "Caracterización RED sobre imagen local anterior inmutable, sin montar implementación nueva ni usar BD/red.",
+      "argv": ["docker", "run", "--rm", "--entrypoint", "/opt/recipes/venv/bin/python", "--mount", "type=bind,source=./cuaderno/tests/test_import_hardening.py,target=/opt/recipes/cuaderno/tests/test_import_hardening.py,readonly", "sha256:4a3e0c7a5aaa0cf65c0f27f437a6a7f26c70514912b772797e8979762b757ca6", "manage.py", "test", "cuaderno.tests.test_import_hardening", "--noinput", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "b66593cc9"
+    },
+    "import-hardening": {
+      "purpose": "Regresiones unitarias del fetching acotado, SSRF, ZIP y nombres exportados nativos.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_import_hardening", "--noinput", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "b66593cc9"
+    },
+    "native-security": {
+      "purpose": "Regresiones PostgreSQL de permisos nativos, uploads acotados y precios actuales por lote.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_native_security", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "b66593cc9"
+    },
+    "delivery-tests": {
+      "purpose": "Validar tar seguro y que el build identifica el contenido dirty/untracked, no solo HEAD.",
+      "argv": ["python", "scripts/cuaderno/test_delivery.py"],
+      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "purchase-ui": {
+      "purpose": "Claves del helper real de recepción: identidad de pedido y reintento después de editar otro payload.",
+      "argv": ["node", "--test", "src/cuaderno/purchaseRequests.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "runtime-audit": {
+      "purpose": "Inventario Python efectivo/transitivo, Alpine y advisories PyPI versionados, sin datos de aplicación.",
+      "argv": ["docker", "exec", "cuaderno-release-web", "/opt/recipes/venv/bin/python", "/tmp/cuaderno_audit_dependencies.py"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "88be31ec5+worktree",
+      "last_result": "20260930T070438Z-runtime-audit-84c067b1 exit1 imagen591;153Python/63Alpine/unresolved0, OAuthlib versiónGHSA conservado; scriptcopiado/tmp."
+    },
+    "purchase-constraints": {
+      "purpose": "El indicador gratuito mantiene equivalencia exacta con precio cero también en PostgreSQL.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_purchasing.PurchasingWorkflowTests.test_database_offer_free_flag_is_exactly_equivalent_to_zero", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "frontend-audit": {
+      "purpose": "Auditoría real de dependencias Node incluyendo desarrollo/build y copias anidadas.",
+      "argv": ["yarn.cmd", "audit", "--json", "--non-interactive"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "dependency-build": {
+      "purpose": "Reconstrucción Python aislada desde requisitos, sin venv baseline opaco.",
+      "argv": ["docker", "build", "--target", "python_dependencies", "-f", "deploy/cuaderno/Dockerfile", "-t", "cuaderno-python-dependencies:local", "."],
+      "cwd": ".", "timeout_seconds": 3600, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "purchase-documents": {
+      "purpose": "Compatibilidad sin pedidos huérfanos, recibos visibles y reversión documental obligatoria.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_purchasing.PurchasingWorkflowTests.test_receipt_boundaries_cancel_and_reversal_preserve_documents", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_legacy_order_route_uses_the_persistent_household_contract", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "service-worker": {
+      "purpose": "Privacidad PWA: rutas sin caché autenticada, sin replay offline y purga legado por origen.",
+      "argv": ["node", "--test", "src/cuaderno/serviceWorker.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "purchasing": {
+      "purpose": "Ofertas nativas, pedido sin stock, recepción parcial, reversión y reposición derivada.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_purchasing", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "native-stock-precision": {
+      "purpose": "Delta exacto en edición nativa y rechazo seguro de exponentes/escala no almacenables.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_native_absolute_stock_edit_preserves_high_precision_delta", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_stock_extreme_exponents_and_unstorable_fraction_are_rejected", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "stock-precision": {
+      "purpose": "Persistir 32 dígitos sin redondear y distinguir payloads idempotentes de alta precisión.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_high_precision_receipt_preserves_balance_and_distinct_retry_payload", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "service-scale": {
+      "purpose": "Listado de servicios acotado y detalle independiente del límite de listado.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_services.ServiceWorkflowTests.test_list_is_bounded_and_detail_can_access_an_older_service", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "frontend-unit": {
+      "purpose": "Formularios españoles, cantidades/fechas, presentación, claves retry, media e intercambio.",
+      "argv": ["node", "--test", "src/cuaderno/forms.test.mjs", "src/cuaderno/inventoryRequests.test.mjs", "src/cuaderno/sharedMedia.test.mjs", "src/cuaderno/exchangeUi.test.mjs"],
+      "cwd": "vue3", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "service-privacy": {
+      "purpose": "Los snapshots confirmados mantienen ACL privada de raíz e hijos, además de Household/Space.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_services.ServiceWorkflowTests.test_confirmed_private_recipe_snapshot_remains_private_from_helper_and_admin", "cuaderno.tests.test_services.ServiceWorkflowTests.test_private_child_recipe_also_protects_confirmed_snapshot", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "service-integrity": {
+      "purpose": "Producción sin consumo parcial y origen congelado del documento en movimientos.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_services.ServiceWorkflowTests.test_integral_production_consumes_fefo_with_conversion_and_skips_unusable_stock", "cuaderno.tests.test_services.ServiceWorkflowTests.test_incomplete_recipe_warning_blocks_production_without_consumption", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "pin-baseline": {
+      "purpose": "Reproducir solo los dos fallos upstream en código pin intacto y PostgreSQL nuevo separado.",
+      "argv": ["python", "scripts/cuaderno/pin_baseline.py"], "cwd": ".", "timeout_seconds": 1800,
+      "isolated_mutations": true, "verified": true, "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "format-conversion": {
+      "purpose": "Un formato desconocido necesita contenido declarado específico del alimento, no conversión global.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_unknown_format_conversion_requires_food_specific_content", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_food_specific_density_does_not_authorize_a_generic_bag_conversion", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true,
+      "verified": true, "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "service-workflow": {
+      "purpose": "Servicios nativos: fecha local, snapshot confirmado, cancelación y producción explícita e idempotente.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_services", "--noinput", "--keepdb", "--verbosity", "2"],
       "cwd": ".",
       "timeout_seconds": 1200,
-      "isolated_mutations": false,
-      "verified": false,
-      "verified_at_commit": null
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "legacy-stock-history": {
+      "purpose": "Proteger historial nativo previo al ledger contra borrado por API.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_native_delete_cannot_erase_pre_ledger_tandoor_logs", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "local-up": {
+      "purpose": "Construir el checkout y arrancar solo preview aislado cuaderno-release en loopback18081.",
+      "argv": ["python", "scripts/cuaderno/local_up.py"],
+      "cwd": ".",
+      "timeout_seconds": 1800,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "88be31ec5+worktree.e9babaf9a96dce8dffbb87680f19d695a1e11d2e5d9c618f4baf07e8b4f734cc",
+      "last_result": "20260930T063934Z-local-up-97392261 PASS256.5s; imagen59172af037dahealthy; source ref completo STATUS."
+    },
+    "native-media-services": {
+      "purpose": "Compartir adjuntos nativos sin publicar media privada y no vincular recetas privadas ajenas.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_native_shared_recipe_attachment_requires_its_own_share_capability", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_service_cannot_link_another_users_private_recipe", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_native_delete_preserves_entry_and_stock_history", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "inventory-integrity": {
+      "purpose": "Idempotencia nativa, consumo delta, histórico inmutable, dimensiones y Households.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_native_consume_replay_does_not_subtract_twice_and_rejects_overdraw", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_native_create_key_cannot_be_reused_by_movement_service", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_global_mass_volume_conversion_is_not_a_food_density", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_movement_metadata_is_frozen_when_native_entry_moves", "cuaderno.tests.test_integration.CuadernoIntegrationTests.test_inventory_isolated_between_households_but_space_admin_can_access", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "exchange-portable": {
+      "purpose": "Roundtrip portable real de subrecetas, rendimientos y precios entre Spaces.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_exchange_portable", "--noinput", "--keepdb", "--verbosity", "2"],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878"
+    },
+    "baseline": {
+      "purpose": "Pruebas upstream sin nuevas funciones; separar fallos heredados.",
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/pytest", "-o", "addopts=", "-q", "cookbook/tests", "--reuse-db"],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878",
+      "last_result": "20260930T050917Z-native-regression-5d9c2d8b exit124timeout1200; salida1279passed/1warning1243.57s, corrió sola. No PASS vigente; diagnóstico de duración pendiente, no skip/xfail nuevos."
     },
     "format": {
       "purpose": "Formato y lint de archivos modificados según herramientas heredadas.",
-      "argv": null,
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/flake8", "cuaderno"],
       "cwd": ".",
       "timeout_seconds": 1200,
       "isolated_mutations": false,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "369c86d5f+worktree",
+      "last_result": "20260930T061907Z-format-83245b91 exit0, alcance sólo cuaderno; no lint global."
     },
     "typecheck": {
       "purpose": "Vue/TypeScript y tipos de código nuevo, sin supresiones masivas.",
-      "argv": null,
-      "cwd": ".",
+      "argv": ["npx.cmd", "vue-tsc", "--noEmit", "-p", "tsconfig.app.json"],
+      "cwd": "vue3",
       "timeout_seconds": 1200,
       "isolated_mutations": false,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "620015607+worktree",
+      "last_result": "20260930T063242Z-typecheck-3ac97691 RED626/cero Cuaderno/service-worker. Pin650 mismo checker. PASS anteriores sin -p vacuos."
     },
     "unit": {
       "purpose": "Contratos de unidades, precios y reglas de negocio.",
-      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "-m", "unittest", "cuaderno.tests.test_domain_costing"],
+      "argv": ["docker", "exec", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "-m", "unittest", "cuaderno.tests.test_domain_costing", "cuaderno.tests.test_production", "cuaderno.tests.test_margin", "cuaderno.tests.test_stock_contract"],
       "cwd": ".",
       "timeout_seconds": 1200,
       "isolated_mutations": false,
@@ -40,12 +538,13 @@
     },
     "integration": {
       "purpose": "PostgreSQL real y APIs con permisos/aislamiento.",
-      "argv": null,
+      "argv": ["docker","exec","-e","PYTHONDONTWRITEBYTECODE=1","-e","DJANGO_SETTINGS_MODULE=recipes.test_settings","-e","TEST_POSTGRES_DB=cuaderno_integrated_20260930","cuaderno-g0-t002-web","/opt/recipes/venv/bin/python","manage.py","test","cuaderno.tests.test_integration","cuaderno.tests.test_exchange_portable","cuaderno.tests.test_services","cuaderno.tests.test_purchasing","cuaderno.tests.test_native_security","cuaderno.tests.test_finance_api","cuaderno.tests.test_recipe_finance","cuaderno.tests.test_import_hardening","cuaderno.tests.test_ingredient_yields","cuaderno.tests.test_price_validation","cuaderno.tests.test_stock_minimum","cuaderno.tests.test_yield_upgrade_integrity","cuaderno.tests.test_unit_merge_integrity","cuaderno.tests.test_yield_edit_conflicts","cuaderno.tests.test_price_history_impact","cuaderno.tests.test_service_preparation","cuaderno.tests.test_group_cache_isolation","cuaderno.tests.test_production_reversal_integrity","cuaderno.tests.test_waste_valuation","cuaderno.tests.test_waste_api","--noinput","--keepdb","--verbosity","2"],
       "cwd": ".",
       "timeout_seconds": 1200,
       "isolated_mutations": true,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "53e2c0671",
+      "last_result": "20260930T062615Z-integration-32108451 PASS250/250 en317.377s, incluye causa13/preparación17/permisos17/reversión4/valoración11. No navegador ni DOM."
     },
     "e2e": {
       "purpose": "Build real en navegadores y cuatro viewports.",
@@ -67,39 +566,43 @@
     },
     "performance": {
       "purpose": "Dataset sintético documentado y mediciones reproducibles.",
-      "argv": null,
+      "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_POSTGRES_DB=cuaderno_perf_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_performance", "--noinput", "--keepdb", "--verbosity", "2"],
       "cwd": ".",
       "timeout_seconds": 1200,
-      "isolated_mutations": false,
-      "verified": false,
-      "verified_at_commit": null
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "543346630",
+      "last_result": "20260930T013745Z-performance-307f57cd RED3: seqcost242.964/list151.590/108.699/330.298ms; concurrent services808.857/movements673.347/packages2237.400>500ms. Dataset/cardinalidades/estabilidadSQL pasan. Runtime32CPU sin límiteRAM, source_refunknown-worktree del contenedor de tests con módulo copiado; no perfil2CPU/2GiB."
     },
     "migrations": {
       "purpose": "Migraciones desde el pin y sobre una copia aislada.",
-      "argv": null,
+      "argv": ["python", "scripts/cuaderno/upgrade_smoke.py"],
       "cwd": ".",
       "timeout_seconds": 1200,
       "isolated_mutations": true,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "88be31ec5+worktree",
+      "last_result": "20260930T070137Z-migrations-c39da16a PASS513.173s: pin689 sin Cuaderno→imagen591 hasta0016; login/POST201/reopen200 nativo por DjangoClient+PostgreSQL y conservación postupgrade. No browser/socket HTTP."
     },
     "build": {
-      "purpose": "Build reproducible del fork; no imagen original sin cambios.",
-      "argv": null,
-      "cwd": ".",
+      "purpose": "Build Vue del checkout; la imagen final Docker se verifica por separado.",
+      "argv": ["npm.cmd", "run", "build"],
+      "cwd": "vue3",
       "timeout_seconds": 1200,
       "isolated_mutations": false,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "279ba8ad8c194a12e6dd8fe5eb5d2c56fbecb878",
+      "last_result": "PASS frontend; no equivale al build final de imagen Docker"
     },
     "restore": {
       "purpose": "Backup/restore a un destino local nuevo y validación de datos.",
-      "argv": null,
+      "argv": ["python", "scripts/cuaderno/delivery_restore.py", "--round-trip"],
       "cwd": ".",
       "timeout_seconds": 1200,
       "isolated_mutations": true,
-      "verified": false,
-      "verified_at_commit": null
+      "verified": true,
+      "verified_at_commit": "88be31ec5+worktree",
+      "last_result": "20260930T065043Z-restore-84bdbe5b PASS imagen59172af037da:114tablas/931filas/110secuencias/3media;3usuarios/5costes/3saldos/4finanzas/4servicios/4preparaciones con2ítems reales y par WASTE/reversal. Destino nuevo, hashes de snapshot; NO rollback completo ni comparación con BD viva después de HTTP."
     },
     "release": {
       "purpose": "Agregador de checks con propagación de cualquier fallo.",

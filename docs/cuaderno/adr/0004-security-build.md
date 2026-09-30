@@ -1,0 +1,15 @@
+# ADR 0004 — Dependencias corregidas y build sin imagen local opaca
+
+2026-09-29, implementación en verificación. No altera sources.lock ni la imagen baseline intacta.
+
+Se mantienen la rama Django 5.2 y las APIs nativas. Parches exactos Django 5.2.17/PyJWT 2.14.0, no actualización indiscriminada a latest. Fuentes primarias: [Django](https://www.djangoproject.com/weblog/2026/aug/04/security-releases/), [PyJWT](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-w6j9-cwv2-h6wq).
+
+Las resoluciones Yarn fijan PostCSS 8.5.28 y nanoid 3.3.18 también en copias anidadas. El audit Node completo posterior da cero avisos conocidos sobre 515 dependencias; no equivale a ausencia universal de vulnerabilidades.
+
+El intento OAuthlib 4.0.0 resultó incompatible: Allauth 65.18.0 con el extra socialaccount exige `<4`. El build limpio lo detectó (`20260929T221627Z-dependency-build-1a34e0d4`); `pip check` en el entorno existente no comprobó esa restricción de extra. El audit anterior de 174 distribuciones con OAuthlib 4 es histórico, no prueba del release final. No se eliminan funciones sociales para resolverlo.
+
+Se conserva OAuthlib 3.3.1 y se aplica durante el build el backport mínimo de [40b0ab56](https://github.com/oauthlib/oauthlib/commit/40b0ab56da3682c2484a4b78bbff309f8025d950), bajo BSD-3-Clause, que usa `hmac.compare_digest` en PKCE plain/S256. La API del [aviso oficial](https://github.com/oauthlib/oauthlib/security/advisories/GHSA-xpv3-w29h-x7cv) declara 4.0.0 como primera versión corregida. Se rectifica la referencia anterior a 3.3.2: no sirve como justificación del release. `patch_oauthlib.py` exige versión exacta y SHA-256 del fichero antes `0d6931601c4e88a078fb3ccf5f052c035ad6a4bb2171efb9c218e088a7272dc6`, después `53f308e800db1005c58fe17e7310ad695a62947363f725de8259f387fa841114`; falla cerrado si cambia el artefacto. No hay monkeypatch en startup. El auditor por versión seguirá señalando el advisory: registrar la mitigación comprobada aparte, no ocultar el hallazgo ni renombrar la distribución.
+
+Wheel queda fijado en 0.46.2; su [aviso](https://github.com/pypa/wheel/security/advisories/GHSA-8rrh-rw8j-w5fx) afecta a unpack de wheels hostiles, principalmente herramienta de build. El backport pasa 4 tests y la combinación final pasa 50 tests OAuth/social. Build actualizado `20260929T230217Z-local-up-ca8ce56f` y hash del parche en el runtime comprobados.
+
+Docker reconstruye el venv desde requisitos del checkout en stage aislado. Node, Python y PostgreSQL están fijados por digest observado; la imagen no copia git, donantes, node_modules ni tests. Candidato591 build063934Z PASS y auditoría070438Z:153 distribuciones Python/63 Alpine, cero consultas irresueltas y un aviso por versión OAuthlib conservado. Backport53f308e8 comprobado también en591. Inventarios Python153/frontend host451 y stageLinux453 validan el esquema oficial CycloneDX fijado (SBOM_PROVENANCE). Wiring8231ee566 compilado captura el árbol frontend real del stage build y copia solo JSON al runtime. Quedan hashes completos de paquetes/transitivas, cierre frontend empacado y escaneo OS/imagen; inventario/PyPI/JSONSchema no equivalen a Trivy/Grype.
