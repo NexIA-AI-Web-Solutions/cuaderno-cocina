@@ -7,6 +7,7 @@ import json
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from cookbook.models import InventoryEntry, InventoryLog
@@ -40,6 +41,15 @@ def _storage_decimal(value):
     if value.adjusted() >= 16 or (digits and exponent < -16):
         raise ValidationError({"quantity": "La cantidad supera la precisión de almacenamiento (16 enteros y 16 decimales)."})
     return value
+
+
+def _reversal_metadata(original):
+    metadata = original.metadata_snapshot
+    if not isinstance(metadata, dict) or (
+        "valuation" in metadata and not isinstance(metadata["valuation"], dict)
+    ):
+        raise ValidationError({"reverse_of": "El historial del movimiento no tiene un snapshot válido para revertirlo."})
+    return metadata
 
 
 def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempotency_key: str, reverses_id: int | None = None, origin: dict | None = None) -> StockMovement:
@@ -85,6 +95,19 @@ def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempoten
                 raise IdempotencyConflict({"idempotency_key": "La misma clave llega con otra cantidad."})
             return prior
         entry = InventoryEntry.objects.select_for_update().get(pk=entry_id, space=space)
+        valuation_metadata = {}
+        if reverses_id is not None:
+            original = StockMovement.objects.get(pk=reverses_id, space=space, entry_id=entry.pk)
+            original_metadata = _reversal_metadata(original)
+            if "valuation" in original_metadata:
+                # A compensating movement keeps the original estimate even
+                # if the price, unit labels or policy changed afterwards.
+                valuation_metadata["valuation"] = original_metadata["valuation"]
+        elif kind == StockMovement.WASTE:
+            from cuaderno.services.stock_valuation import replacement_valuation
+            valuation_metadata["valuation"] = replacement_valuation(
+                entry=entry, quantity=parsed_quantity, as_of=timezone.now(),
+            )
         current = Decimal(entry.amount)
         try:
             if kind == StockMovement.RECEIPT:
@@ -116,7 +139,10 @@ def apply_movement(*, entry_id: int, space, user, kind: str, quantity, idempoten
             idempotency_key=idempotency_key,
             fingerprint=fingerprint,
             balance_after=updated,
-            metadata_snapshot={**inventory_metadata(entry), **({"origin": origin} if origin is not None else {})},
+            metadata_snapshot={
+                **inventory_metadata(entry), **valuation_metadata,
+                **({"origin": origin} if origin is not None else {}),
+            },
             reverses_id=reverses_id,
             created_by=user,
         )
@@ -128,7 +154,8 @@ def reverse_movement(*, movement_id: int, space, user, idempotency_key: str, pur
     with transaction.atomic():
         type(space).objects.select_for_update().get(pk=space.pk)
         original = StockMovement.objects.select_for_update().get(pk=movement_id, space=space)
-        origin = original.metadata_snapshot.get("origin")
+        original_metadata = _reversal_metadata(original)
+        origin = original_metadata.get("origin")
         if isinstance(origin, dict) and origin.get("type") == "service_plan":
             # A service consumes several entries atomically. Returning just
             # one entry would leave its produced state and snapshot untrue.
