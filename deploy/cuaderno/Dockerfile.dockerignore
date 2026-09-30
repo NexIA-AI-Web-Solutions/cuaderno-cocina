@@ -9,6 +9,7 @@ tests
 scripts
 !scripts/cuaderno/
 !scripts/cuaderno/patch_oauthlib.py
+!scripts/cuaderno/frontend_inventory.mjs
 **/node_modules
 **/__pycache__
 **/*.pyc

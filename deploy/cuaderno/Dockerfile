@@ -4,7 +4,10 @@ COPY vue3/package.json vue3/yarn.lock ./
 RUN yarn install --frozen-lockfile --non-interactive
 COPY vue3/ ./
 COPY cookbook/locale/ /build/cookbook/locale/
-RUN yarn build
+COPY scripts/cuaderno/frontend_inventory.mjs /build/scripts/cuaderno/frontend_inventory.mjs
+# Capture the exact installed build/dev tree that produced this bundle.
+# This is not a claim that every dependency is present in the bundled JS.
+RUN yarn build && node /build/scripts/cuaderno/frontend_inventory.mjs > /build/frontend-installed.cdx.json
 
 # Rebuild dependencies from the repository, without an opaque local pin image.
 FROM python:3.13-alpine3.23@sha256:6438599575cca0d1df94aeee0d2ae088d4d8846eab554b2ee7784a3a6df0d516 AS python_dependencies
@@ -29,6 +32,7 @@ COPY cuaderno/ ./cuaderno/
 COPY http.d/ ./http.d/
 COPY manage.py boot.sh plugin.py requirements.txt LICENSE.md ./
 COPY --from=frontend /build/cookbook/static/vue3/ ./cookbook/static/vue3/
+COPY --from=frontend /build/frontend-installed.cdx.json ./SBOM.frontend.cdx.json
 ARG SOURCE_COMMIT=worktree
 ENV PYTHONUNBUFFERED=1 DOCKER=true PATH=/opt/recipes/venv/bin:$PATH
 RUN python -c "from pathlib import Path; Path('cookbook/version_info.py').write_text('TANDOOR_VERSION = \"2.6.15-cuaderno\"\nTANDOOR_REF = \"${SOURCE_COMMIT}\"\nVERSION_INFO = []\n')" \

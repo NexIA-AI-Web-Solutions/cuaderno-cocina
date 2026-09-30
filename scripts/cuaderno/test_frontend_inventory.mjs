@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict'
 import {afterEach, test} from 'node:test'
+import {spawnSync} from 'node:child_process'
 import {createHash} from 'node:crypto'
-import {mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync} from 'node:fs'
+import {copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
+import {fileURLToPath} from 'node:url'
 
 import {InventoryFailure, buildInventory, packagePurl} from './frontend_inventory.mjs'
 
 
 const temporaryRoots = []
+const INVENTORY_SCRIPT = fileURLToPath(new URL('./frontend_inventory.mjs', import.meta.url))
 
 function fixtureRoot() {
     const root = mkdtempSync(join(tmpdir(), 'cuaderno-frontend-inventory-'))
@@ -139,4 +142,37 @@ test('emits CycloneDX 1.6 provenance with string properties and an honest instal
         assert.equal(typeof property.name, 'string')
         assert.equal(typeof property.value, 'string')
     }
+})
+
+test('CLI inventories the Docker build layout and rejects caller-controlled paths', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'cuaderno-frontend-cli-'))
+    temporaryRoots.push(fixture)
+    const buildRoot = join(fixture, 'build')
+    const scriptDirectory = join(buildRoot, 'scripts', 'cuaderno')
+    const scriptPath = join(scriptDirectory, 'frontend_inventory.mjs')
+    const modules = join(buildRoot, 'vue3', 'node_modules')
+    mkdirSync(scriptDirectory, {recursive: true})
+    mkdirSync(modules, {recursive: true})
+    copyFileSync(INVENTORY_SCRIPT, scriptPath)
+    packageFixture(join(modules, 'plain'), {name: 'plain', version: '1.0.0', license: 'MIT'})
+    packageFixture(
+        join(modules, '@scope', 'built'),
+        {name: '@scope/built', version: '2.0.0', license: 'Apache-2.0'},
+    )
+
+    const completed = spawnSync(process.execPath, [scriptPath], {encoding: 'utf8'})
+
+    assert.equal(completed.status, 0, completed.stderr)
+    assert.equal(completed.signal, null)
+    const inventory = JSON.parse(completed.stdout)
+    assert.equal(inventory.components.length, 2)
+    assert.deepEqual(inventory.components.map(component => component.name), ['@scope/built', 'plain'])
+    assert.match(completed.stderr, /CUADERNO_FRONTEND_INVENTORY_SCOPE/)
+    assert.match(completed.stderr, /installed_tree_with_build_dev=true/)
+    assert.match(completed.stderr, /components=2/)
+
+    const rejected = spawnSync(process.execPath, [scriptPath, modules], {encoding: 'utf8'})
+    assert.equal(rejected.status, 1)
+    assert.equal(rejected.stdout, '')
+    assert.match(rejected.stderr, /no acepta rutas ni argumentos externos/i)
 })
