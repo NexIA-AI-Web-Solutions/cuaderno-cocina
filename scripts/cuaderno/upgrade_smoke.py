@@ -12,9 +12,15 @@ PIN_IMAGE = "cuaderno-g0-t002-app:f77a459f"
 PIN_IMAGE_ID = "sha256:68946d4df1351cf5b30c7c606243856d65681439d6db4436baed9298d88cea8b"
 
 PIN_FIXTURE = '''
+import json
+import platform
 from decimal import Decimal
+import django
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.db import connection
+from django.test import Client
 from django_scopes import scopes_disabled
 from cookbook.models import Space, UserSpace, Household, InventoryLocation, InventoryEntry, Food, Unit, Recipe, Step, Ingredient
 with scopes_disabled():
@@ -35,6 +41,36 @@ with scopes_disabled():
     )
     step.ingredients.add(Ingredient.objects.create(space=space, food=food, unit=unit, amount=Decimal("0.4")))
     recipe.steps.add(step)
+settings.ALLOWED_HOSTS = [*settings.ALLOWED_HOSTS, "testserver"]
+assert connection.settings_dict["NAME"].startswith("cuaderno_upgrade_")
+assert "cuaderno" not in settings.INSTALLED_APPS
+client = Client()
+assert client.login(username=user.username, password="Upgrade-Synthetic-Only!")
+native_recipe = client.get(f"/api/recipe/{recipe.pk}/")
+assert native_recipe.status_code == 200, native_recipe.content
+assert native_recipe.json()["name"] == "Synthetic pin recipe"
+created = client.post(
+    "/api/recipe/", data=json.dumps({"name": "Synthetic native API baseline", "servings": 4, "steps": []}),
+    content_type="application/json",
+)
+assert created.status_code == 201, created.content
+created_id = created.json()["id"]
+reopened = client.get(f"/api/recipe/{created_id}/")
+assert reopened.status_code == 200 and reopened.json()["name"] == "Synthetic native API baseline", reopened.content
+with scopes_disabled():
+    assert Recipe.objects.filter(pk=created_id, space=space, created_by=user).exists()
+with connection.cursor() as cursor:
+    cursor.execute("SELECT app, name FROM django_migrations ORDER BY app, name")
+    migrations = cursor.fetchall()
+assert not any(app == "cuaderno" for app, _name in migrations)
+print("PIN_BASELINE=" + json.dumps({
+    "python": platform.python_version(), "django": django.get_version(),
+    "database": connection.settings_dict["NAME"], "migrations": migrations,
+    "transport": "Django Client against native views and real PostgreSQL, not browser or socket HTTP",
+    "login": True, "native_get_status": native_recipe.status_code,
+    "native_post_status": created.status_code, "reopen_status": reopened.status_code,
+    "recipe_id": created_id, "cuaderno_installed": False,
+}, sort_keys=True))
 print("PIN_FIXTURE_OK")
 '''
 
@@ -60,6 +96,9 @@ with scopes_disabled():
     assert membership.household.name == "Synthetic team"
     assert set(membership.groups.values_list("name", flat=True)) == {"admin"}
     recipe = Recipe.objects.get(space=space, name="Synthetic pin recipe")
+    api_recipe = Recipe.objects.get(space=space, name="Synthetic native API baseline")
+    assert api_recipe.created_by_id == user.pk and api_recipe.servings == 4
+    assert not api_recipe.steps.exists()
     assert recipe.private and recipe.created_by_id == user.pk and recipe.servings == 4
     recipe_updated_at = recipe.updated_at
     step = recipe.steps.get()
@@ -84,6 +123,10 @@ with scopes_disabled():
     PriceVersion.objects.create(space=space, package=package, amount=32, valid_from=timezone.now(), created_by=user)
 client = Client()
 assert client.login(username=user.username, password="Upgrade-Synthetic-Only!")
+native_api_reopen = client.get(f"/api/recipe/{api_recipe.pk}/")
+assert native_api_reopen.status_code == 200, native_api_reopen.content
+assert native_api_reopen.json()["name"] == "Synthetic native API baseline"
+assert native_api_reopen.json()["servings"] == 4
 cost = client.get(f"/api/cuaderno/recipes/{recipe.pk}/cost/")
 assert cost.status_code == 200, cost.content
 assert Decimal(cost.json()["total"]) == Decimal("2.56"), cost.content
