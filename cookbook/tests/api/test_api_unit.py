@@ -1,6 +1,7 @@
 import json
 import pytest
 import uuid
+from decimal import Decimal
 
 from django.contrib import auth
 from django.urls import reverse
@@ -200,6 +201,14 @@ def test_merge(
     space_1
 ):
     with scopes_disabled():
+        # The merge contract requires explicit aliases of the same scale.
+        for unit in (obj_1, obj_2):
+            unit.base_unit = 'g'
+            unit.save(update_fields=['base_unit'])
+        ing_1_s1.amount = Decimal('1000')
+        ing_1_s1.save(update_fields=['amount'])
+        sle_1_s1.amount = Decimal('200')
+        sle_1_s1.save(update_fields=['amount'])
         assert Unit.objects.filter(space=space_1).count() == 2
         assert obj_1.ingredient_set.count() == 1
         assert obj_2.ingredient_set.count() == 1
@@ -207,6 +216,11 @@ def test_merge(
         assert obj_1.shoppinglistentry_set.count() == 1
         assert obj_2.shoppinglistentry_set.count() == 1
         assert obj_3.shoppinglistentry_set.count() == 1
+
+        ing_1_s1.refresh_from_db()
+        sle_1_s1.refresh_from_db()
+        assert ing_1_s1.amount == Decimal('1000')
+        assert sle_1_s1.amount == Decimal('200')
 
     # merge Unit with ingredient/shopping list entry with another Unit, only HTTP put method should work
     url = reverse(MERGE_URL, args=[obj_1.id, obj_2.id])
@@ -225,6 +239,11 @@ def test_merge(
 
         assert obj_2.shoppinglistentry_set.count() == 2
         assert obj_3.shoppinglistentry_set.count() == 1
+
+        ing_1_s1.refresh_from_db()
+        sle_1_s1.refresh_from_db()
+        assert ing_1_s1.amount == Decimal('1000')
+        assert sle_1_s1.amount == Decimal('200')
 
     # attempt to merge with non-existent parent
     r = u1_s1.put(

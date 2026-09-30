@@ -152,6 +152,17 @@ class UnitMergeIntegrityTests(PurchasingFixtureMixin, TestCase):
             self.assertEqual(entry.unit_id, self.g.pk)
             self.assertEqual(entry.amount, Decimal("1000"))
 
+    def test_unknown_unit_cannot_be_assumed_an_equivalent_alias(self):
+        with scopes_disabled():
+            source = self._alias("cucharada sin escala", base_unit=None)
+            conversion = self._conversion(source, self.g, "1", "15")
+            with self.assertRaises(DomainError):
+                source.merge_into(self.g)
+            conversion.refresh_from_db()
+            self.assertTrue(Unit.objects.filter(pk=source.pk).exists())
+            self.assertEqual(conversion.base_unit_id, source.pk)
+            self.assertEqual(conversion.converted_amount, Decimal("15"))
+
     def test_ingredient_only_merge_rejects_relabelling_grams_as_kilograms(self):
         with scopes_disabled():
             source = self._alias("gramos usados solo por ingrediente")
