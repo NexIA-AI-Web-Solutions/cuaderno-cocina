@@ -23,6 +23,7 @@ GRYPE_ZIP_SHA256 = "1db5c23b8ba0038a04acebed9c17945e1ade68d9f83e2fe1c101e4fb1feb
 VULNERABILITY_DB_SHA256 = "04d141a255a18805a25dae81566dd3696c551be38bfe17929fd1008b338228d4"
 DB_DIGEST = "xxh64:8803575133ab5141"
 DB_CLIENT_VERSION = "v6.1.9"
+DB_BUILT = "2026-09-30T06:32:47Z"
 DB_SOURCE = (
     "https://grype.anchore.io/databases/v6/"
     "vulnerability-db_v6.1.9_2026-09-30T00:35:37Z_1790749967.tar.zst"
@@ -271,10 +272,14 @@ def _verify_db_status(paths, runner, environment):
     if completed.returncode != 0:
         raise ImageAuditFailure("Grype no pudo verificar su base offline fijada.")
     document = _strict_json_bytes((completed.stdout or "").encode(), "grype db status")
-    location = document.get("location") if isinstance(document, dict) else None
-    if (not isinstance(document, dict) or document.get("schemaVersion") != 6
-            or document.get("error") is not None or not isinstance(location, str)
-            or Path(location).resolve(strict=False) != paths.database.resolve(strict=True)):
+    database_path = document.get("path") if isinstance(document, dict) else None
+    if (not isinstance(document, dict)
+            or document.get("schemaVersion") != DB_CLIENT_VERSION
+            or document.get("from") != DB_SOURCE
+            or document.get("built") != DB_BUILT
+            or document.get("valid") is not True
+            or not isinstance(database_path, str)
+            or Path(database_path).resolve(strict=False) != paths.database.resolve(strict=True)):
         raise ImageAuditFailure("grype db status no corresponde a la base local fijada.")
     return document
 

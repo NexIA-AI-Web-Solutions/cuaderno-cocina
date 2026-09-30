@@ -18,6 +18,7 @@ else:
 IMAGE_ID = "sha256:" + "a" * 64
 SOURCE_REF = "b" * 40 + "+worktree." + "c" * 64
 GRYPE_COMMIT = "b6f5194537747ee7f705f4113069ac9eb269919f"
+DB_BUILT = "2026-09-30T06:32:47Z"
 
 
 def container_document(**changes):
@@ -89,8 +90,8 @@ class FakeRunner:
             if self.mutate_tool_before_scan:
                 self.paths.tool.write_bytes(b"mutated tool before scan")
             return subprocess.CompletedProcess(argv, 0, stdout=json.dumps({
-                "built": "2026-09-30T00:35:37Z", "schemaVersion": 6,
-                "location": str(self.paths.database), "checksum": "sha256:synthetic", "error": None,
+                "schemaVersion": "v6.1.9", "from": subject.DB_SOURCE,
+                "built": DB_BUILT, "path": str(self.paths.database), "valid": True,
             }), stderr="")
         if argv[0] == str(self.paths.tool):
             self.paths.report.write_text(json.dumps(self.report), encoding="utf-8")
@@ -262,22 +263,28 @@ class ImageAuditTests(unittest.TestCase):
         }), encoding="utf-8")
 
         status_mutations = (
-            {"schemaVersion": 5},
-            {"error": "database unavailable"},
-            {"location": str(self.root / "foreign/vulnerability.db")},
+            ({"schemaVersion": "v6.1.8"}, None),
+            ({"from": "https://grype.anchore.io/databases/other"}, None),
+            ({"built": "2026-09-30T06:32:48Z"}, None),
+            ({"path": str(self.root / "foreign/vulnerability.db")}, None),
+            ({"valid": False}, None),
+            ({"valid": 1}, None),
+            ({}, "valid"),
         )
-        for index, mutation in enumerate(status_mutations):
+        for index, (mutation, removed_key) in enumerate(status_mutations):
             scan_id = f"12345678-1234-4234-8234-{900 + index:012d}"
             paths = subject.audit_paths(self.root, scan_id)
             runner = FakeRunner(paths)
             original = runner.__call__
 
-            def changed_status(argv, _mutation=mutation, **kwargs):
+            def changed_status(argv, _mutation=mutation, _removed_key=removed_key, **kwargs):
                 result = original(argv, **kwargs)
                 normalized = list(map(str, argv))
                 if normalized[1:] == ["db", "status", "-o", "json"]:
                     payload = json.loads(result.stdout)
                     payload.update(_mutation)
+                    if _removed_key is not None:
+                        payload.pop(_removed_key, None)
                     return subprocess.CompletedProcess(normalized, 0, stdout=json.dumps(payload), stderr="")
                 return result
 
