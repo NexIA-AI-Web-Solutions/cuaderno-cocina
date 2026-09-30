@@ -219,6 +219,35 @@ class ServicePlan(models.Model):
         )]
 
 
+class ServicePreparationItem(models.Model):
+    """A Step copy frozen at service confirmation, not another recipe editor."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    service = models.ForeignKey(ServicePlan, on_delete=models.CASCADE, related_name="preparation_items")
+    source_step = models.ForeignKey("cookbook.Step", on_delete=models.SET_NULL, null=True, blank=True)
+    task_key = models.CharField(max_length=128)
+    position = models.PositiveIntegerField()
+    recipe_id_snapshot = models.PositiveBigIntegerField()
+    name = models.TextField(blank=True, default="")
+    instruction = models.TextField(blank=True, default="")
+    checked = models.BooleanField(default=False)
+    checked_at = models.DateTimeField(null=True, blank=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("position", "pk")
+        constraints = [
+            models.UniqueConstraint(fields=["service", "task_key"], name="cuaderno_preparation_task_unique"),
+            models.UniqueConstraint(fields=["service", "position"], name="cuaderno_preparation_position_unique"),
+            models.CheckConstraint(
+                condition=(models.Q(checked=True, checked_at__isnull=False)
+                           | models.Q(checked=False, checked_at__isnull=True)),
+                name="cuaderno_preparation_checked_time",
+            ),
+        ]
+
+
 class AllergenDeclaration(models.Model):
     """Declared or unknown. Absence of a row is not proof the allergen is absent."""
 

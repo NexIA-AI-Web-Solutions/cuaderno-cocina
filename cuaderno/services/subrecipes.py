@@ -12,6 +12,9 @@ from cuaderno.domain.ingredient_yields import ingredient_quantities
 from cuaderno.models import RecipeYield
 
 
+MAX_NATIVE_GRAPH_RECIPES = 1001
+
+
 def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversions=None):
     if from_unit is None or to_unit is None:
         raise DomainError("yield_unit_missing", "La subreceta y su uso necesitan unidad.")
@@ -63,7 +66,7 @@ def native_recipe_graph(recipe_ids, space, user=None):
     edges: dict[str, list[str]] = {}
 
     def load(recipe_id, depth=0):
-        if depth > 32 or len(cache) > 1000:
+        if depth > 32 or len(cache) >= MAX_NATIVE_GRAPH_RECIPES:
             raise DomainError("recipe_graph_limit", "La ficha supera el límite de subrecetas.")
         if recipe_id in cache:
             return cache[recipe_id]

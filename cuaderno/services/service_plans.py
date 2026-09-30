@@ -204,6 +204,8 @@ def confirm_service_plan(plan: ServicePlan, user) -> ServicePlan:
     plan.state = ServicePlan.CONFIRMED
     plan.confirmed_at = confirmed_at
     plan.save(update_fields=["snapshot", "state", "confirmed_at"])
+    from cuaderno.services.preparation import seed_preparation
+    seed_preparation(plan, user)
     return plan
 
 
