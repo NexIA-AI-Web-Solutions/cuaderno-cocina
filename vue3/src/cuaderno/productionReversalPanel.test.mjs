@@ -113,6 +113,10 @@ async function mount(transport, initial = service()) {
     `)
     const vueUrl = import.meta.resolve('vue')
     const emptyComponent = moduleUrl(`import {h} from ${JSON.stringify(vueUrl)}; export default {render: () => h('empty-component')};`)
+    const allergens = moduleUrl(ts.transpileModule(
+        readFileSync(new URL('./allergenUi.ts', import.meta.url), 'utf8'),
+        {compilerOptions: {module: ts.ModuleKind.ESNext}},
+    ).outputText)
     const filename = 'ProduccionPage.vue'
     const source = readFileSync(new URL('./pages/ProduccionPage.vue', import.meta.url), 'utf8')
     const {descriptor, errors: parseErrors} = parse(source, {filename})
@@ -128,6 +132,8 @@ async function mount(transport, initial = service()) {
         ['@/cuaderno/api', api],
         ['@/components/inputs/VModelSelect.vue', emptyComponent],
         ['@/cuaderno/components/ServicePreparationPanel.vue', emptyComponent],
+        ['@/cuaderno/components/AllergenAssessmentPanel.vue', emptyComponent],
+        ['@/cuaderno/allergenUi', allergens],
         ['@/cuaderno/forms', forms],
         ['@/cuaderno/inventoryRequests', requests],
         ['@/cuaderno/financeUi', finance],

@@ -8,7 +8,7 @@
             Un alérgeno sin declarar no se trata como ausente.
         </p>
         <v-alert v-if="notice" type="info" class="mb-4" role="status">{{ notice }}</v-alert>
-        <v-row>
+        <v-row class="no-print">
             <v-col cols="12" md="6">
                 <v-card class="print-card">
                     <v-card-title>Ficha desde recetas</v-card-title>
@@ -45,6 +45,14 @@
                         <v-text-field v-model="service.date" label="Fecha del servicio" type="date" />
                         <v-text-field v-model="service.covers" label="Comensales" inputmode="numeric" />
                         <v-model-select v-model="service.recipe" model="Recipe" label="Receta del servicio" search-on-load />
+                        <allergen-assessment-panel
+                            class="no-print"
+                            title="Alérgenos de la receta seleccionada"
+                            source="recipe"
+                            :assessment="recipeAllergens"
+                            :loading="loadingRecipeAllergens"
+                            :error="recipeAllergenError"
+                        />
                         <v-btn color="primary" :loading="savingService" min-height="44" @click="saveService">Anotar servicio</v-btn>
                         <p class="mt-2" role="status">{{ serviceMessage }}</p>
                     </v-card-text>
@@ -77,12 +85,20 @@
                         <v-select v-model="allergen.state" label="Estado" :items="states" item-title="title" item-value="value" />
                         <v-btn color="primary" :loading="savingAllergen" min-height="44" @click="saveAllergen">Declarar</v-btn>
                         <p class="mt-2" role="status">{{ allergenMessage }}</p>
+                        <allergen-assessment-panel
+                            class="no-print"
+                            title="Alérgenos del alimento seleccionado"
+                            source="food"
+                            :assessment="foodAllergens"
+                            :loading="loadingFoodAllergens"
+                            :error="foodAllergenError"
+                        />
                     </v-card-text>
                 </v-card>
             </v-col>
         </v-row>
         <section class="mt-6" aria-labelledby="service-list-title">
-            <div class="d-flex flex-wrap align-center ga-3 mb-3">
+            <div class="d-flex flex-wrap align-center ga-3 mb-3 no-print">
                 <h2 id="service-list-title" class="text-h6">Servicios guardados (últimos 100)</h2>
                 <v-btn variant="text" :loading="loadingServices" min-height="44" @click="loadServices">Actualizar servicios</v-btn>
                 <v-btn variant="text" prepend-icon="fa-solid fa-print" min-height="44" @click="printServices">Imprimir fichas</v-btn>
@@ -118,6 +134,12 @@
                                 </v-alert>
                             </div>
                             <v-alert v-for="(warning, index) in plan.snapshot?.warnings || []" :key="index" type="warning" class="mt-2">{{ productionWarning(warning) }}</v-alert>
+                            <allergen-assessment-panel
+                                title="Alérgenos congelados al confirmar"
+                                source="snapshot"
+                                :assessment="frozenAllergens(plan)"
+                                :legacy="frozenAllergens(plan) === null"
+                            />
                             <v-list v-if="plan.snapshot?.needs?.length">
                                 <v-list-item v-for="line in plan.snapshot.needs" :key="line.food_id" :title="line.food_name" :subtitle="`${line.quantity} ${line.unit_name || '(sin unidad)'}`" />
                             </v-list>
@@ -164,10 +186,11 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref, watch} from "vue"
+import {onMounted, onUnmounted, reactive, ref, watch} from "vue"
 import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import ServicePreparationPanel from '@/cuaderno/components/ServicePreparationPanel.vue'
+import AllergenAssessmentPanel from '@/cuaderno/components/AllergenAssessmentPanel.vue'
 import {apiError, productionUsage, productionWarning, serviceBody, yieldBody, confirmedCostLabel} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
 import {
@@ -177,6 +200,14 @@ import {
     pricePolicyLabel,
     type RecipeFinance,
 } from '@/cuaderno/financeUi'
+import {
+    allergenAssessmentEnvelope,
+    allergenDeclarationName,
+    allergenDeclarationResponse,
+    isSafeAllergenId,
+    type AllergenAssessment,
+    type AllergenState,
+} from '@/cuaderno/allergenUi'
 
 const states = [
     {title: "Desconocido", value: "unknown"},
@@ -192,6 +223,8 @@ type ServiceRow = {
     id: number; title: string; covers: string; service_date: string | null; state: string;
     snapshot?: {cost?: {status: string; total: string | null; display: string | null}; warnings?: unknown[];
         finance?: RecipeFinance;
+        recipe_id?: number | null;
+        allergens?: unknown;
         needs?: {food_id: number; food_name: string; quantity: string; unit_name: string | null}[];
         production?: {
             produced_at?: string; edition?: string; movement_ids?: number[]; stock_changed?: boolean;
@@ -212,6 +245,16 @@ const confirmation = ref<{plan: ServiceRow; action: 'produce' | 'cancel' | 'reve
 const serviceRequests = inventoryRequests()
 const sheet = reactive({component: "", quantity: ""})
 const allergen = reactive({food: null as any, name: "", state: "unknown"})
+const foodAllergens = ref<AllergenAssessment | null>(null)
+const recipeAllergens = ref<AllergenAssessment | null>(null)
+const loadingFoodAllergens = ref(false)
+const loadingRecipeAllergens = ref(false)
+const foodAllergenError = ref('')
+const recipeAllergenError = ref('')
+let foodAllergenGeneration = 0
+let recipeAllergenGeneration = 0
+let foodAllergenController: AbortController | null = null
+let recipeAllergenController: AbortController | null = null
 const savingService = ref(false)
 const consolidating = ref(false)
 const savingAllergen = ref(false)
@@ -229,6 +272,97 @@ watch(selectedRecipes, () => {
     recipeWarnings.value = []
     recipeMessage.value = ''
 }, {deep: true})
+
+async function loadFoodAllergens(foodId: number | null) {
+    const generation = ++foodAllergenGeneration
+    foodAllergenController?.abort()
+    foodAllergenController = null
+    foodAllergens.value = null
+    foodAllergenError.value = ''
+    loadingFoodAllergens.value = false
+    if (!isSafeAllergenId(foodId)) return
+    const controller = new AbortController()
+    foodAllergenController = controller
+    loadingFoodAllergens.value = true
+    try {
+        const {ok, status, data} = await readJson(await cuadernoFetch(
+            `/api/cuaderno/allergens/?food=${foodId}`,
+            {signal: controller.signal},
+        ))
+        if (generation !== foodAllergenGeneration || controller.signal.aborted) return
+        if (!ok) {
+            foodAllergenError.value = explain(status, data)
+            return
+        }
+        const parsed = allergenAssessmentEnvelope(data, 'food', Number(foodId))
+        if (!parsed) {
+            foodAllergenError.value = 'La respuesta de alérgenos está incompleta o incoherente.'
+            return
+        }
+        foodAllergens.value = parsed
+    } catch {
+        if (generation === foodAllergenGeneration && !controller.signal.aborted) {
+            foodAllergenError.value = 'No se pudo consultar la información de alérgenos.'
+        }
+    } finally {
+        if (generation === foodAllergenGeneration) loadingFoodAllergens.value = false
+    }
+}
+
+async function loadRecipeAllergens(recipeId: number | null) {
+    const generation = ++recipeAllergenGeneration
+    recipeAllergenController?.abort()
+    recipeAllergenController = null
+    recipeAllergens.value = null
+    recipeAllergenError.value = ''
+    loadingRecipeAllergens.value = false
+    if (!isSafeAllergenId(recipeId)) return
+    const controller = new AbortController()
+    recipeAllergenController = controller
+    loadingRecipeAllergens.value = true
+    try {
+        const {ok, status, data} = await readJson(await cuadernoFetch(
+            `/api/cuaderno/allergens/?recipe=${recipeId}`,
+            {signal: controller.signal},
+        ))
+        if (generation !== recipeAllergenGeneration || controller.signal.aborted) return
+        if (!ok) {
+            recipeAllergenError.value = explain(status, data)
+            return
+        }
+        const parsed = allergenAssessmentEnvelope(data, 'recipe', Number(recipeId))
+        if (!parsed) {
+            recipeAllergenError.value = 'La respuesta de alérgenos está incompleta o incoherente.'
+            return
+        }
+        recipeAllergens.value = parsed
+    } catch {
+        if (generation === recipeAllergenGeneration && !controller.signal.aborted) {
+            recipeAllergenError.value = 'No se pudo consultar la información de alérgenos.'
+        }
+    } finally {
+        if (generation === recipeAllergenGeneration) loadingRecipeAllergens.value = false
+    }
+}
+
+watch(() => allergen.food?.id ?? null, value => {
+    void loadFoodAllergens(value)
+}, {flush: 'sync'})
+
+watch(() => service.recipe?.id ?? null, value => {
+    void loadRecipeAllergens(value)
+}, {flush: 'sync'})
+
+function frozenAllergens(plan: ServiceRow): AllergenAssessment | null {
+    const raw = plan.snapshot?.allergens
+    if (raw === undefined || raw === null) return null
+    const expectedId = plan.snapshot?.recipe_id
+    return allergenAssessmentEnvelope(
+        raw,
+        'recipe',
+        typeof expectedId === 'number' ? expectedId : undefined,
+    )
+}
 
 async function calculateRecipes() {
     if (calculatingRecipes.value || !selectedRecipes.value.length) return
@@ -435,6 +569,10 @@ async function transition(plan: ServiceRow, action: ServiceAction) {
 
 function printServices() { window.print() }
 onMounted(loadServices)
+onUnmounted(() => {
+    foodAllergenController?.abort()
+    recipeAllergenController?.abort()
+})
 
 async function consolidate() {
     if (consolidating.value || !usages.value.length) return
@@ -455,20 +593,41 @@ async function consolidate() {
 
 async function saveAllergen() {
     if (savingAllergen.value) return
-    if (!allergen.food?.id || !allergen.name.trim()) { allergenMessage.value = 'Selecciona un alimento e indica el nombre del alérgeno.'; return }
+    const submittedName = allergenDeclarationName(allergen.name)
+    if (!isSafeAllergenId(allergen.food?.id) || !submittedName) {
+        allergenMessage.value = 'Selecciona un alimento con identificador válido e indica un nombre válido, sin caracteres no permitidos.'
+        return
+    }
+    const submittedFoodId = allergen.food.id as number
+    const submittedState: AllergenState = allergen.state === 'declared' ? 'declared' : 'unknown'
     savingAllergen.value = true
-    const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/allergens/", {
-        method: "POST",
-        body: JSON.stringify({
-            food: allergen.food.id,
-            name: allergen.name.trim(),
-            state: allergen.state,
-        }),
-    }))
-    savingAllergen.value = false
-    allergenMessage.value = ok
-        ? `${states.find(state => state.value === data.state)?.title || 'Guardado'}. No declarar no significa que el alérgeno esté ausente.`
-        : explain(status, data)
+    try {
+        const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/allergens/", {
+            method: "POST",
+            body: JSON.stringify({
+                food: submittedFoodId,
+                name: submittedName,
+                state: submittedState,
+            }),
+        }))
+        if (!ok) {
+            allergenMessage.value = explain(status, data)
+            return
+        }
+        if (!allergenDeclarationResponse(data, submittedState)) {
+            allergenMessage.value = 'La respuesta de la declaración está incompleta o incoherente. Conservamos el formulario.'
+            return
+        }
+        allergenMessage.value = `${states.find(state => state.value === submittedState)?.title || 'Guardado'}. No declarar no significa que el alérgeno esté ausente.`
+        await Promise.all([
+            allergen.food?.id === submittedFoodId ? loadFoodAllergens(submittedFoodId) : Promise.resolve(),
+            service.recipe?.id ? loadRecipeAllergens(service.recipe.id) : Promise.resolve(),
+        ])
+    } catch {
+        allergenMessage.value = 'No se pudo guardar la declaración. Conservamos el formulario.'
+    } finally {
+        savingAllergen.value = false
+    }
 }
 </script>
 
