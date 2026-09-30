@@ -148,6 +148,10 @@
                                 <p class="font-weight-bold">Producción revertida</p>
                                 <p>{{ reversalAuditLabel(plan.snapshot.production) }}</p>
                             </v-alert>
+                            <production-waste-panel
+                                v-if="plan.state === 'produced' || plan.state === 'cancelled'"
+                                :classification="frozenProductionWaste(plan)"
+                            />
                             <service-preparation-panel class="mt-4" :service-id="plan.id" :service-state="plan.state" />
                         </v-card-text>
                         <v-card-actions class="flex-wrap ga-2 no-print">
@@ -191,6 +195,7 @@ import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import ServicePreparationPanel from '@/cuaderno/components/ServicePreparationPanel.vue'
 import AllergenAssessmentPanel from '@/cuaderno/components/AllergenAssessmentPanel.vue'
+import ProductionWastePanel from '@/cuaderno/components/ProductionWastePanel.vue'
 import {apiError, productionUsage, productionWarning, serviceBody, yieldBody, confirmedCostLabel} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
 import {
@@ -208,6 +213,10 @@ import {
     type AllergenAssessment,
     type AllergenState,
 } from '@/cuaderno/allergenUi'
+import {
+    productionWasteEnvelope,
+    type ProductionWasteClassification,
+} from '@/cuaderno/productionWasteUi'
 
 const states = [
     {title: "Desconocido", value: "unknown"},
@@ -228,12 +237,17 @@ type ServiceRow = {
         needs?: {food_id: number; food_name: string; quantity: string; unit_name: string | null}[];
         production?: {
             produced_at?: string; edition?: string; movement_ids?: number[]; stock_changed?: boolean;
+            waste_classification?: unknown;
             reversal?: {
                 key_sha256?: string; reversed_at?: string; reversed_by?: number;
                 original_movement_ids?: number[]; movement_ids?: number[];
             };
         };
     }
+}
+
+function frozenProductionWaste(plan: ServiceRow): ProductionWasteClassification | null {
+    return productionWasteEnvelope(plan.snapshot?.production?.waste_classification)
 }
 type ServiceAction = 'confirm' | 'produce' | 'cancel' | 'reverse'
 type ReversalResponse = ServiceRow & {stock_changed: boolean; reversal_movement_ids: number[]}

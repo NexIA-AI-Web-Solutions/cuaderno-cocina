@@ -166,10 +166,15 @@ async function mount(transport, serviceRows = []) {
         ['@/components/inputs/VModelSelect.vue', modelSelect],
         ['@/cuaderno/components/ServicePreparationPanel.vue', emptyComponent],
         ['@/cuaderno/components/AllergenAssessmentPanel.vue', panel],
+        ['@/cuaderno/components/ProductionWastePanel.vue', emptyComponent],
         ['@/cuaderno/forms', forms],
         ['@/cuaderno/inventoryRequests', requests],
         ['@/cuaderno/financeUi', finance],
         ['@/cuaderno/allergenUi', helper],
+        ['@/cuaderno/productionWasteUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./productionWasteUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
     ])
     code = code.replace(/from (["'])([^"']+)\1/g, (original, quote, name) => {
         assert.ok(replacements.has(name), `Unexpected dependency ${name}`)

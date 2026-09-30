@@ -52,19 +52,21 @@ function all(root, predicate) {
 
 const textOf = root => all(root, node => node.type === '#text').map(node => node.text).join(' ')
 const button = (root, text) => all(root, node => node.type === 'button' && textOf(node).includes(text))[0]
+const wastePanel = root => all(root, node => node.type === 'production-waste-panel')[0]
 async function flush() { for (let index = 0; index < 12; index += 1) await Vue.nextTick() }
 
-function production({reversal = null, edition = 'integral'} = {}) {
+function production({reversal = null, edition = 'integral', waste = undefined} = {}) {
     return {
         produced_at: '2026-10-25T12:00:00+02:00',
         edition,
         movement_ids: edition === 'integral' ? [31, 32] : [],
         stock_changed: edition === 'integral',
         ...(reversal ? {reversal} : {}),
+        ...(waste === undefined ? {} : {waste_classification: waste}),
     }
 }
 
-function service({state = 'produced', reversal = null, edition = 'integral'} = {}) {
+function service({state = 'produced', reversal = null, edition = 'integral', waste = undefined} = {}) {
     return {
         id: 17,
         title: 'Banquete sintético',
@@ -73,8 +75,27 @@ function service({state = 'produced', reversal = null, edition = 'integral'} = {
         state,
         snapshot: {
             needs: [{food_id: 4, food_name: 'Aceite', quantity: '1.25', unit_name: 'L'}],
-            production: production({reversal, edition}),
+            production: production({reversal, edition, waste}),
         },
+    }
+}
+
+function wasteClassification() {
+    return {
+        schema_version: 1,
+        policy: 'declared_yield_estimate',
+        classification_only: true,
+        included_in_gross_needs: true,
+        additional_stock_movement: false,
+        coverage: 'declared_yields_only',
+        status: 'declared',
+        recorded_by: 5,
+        recorded_at: '2026-10-25T12:00:00+02:00',
+        lines: [{
+            ingredient_id: 11, food_id: 4, food_name: 'Aceite', unit_id: 8, unit_name: 'L',
+            quantity_basis: 'net_usable', yield_ratio: '0.8', purchased_quantity: '0.5',
+            useful_quantity: '0.4', waste_quantity: '0.1', cause: 'declared_yield',
+        }],
     }
 }
 
@@ -117,6 +138,17 @@ async function mount(transport, initial = service()) {
         readFileSync(new URL('./allergenUi.ts', import.meta.url), 'utf8'),
         {compilerOptions: {module: ts.ModuleKind.ESNext}},
     ).outputText)
+    const wasteHelper = moduleUrl(ts.transpileModule(
+        readFileSync(new URL('./productionWasteUi.ts', import.meta.url), 'utf8'),
+        {compilerOptions: {module: ts.ModuleKind.ESNext}},
+    ).outputText)
+    const wasteComponent = moduleUrl(`
+        import {defineComponent, h} from ${JSON.stringify(vueUrl)};
+        export default defineComponent({
+            props: {classification: {default: null}},
+            setup: props => () => h('production-waste-panel', {classification: props.classification}),
+        });
+    `)
     const filename = 'ProduccionPage.vue'
     const source = readFileSync(new URL('./pages/ProduccionPage.vue', import.meta.url), 'utf8')
     const {descriptor, errors: parseErrors} = parse(source, {filename})
@@ -133,7 +165,9 @@ async function mount(transport, initial = service()) {
         ['@/components/inputs/VModelSelect.vue', emptyComponent],
         ['@/cuaderno/components/ServicePreparationPanel.vue', emptyComponent],
         ['@/cuaderno/components/AllergenAssessmentPanel.vue', emptyComponent],
+        ['@/cuaderno/components/ProductionWastePanel.vue', wasteComponent],
         ['@/cuaderno/allergenUi', allergens],
+        ['@/cuaderno/productionWasteUi', wasteHelper],
         ['@/cuaderno/forms', forms],
         ['@/cuaderno/inventoryRequests', requests],
         ['@/cuaderno/financeUi', finance],
@@ -337,4 +371,34 @@ test('successful reversal applies only state and audit, never overwriting frozen
         assert.match(textOf(mounted.root), /Producción revertida/)
         assert.equal(button(mounted.root, 'Confirmar reversión'), undefined)
     } finally { mounted.close() }
+})
+
+test('the frozen declared-loss classification remains attached after complete reversal', async () => {
+    const waste = wasteClassification()
+    const initial = service({waste})
+    const audit = {
+        reversed_at: '2026-10-25T13:00:00+02:00', reversed_by: 5,
+        original_movement_ids: [31, 32], movement_ids: [41, 42], key_sha256: 'f'.repeat(64),
+    }
+    const response = {
+        ...service({state: 'cancelled', reversal: audit, waste}),
+        reversal_movement_ids: [41, 42], stock_changed: true,
+    }
+    const mounted = await mount(listThen(initial, () => ({ok: true, status: 200, data: response})), initial)
+    try {
+        assert.deepEqual(wastePanel(mounted.root).props.classification, waste)
+        await openAndConfirm(mounted)
+        await flush()
+        assert.deepEqual(wastePanel(mounted.root).props.classification, waste)
+    } finally { mounted.close() }
+})
+
+test('legacy or malformed classifications stay unknown and never trigger a live request', async () => {
+    for (const initial of [service(), service({waste: {...wasteClassification(), recorded_by: true}})]) {
+        const mounted = await mount(listThen(initial, () => assert.fail('No write expected')), initial)
+        try {
+            assert.equal(wastePanel(mounted.root).props.classification, null)
+            assert.deepEqual(mounted.calls.map(call => call.url), ['/api/cuaderno/services/'])
+        } finally { mounted.close() }
+    }
 })
