@@ -128,6 +128,14 @@ def reverse_movement(*, movement_id: int, space, user, idempotency_key: str, pur
     with transaction.atomic():
         type(space).objects.select_for_update().get(pk=space.pk)
         original = StockMovement.objects.select_for_update().get(pk=movement_id, space=space)
+        origin = original.metadata_snapshot.get("origin")
+        if isinstance(origin, dict) and origin.get("type") == "service_plan":
+            # A service consumes several entries atomically. Returning just
+            # one entry would leave its produced state and snapshot untrue.
+            # Fail closed even when the referenced service is missing.
+            raise ValidationError({
+                "reverse_of": "No se puede revertir un movimiento aislado de producción. La reversión completa del servicio aún no está disponible."
+            })
         from cuaderno.models import PurchaseReceipt
         receipt = PurchaseReceipt.objects.select_for_update().filter(space=space, movement=original).first()
         if receipt and receipt.pk != purchase_receipt_id:
