@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+from datetime import datetime
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "recipes.settings")
 
@@ -59,6 +61,48 @@ def validate_replenishment(document):
     return document
 
 
+def validate_preparation(document, service_id, state):
+    _require_keys(document, {"service_id", "state", "can_edit", "revision", "items"}, "Preparación")
+    positive_id = lambda value: type(value) is int and value > 0
+    if (not positive_id(document["service_id"]) or document["service_id"] != service_id
+            or document["state"] != state or state not in {"draft", "confirmed", "produced", "cancelled"}
+            or type(document["can_edit"]) is not bool or not isinstance(document["items"], list)
+            or not isinstance(document["revision"], str)
+            or re.fullmatch(r"[0-9a-f]{64}", document["revision"]) is None):
+        raise ValueError("Preparación no corresponde al servicio/estado restaurado.")
+    if document["can_edit"] != (state == "confirmed" and bool(document["items"])):
+        raise ValueError("Preparación histórica/vacía o terminal no debe aparecer editable.")
+    if state == "draft" and document["items"]:
+        raise ValueError("Un borrador no puede contener pasos congelados antes de confirmar.")
+    seen = set()
+    for position, item in enumerate(document["items"]):
+        _require_keys(item, {
+            "id", "source_step_id", "position", "recipe_id", "name", "instruction",
+            "checked", "checked_at", "updated_by",
+        }, "Tarea congelada")
+        if (not positive_id(item["id"]) or item["id"] in seen
+                or type(item["position"]) is not int or item["position"] != position
+                or not positive_id(item["recipe_id"])
+                or (item["source_step_id"] is not None and not positive_id(item["source_step_id"]))
+                or not isinstance(item["name"], str) or not isinstance(item["instruction"], str)
+                or type(item["checked"]) is not bool
+                or (item["updated_by"] is not None and not positive_id(item["updated_by"]))):
+            raise ValueError("Una tarea restaurada perdió identidad, texto o metadatos.")
+        seen.add(item["id"])
+        if item["checked"]:
+            if not isinstance(item["checked_at"], str) or not positive_id(item["updated_by"]):
+                raise ValueError("Una tarea marcada necesita fecha consciente y autor.")
+            try:
+                checked_at = datetime.fromisoformat(item["checked_at"])
+            except ValueError as exc:
+                raise ValueError("La fecha de preparación restaurada no es válida.") from exc
+            if checked_at.utcoffset() is None:
+                raise ValueError("La fecha de preparación necesita zona horaria.")
+        elif item["checked_at"] is not None:
+            raise ValueError("Una tarea sin marcar no conserva fecha de marcado.")
+    return document
+
+
 def payload_sha256(payload):
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
@@ -87,7 +131,7 @@ def main():
             users = [get_user_model().objects.get(username="demo")]
         password = os.environ.get("CUADERNO_DEMO_PASSWORD")
         profiles, costs, finances, services = [], [], [], []
-        ingredient_yields, stock_minimums, replenishments = [], [], []
+        ingredient_yields, stock_minimums, replenishments, preparations = [], [], [], []
         for user in users:
             if not password or not user.check_password(password):
                 raise ValueError("La contraseña DEMO no autentica el usuario restaurado.")
@@ -125,6 +169,13 @@ def main():
                     if api.status_code != 200:
                         raise ValueError("Servicio restaurado no accesible por API.")
                     services.append({"user": user.pk, "service": service.pk, "document": api.json()})
+                    preparation = client.get(f"/api/cuaderno/services/{service.pk}/preparation/")
+                    if preparation.status_code != 200:
+                        raise ValueError("Preparación restaurada no accesible por API.")
+                    preparations.append({
+                        "user": user.pk, "service": service.pk,
+                        "document": validate_preparation(preparation.json(), service.pk, service.state),
+                    })
             if edition == "integral":
                 minimums_api = client.get("/api/cuaderno/stock-minimums/")
                 if minimums_api.status_code != 200:
@@ -176,6 +227,7 @@ def main():
             "ingredient_yields": ingredient_yields,
             "stock_minimums": stock_minimums,
             "replenishments": replenishments,
+            "preparations": preparations,
         }
         digest = payload_sha256(payload)
         transaction.set_rollback(True)
@@ -184,7 +236,9 @@ def main():
                                          "finances_verified": len(finances), "services_verified": len(services),
                                          "ingredient_yields_verified": len(ingredient_yields),
                                          "stock_minimums_verified": len(stock_minimums),
-                                         "replenishments_verified": len(replenishments)}))
+                                         "replenishments_verified": len(replenishments),
+                                         "preparations_verified": len(preparations),
+                                         "preparation_items_verified": sum(len(row["document"]["items"]) for row in preparations)}))
 
 
 if __name__ == "__main__":

@@ -57,14 +57,41 @@ class SourceIdentityTest(unittest.TestCase):
 
 
 class RestoreFingerprintSchemaTest(unittest.TestCase):
+    def test_preparation_fingerprint_checks_frozen_items_authors_and_legacy_readonly(self):
+        document = {
+            "service_id": 7, "state": "confirmed", "can_edit": True, "revision": "a" * 64,
+            "items": [{
+                "id": 9, "source_step_id": 2, "position": 0, "recipe_id": 3,
+                "name": "Preparar", "instruction": "Instrucción DEMO congelada",
+                "checked": True, "checked_at": "2026-09-30T00:00:00+00:00", "updated_by": 4,
+            }],
+        }
+        self.assertEqual(restore_smoke.validate_preparation(document, 7, "confirmed"), document)
+        for invalid in (
+            {**document, "service_id": True}, {**document, "state": "produced"},
+            {**document, "revision": "A" * 64}, {**document, "items": {}},
+            {**document, "items": [{**document["items"][0], "checked": "true"}]},
+            {**document, "items": [{**document["items"][0], "updated_by": None}]},
+            {**document, "items": [{**document["items"][0], "checked_at": "2026-09-30T00:00:00"}]},
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                restore_smoke.validate_preparation(invalid, 7, "confirmed")
+        legacy = {**document, "can_edit": False, "items": []}
+        self.assertEqual(restore_smoke.validate_preparation(legacy, 7, "confirmed"), legacy)
+        with self.assertRaises(ValueError):
+            restore_smoke.validate_preparation({**legacy, "can_edit": True}, 7, "confirmed")
+        with self.assertRaises(ValueError):
+            restore_smoke.validate_preparation({**document, "state": "draft", "can_edit": False}, 7, "draft")
+
     def test_extended_documents_each_change_the_restore_fingerprint(self):
         payload = {
             "ingredient_yields": [{"recipe": 1, "document": {"ingredients": []}}],
             "stock_minimums": [{"space": 1, "document": {"items": []}}],
             "replenishments": [{"space": 1, "document": {"items": []}}],
+            "preparations": [{"service": 1, "document": {"items": []}}],
         }
         original = restore_smoke.payload_sha256(payload)
-        for key in ("ingredient_yields", "stock_minimums", "replenishments"):
+        for key in ("ingredient_yields", "stock_minimums", "replenishments", "preparations"):
             changed = {name: list(rows) for name, rows in payload.items()}
             changed[key] = [*changed[key], {"changed": True}]
             with self.subTest(key=key):
