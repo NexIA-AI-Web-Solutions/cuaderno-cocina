@@ -41,14 +41,14 @@ def test_markdown_renderer():
     # Run render_instructions
     result = render_instructions(mock_step)
 
-    # If rendered_file is empty, fill it with the result
-    if not os.path.exists(rendered_file) or os.path.getsize(rendered_file) == 0:
-        with open(rendered_file, 'w', encoding='utf-8') as f:
-            f.write(result)
+    # Fixtures are reviewed source, never regenerated from the implementation.
+    assert os.path.isfile(rendered_file) and os.path.getsize(rendered_file) > 0
 
     # Read rendered markdown
     with open(rendered_file, 'r', encoding='utf-8') as f:
         expected_content = f.read()
     print(result)
     # Compare
-    assert result == expected_content
+    # The source fixture has a conventional final newline; renderer HTML does
+    # not. Compare every byte of content plus that explicit file terminator.
+    assert result + '\n' == expected_content

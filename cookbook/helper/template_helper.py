@@ -1,4 +1,5 @@
 import html
+import math
 import re
 from gettext import gettext as _
 
@@ -147,6 +148,8 @@ def render_instructions(step):  # TODO deduplicate markdown cleanup code
             number_val = float(number)
         except (ValueError, TypeError):
             number_val = 0.0
+        if not math.isfinite(number_val):
+            return _('No se puede escalar un número no finito.')
         return f"<scalable-number v-bind:number='{number_val}' v-bind:factor='ingredient_factor'></scalable-number>"
 
     # compile template
@@ -165,24 +168,26 @@ def render_instructions(step):  # TODO deduplicate markdown cleanup code
         return _('Could not parse template code.') + f' Error generating template.'
 
     # do second cleaning that allows scalable-number
+    def finite_number_literal(value):
+        # Python float accepts Unicode digits and non-finite names that are not
+        # safe numeric literals for the Vue template compiler.
+        if not re.fullmatch(r'[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?', value):
+            return False
+        try:
+            return math.isfinite(float(value))
+        except (ValueError, TypeError):
+            return False
+
     def validate_scalable_number_attributes(tag, name, value):
         if name == 'v-bind:number':
-            try:
-                float(value)
-                return True
-            except (ValueError, TypeError):
-                return False
+            return finite_number_literal(value)
         if name == 'v-bind:factor':
             return value == 'ingredient_factor'
         return False
 
     def validate_plural_name_attributes(tag, name, value):
         if name == 'v-bind:amount':
-            try:
-                float(value)
-                return True
-            except (ValueError, TypeError):
-                return False
+            return finite_number_literal(value)
         if name == 'v-bind:factor':
             return value == 'ingredient_factor'
         if name == ':no-amount':
