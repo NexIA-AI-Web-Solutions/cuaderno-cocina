@@ -128,6 +128,12 @@ class PackageListView(APIView):
 class PriceCreateView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
+    def get(self, request, pk):
+        from cuaderno.api.price_history import package_price_history_payload
+
+        package = get_object_or_404(PackageFormat, pk=pk, space=request.space)
+        return Response(package_price_history_payload(request, package))
+
     @transaction.atomic
     def post(self, request, pk):
         package = get_object_or_404(PackageFormat, pk=pk, space=request.space)

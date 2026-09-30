@@ -21,6 +21,7 @@ from cuaderno.health import readiness
 from cuaderno.api.finance import RecipeFinanceView
 from cuaderno.api.ingredient_yields import IngredientYieldView
 from cuaderno.api.stock_minimums import StockMinimumView
+from cuaderno.api.price_history import RecipePriceImpactView
 
 urlpatterns = [
     path("health/ready/", readiness),
@@ -28,6 +29,7 @@ urlpatterns = [
     path("api/cuaderno/packages/", PackageListView.as_view()),
     path("api/cuaderno/packages/<int:pk>/prices/", PriceCreateView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/cost/", RecipeCostView.as_view()),
+    path("api/cuaderno/recipes/<int:recipe_id>/price-impact/", RecipePriceImpactView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/finance/", RecipeFinanceView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/ingredient-yields/", IngredientYieldView.as_view()),
     path("api/cuaderno/movements/", MovementView.as_view()),
