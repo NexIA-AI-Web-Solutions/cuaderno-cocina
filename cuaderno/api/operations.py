@@ -58,7 +58,7 @@ class MovementView(APIView):
         from cuaderno.services.inventory_access import household_inventory
         _require(request.space, SpaceProfile.INTEGRAL)
         rows = household_inventory(request, StockMovement.objects.all(), "entry__inventory_location__household_id").order_by("-id").values(
-            "id", "kind", "quantity", "entry_id", "balance_after", "reverses_id", "created_at", "metadata_snapshot",
+            "id", "kind", "quantity", "entry_id", "balance_after", "reverses_id", "created_at", "created_by_id", "metadata_snapshot",
         )[:100]
         return Response(
             [
@@ -70,6 +70,7 @@ class MovementView(APIView):
                     "balance": _dec(row["balance_after"]) if row["balance_after"] is not None else None,
                     "reverses": row["reverses_id"],
                     "created_at": row["created_at"].isoformat(),
+                    "created_by": row["created_by_id"],
                     "metadata_snapshot": row["metadata_snapshot"],
                 }
                 for row in rows

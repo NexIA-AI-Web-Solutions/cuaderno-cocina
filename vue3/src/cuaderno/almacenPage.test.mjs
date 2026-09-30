@@ -226,3 +226,29 @@ test('unexpected request-adapter exception releases moving state and preserves t
         assert.match(textOf(mounted.root), /No se pudo registrar el movimiento/)
     } finally { mounted.close() }
 })
+
+test('history exposes author and date, marks unknown legacy values and directs complete service reversal', async () => {
+    const createdAt = '2026-09-30T12:00:00+00:00'
+    const rows = [
+        {id: 71, kind: 'consume', quantity: '1', entry: 17, balance: '0', reverses: null,
+            created_by: 23, created_at: createdAt, metadata_snapshot: {origin: {type: 'service_plan', id: 42}}},
+        {id: 72, kind: 'receipt', quantity: '1', entry: 17, balance: '1', reverses: null,
+            created_by: null, created_at: null, metadata_snapshot: {}},
+    ]
+    const mounted = await mount(() => ({ok: true, status: 200, data: rows}))
+    try {
+        const text = textOf(mounted.root)
+        assert.match(text, /Autor #23/)
+        assert.ok(text.includes(new Date(createdAt).toLocaleString('es-ES')))
+        assert.match(text, /Autor desconocido/)
+        assert.match(text, /Fecha desconocida/)
+        assert.doesNotMatch(text, /aún no está disponible/)
+        const link = button(mounted.root, 'Ver servicio en Producción')
+        assert.ok(link, 'The complete reversal belongs to the service, not a partial movement action')
+        assert.deepEqual(link.props.to, {name: 'CuadernoProduccionPage'})
+        const consumed = all(mounted.root, node => node.type === 'v-list-item'
+            && textOf(node).includes('Movimiento de producción'))[0]
+        assert.ok(consumed)
+        assert.equal(button(consumed, 'Revertir'), undefined)
+    } finally { mounted.close() }
+})

@@ -44,10 +44,12 @@
                                     existencia {{ row.entry }} · saldo {{ row.balance }}
                                     <span v-if="row.reverses"> · revierte {{ row.reverses }}</span>
                                     <span v-if="isPurchaseMovement(row)"> · recepción de pedido {{ row.metadata_snapshot.origin.id }}</span>
+                                    <span class="movement-detail d-block mt-1">{{ movementAuditLabel(row) }}</span>
                                     <span v-if="replacementValuationLabel(row)" class="movement-detail d-block mt-1">{{ replacementValuationLabel(row) }}</span>
                                     <span v-if="standaloneWasteCause(row)" class="movement-detail d-block mt-1">Motivo: {{ standaloneWasteCause(row) }}</span>
                                     <span v-if="isServiceProductionMovement(row)" class="movement-detail d-block mt-1">
-                                        Movimiento de producción: la reversión completa del servicio aún no está disponible.
+                                        Movimiento de producción: revierte la producción completa desde la ficha del servicio.
+                                        <v-btn :to="{name: 'CuadernoProduccionPage'}" variant="text" min-height="44">Ver servicio en Producción</v-btn>
                                     </span>
                                 </v-list-item-subtitle>
                                 <template #append>
@@ -114,6 +116,15 @@ function movementKey(payload: unknown) {
     return pendingMovement.key('cuaderno-stock', payload)
 }
 function kindLabel(kind: string) { return kinds.find(item => item.value === kind)?.title || (kind === 'reversal' ? 'Reversión' : kind) }
+
+function movementAuditLabel(row: any): string {
+    const author = Number.isSafeInteger(row?.created_by) && row.created_by > 0
+        ? `Autor #${row.created_by}` : 'Autor desconocido'
+    const date = typeof row?.created_at === 'string' ? new Date(row.created_at) : null
+    const timestamp = date && Number.isFinite(date.getTime())
+        ? date.toLocaleString('es-ES') : 'Fecha desconocida'
+    return `${author} · ${timestamp}`
+}
 
 function requestMove() {
     if (moving.value) return

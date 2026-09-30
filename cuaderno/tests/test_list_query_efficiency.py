@@ -257,10 +257,11 @@ class ListQueryEfficiencyTests(ServiceFixtureMixin, TestCase):
             "balance": "100.5000000000000000",
             "reverses": None,
             "created_at": representative.created_at.isoformat(),
+            "created_by": self.user.pk,
             "metadata_snapshot": nested_metadata,
         })
         self.assertTrue(all(set(row) == {
-            "id", "kind", "quantity", "entry", "balance", "reverses", "created_at", "metadata_snapshot",
+            "id", "kind", "quantity", "entry", "balance", "reverses", "created_at", "created_by", "metadata_snapshot",
         } for row in response.data))
         movement_selects = self._model_selects(captured, "cuaderno_stockmovement")
         self.assertEqual(len(movement_selects), 1)
