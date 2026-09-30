@@ -30,6 +30,10 @@
 
             <v-divider class="my-4" />
 
+            <IngredientYieldPanel :recipe-id="recipeId" @saved="loadAll" />
+
+            <v-divider class="my-4" />
+
             <section aria-labelledby="recipe-finance-title">
                 <h2 id="recipe-finance-title" class="text-subtitle-1 font-weight-bold mb-2">Presupuesto y venta por ración</h2>
                 <p v-if="loadingFinance" role="status">Cargando datos financieros…</p>
@@ -102,6 +106,7 @@
 import {computed, onBeforeUnmount, ref, watch} from "vue"
 import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import {apiError} from "@/cuaderno/forms"
+import IngredientYieldPanel from "@/cuaderno/components/IngredientYieldPanel.vue"
 import {
     financeBody,
     financeMoneyLabel,
