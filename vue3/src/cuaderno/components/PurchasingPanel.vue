@@ -63,6 +63,10 @@
         </v-col>
 
         <v-col cols="12">
+            <StockMinimumPanel @loaded="rememberFoods" />
+        </v-col>
+
+        <v-col cols="12">
             <v-card>
                 <v-card-title class="d-flex align-center flex-wrap ga-2">
                     <span>Pedidos</span>
@@ -182,14 +186,24 @@
                 <v-card-text>
                     <v-alert v-if="replenishmentMessage" type="error" variant="tonal" class="mb-3">{{ replenishmentMessage }}</v-alert>
                     <v-table v-if="replenishment.length" density="comfortable" class="replenishment-table">
-                        <thead><tr><th>Alimento</th><th>Necesario</th><th>Disponible</th><th>Falta</th><th>Compra propuesta</th><th>Precio ref.</th></tr></thead>
+                        <thead><tr><th>Alimento</th><th>Necesario</th><th>Disponible</th><th>Mínimo</th><th>Objetivo</th><th>Falta</th><th>Compra propuesta</th><th>Exceso</th><th>Precio ref.</th></tr></thead>
                         <tbody>
                             <tr v-for="item in replenishment" :key="`${item.food}-${item.unit}`">
                                 <td>{{ foodName(item.food) }}</td>
                                 <td>{{ item.required }}</td>
                                 <td>{{ item.usable_stock }}</td>
+                                <td>
+                                    {{ minimumLabel(item.minimum_stock) }}
+                                    <ul v-if="item.location_shortfalls.length" class="location-shortfalls">
+                                        <li v-for="shortfall in item.location_shortfalls" :key="shortfall.location">
+                                            {{ shortfall.location_name }}: mín. {{ shortfall.minimum_stock }}, disponible {{ shortfall.usable_stock }}, falta {{ shortfall.missing }}
+                                        </li>
+                                    </ul>
+                                </td>
+                                <td>{{ minimumLabel(item.target_stock) }}</td>
                                 <td>{{ item.missing }}</td>
                                 <td>{{ item.packages === null ? 'Sin formato' : `${item.packages} envases · ${item.purchase_quantity}` }}</td>
+                                <td>{{ excessLabel(item) }}</td>
                                 <td>{{ item.reference_price === null ? 'Desconocido' : `${item.reference_price} ${item.currency}` }}</td>
                             </tr>
                         </tbody>
@@ -201,10 +215,18 @@
                                 <dl class="compact-values">
                                     <div><dt>Necesario</dt><dd>{{ item.required }}</dd></div>
                                     <div><dt>Disponible</dt><dd>{{ item.usable_stock }}</dd></div>
+                                    <div><dt>Mínimo</dt><dd>{{ minimumLabel(item.minimum_stock) }}</dd></div>
+                                    <div><dt>Objetivo</dt><dd>{{ minimumLabel(item.target_stock) }}</dd></div>
                                     <div><dt>Falta</dt><dd>{{ item.missing }}</dd></div>
                                     <div><dt>Compra</dt><dd>{{ item.packages === null ? 'Sin formato' : `${item.packages} envases · ${item.purchase_quantity}` }}</dd></div>
+                                    <div><dt>Exceso por envases</dt><dd>{{ excessLabel(item) }}</dd></div>
                                     <div><dt>Precio ref.</dt><dd>{{ item.reference_price === null ? 'Desconocido' : `${item.reference_price} ${item.currency}` }}</dd></div>
                                 </dl>
+                                <ul v-if="item.location_shortfalls.length" class="mt-3 pl-4">
+                                    <li v-for="shortfall in item.location_shortfalls" :key="`mobile-location-${shortfall.location}`">
+                                        {{ shortfall.location_name }}: mínimo {{ shortfall.minimum_stock }}, disponible {{ shortfall.usable_stock }}, falta {{ shortfall.missing }}
+                                    </li>
+                                </ul>
                             </v-card-text>
                         </v-card>
                     </div>
@@ -218,20 +240,21 @@
 <script setup lang="ts">
 import {computed, onMounted, reactive, ref, watch} from 'vue'
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
+import StockMinimumPanel from '@/cuaderno/components/StockMinimumPanel.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError, decimalInput} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {replenishmentEnvelope, replenishmentExcess} from '@/cuaderno/stockMinimumUi'
+import type {ReplenishmentRow} from '@/cuaderno/stockMinimumUi'
 
 type Package = {id: number; food: number; food_name: string; unit: number; unit_name: string; label: string; quantity: string}
 type Offer = {id: number; package: number; supplier: number; amount: string; currency: string; valid_from: string}
 type Order = {id: number; quantity: string; received_quantity: string; unit: number; supplier_name: string; package: number | null; price_snapshot: string | null; currency_snapshot: string; state: string}
 type ReceiptDocument = {id: number; quantity: string; movement: number; reversed_by: number | null}
-type Replenishment = {food: number; unit: number; required: string; usable_stock: string; missing: string; packages: string | null; purchase_quantity: string | null; reference_price: string | null; currency: string}
-
 const packages = ref<Package[]>([])
 const offers = ref<Offer[]>([])
 const orders = ref<Order[]>([])
-const replenishment = ref<Replenishment[]>([])
+const replenishment = ref<ReplenishmentRow[]>([])
 const receiptsByOrder = reactive<Record<number, ReceiptDocument[]>>({})
 const foods = reactive<Record<number, string>>({})
 const offer = reactive({package: null as Package | null, supplier: null as any, amount: '', explicitFree: false})
@@ -260,6 +283,9 @@ function packageLabel(item: Package) { return `${item.food_name} · ${item.label
 function offerLabel(item: Offer) { return `${item.amount} ${item.currency} · ${new Date(item.valid_from).toLocaleDateString('es-ES')}` }
 function unitName(order: Order) { return packages.value.find(item => item.id === order.package)?.unit_name || `unidad ${order.unit}` }
 function foodName(id: number) { return foods[id] || `Alimento ${id}` }
+function rememberFoods(values: Record<number, string>) { Object.assign(foods, values) }
+function minimumLabel(value: string | null) { return value === null ? '—' : value }
+function excessLabel(item: ReplenishmentRow) { return replenishmentExcess(item.purchase_quantity, item.missing) ?? '—' }
 function stateLabel(state: string) { return ({draft: 'Borrador', ordered: 'Pedido', part_received: 'Recibido parcialmente', received: 'Recibido', cancelled: 'Cancelado'} as Record<string, string>)[state] || state }
 function responseItems(data: any) { return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [] }
 
@@ -401,8 +427,16 @@ async function loadReplenishment() {
     loadingReplenishment.value = true; replenishmentMessage.value = ''
     const result = await readJson(await cuadernoFetch('/api/cuaderno/replenishment/', {method: 'POST', body: JSON.stringify({})}))
     loadingReplenishment.value = false
-    if (result.ok) replenishment.value = responseItems(result.data?.items)
-    else replenishmentMessage.value = apiError(result.status, result.data)
+    if (!result.ok) {
+        replenishmentMessage.value = apiError(result.status, result.data)
+        return
+    }
+    const envelope = replenishmentEnvelope(result.data)
+    if (envelope === null) {
+        replenishmentMessage.value = 'El servidor devolvió una propuesta de reposición incompleta. Conservamos los datos mostrados.'
+        return
+    }
+    replenishment.value = envelope.items
 }
 
 onMounted(async () => { await Promise.all([loadCatalog(), loadOrders()]) })
@@ -414,6 +448,7 @@ onMounted(async () => { await Promise.all([loadCatalog(), loadOrders()]) })
 .replenishment-cards { display: none; }
 .compact-values > div { display: flex; justify-content: space-between; gap: 1rem; }
 .compact-values dt { font-weight: 600; }
+.location-shortfalls { min-width: 16rem; padding-inline-start: 1rem; font-size: 0.8rem; }
 @media (max-width: 700px) {
     .order-row :deep(.v-list-item__append) { align-self: stretch; margin-inline-start: 0; margin-top: 0.75rem; }
     .order-actions { justify-content: flex-start !important; }
