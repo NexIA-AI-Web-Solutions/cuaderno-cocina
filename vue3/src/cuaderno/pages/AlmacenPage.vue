@@ -34,13 +34,20 @@
                                     existencia {{ row.entry }} · saldo {{ row.balance }}
                                     <span v-if="row.reverses"> · revierte {{ row.reverses }}</span>
                                     <span v-if="isPurchaseMovement(row)"> · recepción de pedido {{ row.metadata_snapshot.origin.id }}</span>
+                                    <span v-if="replacementValuationLabel(row)" class="d-block mt-1">{{ replacementValuationLabel(row) }}</span>
+                                    <span v-if="isServiceProductionMovement(row)" class="d-block mt-1">
+                                        Movimiento de producción: la reversión completa del servicio aún no está disponible.
+                                    </span>
                                 </v-list-item-subtitle>
                                 <template #append>
-                                    <v-btn v-if="canReverseGeneric(row)" variant="text" min-height="44" :disabled="moving" @click="reversal = row; confirmation = 'reverse'">Revertir</v-btn>
+                                    <v-btn v-if="canReverseGeneric(row, history)" variant="text" min-height="44" :disabled="moving" @click="reversal = row; confirmation = 'reverse'">Revertir</v-btn>
                                 </template>
                             </v-list-item>
                         </v-list>
-                        <p v-else-if="!loadingHistory && !editionError">Todavía no hay movimientos registrados.</p>
+                        <p v-if="history.some(hasReplacementValuation)" class="text-caption mt-3">
+                            Estas cifras son estimaciones de reposición; no son valoración FIFO, coste medio ni beneficio.
+                        </p>
+                        <p v-if="!history.length && !loadingHistory && !editionError">Todavía no hay movimientos registrados.</p>
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -66,6 +73,13 @@ import PurchasingPanel from '@/cuaderno/components/PurchasingPanel.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError, decimalInput} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {
+    canReverseGeneric,
+    hasReplacementValuation,
+    isPurchaseMovement,
+    isServiceProductionMovement,
+    replacementValuationLabel,
+} from '@/cuaderno/stockMovementUi'
 
 const kinds = [
     {title: 'Recepción sin pedido', value: 'receipt'},
@@ -86,8 +100,6 @@ function movementKey(payload: unknown) {
     return pendingMovement.key('cuaderno-stock', payload)
 }
 function kindLabel(kind: string) { return kinds.find(item => item.value === kind)?.title || (kind === 'reversal' ? 'Reversión' : kind) }
-function isPurchaseMovement(row: any) { return row.metadata_snapshot?.origin?.type === 'purchase_order' }
-function canReverseGeneric(row: any) { return !isPurchaseMovement(row) && !row.reverses && !history.value.some(item => item.reverses === row.id) }
 
 function requestMove() {
     if (moving.value) return
@@ -113,7 +125,7 @@ async function sendMove() {
     if (ok) { move.quantity = ''; pendingMovement.complete('cuaderno-stock', payload); await loadHistory() }
 }
 async function reverse(row: any) {
-    if (moving.value || !row || isPurchaseMovement(row)) return
+    if (moving.value || !canReverseGeneric(row, history.value)) return
     moving.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/', {
         method: 'POST', body: JSON.stringify({reverse_of: row.id, idempotency_key: `cuaderno-ui-reverse-${row.id}`}),
