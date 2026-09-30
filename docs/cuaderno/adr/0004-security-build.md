@@ -2,7 +2,13 @@
 
 2026-09-29, implementación en verificación. No altera sources.lock ni la imagen baseline intacta.
 
-Se mantienen la rama Django 5.2 y las APIs nativas. Parches exactos Django 5.2.17/PyJWT 2.14.0, no actualización indiscriminada a latest. Fuentes primarias: [Django](https://www.djangoproject.com/weblog/2026/aug/04/security-releases/), [PyJWT](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-w6j9-cwv2-h6wq).
+Se mantienen la rama Django 5.2 y las APIs nativas. Parches iniciales exactos Django 5.2.17/PyJWT 2.14.0, no actualización indiscriminada a latest. Fuentes primarias: [Django](https://www.djangoproject.com/weblog/2026/aug/04/security-releases/), [PyJWT](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-w6j9-cwv2-h6wq). La actualización focal posterior a PyJWT2.15.0 se registra abajo, sin sustituir esta procedencia.
+
+## Actualización focal del 30 de septiembre — PyJWT2.15.0
+
+El audit real175100Z sobre imagened4 contiene153 distribuciones Python/63 Alpine, cero consultas irresueltas y dos avisos: OAuthlib conservado y PyJWT2.14.0 [GHSA-42vr-xj54-vc7v](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-42vr-xj54-vc7v). El aviso oficial identifica2.15.0 como primera release corregida, commit1d41a6478e1562e68ff667fcd703356acf085f68 que contiene fix5fde08a6cf906aa7698de2d6391d88b73006b17b. La corrección traduce RecursionError de payload a DecodeError; no demuestra bypass de firma ni caída de worker.
+
+Cuaderno conserva sesión nativa; PyJWT llega por autenticación social opcional de Allauth, no por un auth Cuaderno paralelo. Se cambia solo `requirements.txt` de2.14.0 a2.15.0. Root4tests: RED175616Z con2RecursionError en2.14 (decode explícitamente no verificado y JWKS antes de fetch); GREEN175847Z cuatro casos en contenedor aislado2.15.0, sin puertos/mounts/datos y pip check sin conflictos. Controles de HS256, audience, firma errónea y payload ordinario preservados. Reviewer independiente aprobó cambio focal; instalación G0 después de finalizar API674 mantiene pip check0, security4 PASS180654Z y OAuth/social50 PASS180814Z. Rebuild y audit de la nueva imagen siguen pendientes. Previewed4 todavía2.14.0; no declarar corregida por cambiar un requisito.
 
 Las resoluciones Yarn fijan PostCSS 8.5.28 y nanoid 3.3.18 también en copias anidadas. El audit Node completo posterior da cero avisos conocidos sobre 515 dependencias; no equivale a ausencia universal de vulnerabilidades.
 
