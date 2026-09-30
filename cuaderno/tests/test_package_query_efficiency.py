@@ -16,6 +16,7 @@ from rest_framework.test import APIClient
 
 from cookbook.models import Food, Household, Recipe, SearchFields, Space, Unit, UserSpace
 from cuaderno.models import PackageFormat, PriceVersion
+from cuaderno.services.visibility import visible_packages
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
@@ -165,6 +166,36 @@ class PackageListPrivacyAndQueryTests(TestCase):
         self.assertEqual(revoked.status_code, 200, revoked.content)
         self.assertEqual(self._ids(revoked), {self.visible_package.pk})
         self.assertNotIn(self.private_food.name, str(revoked.data))
+
+    def test_package_policy_is_direct_single_sql_and_keeps_private_ancestor_acl(self):
+        with scopes_disabled():
+            child = self.private_food.add_child(space=self.space, name="Private ancestor child")
+            child_package = self._package(child, self.unit, "Private descendant format")
+            foreign_recipe = Recipe.objects.create(
+                space=self.foreign_space, name="Foreign recipe", servings=1, created_by=self.foreign_user,
+            )
+            corrupt_food = Food.add_root(space=self.space, name="Corrupt recipe link")
+            Food._base_manager.filter(pk=corrupt_food.pk).update(recipe=foreign_recipe)
+            corrupt_package = self._package(corrupt_food, self.unit, "Foreign recipe format")
+
+        def identifiers():
+            with scopes_disabled(), CaptureQueriesContext(connection) as lazy:
+                packages = visible_packages(self.observer, self.space)
+            self.assertEqual(len(lazy), 0)
+            with scopes_disabled(), CaptureQueriesContext(connection) as captured:
+                result = set(packages.values_list("pk", flat=True))
+            self.assertEqual(len(captured), 1)
+            self.assertNotRegex(captured[0]["sql"], r'food_id"\s+IN\s*\(')
+            return result
+
+        self.assertEqual(identifiers(), {self.visible_package.pk})
+        with scopes_disabled():
+            self.private_recipe.shared.add(self.observer)
+        self.assertEqual(identifiers(), {self.visible_package.pk, self.private_package.pk, child_package.pk})
+        self.assertNotIn(corrupt_package.pk, identifiers())
+        with scopes_disabled():
+            self.private_recipe.shared.remove(self.observer)
+        self.assertEqual(identifiers(), {self.visible_package.pk})
 
     def test_latest_price_is_deterministic_and_corrupt_cross_space_rows_are_hidden(self):
         past = timezone.now() - timedelta(days=1)

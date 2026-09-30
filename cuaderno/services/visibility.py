@@ -30,19 +30,25 @@ def coherent_steps(user, space):
     ).filter(~Exists(unavailable))
 
 
-def visible_foods(user, space, *, recipes=None):
+def _food_visibility_predicate(user, space, *, path_field="path", recipes=None):
     foods = Food.objects.filter(space=space)
     linked_foods = foods.filter(recipe_id__isnull=False)
     # Native full_name and parent expose ancestry. Hide the whole inaccessible
     # branch rather than returning a descendant with a private ancestor label.
     hidden_ancestors = Food.objects.filter(space=space, recipe_id__isnull=False).exclude(
         recipe_id__in=(visible_recipes(user, space) if recipes is None else recipes).values("pk"),
-    ).annotate(_descendant_prefix=Substr(OuterRef("path"), 1, Length("path"))).filter(
+    ).annotate(_descendant_prefix=Substr(OuterRef(path_field), 1, Length("path"))).filter(
         path=F("_descendant_prefix"),
     )
     # Keep the fast path inside the same statement/snapshot as the ACL. A
     # Python exists() check would race with a newly linked private ancestor.
-    return foods.filter(~Exists(linked_foods) | ~Exists(hidden_ancestors))
+    return ~Exists(linked_foods) | ~Exists(hidden_ancestors)
+
+
+def visible_foods(user, space, *, recipes=None):
+    return Food.objects.filter(space=space).filter(
+        _food_visibility_predicate(user, space, recipes=recipes),
+    )
 
 
 def native_recipe_read_policy(root, request):
@@ -114,7 +120,9 @@ def native_recipe_read_policy(root, request):
 
 def visible_packages(user, space):
     return PackageFormat.objects.filter(
-        space=space, food_id__in=visible_foods(user, space).values("pk"), unit__space=space,
+        space=space, food__space=space, unit__space=space,
+    ).filter(
+        _food_visibility_predicate(user, space, path_field="food__path"),
     )
 
 
