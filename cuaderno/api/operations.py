@@ -5,6 +5,7 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -13,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope
-from cookbook.models import Food, Ingredient, InventoryEntry, MealPlan, MealType, Recipe, Step, Unit
+from cookbook.models import Food, Ingredient, InventoryEntry, MealPlan, MealType, Recipe, Step, Unit, UnitConversion
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.exchange import export_recipe_document, parse_recipe_document
 from cuaderno.domain.margin import food_cost_gap
@@ -494,12 +495,15 @@ class RecipeExchangeView(APIView):
                                          "valid_from": price.valid_from.isoformat(), "note": price.note}
                                         for price in package.prices.filter(space=request.space).order_by("valid_from", "id")]})
         payload["format"] = "cuaderno-recipes-v2"
-        payload["catalog"] = {"foods": list(foods.values()), "units": list(units.values()), "packages": packages}
+        conversions = _export_exchange_conversions(request.space, foods, units, add_unit)
+        payload["catalog"] = {"foods": list(foods.values()), "units": list(units.values()), "packages": packages,
+                              "conversions": conversions}
         payload["source_space"] = request.space.pk
         payload["media"] = {"included": False, "method": "native-tandoor-zip", "url_downloads": False}
         payload["warnings"] = ["Este JSON incluye pasos, ingredientes, subrecetas, rendimientos y precios. "
                                "Para fotos, archivos, etiquetas y otros metadatos nativos utiliza también la exportación ZIP de Tandoor. "
-                               "Las conversiones personalizadas de unidades, alérgenos y ajustes fiscales del espacio no están incluidos."]
+                               "Incluye las conversiones de unidades alcanzables del catálogo. "
+                               "Los alérgenos y ajustes fiscales del espacio no están incluidos."]
         return HttpResponse(json.dumps(payload, ensure_ascii=False), content_type="application/json")
 
     @transaction.atomic
@@ -658,14 +662,57 @@ def _exchange_item_payload(item: dict) -> dict:
     return payload
 
 
+def _export_exchange_conversions(space, foods, units, add_unit):
+    """Native conversion graph reachable from exported units, never hidden foods."""
+    rows = list(UnitConversion.objects.filter(space=space).filter(
+        Q(food__isnull=True) | Q(food_id__in=foods),
+    ).select_related("base_unit", "converted_unit").order_by("pk"))
+    adjacency = {}
+    for row in rows:
+        adjacency.setdefault(row.base_unit_id, []).append(row)
+        adjacency.setdefault(row.converted_unit_id, []).append(row)
+    pending = list(units)
+    visited = set()
+    selected = {}
+    for unit_id in pending:
+        if unit_id in visited:
+            continue
+        visited.add(unit_id)
+        for row in adjacency.get(unit_id, []):
+            if row.pk in selected:
+                continue
+            if row.base_unit.space_id != space.pk or row.converted_unit.space_id != space.pk:
+                raise ValidationError({"catalog": "Una conversión enlaza una unidad de otro espacio."})
+            if not row.base_amount.is_finite() or not row.converted_amount.is_finite() or row.base_amount <= 0 or row.converted_amount <= 0:
+                raise ValidationError({"catalog": "Revisa las cantidades positivas de las conversiones antes de exportar."})
+            selected[row.pk] = {
+                "ref": f"conversion:{row.pk}", "id": row.pk,
+                "food_ref": f"food:{row.food_id}" if row.food_id else None,
+                "base_unit_ref": add_unit(row.base_unit), "converted_unit_ref": add_unit(row.converted_unit),
+                "base_amount": _dec(row.base_amount), "converted_amount": _dec(row.converted_amount),
+            }
+            pending.extend((row.base_unit_id, row.converted_unit_id))
+    # Preserve native PK precedence used by the existing conversion BFS.
+    return [selected[pk] for pk in sorted(selected)]
+
+
+def _exchange_conversion_values(item, resolved):
+    return {
+        "food": resolved["foods"][item["food_ref"]] if item.get("food_ref") else None,
+        "base_unit": resolved["units"][item["base_unit_ref"]],
+        "converted_unit": resolved["units"][item["converted_unit_ref"]],
+        "base_amount": item["base_amount"], "converted_amount": item["converted_amount"],
+    }
+
+
 def _exchange_catalog_plan(request, catalog):
     """Read-only resolution. A repeated name never establishes catalog identity."""
     from cuaderno.models import PackageFormat
     mapping = request.data.get("mapping") or {}
-    if not isinstance(mapping, dict) or set(mapping) - {"foods", "units", "packages"}:
+    if not isinstance(mapping, dict) or set(mapping) - {"foods", "units", "packages", "conversions"}:
         raise ValidationError({"mapping": "Mapping de catálogo inválido."})
-    resolved = {"foods": {}, "units": {}, "packages": {}}
-    for kind, model in (("units", Unit), ("foods", Food), ("packages", PackageFormat)):
+    resolved = {"foods": {}, "units": {}, "packages": {}, "conversions": {}}
+    for kind, model in (("units", Unit), ("foods", Food), ("packages", PackageFormat), ("conversions", UnitConversion)):
         if not isinstance(mapping.get(kind, {}), dict):
             raise ValidationError({"mapping": "El mapping debe contener objetos de identificadores."})
         if set(mapping.get(kind, {})) - (set(catalog[kind]) | {item.get("name", ref) for ref, item in catalog[kind].items()}):
@@ -692,10 +739,10 @@ def _exchange_catalog_plan(request, catalog):
                 if kind == "units" and any(getattr(target, field) != item.get(field) for field in ("name", "base_unit", "plural_name", "description")):
                     raise ImportConflict({"mapping": "La unidad elegida tiene datos diferentes."})
                 resolved[kind][ref] = target
-            elif kind != "packages" and model.objects.filter(space=request.space, name=item["name"]).exists():
+            elif kind in ("foods", "units") and model.objects.filter(space=request.space, name=item["name"]).exists():
                 raise ValidationError({"mapping_required": f"Confirma el identificador de {kind}: {item['name']}."})
             else:
-                if kind != "packages":
+                if kind in ("foods", "units"):
                     if item["name"] in new_names:
                         raise ValidationError({"mapping_required": "El catálogo contiene nombres duplicados con identidades diferentes."})
                     new_names.add(item["name"])
@@ -713,6 +760,35 @@ def _exchange_catalog_plan(request, catalog):
                 raise ImportConflict({"mapping": "El formato elegido tiene otro historial de precios."})
         if resolved["packages"][ref] is None and food and item["is_reference"] and PackageFormat.objects.filter(space=request.space, food=food, is_reference=True).exists():
             raise ValidationError({"mapping_required": "Confirma el formato de referencia existente."})
+    for ref, item in catalog["conversions"].items():
+        values = _exchange_conversion_values(item, resolved)
+        conversion = resolved["conversions"][ref]
+        if conversion is not None:
+            if any(getattr(conversion, key) != value for key, value in values.items()):
+                raise ImportConflict({"mapping": "La conversión elegida tiene unidades, alimento o proporción diferentes."})
+        elif values["base_unit"] is not None and values["converted_unit"] is not None and (
+            item.get("food_ref") is None or values["food"] is not None
+        ):
+            if UnitConversion.objects.filter(space=request.space, food=values["food"]).filter(
+                Q(base_unit=values["base_unit"], converted_unit=values["converted_unit"])
+                | Q(base_unit=values["converted_unit"], converted_unit=values["base_unit"])
+            ).exists():
+                raise ValidationError({"mapping_required": "Confirma la conversión existente entre estas unidades y alimento."})
+    from cuaderno.domain.exchange_conversions import validate_conversion_precedence, validate_destination_conversion_graph
+    try:
+        validate_conversion_precedence(catalog["conversions"], resolved["conversions"])
+        if catalog["conversions"] and any(unit is not None for unit in resolved["units"].values()):
+            mapped_foods = [food.pk for food in resolved["foods"].values() if food is not None]
+            destination_rows = UnitConversion.objects.filter(
+                space=request.space, base_unit__space=request.space, converted_unit__space=request.space,
+            ).filter(Q(food__isnull=True) | Q(food_id__in=mapped_foods)).values(
+                "id", "food_id", "base_unit_id", "converted_unit_id",
+            )[:10001]
+            validate_destination_conversion_graph(
+                catalog["conversions"], resolved["conversions"], resolved["units"], resolved["foods"], destination_rows,
+            )
+    except DomainError as exc:
+        raise ImportConflict({exc.code: exc.message}) from exc
     return resolved
 
 
@@ -750,6 +826,11 @@ def _exchange_catalog_apply(request, catalog, imported):
             if actual != item["prices"]:
                 raise ImportConflict({"mapping": "El formato elegido tiene otro historial de precios."})
         resolved["packages"][ref] = package
+    for ref, item in catalog["conversions"].items():
+        if resolved["conversions"][ref] is None:
+            resolved["conversions"][ref] = UnitConversion.objects.create(
+                space=request.space, created_by=request.user, **_exchange_conversion_values(item, resolved),
+            )
     return resolved
 
 

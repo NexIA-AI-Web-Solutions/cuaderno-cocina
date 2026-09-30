@@ -2192,6 +2192,23 @@ class UnitConversionViewSet(LoggingMixin, viewsets.ModelViewSet):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        # Coordinate with portable imports before serializer validation.
+        Space.objects.select_for_update().only('pk').get(pk=request.space.pk)
+        return super().create(request, *args, **kwargs)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        # get_object() must run AFTER this lock, not on a stale instance.
+        Space.objects.select_for_update().only('pk').get(pk=request.space.pk)
+        return super().update(request, *args, **kwargs)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        Space.objects.select_for_update().only('pk').get(pk=request.space.pk)
+        return super().destroy(request, *args, **kwargs)
+
     def get_queryset(self):
         food_id = self.request.query_params.get('food_id', None)
         if food_id is not None:
@@ -2201,7 +2218,17 @@ class UnitConversionViewSet(LoggingMixin, viewsets.ModelViewSet):
         if query is not None:
             self.queryset = self.queryset.filter(Q(food__name__icontains=query) | Q(base_unit__name__icontains=query) | Q(converted_unit__name__icontains=query))
 
-        return self.queryset.filter(space=self.request.space)
+        # Cuaderno: the nested Food serializer also exposes its linked recipe.
+        # Reuse recipe visibility for list AND object lookup, including revokes.
+        from cuaderno.services.costing import visible_recipes
+
+        space = self.request.space
+        return self.queryset.filter(
+            space=space, base_unit__space=space, converted_unit__space=space,
+        ).filter(
+            Q(food__isnull=True) | Q(food__space=space, food__recipe__isnull=True)
+            | Q(food__space=space, food__recipe__in=visible_recipes(self.request.user, space)),
+        )
 
 
 @extend_schema_view(list=extend_schema(

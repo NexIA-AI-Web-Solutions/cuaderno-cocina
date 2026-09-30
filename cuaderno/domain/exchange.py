@@ -124,12 +124,13 @@ def parse_portable_catalog(payload, recipes):
                                       any(i["food_ref"] or i["unit_ref"] for i in r["ingredients"]) for r in recipes):
             raise DomainError("unsupported_import", "Los vínculos y rendimientos requieren cuaderno-recipes-v2.")
         return None
-    _fields(catalog, "foods units packages")
+    _fields(catalog, "foods units packages conversions")
     result = {}
     allowed = {
         "foods": "ref id name recipe",
         "units": "ref id name base_unit plural_name description",
         "packages": "ref id food_ref unit_ref label quantity is_reference prices",
+        "conversions": "ref id food_ref base_unit_ref converted_unit_ref base_amount converted_amount",
     }
     for kind, fields in allowed.items():
         values = catalog.get(kind, [])
@@ -142,9 +143,9 @@ def parse_portable_catalog(payload, recipes):
             ref = value.get("ref")
             if not isinstance(ref, str) or not ref or len(ref) > 256 or ref in result[kind]:
                 raise DomainError("invalid_import", "Identidad del catálogo ausente o repetida.")
-            if kind != "packages" and (not isinstance(value.get("name"), str) or not value["name"] or len(value["name"]) > 128):
+            if kind in ("foods", "units") and (not isinstance(value.get("name"), str) or not value["name"] or len(value["name"]) > 128):
                 raise DomainError("invalid_import", "Nombre de catálogo inválido.")
-            if kind != "packages":
+            if kind in ("foods", "units"):
                 if value["name"] in names:
                     raise DomainError("invalid_import", "El catálogo repite un nombre con identidades diferentes.")
                 names.add(value["name"])
@@ -162,6 +163,23 @@ def parse_portable_catalog(payload, recipes):
         for field, limit in (("base_unit", 256), ("plural_name", 128), ("description", 100000)):
             if unit.get(field) is not None and (not isinstance(unit[field], str) or len(unit[field]) > limit):
                 raise DomainError("invalid_import", "Los metadatos de la unidad no son válidos.")
+    conversion_pairs = set()
+    for conversion in result["conversions"].values():
+        require(conversion.get("food_ref"), result["foods"], optional=True)
+        require(conversion.get("base_unit_ref"), result["units"])
+        require(conversion.get("converted_unit_ref"), result["units"])
+        base_ref = conversion["base_unit_ref"]
+        converted_ref = conversion["converted_unit_ref"]
+        # Match native f_unique_conversion_per_space: directed endpoints and
+        # NULL foods are distinct in PostgreSQL. Preserve reverse, parallel
+        # global and self edges in document order, hence native PK precedence.
+        if conversion.get("food_ref") is not None:
+            pair = (conversion["food_ref"], base_ref, converted_ref)
+            if pair in conversion_pairs:
+                raise DomainError("invalid_import", "El catálogo repite una conversión dirigida del mismo alimento.")
+            conversion_pairs.add(pair)
+        conversion["base_amount"] = _number(conversion.get("base_amount"))
+        conversion["converted_amount"] = _number(conversion.get("converted_amount"))
     references = set()
     for package in result["packages"].values():
         require(package.get("food_ref"), result["foods"])

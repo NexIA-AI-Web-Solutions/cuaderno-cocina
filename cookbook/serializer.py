@@ -1132,6 +1132,49 @@ class UnitConversionSerializer(WritableNestedModelSerializer, OpenDataModelMixin
     base_amount = CustomDecimalField()
     converted_amount = CustomDecimalField()
 
+    def _validate_native_reference(self, raw, model, field):
+        if raw is None:
+            return
+        request = self.context.get('request')
+        if request is None:
+            raise serializers.ValidationError({field: 'No se puede validar la referencia sin su espacio.'})
+        if type(raw) is int:
+            identifier, name = raw, None
+        elif isinstance(raw, dict):
+            identifier, name = raw.get('id'), raw.get('name')
+        elif isinstance(raw, bool):
+            raise serializers.ValidationError({field: 'La referencia no es válida.'})
+        else:
+            return  # The native nested serializer reports malformed input.
+
+        own = model.objects.filter(space=request.space)
+        candidates = []
+        if identifier is not None:
+            if type(identifier) is not int or not 0 < identifier <= 9223372036854775807:
+                raise serializers.ValidationError({field: 'La referencia no es válida.'})
+            identified = own.filter(pk=identifier)
+            if not identified.exists():
+                raise serializers.ValidationError({field: 'La referencia no está disponible en este espacio.'})
+            candidates.append(identified)
+        if isinstance(name, str) and name.strip():
+            # Native create resolves names/plurals before nested identity. Check
+            # both routes, including a visible ID paired with a hidden name.
+            candidates.append(own.filter(Q(name__iexact=name.strip()) | Q(plural_name__iexact=name.strip())))
+        if model is Food:
+            from cuaderno.services.costing import visible_recipes
+            allowed = Q(recipe__isnull=True) | Q(recipe__in=visible_recipes(request.user, request.space))
+            if any(rows.exclude(allowed).exists() for rows in candidates):
+                raise serializers.ValidationError({field: 'El alimento no está disponible en este espacio.'})
+
+    def to_internal_value(self, data):
+        # Run before WritableNestedModelSerializer turns bare IDs into fields,
+        # and before create() can return an existing private conversion.
+        if isinstance(data, dict):
+            for field, model in (('food', Food), ('base_unit', Unit), ('converted_unit', Unit)):
+                if field in data:
+                    self._validate_native_reference(data[field], model, field)
+        return super().to_internal_value(data)
+
     @extend_schema_field(str)
     def get_conversion_name(self, obj):
         text = f'{round(obj.base_amount)} {obj.base_unit} '
@@ -1141,16 +1184,20 @@ class UnitConversionSerializer(WritableNestedModelSerializer, OpenDataModelMixin
 
     def create(self, validated_data):
         validated_data['space'] = validated_data.pop('space', self.context['request'].space)
-        try:
-            return UnitConversion.objects.get(
-                food__name__iexact=validated_data.get('food', {}).get('name', None),
+        existing = UnitConversion.objects.filter(
+                food__name__iexact=(validated_data.get('food') or {}).get('name', None),
                 base_unit__name__iexact=validated_data.get('base_unit', {}).get('name', None),
                 converted_unit__name__iexact=validated_data.get('converted_unit', {}).get('name', None),
-                space=validated_data['space']
-            )
-        except UnitConversion.DoesNotExist:
-            validated_data['created_by'] = self.context['request'].user
-            return super().create(validated_data)
+                space=validated_data['space'],
+                base_unit__space=validated_data['space'],
+                converted_unit__space=validated_data['space'],
+        ).filter(
+            Q(food__isnull=True) | Q(food__space=validated_data['space']),
+        ).order_by('pk').first()
+        if existing is not None:
+            return existing
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)
 
     class Meta:
         model = UnitConversion
