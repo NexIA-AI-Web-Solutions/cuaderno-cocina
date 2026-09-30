@@ -37,9 +37,10 @@ def get_allowed_groups(groups_required):
 def has_group_permission(request, groups, no_cache=False):
     """
     Tests if a given user is member of a certain group (or any higher group)
-    Superusers always bypass permission checks.
     Unauthenticated users can't be member of any group thus always return false.
-    :param no_cache: (optional) do not return cached results, always check against DB
+    Roles are a request-local snapshot, never a shared user-only cache: changing
+    Space or revoking groups must take effect on the next request.
+    :param no_cache: (optional) refresh this request's snapshot against the DB
     :param request: the django request checking permission for
     :param groups: list or tuple of groups the user should be checked for
     :return: True if user is in allowed groups, false otherwise
@@ -48,23 +49,38 @@ def has_group_permission(request, groups, no_cache=False):
         return False
     groups_allowed = get_allowed_groups(groups)
 
-    CACHE_KEY = 'GROUP_CACHE_' + str(request.user.pk)
-    user_groups = cache.get(CACHE_KEY, default=None)
+    bound_space = getattr(request, 'space', None)
+    bound_membership = getattr(request, 'user_space', None)
+    snapshot_key = (
+        request.user.pk, getattr(bound_space, 'pk', None),
+        getattr(bound_membership, 'pk', None),
+        getattr(bound_membership, 'user_id', None),
+        getattr(bound_membership, 'space_id', None),
+    )
+    snapshot = getattr(request, '_group_permission_snapshot', None)
+    if no_cache or snapshot is None or snapshot[0] != snapshot_key:
+        # One LEFT JOIN also represents a membership with no groups. Counting
+        # unique memberships (not joined rows) fails closed for multiple active
+        # Spaces without penalising a membership belonging to several groups.
+        rows = list(request.user.userspace_set.filter(active=True).values_list(
+            'pk', 'space_id', 'groups__name',
+        ))
+        memberships = {(membership_id, space_id) for membership_id, space_id, _ in rows}
+        user_groups = ()
+        if len(memberships) == 1:
+            membership_id, space_id = next(iter(memberships))
+            space_matches = bound_space is None or bound_space.pk == space_id
+            membership_matches = bound_membership is None or (
+                bound_membership.pk == membership_id
+                and bound_membership.user_id == request.user.pk
+                and bound_membership.space_id == space_id
+            )
+            if space_matches and membership_matches:
+                user_groups = tuple(group for _, _, group in rows if group is not None)
+        snapshot = (snapshot_key, user_groups)
+        request._group_permission_snapshot = snapshot
 
-    if no_cache or user_groups is None:
-        # always reset to invalidate should a cache exist
-        user_groups = []
-        if user_space := request.user.userspace_set.filter(active=True):
-            if len(user_space) == 1: # more than one active space is not supported and should error
-                user_groups = user_space.first().groups.values_list('name', flat=True)
-
-    cache.set(CACHE_KEY, user_groups, timeout=30)
-
-    for group in user_groups:
-        if group in groups_allowed:
-            return True
-
-    return False
+    return any(group in groups_allowed for group in snapshot[1])
 
 
 def is_object_owner(user, obj):
