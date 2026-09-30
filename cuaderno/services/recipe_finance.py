@@ -98,13 +98,16 @@ def _cost_per_serving(cost: dict) -> tuple[Decimal | None, list[str]]:
 
 
 def _derived_decimal(value) -> Decimal:
-    """Validate a calculated cost without applying the 4-place storage limit."""
+    """Accept working-precision costs, retaining the existing magnitude bounds.
+
+    A recurring cost can have64 significant digits and more than32 decimal
+    places. This is not a persisted Property or a financial input validator.
+    """
     try:
         amount = parse_decimal(value, allow_zero=True)
     except DomainError as exc:
         raise DomainError("invalid_recipe_finance", f"ingredient_cost_per_serving: {exc.message}") from exc
-    exponent = amount.as_tuple().exponent
-    if amount and (amount.adjusted() >= 32 or exponent < -32):
+    if len(amount.as_tuple().digits) > 64 or (amount and not -32 <= amount.adjusted() < 32):
         raise DomainError("invalid_recipe_finance", "El coste calculado queda fuera del dominio admitido.")
     return amount
 

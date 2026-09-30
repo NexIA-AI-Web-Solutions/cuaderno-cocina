@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
 from django.db.models import Q
 from django.utils import timezone
@@ -35,6 +35,7 @@ def reference_package(food):
 
 @dataclass(frozen=True)
 class _CostingContext:
+    space_id: int
     recipes: dict
     yields: dict
     packages: dict
@@ -59,6 +60,8 @@ def _load_costing_context(recipe_cache, space_id, as_of) -> _CostingContext:
         row.food_id: row
         for row in PackageFormat.objects.filter(
             space_id=space_id,
+            food__space_id=space_id,
+            unit__space_id=space_id,
             food_id__in=food_ids,
             is_reference=True,
         ).select_related("unit")
@@ -74,7 +77,7 @@ def _load_costing_context(recipe_cache, space_id, as_of) -> _CostingContext:
         .distinct("package_id")
     }
     conversion_rows = tuple(
-        UnitConversion.objects.filter(space_id=space_id)
+        UnitConversion.objects.filter(space_id=space_id, base_unit__space_id=space_id, converted_unit__space_id=space_id)
         .filter(Q(food_id__isnull=True) | Q(food_id__in=food_ids))
         .select_related("base_unit", "converted_unit")
         .order_by("pk")
@@ -87,6 +90,7 @@ def _load_costing_context(recipe_cache, space_id, as_of) -> _CostingContext:
         else:
             food_conversions[row.food_id].append(row)
     return _CostingContext(
+        space_id=space_id,
         recipes=recipe_cache,
         yields=yields,
         packages=packages,
@@ -158,7 +162,7 @@ def _cost_recipe_lines(recipe, factor, as_of, warnings, path, context):
                 lines.extend(
                     _cost_recipe_lines(
                         child,
-                        factor * amount / declared.quantity,
+                        scale_amount(amount, declared.quantity, factor),
                         as_of,
                         warnings,
                         (*path, recipe.pk),
@@ -189,6 +193,10 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context
         return CostResult("complete", Decimal("0"), Decimal("0"), Decimal("0"), ("excluido",))
     if ingredient.food_id is None:
         return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
+    if ingredient.space_id != context.space_id or ingredient.food.space_id != context.space_id:
+        return CostResult("incomplete", None, None, None, ("alimento_desconocido",))
+    if ingredient.unit_id and ingredient.unit.space_id != context.space_id:
+        return CostResult("needs_conversion", None, None, None, ("sin_unidad",))
     if ingredient.amount is None:
         return CostResult("incomplete", None, None, None, ("cantidad_desconocida",))
     used, _trace = ingredient_quantities(ingredient, factor)
@@ -203,7 +211,7 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context
     unit_name = ingredient.unit.name if ingredient.unit_id else None
     if unit_name is None:
         return CostResult("needs_conversion", None, None, None, ("sin_unidad",))
-    return line_cost(
+    result = line_cost(
         price.amount,
         package.quantity,
         package.unit.name,
@@ -211,11 +219,26 @@ def _cost_ingredient(ingredient, factor: Decimal, as_of, warnings: list, context
         unit_name,
         explicit_free=price.explicit_free,
     )
+    if result.status != "needs_conversion" and result.warnings != ("unknown_unit",):
+        return result
+    try:
+        converted = _convert_native_quantity(used, ingredient.unit, package.unit, ingredient.food, context)
+    except DomainError as exc:
+        return CostResult("needs_conversion", None, None, None, (exc.code,))
+    # Both quantities are now expressed in the actual package unit. The
+    # dimensionless ratio reuses price/quantity validation without inventing
+    # a universal density or reapplying ingredient yield.
+    return line_cost(
+        price.amount, package.quantity, "unit", converted, "unit",
+        explicit_free=price.explicit_free,
+    )
 
 
 def _sheet(lines: list[CostResult], warnings: list, base_servings: int, target: Decimal) -> dict:
     blocking = [line for line in lines if line.status != "complete"]
-    known = sum((line.unrounded for line in lines if line.unrounded is not None and line.status == "complete"), Decimal("0"))
+    with localcontext() as context:
+        context.prec = 64
+        known = sum((line.unrounded for line in lines if line.unrounded is not None and line.status == "complete"), Decimal("0"))
     extra = tuple(warnings)
     if blocking:
         status = "needs_conversion" if any(line.status == "needs_conversion" for line in blocking) else "incomplete"
@@ -230,7 +253,9 @@ def _sheet(lines: list[CostResult], warnings: list, base_servings: int, target: 
             result = CostResult(result.status, result.unrounded, result.display, result.known_subtotal, extra)
     per_serving = None
     if result.status == "complete" and result.unrounded is not None:
-        per_serving = format(result.unrounded / target, "f")
+        with localcontext() as context:
+            context.prec = 64
+            per_serving = format(result.unrounded / target, "f")
     payload = result.as_dict()
     payload["base_servings"] = str(base_servings)
     payload["servings"] = format(target, "f")

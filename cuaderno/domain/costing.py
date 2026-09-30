@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import money_display, parse_decimal
@@ -33,14 +33,18 @@ def scale_amount(base_amount, base_servings, requested_servings) -> Decimal:
     base = parse_decimal(base_amount, allow_zero=True)
     origin = parse_decimal(base_servings, allow_zero=False)
     target = parse_decimal(requested_servings, allow_zero=False)
-    return base * target / origin
+    with localcontext() as context:
+        context.prec = 64
+        return base * target / origin
 
 
 def portion_of_batch(batch_cost, batch_yield, used) -> CostResult:
     cost = parse_decimal(batch_cost, allow_zero=True)
     yield_amount = parse_decimal(batch_yield, allow_zero=False)
     used_amount = parse_decimal(used, allow_zero=True)
-    unrounded = cost * used_amount / yield_amount
+    with localcontext() as context:
+        context.prec = 64
+        unrounded = cost * used_amount / yield_amount
     return _complete(unrounded)
 
 
@@ -67,27 +71,33 @@ def line_cost(
     if price == 0 and not explicit_free:
         return CostResult("invalid", None, None, None, ("cero_no_explicito",))
     try:
-        package_base = parse_decimal(package_quantity, allow_zero=False)
-        used = parse_decimal(used_quantity, allow_zero=True)
-        if yield_ratio is not None:
-            ratio = parse_decimal(yield_ratio, allow_zero=False)
-            if ratio > 1:
-                raise DomainError("invalid_yield", "La merma debe estar en (0, 1].")
-            if quantity_basis == "net_usable":
-                used = used / ratio
-        used_in_package_unit = convert_quantity(used, used_unit, package_unit, density_g_per_ml=density)
+        with localcontext() as context:
+            context.prec = 64
+            package_base = parse_decimal(package_quantity, allow_zero=False)
+            used = parse_decimal(used_quantity, allow_zero=True)
+            if yield_ratio is not None:
+                ratio = parse_decimal(yield_ratio, allow_zero=False)
+                if ratio > 1:
+                    raise DomainError("invalid_yield", "La merma debe estar en (0, 1].")
+                if quantity_basis == "net_usable":
+                    used = used / ratio
+            used_in_package_unit = convert_quantity(used, used_unit, package_unit, density_g_per_ml=density)
+            # Do not pre-round a repeating package unit price before its
+            # quantity cancels (e.g. one euro for3 units, using all3).
+            unrounded = price * used_in_package_unit / package_base
     except DomainError as exc:
         status = "needs_conversion" if exc.code == "needs_conversion" else "invalid"
         return CostResult(status, None, None, None, (exc.code,))
-    unrounded = price / package_base * used_in_package_unit
     return _complete(unrounded)
 
 
 def sum_lines(line_costs: list) -> CostResult:
     """Sum exact line costs and round only the displayed total."""
-    total = Decimal("0")
-    for item in line_costs:
-        total += parse_decimal(item, allow_zero=True)
+    with localcontext() as context:
+        context.prec = 64
+        total = Decimal("0")
+        for item in line_costs:
+            total += parse_decimal(item, allow_zero=True)
     return _complete(total)
 
 

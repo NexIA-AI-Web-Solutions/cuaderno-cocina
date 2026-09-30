@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, localcontext
+
+from django.db.models import Q
 
 from cookbook.models import Recipe, UnitConversion
 from cuaderno.domain.errors import DomainError
@@ -15,13 +17,28 @@ from cuaderno.models import RecipeYield
 MAX_NATIVE_GRAPH_RECIPES = 1001
 
 
+def _scale_native_quantity(quantity, numerator, denominator):
+    # Match ingredient yield's working precision. Two persisted Decimal(32,16)
+    # operands can require64 digits before division; recurring results remain
+    # working-precision decimals, not a claim of infinite rational precision.
+    with localcontext() as context:
+        context.prec = 64
+        return quantity * numerator / denominator
+
+
 def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversions=None):
     if from_unit is None or to_unit is None:
         raise DomainError("yield_unit_missing", "La subreceta y su uso necesitan unidad.")
+    space_id = getattr(space, "pk", space)
+    if (from_unit.space_id != space_id or to_unit.space_id != space_id
+            or food is None or food.space_id != space_id):
+        raise DomainError("yield_conversion_missing", "No hay conversión disponible en este espacio.")
     if from_unit.pk == to_unit.pk:
         return Decimal(amount)
     try:
-        return convert_quantity(amount, from_unit.base_unit or from_unit.name, to_unit.base_unit or to_unit.name)
+        with localcontext() as context:
+            context.prec = 64
+            return convert_quantity(amount, from_unit.base_unit or from_unit.name, to_unit.base_unit or to_unit.name)
     except DomainError:
         pass
     try:
@@ -31,10 +48,16 @@ def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversi
         cross_dimension = True
     # Preserve native food-specific conversions, with Decimal arithmetic.
     if conversions is None:
-        conversions = UnitConversion.objects.filter(space=space).filter(food__isnull=True) | UnitConversion.objects.filter(space=space, food=food)
+        conversions = UnitConversion.objects.filter(
+            space_id=space_id, base_unit__space_id=space_id, converted_unit__space_id=space_id,
+        ).filter(Q(food__isnull=True) | Q(food=food)).select_related("base_unit", "converted_unit").order_by("pk")
     graph = {}
     for row in conversions:
-        if row.base_amount > 0 and row.converted_amount > 0:
+        if (row.space_id != space_id or row.base_unit.space_id != space_id
+                or row.converted_unit.space_id != space_id or row.food_id not in (None, food.pk)):
+            continue
+        if (row.base_amount.is_finite() and row.converted_amount.is_finite()
+                and row.base_amount > 0 and row.converted_amount > 0):
             specific = row.food_id is not None
             if not specific:
                 try:
@@ -43,8 +66,10 @@ def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversi
                     same_dimension = False
                 if not same_dimension:
                     continue
-            graph.setdefault(row.base_unit_id, []).append((row.converted_unit_id, row.converted_amount / row.base_amount, specific))
-            graph.setdefault(row.converted_unit_id, []).append((row.base_unit_id, row.base_amount / row.converted_amount, specific))
+            # Multiply before dividing: pre-rounding an inverse ratio such as
+            # 1000/920 makes an exact 368g -> 400mL become 400.000...0001.
+            graph.setdefault(row.base_unit_id, []).append((row.converted_unit_id, row.converted_amount, row.base_amount, specific))
+            graph.setdefault(row.converted_unit_id, []).append((row.base_unit_id, row.base_amount, row.converted_amount, specific))
     queue = [(from_unit.pk, Decimal(amount), False)]
     visited = set()
     for unit_id, quantity, specific in queue:
@@ -53,8 +78,8 @@ def convert_native_quantity(amount, from_unit, to_unit, food, space, *, conversi
         if (unit_id, specific) in visited:
             continue
         visited.add((unit_id, specific))
-        queue.extend((target, quantity * ratio, specific or edge_specific)
-                     for target, ratio, edge_specific in graph.get(unit_id, []) if (target, specific or edge_specific) not in visited)
+        queue.extend((target, _scale_native_quantity(quantity, numerator, denominator), specific or edge_specific)
+                     for target, numerator, denominator, edge_specific in graph.get(unit_id, []) if (target, specific or edge_specific) not in visited)
     raise DomainError("yield_conversion_missing", f"No hay conversión de {from_unit.name} a {to_unit.name}.")
 
 
@@ -120,14 +145,16 @@ def sheet_from_recipes(recipe_ids, space, user=None, factors=None) -> dict:
                         if declared.quantity <= 0:
                             raise DomainError("invalid_yield", "El rendimiento de la subreceta debe ser positivo.")
                         needed = convert_native_quantity(amount, ingredient.unit, declared.unit, ingredient.food, space)
-                        walk(cache[child_id], needed / declared.quantity)
+                        walk(cache[child_id], _scale_native_quantity(needed, Decimal("1"), declared.quantity))
                         continue
                 key = ingredient.food.name
                 if key in units and units[key] != ingredient.unit:
                     amount = convert_native_quantity(amount, ingredient.unit, units[key], ingredient.food, space)
                 else:
                     units[key] = ingredient.unit
-                totals[key] = totals.get(key, Decimal("0")) + amount
+                with localcontext() as context:
+                    context.prec = 64
+                    totals[key] = totals.get(key, Decimal("0")) + amount
 
     for recipe in roots:
         factor = Decimal(str((factors or {}).get(recipe.pk, "1")))

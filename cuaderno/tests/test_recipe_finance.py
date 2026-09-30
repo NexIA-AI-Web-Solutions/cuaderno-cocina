@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, getcontext
 
 from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.auth import get_user_model
@@ -19,6 +19,49 @@ from cuaderno.services.recipe_finance import (
 
 
 class RecipeFinanceTests(TestCase):
+    def test_derived_cost_accepts_64_significant_digits_without_rounding(self):
+        values = (
+            "0." + "3" * 64,
+            "99999999999999999.99999999999999800000000000000000000000000000001",
+            "99999999999999999999999999999999",
+            "0.00000000000000000000000000000001",
+            "0",
+        )
+        context_before = getcontext().copy()
+        with scopes_disabled():
+            for value in values:
+                with self.subTest(value=value):
+                    result = read_recipe_finance(
+                        self.recipe,
+                        {"status": "complete", "per_serving": value, "warnings": []},
+                        self.profile,
+                    )
+                    self.assertEqual(result["ingredient_cost_per_serving"], value)
+                    self.assertIsNone(result["net_profit"])
+            self.assertFalse(Property.objects.filter(space=self.space).exists())
+        self.assertEqual(getcontext().prec, context_before.prec)
+        self.assertEqual(getcontext().flags, context_before.flags)
+
+    def test_derived_cost_rejects_precision_and_magnitude_overflow_and_invalid_values(self):
+        values = (
+            "0." + "3" * 65,
+            "100000000000000000000000000000000",
+            "0.000000000000000000000000000000001",
+            "-1", "NaN", "Infinity", "-Infinity", True, 0.1, "",
+        )
+        with scopes_disabled():
+            for value in values:
+                with self.subTest(value=value), self.assertRaises(DomainError) as error:
+                    read_recipe_finance(
+                        self.recipe,
+                        {"status": "complete", "per_serving": value, "warnings": []},
+                        self.profile,
+                    )
+                self.assertEqual(error.exception.code, "invalid_recipe_finance")
+            with self.assertRaises(DomainError):
+                write_recipe_finance(self.recipe, {"budget_per_person": "1.23456"}, self.user)
+            self.assertFalse(Property.objects.filter(space=self.space).exists())
+
     def test_ratio_presentation_uses_half_up_on_exact_tie(self):
         with scopes_disabled():
             write_recipe_finance(self.recipe, {"selling_price_per_serving": "1"}, self.user)

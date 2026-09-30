@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, localcontext
 import re
 
 from cuaderno.domain.errors import DomainError
@@ -49,7 +49,12 @@ def parse_decimal(value, *, allow_zero: bool = True, allow_negative: bool = Fals
 
 
 def money_display(amount: Decimal) -> Decimal:
-    return amount.quantize(CENTS, rounding=ROUND_HALF_UP)
+    with localcontext() as context:
+        # Derived subrecipes may have more integer places than their original
+        # 32/16 operands. Reserve cents plus a possible rounding carry; this
+        # changes presentation precision only, not the unrounded calculation.
+        context.prec = max(64, amount.adjusted() + 4)
+        return amount.quantize(CENTS, rounding=ROUND_HALF_UP)
 
 
 def canonical_decimal(value) -> str:
