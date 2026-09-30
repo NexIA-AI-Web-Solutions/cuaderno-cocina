@@ -7,9 +7,10 @@ import hashlib
 import json
 import re
 import sys
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN, localcontext
 from urllib.parse import urlencode
 
 if __package__:
@@ -39,6 +40,15 @@ REVERSAL_KEYS = {
 }
 AUDIT_KEYS = {"key_sha256", "reversed_at", "reversed_by", "original_movement_ids", "movement_ids"}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+DOCUMENT_DECIMAL_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
+CLASSIFICATION_KEYS = {
+    "schema_version", "policy", "classification_only", "included_in_gross_needs",
+    "additional_stock_movement", "coverage", "status", "recorded_by", "recorded_at", "lines",
+}
+CLASSIFICATION_LINE_KEYS = {
+    "ingredient_id", "food_id", "food_name", "unit_id", "unit_name", "quantity_basis",
+    "yield_ratio", "purchased_quantity", "useful_quantity", "waste_quantity", "cause",
+}
 
 
 def _fixed_decimal(value, label: str) -> Decimal:
@@ -74,6 +84,91 @@ def _aware(value, label: str) -> None:
         raise SmokeFailure(f"{label} no es una fecha ISO válida.") from exc
     if parsed.utcoffset() is None:
         raise SmokeFailure(f"{label} no incluye zona horaria.")
+
+
+def _document_decimal(value, label: str) -> Decimal:
+    if not isinstance(value, str) or len(value) > 160 or DOCUMENT_DECIMAL_RE.fullmatch(value) is None:
+        raise SmokeFailure(f"{label} no es un decimal textual congelado válido.")
+    result = Decimal(value)
+    if len(result.as_tuple().digits) > 64 or (result and not -64 <= result.adjusted() <= 64):
+        raise SmokeFailure(f"{label} excede la precisión congelada admitida.")
+    return result
+
+
+def _document_id(value, label: str) -> int:
+    if type(value) is not int or not 0 < value <= 9223372036854775807:
+        raise SmokeFailure(f"{label} no es un identificador congelado válido.")
+    return value
+
+
+def _document_label(value, label: str) -> str:
+    if (not isinstance(value, str) or not 0 < len(value) <= 1024
+            or any(ord(character) < 32 or 127 <= ord(character) <= 159
+                   or 0xD800 <= ord(character) <= 0xDFFF for character in value)):
+        raise SmokeFailure(f"{label} no es una etiqueta congelada válida.")
+    return value
+
+
+def _classification_identity(row: dict, prefix: str) -> bool:
+    identifier, name = row.get(f"{prefix}_id"), row.get(f"{prefix}_name")
+    if identifier is None and name is None:
+        return False
+    _document_id(identifier, f"waste.{prefix}_id")
+    _document_label(name, f"waste.{prefix}_name")
+    return True
+
+
+def _waste_classification(value, *, produced_at: str, actor_id: int) -> dict:
+    if not isinstance(value, dict) or set(value) != CLASSIFICATION_KEYS:
+        raise SmokeFailure("La clasificación de merma tiene campos desconocidos o incompletos.")
+    if (type(value.get("schema_version")) is not int or value["schema_version"] != 1
+            or value.get("policy") != "declared_yield_estimate"
+            or value.get("classification_only") is not True
+            or value.get("included_in_gross_needs") is not True
+            or value.get("additional_stock_movement") is not False
+            or value.get("coverage") != "declared_yields_only"
+            or value.get("recorded_by") != actor_id
+            or value.get("recorded_at") != produced_at):
+        raise SmokeFailure("La política congelada de merma no coincide con la producción.")
+    _document_id(value["recorded_by"], "waste.recorded_by")
+    _aware(value["recorded_at"], "waste.recorded_at")
+    lines = value.get("lines")
+    if not isinstance(lines, list) or len(lines) > 10000:
+        raise SmokeFailure("Las trazas congeladas de merma no forman una lista acotada.")
+    incomplete = False
+    for row in lines:
+        if not isinstance(row, dict) or set(row) != CLASSIFICATION_LINE_KEYS:
+            raise SmokeFailure("Una traza de merma tiene campos desconocidos o incompletos.")
+        _document_id(row.get("ingredient_id"), "waste.ingredient_id")
+        food_known = _classification_identity(row, "food")
+        unit_known = _classification_identity(row, "unit")
+        if not food_known and unit_known:
+            raise SmokeFailure("Una traza de merma tiene unidad sin alimento congelado.")
+        incomplete = incomplete or not food_known or not unit_known
+        basis, raw_ratio = row.get("quantity_basis"), row.get("yield_ratio")
+        if (not isinstance(basis, str) or basis not in {"gross", "net_usable"}
+                or row.get("cause") != "declared_yield"):
+            raise SmokeFailure("Una traza de merma no conserva su política declarada.")
+        purchased = _document_decimal(row.get("purchased_quantity"), "waste.purchased_quantity")
+        if raw_ratio is None:
+            if basis != "gross" or row.get("useful_quantity") is not None or row.get("waste_quantity") is not None:
+                raise SmokeFailure("Una traza sin rendimiento inventa cantidades útiles o merma.")
+            incomplete = True
+            continue
+        ratio = _document_decimal(raw_ratio, "waste.yield_ratio")
+        if not 0 < ratio <= 1:
+            raise SmokeFailure("El rendimiento congelado debe estar entre cero y uno.")
+        useful = _document_decimal(row.get("useful_quantity"), "waste.useful_quantity")
+        waste = _document_decimal(row.get("waste_quantity"), "waste.waste_quantity")
+        with localcontext() as context:
+            context.prec, context.rounding = 64, ROUND_HALF_EVEN
+            ratio_matches = useful == purchased * ratio if basis == "gross" else purchased == useful / ratio
+            if not ratio_matches or purchased < useful or waste != purchased - useful:
+                raise SmokeFailure("Las cantidades congeladas no corresponden al rendimiento declarado.")
+    expected_status = "unknown" if not lines else "incomplete" if incomplete else "declared"
+    if value.get("status") != expected_status:
+        raise SmokeFailure("El estado de cobertura de merma no corresponde a sus trazas.")
+    return value
 
 
 def _canonical(value) -> str:
@@ -162,10 +257,22 @@ def _production_document(payload: dict, service_id: int, edition: str) -> tuple[
     production = payload["snapshot"].get("production")
     if not isinstance(production, dict):
         raise SmokeFailure("Falta el documento de producción congelado.")
-    expected_base = {"produced_at", "edition", "movement_ids", "stock_changed"}
+    legacy_base = {"produced_at", "edition", "movement_ids", "stock_changed"}
+    version_two_base = legacy_base | {"schema_version", "waste_classification"}
+    expected_base = version_two_base if "schema_version" in production else legacy_base
     if set(production) not in (expected_base, expected_base | {"reversal"}):
         raise SmokeFailure("Producción contiene campos desconocidos o incompletos.")
     _aware(production.get("produced_at"), "production.produced_at")
+    if payload.get("produced_at") != production.get("produced_at"):
+        raise SmokeFailure("La fecha del servicio producido no coincide con su documento congelado.")
+    if expected_base == version_two_base:
+        if type(production.get("schema_version")) is not int or production["schema_version"] != 2:
+            raise SmokeFailure("La versión del documento de producción no está soportada.")
+        _waste_classification(
+            production.get("waste_classification"),
+            produced_at=production["produced_at"],
+            actor_id=_document_id(payload.get("created_by"), "service.created_by"),
+        )
     ids = production.get("movement_ids")
     if not isinstance(ids, list) or any(type(pk) is not int or pk <= 0 for pk in ids) or len(ids) != len(set(ids)):
         raise SmokeFailure("Los movimientos originales no son identificadores únicos.")
@@ -279,6 +386,104 @@ def _post_transition(session: HttpSession, service_id: int, action: str, key: st
     )
 
 
+def _produce_owned_service(
+    session: HttpSession, *, service_id: int, recipe_id: int, edition: str,
+    production_key: str, recovery,
+) -> dict:
+    """Produce and validate inside the compensation boundary."""
+    with _production_recovery_guard(True, recovery):
+        detail = _post_transition(session, service_id, "produce", production_key)
+        detail = _service_detail(detail, service_id, recipe_id)
+        if detail.get("state") != "produced":
+            raise SmokeFailure("Producir no dejó el servicio en estado producido.")
+        _production_document(detail, service_id, edition)
+        return detail
+
+
+def _recover_owned_production(
+    session: HttpSession, *, service_id: int, recipe_id: int, edition: str,
+    production_key: str, reversal_key: str, verify_recovered,
+) -> dict:
+    path = f"/api/cuaderno/services/{service_id}/"
+    current = session.json("GET", path, csrf=False)
+    detail = _service_detail(current, service_id, recipe_id)
+    if detail.get("state") == "cancelled":
+        production, original_ids = _production_document(detail, service_id, edition)
+        audit = production.get("reversal")
+        expected_hash = hashlib.sha256(reversal_key.encode("utf-8")).hexdigest()
+        if (not isinstance(audit, dict) or set(audit) != AUDIT_KEYS
+                or audit.get("key_sha256") != expected_hash
+                or audit.get("reversed_by") != detail.get("created_by")):
+            raise SmokeFailure(
+                "CHECKPOINT: el servicio figura cancelado sin la reversión propia verificable; no se modifica.",
+            )
+        _aware(audit.get("reversed_at"), "reversal.reversed_at")
+        reversal_ids = audit.get("movement_ids")
+        if (audit.get("original_movement_ids") != original_ids
+                or not isinstance(reversal_ids, list)
+                or any(type(identifier) is not int or identifier <= 0 for identifier in reversal_ids)
+                or len(reversal_ids) != len(set(reversal_ids))
+                or set(reversal_ids) & set(original_ids)
+                or (edition == "integral" and len(reversal_ids) != len(original_ids))
+                or (edition == "profesional" and reversal_ids)):
+            raise SmokeFailure(
+                "CHECKPOINT: el servicio cancelado no conserva una reversión completa verificable; no se modifica.",
+            )
+        verify_recovered()
+        return detail
+    if detail.get("state") != "produced":
+        raise SmokeFailure(
+            "CHECKPOINT: el servicio ya no conserva la producción propia verificable; no se modifica.",
+        )
+    production, original_ids = _production_document(detail, service_id, edition)
+    produced_snapshot = deepcopy(detail["snapshot"])
+    replay = _post_transition(session, service_id, "produce", production_key)
+    replay_production, replay_ids = _production_document(replay, service_id, edition)
+    if (replay_ids != original_ids or replay_production != production
+            or _persisted_service(replay) != detail):
+        raise SmokeFailure(
+            "CHECKPOINT: la clave de producción no reproduce exactamente el servicio; no se revierte.",
+        )
+    reversed_payload = _post_transition(session, service_id, "reverse", reversal_key)
+    _validate_reversal(
+        reversed_payload, service_id=service_id, recipe_id=recipe_id, edition=edition,
+        produced_snapshot=produced_snapshot, reversal_key=reversal_key,
+    )
+    verify_recovered()
+    return reversed_payload
+
+
+def _reverse_owned_service(
+    session: HttpSession, *, service_id: int, recipe_id: int, edition: str,
+    reversal_key: str, produced_snapshot: dict, verify_recovered, recovery,
+) -> dict:
+    """Reverse and validate the persisted outcome inside recovery boundary."""
+    with _production_recovery_guard(True, recovery):
+        detail = _post_transition(session, service_id, "reverse", reversal_key)
+        _validate_reversal(
+            detail, service_id=service_id, recipe_id=recipe_id, edition=edition,
+            produced_snapshot=produced_snapshot, reversal_key=reversal_key,
+        )
+        verify_recovered()
+        return detail
+
+
+@contextmanager
+def _production_recovery_guard(enabled: bool, recovery):
+    try:
+        yield
+    except Exception as original:
+        if enabled:
+            try:
+                recovery()
+            except Exception:
+                raise SmokeFailure(
+                    "CHECKPOINT: falló una comprobación después de producir y no se pudo verificar la "
+                    "compensación propia. Conserva el servicio para diagnóstico local; no lo modifiques automáticamente.",
+                ) from original
+        raise
+
+
 def _exercise_account(edition: str, password: str) -> tuple[dict, HttpSession]:
     session = HttpSession()
     session.login(f"demo-{edition}", password)
@@ -293,6 +498,16 @@ def _exercise_account(edition: str, password: str) -> tuple[dict, HttpSession]:
     production_key = PRODUCTION_KEYS[edition]
     reversal_key = REVERSAL_KEYS[edition]
     confirmed_snapshot = deepcopy(detail["snapshot"]) if detail["state"] == "confirmed" else None
+    produced_here = False
+
+    def verify_recovered_inventory() -> None:
+        restored = _inventory_amount(session, package)
+        if edition == "integral":
+            expected = (inventory_initial, Decimal("5"))
+            if restored != expected:
+                raise SmokeFailure("Integral no recuperó la misma existencia DEMO con 5 L.")
+        elif restored != (inventory_initial, stock_initial):
+            raise SmokeFailure("Profesional no conservó intacto su inventario DEMO.")
 
     if detail["state"] == "confirmed":
         before_denied = session.json("GET", path, csrf=False)
@@ -302,47 +517,73 @@ def _exercise_account(edition: str, password: str) -> tuple[dict, HttpSession]:
         )
         if session.json("GET", path, csrf=False) != before_denied:
             raise SmokeFailure("Producir sin CSRF alteró el servicio.")
-        detail = _post_transition(session, service_id, "produce", production_key)
+        detail = _produce_owned_service(
+            session, service_id=service_id, recipe_id=recipe_id, edition=edition,
+            production_key=production_key,
+            recovery=lambda: _recover_owned_production(
+                session, service_id=service_id, recipe_id=recipe_id, edition=edition,
+                production_key=production_key, reversal_key=reversal_key,
+                verify_recovered=verify_recovered_inventory,
+            ),
+        )
+        produced_here = True
 
     if detail["state"] == "produced":
-        production, original_ids = _production_document(detail, service_id, edition)
-        produced_snapshot = deepcopy(detail["snapshot"])
-        if confirmed_snapshot is not None:
-            without_production = deepcopy(produced_snapshot)
-            without_production.pop("production", None)
-            if without_production != confirmed_snapshot:
-                raise SmokeFailure("Producir alteró el snapshot confirmado en vez de anexar producción.")
-        replay_production = _post_transition(session, service_id, "produce", production_key)
-        replay_document, replay_ids = _production_document(replay_production, service_id, edition)
-        if replay_ids != original_ids or replay_document != production:
-            raise SmokeFailure("Repetir producción con la misma clave no fue idempotente.")
-        session.request(
-            "POST", path,
-            payload={"action": "produce", "idempotency_key": production_key + "-distinta"},
-            expected=(409,),
-        )
-        if session.json("GET", path, csrf=False) != _persisted_service(replay_production):
-            raise SmokeFailure("El conflicto de producción alteró el servicio.")
+        with _production_recovery_guard(
+            produced_here,
+            lambda: _recover_owned_production(
+                session, service_id=service_id, recipe_id=recipe_id, edition=edition,
+                production_key=production_key, reversal_key=reversal_key,
+                verify_recovered=verify_recovered_inventory,
+            ),
+        ):
+            production, original_ids = _production_document(detail, service_id, edition)
+            produced_snapshot = deepcopy(detail["snapshot"])
+            if confirmed_snapshot is not None:
+                without_production = deepcopy(produced_snapshot)
+                without_production.pop("production", None)
+                if without_production != confirmed_snapshot:
+                    raise SmokeFailure("Producir alteró el snapshot confirmado en vez de anexar producción.")
+            replay_production = _post_transition(session, service_id, "produce", production_key)
+            replay_document, replay_ids = _production_document(replay_production, service_id, edition)
+            if replay_ids != original_ids or replay_document != production:
+                raise SmokeFailure("Repetir producción con la misma clave no fue idempotente.")
+            session.request(
+                "POST", path,
+                payload={"action": "produce", "idempotency_key": production_key + "-distinta"},
+                expected=(409,),
+            )
+            if session.json("GET", path, csrf=False) != _persisted_service(replay_production):
+                raise SmokeFailure("El conflicto de producción alteró el servicio.")
 
-        if edition == "integral":
-            _, stock_produced = _inventory_amount(session, package)
-            expected_initial = Decimal("4.6") if initial_state == "produced" else Decimal("5")
-            if stock_initial != expected_initial or stock_produced != Decimal("4.6"):
-                raise SmokeFailure("Integral no pasó exactamente de 5 L a 4.6 L.")
-            movements_before_reverse = _movement_rows(session.json("GET", MOVEMENTS_PATH, csrf=False))
-        else:
-            if _inventory_amount(session, package) != (inventory_initial, stock_initial):
-                raise SmokeFailure("Profesional modificó el inventario al producir.")
-            movements_before_reverse = []
+            if edition == "integral":
+                _, stock_produced = _inventory_amount(session, package)
+                expected_initial = Decimal("4.6") if initial_state == "produced" else Decimal("5")
+                if stock_initial != expected_initial or stock_produced != Decimal("4.6"):
+                    raise SmokeFailure("Integral no pasó exactamente de 5 L a 4.6 L.")
+                movements_before_reverse = _movement_rows(session.json("GET", MOVEMENTS_PATH, csrf=False))
+            else:
+                if _inventory_amount(session, package) != (inventory_initial, stock_initial):
+                    raise SmokeFailure("Profesional modificó el inventario al producir.")
+                movements_before_reverse = []
 
-        before_denied = session.json("GET", path, csrf=False)
-        session.request(
-            "POST", path, payload={"action": "reverse", "idempotency_key": reversal_key},
-            csrf=False, expected=(403,),
-        )
-        if session.json("GET", path, csrf=False) != before_denied:
-            raise SmokeFailure("Revertir sin CSRF alteró el servicio.")
-        detail = _post_transition(session, service_id, "reverse", reversal_key)
+            before_denied = session.json("GET", path, csrf=False)
+            session.request(
+                "POST", path, payload={"action": "reverse", "idempotency_key": reversal_key},
+                csrf=False, expected=(403,),
+            )
+            if session.json("GET", path, csrf=False) != before_denied:
+                raise SmokeFailure("Revertir sin CSRF alteró el servicio.")
+            detail = _reverse_owned_service(
+                session, service_id=service_id, recipe_id=recipe_id, edition=edition,
+                reversal_key=reversal_key, produced_snapshot=produced_snapshot,
+                verify_recovered=verify_recovered_inventory,
+                recovery=lambda: _recover_owned_production(
+                    session, service_id=service_id, recipe_id=recipe_id, edition=edition,
+                    production_key=production_key, reversal_key=reversal_key,
+                    verify_recovered=verify_recovered_inventory,
+                ),
+            )
     elif detail["state"] == "cancelled":
         production, original_ids = _production_document(detail, service_id, edition)
         produced_snapshot = deepcopy(detail["snapshot"])
