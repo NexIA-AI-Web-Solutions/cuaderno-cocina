@@ -11,8 +11,9 @@
                     El importador nativo de Tandoor, situado debajo, sigue disponible para sus otros formatos.
                 </p>
                 <v-alert type="info" variant="tonal" class="mb-4">
-                    El JSON no incluye fotos, archivos ni etiquetas; para conservarlos usa también la exportación ZIP nativa de Tandoor.
-                    Los alérgenos, las conversiones personalizadas y los ajustes fiscales no forman parte de este intercambio y deben revisarse aparte.
+                    Las nuevas exportaciones incluyen las conversiones de unidades necesarias para las recetas visibles.
+                    Las fotos, archivos y etiquetas se conservan con la exportación ZIP nativa de Tandoor;
+                    los alérgenos y ajustes fiscales siguen fuera de este intercambio y deben revisarse aparte.
                 </v-alert>
 
                 <div class="d-flex flex-wrap ga-2 mb-4">
@@ -36,6 +37,10 @@
                         <p class="text-body-2 mb-3">
                             Para cada identidad elige crearla o reutilizar una existente. Un nombre coincidente nunca se fusiona automáticamente.
                         </p>
+                        <v-alert v-if="isV2WithoutConversions" type="warning" variant="tonal" class="mb-3">
+                            Este archivo antiguo no contiene conversiones de unidades. Puedes importarlo, pero revisa después
+                            densidades, pesos unitarios y costes que dependan de ellas.
+                        </v-alert>
 
                         <div v-for="item in foods" :key="item.ref" class="mapping-row">
                             <p class="mb-1"><strong>Ingrediente:</strong> {{ item.name }}</p>
@@ -75,6 +80,22 @@
                                       @update:model-value="value => setChoiceTarget('packages', item.ref, value)"
                                       :item-title="packageTitle" label="Formato existente" clearable
                                       hint="Debe coincidir también su contenido y precios." persistent-hint :loading="loadingPackages" :disabled="busy" />
+                        </div>
+
+                        <div v-for="item in conversions" :key="item.ref" class="mapping-row">
+                            <p class="mb-1"><strong>Conversión:</strong> {{ conversionTitle(item) }}</p>
+                            <v-radio-group :model-value="choiceMode('conversions', item.ref)" inline hide-details :disabled="busy"
+                                           @update:model-value="value => setChoiceMode('conversions', item.ref, value)">
+                                <v-radio label="Crear nueva" value="create" />
+                                <v-radio label="Reutilizar existente" value="reuse" />
+                            </v-radio-group>
+                            <v-model-select v-if="choiceMode('conversions', item.ref) === 'reuse'"
+                                            :model-value="choiceTarget('conversions', item.ref)" model="UnitConversion"
+                                            search-on-load clearable
+                                            @update:model-value="value => setChoiceTarget('conversions', item.ref, value)"
+                                            label="Conversión existente"
+                                            hint="Debe usar las mismas unidades, alimento y proporción."
+                                            persistent-hint :disabled="busy" />
                         </div>
                     </template>
 
@@ -118,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, reactive, ref, watch} from 'vue'
+import {computed, reactive, ref, toRaw, watch} from 'vue'
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
@@ -126,7 +147,14 @@ import {exchangeBody, readExchangeFile} from '@/cuaderno/exchangeUi'
 import type {EditorSupportedTypes} from '@/types/Models'
 
 type CatalogItem = {ref: string; id?: number; name?: string; label?: string}
-type ChoiceKind = 'foods' | 'units' | 'packages'
+type CatalogConversion = CatalogItem & {
+    food_ref: string | null
+    base_unit_ref: string
+    converted_unit_ref: string
+    base_amount: string
+    converted_amount: string
+}
+type ChoiceKind = 'foods' | 'units' | 'packages' | 'conversions'
 type ChoiceTarget = EditorSupportedTypes | number | null | undefined
 type Choice = {mode: 'create' | 'reuse'; target: ChoiceTarget}
 type Preview = {count: number; preview: Array<Record<string, any>>; writes: number; preview_sha256: string; warnings?: unknown[]}
@@ -144,7 +172,7 @@ const importing = ref(false)
 const loadingFile = ref(false)
 const loadingPackages = ref(false)
 const packageOptions = ref<any[]>([])
-const choices = reactive<Record<'foods' | 'units' | 'packages', Record<string, Choice>>>({foods: {}, units: {}, packages: {}})
+const choices = reactive<Record<ChoiceKind, Record<string, Choice>>>({foods: {}, units: {}, packages: {}, conversions: {}})
 let selectionToken = 0
 
 const operationBusy = computed(() => exporting.value || previewing.value || importing.value)
@@ -153,6 +181,10 @@ const isV2 = computed(() => document.value?.format === 'cuaderno-recipes-v2')
 const foods = computed<CatalogItem[]>(() => Array.isArray(document.value?.catalog?.foods) ? document.value!.catalog.foods : [])
 const units = computed<CatalogItem[]>(() => Array.isArray(document.value?.catalog?.units) ? document.value!.catalog.units : [])
 const packages = computed<CatalogItem[]>(() => Array.isArray(document.value?.catalog?.packages) ? document.value!.catalog.packages : [])
+const conversions = computed<CatalogConversion[]>(() => Array.isArray(document.value?.catalog?.conversions) ? document.value!.catalog.conversions : [])
+const isV2WithoutConversions = computed(() => isV2.value
+    && document.value?.catalog
+    && !Object.prototype.hasOwnProperty.call(document.value.catalog, 'conversions'))
 
 function ensureChoice(kind: ChoiceKind, ref: string): Choice {
     const existing = choices[kind][ref]
@@ -187,10 +219,32 @@ watch(choices, invalidatePreview, {deep: true})
 watch(legacyMapping, invalidatePreview)
 
 function initialiseChoices() {
-    for (const kind of ['foods', 'units', 'packages'] as const) {
+    for (const kind of ['foods', 'units', 'packages', 'conversions'] as const) {
         choices[kind] = {}
-        const items = kind === 'foods' ? foods.value : kind === 'units' ? units.value : packages.value
+        const items = kind === 'foods' ? foods.value
+            : kind === 'units' ? units.value
+                : kind === 'packages' ? packages.value : conversions.value
         for (const item of items) choices[kind][item.ref] = {mode: 'create', target: null}
+    }
+}
+
+function validateCatalogShape(value: Record<string, any>) {
+    if (value.format !== 'cuaderno-recipes-v2') return
+    const catalog = value.catalog
+    if (!catalog || Array.isArray(catalog) || typeof catalog !== 'object') {
+        throw new Error('El catálogo del archivo está mal formado.')
+    }
+    for (const kind of ['foods', 'units', 'packages'] as const) {
+        if (Object.prototype.hasOwnProperty.call(catalog, kind)
+            && (!Array.isArray(catalog[kind])
+                || catalog[kind].some((item: unknown) => !item || Array.isArray(item) || typeof item !== 'object'))) {
+            throw new Error('El catálogo del archivo está mal formado.')
+        }
+    }
+    if (Object.prototype.hasOwnProperty.call(catalog, 'conversions')
+        && (!Array.isArray(catalog.conversions)
+            || catalog.conversions.some((item: unknown) => !item || Array.isArray(item) || typeof item !== 'object'))) {
+        throw new Error('El catálogo del archivo está mal formado.')
     }
 }
 
@@ -213,7 +267,9 @@ async function selectFile(value: File | File[] | null) {
         if (file.size > 2_000_000) throw new Error('El archivo supera 2 MB.')
         const text = await file.text()
         if (token !== selectionToken) return
-        document.value = readExchangeFile(text)
+        const parsed = readExchangeFile(text)
+        validateCatalogShape(parsed)
+        document.value = parsed
         legacyMapping.value = '{}'
         initialiseChoices()
         if (document.value.format === 'cuaderno-recipes-v2') await loadPackages(token)
@@ -246,14 +302,27 @@ function packageTitle(item: any) {
     return `${item.food_name} — ${item.label} (${item.quantity} ${item.unit_name})`
 }
 
+function catalogTitle(items: CatalogItem[], ref: string | null, fallback: string) {
+    if (ref === null) return fallback
+    const item = items.find(candidate => candidate.ref === ref)
+    return item?.name || ref
+}
+
+function conversionTitle(item: CatalogConversion) {
+    const baseUnit = catalogTitle(units.value, item.base_unit_ref, 'unidad desconocida')
+    const convertedUnit = catalogTitle(units.value, item.converted_unit_ref, 'unidad desconocida')
+    const scope = catalogTitle(foods.value, item.food_ref, 'conversión general')
+    return `${item.base_amount} ${baseUnit} → ${item.converted_amount} ${convertedUnit} · ${scope}`
+}
+
 function mapping(): Record<string, any> {
     if (!isV2.value) {
         const parsed = JSON.parse(legacyMapping.value || '{}')
         if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('Las correspondencias deben ser un objeto JSON.')
         return parsed
     }
-    const result: Record<string, Record<string, number>> = {foods: {}, units: {}, packages: {}}
-    for (const kind of ['foods', 'units', 'packages'] as const) {
+    const result: Record<string, Record<string, number>> = {foods: {}, units: {}, packages: {}, conversions: {}}
+    for (const kind of ['foods', 'units', 'packages', 'conversions'] as const) {
         for (const [ref, choice] of Object.entries(choices[kind])) {
             if (choice.mode !== 'reuse') continue
             const id = typeof choice.target === 'number' ? choice.target : choice.target?.id
@@ -271,7 +340,7 @@ async function previewImport() {
     message.value = ''
     invalidatePreview()
     try {
-        const body = exchangeBody(document.value, mapping())
+        const body = exchangeBody(toRaw(document.value), mapping())
         previewing.value = true
         const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/exchange/?preview=1', {
             method: 'POST', body: JSON.stringify(body),
@@ -294,7 +363,7 @@ async function confirmImport() {
     if (!document.value || !previewHash.value || importing.value) return
     message.value = ''
     try {
-        const body = exchangeBody(document.value, mapping(), previewHash.value)
+        const body = exchangeBody(toRaw(document.value), mapping(), previewHash.value)
         importing.value = true
         const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/exchange/', {
             method: 'POST', body: JSON.stringify(body),
