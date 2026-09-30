@@ -122,11 +122,16 @@
                                 <v-list-item v-for="line in plan.snapshot.needs" :key="line.food_id" :title="line.food_name" :subtitle="`${line.quantity} ${line.unit_name || '(sin unidad)'}`" />
                             </v-list>
                             <p v-if="plan.state === 'confirmed'" class="mt-2">La ficha no cambia al actualizar precios o recetas. Producir no registra stock de producto terminado ni descuenta subelaboraciones además de sus ingredientes.</p>
+                            <v-alert v-if="plan.state === 'cancelled' && plan.snapshot?.production?.reversal" type="success" role="status" class="mt-3">
+                                <p class="font-weight-bold">Producción revertida</p>
+                                <p>{{ reversalAuditLabel(plan.snapshot.production) }}</p>
+                            </v-alert>
                             <service-preparation-panel class="mt-4" :service-id="plan.id" :service-state="plan.state" />
                         </v-card-text>
                         <v-card-actions class="flex-wrap ga-2 no-print">
                             <v-btn v-if="plan.state === 'draft'" color="primary" :loading="busyPlan === plan.id" :disabled="busyPlan !== null" min-height="44" @click="transition(plan, 'confirm')">Confirmar ficha</v-btn>
                             <v-btn v-if="plan.state === 'confirmed'" color="primary" :disabled="busyPlan !== null" min-height="44" @click="confirmation = {plan, action: 'produce'}">Producir</v-btn>
+                            <v-btn v-if="plan.state === 'produced'" color="primary" :disabled="busyPlan !== null" min-height="44" @click="confirmation = {plan, action: 'reverse'}">Revertir producción</v-btn>
                             <v-btn v-if="['draft', 'confirmed'].includes(plan.state)" :disabled="busyPlan !== null" min-height="44" @click="confirmation = {plan, action: 'cancel'}">Cancelar servicio</v-btn>
                         </v-card-actions>
                     </v-card>
@@ -135,15 +140,23 @@
         </section>
         <v-dialog :model-value="confirmation !== null" max-width="520" @update:model-value="value => { if (!value && busyPlan === null) confirmation = null }">
             <v-card v-if="confirmation">
-                <v-card-title>{{ confirmation.action === 'produce' ? 'Producir servicio' : 'Cancelar servicio' }}</v-card-title>
+                <v-card-title>{{ confirmationTitle(confirmation.action) }}</v-card-title>
                 <v-card-text>
                     <p>{{ confirmation.plan.title }} · {{ confirmation.plan.covers }} comensales.</p>
                     <p v-if="confirmation.action === 'produce'">En Integral se consumirán las necesidades congeladas del hogar asignado. Si faltan existencias utilizables no se descontará nada. En Profesional solo se registrará el estado producido.</p>
+                    <p v-else-if="confirmation.action === 'reverse'">
+                        La reversión completa restaurará todas las asignaciones de existencias consumidas por este servicio.
+                        La necesidad bruta ya incluía la merma: no se registrará un segundo consumo.
+                        Los movimientos originales se conservarán en el historial.
+                        En Profesional no se modificó el stock y la reversión tampoco creará movimientos de existencias.
+                    </p>
                     <p v-else>Se conservará el servicio como cancelado sin cambiar las existencias.</p>
                 </v-card-text>
                 <v-card-actions>
                     <v-btn :disabled="busyPlan !== null" min-height="44" @click="confirmation = null">Volver</v-btn>
-                    <v-btn color="primary" :loading="busyPlan !== null" min-height="44" @click="transition(confirmation.plan, confirmation.action)">Confirmar acción</v-btn>
+                    <v-btn color="primary" :disabled="busyPlan !== null" :loading="busyPlan !== null" min-height="44" @click="transition(confirmation.plan, confirmation.action)">
+                        {{ confirmation.action === 'reverse' ? 'Confirmar reversión' : 'Confirmar acción' }}
+                    </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -179,13 +192,23 @@ type ServiceRow = {
     id: number; title: string; covers: string; service_date: string | null; state: string;
     snapshot?: {cost?: {status: string; total: string | null; display: string | null}; warnings?: unknown[];
         finance?: RecipeFinance;
-        needs?: {food_id: number; food_name: string; quantity: string; unit_name: string | null}[]}
+        needs?: {food_id: number; food_name: string; quantity: string; unit_name: string | null}[];
+        production?: {
+            produced_at?: string; edition?: string; movement_ids?: number[]; stock_changed?: boolean;
+            reversal?: {
+                key_sha256?: string; reversed_at?: string; reversed_by?: number;
+                original_movement_ids?: number[]; movement_ids?: number[];
+            };
+        };
+    }
 }
+type ServiceAction = 'confirm' | 'produce' | 'cancel' | 'reverse'
+type ReversalResponse = ServiceRow & {stock_changed: boolean; reversal_movement_ids: number[]}
 const services = ref<ServiceRow[]>([])
 const loadingServices = ref(false)
 const listMessage = ref('')
 const busyPlan = ref<number | null>(null)
-const confirmation = ref<{plan: ServiceRow; action: 'produce' | 'cancel'} | null>(null)
+const confirmation = ref<{plan: ServiceRow; action: 'produce' | 'cancel' | 'reverse'} | null>(null)
 const serviceRequests = inventoryRequests()
 const sheet = reactive({component: "", quantity: ""})
 const allergen = reactive({food: null as any, name: "", state: "unknown"})
@@ -278,6 +301,73 @@ function stateLabel(state: string) {
     return ({draft: 'Borrador', confirmed: 'Confirmado', produced: 'Producido', cancelled: 'Cancelado'} as Record<string, string>)[state] || state
 }
 
+function confirmationTitle(action: ServiceAction) {
+    if (action === 'produce') return 'Producir servicio'
+    if (action === 'reverse') return 'Revertir producción'
+    return 'Cancelar servicio'
+}
+
+function reversalAuditLabel(production: NonNullable<NonNullable<ServiceRow['snapshot']>['production']>) {
+    const audit = production.reversal
+    if (!audit) return ''
+    const completed = audit.reversed_at ? `Reversión completada el ${audit.reversed_at}. ` : 'Reversión completada. '
+    if (production.edition === 'profesional') {
+        return `${completed}Profesional: completada sin movimientos de existencias. Se conserva el historial original de producción.`
+    }
+    const count = audit.movement_ids?.length || 0
+    return `${completed}Existencias restauradas con ${count} movimientos compensatorios. Se conserva el historial original de consumos.`
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function positiveIds(value: unknown): number[] | null {
+    if (!Array.isArray(value) || value.some(item => !Number.isInteger(item) || item <= 0)) return null
+    const identifiers = value as number[]
+    return new Set(identifiers).size === identifiers.length ? identifiers : null
+}
+
+function sameIds(first: number[], second: number[]) {
+    return first.length === second.length && first.every((value, index) => value === second[index])
+}
+
+function validReversalResponse(value: unknown, plan: ServiceRow): value is ReversalResponse {
+    if (!isRecord(value) || value.id !== plan.id || value.state !== 'cancelled' || typeof value.stock_changed !== 'boolean') return false
+    const responseIds = positiveIds(value.reversal_movement_ids)
+    const snapshot = value.snapshot
+    const previousProduction = plan.snapshot?.production
+    if (responseIds === null || !isRecord(snapshot) || !previousProduction || !isRecord(snapshot.production)) return false
+    const production = snapshot.production
+    const audit = production.reversal
+    if (!isRecord(audit) || Object.keys(audit).sort().join(',') !== 'key_sha256,movement_ids,original_movement_ids,reversed_at,reversed_by') return false
+    const originalIds = positiveIds(audit.original_movement_ids)
+    const reversalIds = positiveIds(audit.movement_ids)
+    const productionIds = positiveIds(production.movement_ids)
+    const previousIds = positiveIds(previousProduction.movement_ids)
+    if (originalIds === null || reversalIds === null || productionIds === null || previousIds === null) return false
+    if (
+        !sameIds(responseIds, reversalIds)
+        || reversalIds.length !== originalIds.length
+        || !sameIds(originalIds, productionIds)
+        || !sameIds(originalIds, previousIds)
+        || reversalIds.some(identifier => originalIds.includes(identifier))
+        || value.stock_changed !== (reversalIds.length > 0)
+        || production.produced_at !== previousProduction.produced_at
+        || production.edition !== previousProduction.edition
+        || production.stock_changed !== previousProduction.stock_changed
+    ) return false
+    return (
+        typeof audit.key_sha256 === 'string'
+        && /^[0-9a-f]{64}$/.test(audit.key_sha256)
+        && typeof audit.reversed_at === 'string'
+        && audit.reversed_at.length > 0
+        && !Number.isNaN(Date.parse(audit.reversed_at))
+        && Number.isInteger(audit.reversed_by)
+        && Number(audit.reversed_by) > 0
+    )
+}
+
 async function loadServices() {
     if (loadingServices.value) return
     loadingServices.value = true
@@ -288,17 +378,59 @@ async function loadServices() {
     listMessage.value = ''
 }
 
-async function transition(plan: ServiceRow, action: 'confirm' | 'produce' | 'cancel') {
+async function transition(plan: ServiceRow, action: ServiceAction) {
     if (busyPlan.value !== null) return
+    const submittedConfirmation = confirmation.value
     busyPlan.value = plan.id
-    const payload = {action, ...(action === 'produce' ? {idempotency_key: serviceRequests.key('produce-service', {plan: plan.id})} : {})}
-    const {ok, status, data} = await readJson(await cuadernoFetch(`/api/cuaderno/services/${plan.id}/`, {method: 'POST', body: JSON.stringify(payload)}))
-    busyPlan.value = null
-    if (!ok) { listMessage.value = explain(status, data); confirmation.value = null; return }
-    const index = services.value.findIndex(row => row.id === plan.id)
-    if (index !== -1) services.value[index] = data
-    confirmation.value = null
-    listMessage.value = data.stock_changed ? 'Producción registrada y existencias descontadas una sola vez.' : `${stateLabel(data.state)}. Las existencias no han cambiado.`
+    const payload = {
+        action,
+        ...(action === 'produce' ? {idempotency_key: serviceRequests.key('produce-service', {plan: plan.id})} : {}),
+        ...(action === 'reverse' ? {idempotency_key: serviceRequests.key('reverse-service', {plan: plan.id})} : {}),
+    }
+    try {
+        const {ok, status, data} = await readJson(await cuadernoFetch(`/api/cuaderno/services/${plan.id}/`, {
+            method: 'POST', body: JSON.stringify(payload),
+        }))
+        if (!ok) {
+            listMessage.value = explain(status, data)
+            if (action !== 'reverse' && confirmation.value === submittedConfirmation) confirmation.value = null
+            return
+        }
+        if (action === 'reverse' && !validReversalResponse(data, plan)) {
+            listMessage.value = 'La respuesta de reversión está incompleta o incoherente. No se actualizó el servicio; reintenta con la misma confirmación.'
+            return
+        }
+        const index = services.value.findIndex(row => row.id === plan.id)
+        if (index !== -1) {
+            // Reversal changes only state and its audit. Never replace the
+            // frozen financial/needs document with unrelated response fields.
+            services.value[index] = action === 'reverse' ? {
+                ...plan,
+                state: 'cancelled',
+                snapshot: {
+                    ...plan.snapshot,
+                    production: {...plan.snapshot?.production, reversal: data.snapshot.production.reversal},
+                },
+            } : data
+        }
+        if (confirmation.value === submittedConfirmation) confirmation.value = null
+        if (action === 'reverse') {
+            const professional = data.snapshot?.production?.edition === 'profesional'
+            listMessage.value = data.stock_changed
+                ? 'Producción revertida y existencias restauradas. Los consumos originales permanecen en el historial.'
+                : professional
+                    ? 'Producción revertida. En Profesional no se había modificado el stock; no se crearon movimientos de existencias. El historial original se conserva.'
+                    : 'Producción revertida. Las existencias no habían cambiado y el historial original se conserva.'
+            return
+        }
+        listMessage.value = data.stock_changed ? 'Producción registrada y existencias descontadas una sola vez.' : `${stateLabel(data.state)}. Las existencias no han cambiado.`
+    } catch {
+        listMessage.value = action === 'reverse'
+            ? 'No se pudo revertir la producción. La confirmación sigue abierta para reintentar con seguridad.'
+            : 'No se pudo completar la acción del servicio. Inténtalo de nuevo.'
+    } finally {
+        busyPlan.value = null
+    }
 }
 
 function printServices() { window.print() }
