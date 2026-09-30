@@ -396,6 +396,8 @@ class MergeMixin(ViewSetMixin):
                         PackageFormat.objects.filter(space=source.space, food=source, is_reference=True).update(is_reference=False)
 
                 if isinstance(source, Unit):
+                    from cuaderno.services.unit_merge import preserve_native_unit_relations
+                    preserve_native_unit_relations(source, target)
                     UnitConversion.objects.filter(base_unit=source).delete()
                     UnitConversion.objects.filter(converted_unit=source).delete()
 

@@ -505,6 +505,21 @@ class RecipeExchangeView(APIView):
             digest = hashlib.sha256(
                 json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
             ).hexdigest()
+            # Canonical default metadata did not exist before cookbook0243.
+            # Preserve old replay identities only for semantically unchanged yields.
+            legacy_payload = json.loads(json.dumps(payload))
+            legacy_equivalent = True
+            for ingredient in [*legacy_payload["ingredients"], *(row for step in legacy_payload["steps"] for row in step["ingredients"])]:
+                if ingredient.get("quantity_basis") != "gross" or ingredient.get("yield_ratio") is not None:
+                    legacy_equivalent = False
+                    break
+                ingredient.pop("quantity_basis", None)
+                ingredient.pop("yield_ratio", None)
+            legacy_digest = None
+            if legacy_equivalent:
+                legacy_digest = hashlib.sha256(
+                    json.dumps(legacy_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest()
             identity = (item["source"], item["external_id"])
             if identity in seen and seen[identity] != digest:
                 raise ImportConflict({"external_id": "Identificador repetido con contenidos diferentes."})
@@ -516,7 +531,7 @@ class RecipeExchangeView(APIView):
                 source=item["source"],
                 external_id=item["external_id"],
             ).select_related("recipe").first()
-            if prior and prior.payload_sha256 != digest:
+            if prior and prior.payload_sha256 not in {digest, legacy_digest}:
                 raise ImportConflict({"external_id": "Ese identificador ya se importó con otro contenido."})
             if prior:
                 from cuaderno.services.costing import visible_recipes

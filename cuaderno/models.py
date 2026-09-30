@@ -278,3 +278,25 @@ class InventoryWriteRequest(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["space", "idempotency_key"], name="cuaderno_native_inventory_request")]
+
+
+class StockMinimum(models.Model):
+    """Reserve metadata only. InventoryEntry remains the sole stock balance."""
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    household = models.ForeignKey("cookbook.Household", on_delete=models.PROTECT)
+    food = models.ForeignKey("cookbook.Food", on_delete=models.PROTECT)
+    unit = models.ForeignKey("cookbook.Unit", on_delete=models.PROTECT)
+    location = models.ForeignKey("cookbook.InventoryLocation", on_delete=models.PROTECT, null=True, blank=True)
+    quantity = models.DecimalField(max_digits=32, decimal_places=16)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=models.Q(quantity__gt=0), name="cuaderno_minimum_positive"),
+            models.UniqueConstraint(
+                fields=["space", "household", "food", "location"], nulls_distinct=False,
+                name="cuaderno_minimum_scope_unique",
+            ),
+        ]

@@ -22,6 +22,7 @@ from cuaderno.models import (
     PurchaseReceipt,
     ServicePlan,
     StockMovement,
+    StockMinimum,
 )
 from cuaderno.services.costing import current_price, reference_package
 from cuaderno.services.ledger import IdempotencyConflict, apply_movement, reverse_movement
@@ -344,8 +345,16 @@ def replenishment(*, request, data) -> list[dict]:
                 raise ValidationError({"snapshot": "Una necesidad confirmada no es válida."})
             needs_by_food.setdefault(food_id, []).append((unit_id, quantity))
 
+    minimums_by_food = {}
+    for row in StockMinimum.objects.filter(space=request.space, household=household).select_related("unit", "location").order_by("food_id", "location_id", "pk"):
+        if row.unit.space_id != request.space.pk or (row.location_id and (row.location.space_id != request.space.pk or row.location.household_id != household.pk)):
+            raise ValidationError({"minimum": "El mínimo tiene una unidad o ubicación fuera de su hogar y espacio."})
+        minimums_by_food.setdefault(row.food_id, []).append(row)
+
     items = []
-    for food_id, needs in sorted(needs_by_food.items()):
+    for food_id in sorted(set(needs_by_food) | set(minimums_by_food)):
+        needs = needs_by_food.get(food_id, [])
+        minimums = minimums_by_food.get(food_id, [])
         food = Food.objects.filter(pk=food_id, space=request.space).first()
         need_units = {
             row.pk: row for row in Unit.objects.filter(pk__in={unit_id for unit_id, _ in needs}, space=request.space)
@@ -353,7 +362,7 @@ def replenishment(*, request, data) -> list[dict]:
         if food is None or len(need_units) != len({unit_id for unit_id, _ in needs}):
             raise ValidationError({"snapshot": "Un alimento o unidad confirmados ya no están disponibles."})
         package = reference_package(food)
-        target_unit = package.unit if package else need_units[needs[0][0]]
+        target_unit = package.unit if package else (need_units[needs[0][0]] if needs else minimums[0].unit)
         try:
             with localcontext() as context:
                 context.prec = 64
@@ -364,9 +373,12 @@ def replenishment(*, request, data) -> list[dict]:
                     ),
                     Decimal("0"),
                 )
+                converted_minimums = [(row, convert_native_quantity(row.quantity, row.unit, target_unit, food, request.space)) for row in minimums]
+                minimum_target = sum((amount for _, amount in converted_minimums), Decimal("0"))
         except DomainError as exc:
             raise ValidationError({exc.code: exc.message}) from exc
         usable = Decimal("0")
+        usable_by_location = {}
         entries = InventoryEntry.objects.filter(
             space=request.space,
             inventory_location__household=household,
@@ -377,12 +389,26 @@ def replenishment(*, request, data) -> list[dict]:
             try:
                 with localcontext() as context:
                     context.prec = 64
-                    usable += convert_native_quantity(entry.amount, entry.unit, target_unit, food, request.space)
+                    converted = convert_native_quantity(entry.amount, entry.unit, target_unit, food, request.space)
+                    usable += converted
+                    usable_by_location[entry.inventory_location_id] = usable_by_location.get(entry.inventory_location_id, Decimal("0")) + converted
             except DomainError as exc:
                 raise ValidationError({exc.code: exc.message}) from exc
         with localcontext() as context:
             context.prec = 64
-            missing = max(required_target - usable, Decimal("0"))
+            target_stock = required_target + minimum_target
+            location_shortfalls = []
+            for row, minimum in converted_minimums:
+                if row.location_id is not None:
+                    local_stock = usable_by_location.get(row.location_id, Decimal("0"))
+                    location_shortfalls.append({
+                        "location": row.location_id, "location_name": row.location.name,
+                        "minimum_stock": _decimal(minimum), "usable_stock": _decimal(local_stock),
+                        "missing": _decimal(max(minimum - local_stock, Decimal("0"))),
+                    })
+            # Excess in another location is not an implicit stock transfer.
+            local_deficit = sum((Decimal(row["missing"]) for row in location_shortfalls), Decimal("0"))
+            missing = max(target_stock - usable, local_deficit, Decimal("0"))
             packages = purchase_quantity = None
             if package:
                 packages = (missing / package.quantity).to_integral_value(rounding=ROUND_CEILING) if missing else Decimal("0")
@@ -392,6 +418,9 @@ def replenishment(*, request, data) -> list[dict]:
             "food": food.pk,
             "unit": target_unit.pk,
             "required": _decimal(required_target),
+            "minimum_stock": _decimal(minimum_target),
+            "target_stock": _decimal(target_stock),
+            "location_shortfalls": location_shortfalls,
             "usable_stock": _decimal(usable),
             "missing": _decimal(missing),
             "package": package.pk if package else None,

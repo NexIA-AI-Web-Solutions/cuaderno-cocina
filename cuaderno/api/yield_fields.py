@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 from django_scopes import scope
+from django.db import transaction
 
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.ingredient_yields import parse_yield_ratio, validate_yield_policy
@@ -21,6 +22,20 @@ class YieldRatioField(serializers.DecimalField):
 
 
 class IngredientYieldValidationMixin:
+    @transaction.atomic
+    def create(self, attrs):
+        try:
+            return super().create(attrs)
+        except DomainError as exc:
+            raise serializers.ValidationError({"yield_ratio": exc.message}) from exc
+
+    @transaction.atomic
+    def update(self, instance, attrs):
+        try:
+            return super().update(instance, attrs)
+        except DomainError as exc:
+            raise serializers.ValidationError({"yield_ratio": exc.message}) from exc
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         basis = attrs.get("quantity_basis", getattr(self.instance, "quantity_basis", "gross"))

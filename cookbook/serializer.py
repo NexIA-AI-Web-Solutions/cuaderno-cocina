@@ -897,6 +897,28 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
     recipe_filter = 'steps__ingredients__food'
     images = ['recipe__image']
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get('recipe') is not None:
+            from cuaderno.services.costing import visible_recipes
+            request = self.context.get('request')
+            raw = self.initial_data.get('recipe') if isinstance(self.initial_data, dict) else None
+            identifier = raw.get('id') if isinstance(raw, dict) else None
+            if request is None:
+                raise serializers.ValidationError({'recipe': 'No se puede validar la receta sin su espacio.'})
+            available = visible_recipes(request.user, request.space)
+            if identifier is not None:
+                if type(identifier) is not int or not 0 < identifier <= 9223372036854775807:
+                    raise serializers.ValidationError({'recipe': 'El identificador de receta no es válido.'})
+                available = available.filter(pk=identifier)
+            else:
+                available = available.filter(name=attrs['recipe'].get('name'))
+            recipe = available.first()
+            if recipe is None:
+                raise serializers.ValidationError({'recipe': 'La receta no está disponible en este espacio.'})
+            attrs['recipe'] = {'id': recipe.pk}
+        return attrs
+
     @extend_schema_field(bool)
     def get_substitute_onhand(self, obj):
         try:
@@ -964,6 +986,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
 
         return obj
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         if name := validated_data.get('name', None):
             validated_data['name'] = name.strip()
@@ -982,7 +1005,11 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
                 validated_data['onhand_users'] = list(set(self.instance.onhand_users.all()) - set(shared_users))
 
         # update before resetting inheritance
-        saved_instance = super(FoodSerializer, self).update(instance, validated_data)
+        from cuaderno.domain.errors import DomainError
+        try:
+            saved_instance = super(FoodSerializer, self).update(instance, validated_data)
+        except DomainError as exc:
+            raise serializers.ValidationError({'recipe': exc.message}) from exc
         if reset_inherit and (r := self.context.get('request', None)):
             Food.reset_inheritance(food=saved_instance, space=r.space)
         return saved_instance

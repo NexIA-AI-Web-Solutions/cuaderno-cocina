@@ -20,6 +20,7 @@ from cuaderno.api.purchasing import (
 from cuaderno.health import readiness
 from cuaderno.api.finance import RecipeFinanceView
 from cuaderno.api.ingredient_yields import IngredientYieldView
+from cuaderno.api.stock_minimums import StockMinimumView
 
 urlpatterns = [
     path("health/ready/", readiness),
@@ -37,6 +38,7 @@ urlpatterns = [
     path("api/cuaderno/purchase-orders/<int:order_id>/receipts/", PurchaseReceiptView.as_view()),
     path("api/cuaderno/purchase-receipts/<int:receipt_id>/reverse/", PurchaseReceiptReverseView.as_view()),
     path("api/cuaderno/replenishment/", ReplenishmentView.as_view()),
+    path("api/cuaderno/stock-minimums/", StockMinimumView.as_view()),
     path("api/cuaderno/services/", ServicePlanView.as_view()),
     path("api/cuaderno/services/<int:plan_id>/", ServicePlanView.as_view()),
     path("api/cuaderno/production/", ProductionSheetView.as_view()),

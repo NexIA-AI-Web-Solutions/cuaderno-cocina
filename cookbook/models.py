@@ -750,8 +750,11 @@ class Unit(ExportModelOperationsMixin('unit'), models.Model, PermissionModelMixi
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
     objects = ScopedManager(space='space')
 
+    @transaction.atomic
     def merge_into(self, target):
         super().merge_into(target)
+        from cuaderno.services.unit_merge import preserve_native_unit_relations
+        preserve_native_unit_relations(self, target)
 
         Ingredient.objects.filter(unit=self).update(unit=target)
         ShoppingListEntry.objects.filter(unit=self).update(unit=target)
@@ -810,6 +813,14 @@ class Food(ExportModelOperationsMixin('food'), TreeModel, PermissionModelMixin):
 
     def __str__(self):
         return self.name
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self.pk and self.recipe_id is not None:
+            from cuaderno.services.yield_integrity import assert_food_recipe_compatible
+            Space._base_manager.select_for_update().get(pk=self.space_id)
+            assert_food_recipe_compatible(self.pk, self.space_id, self.recipe_id)
+        return super().save(*args, **kwargs)
 
     @transaction.atomic
     def merge_into(self, target):
@@ -963,6 +974,14 @@ class Ingredient(ExportModelOperationsMixin('ingredient'), models.Model, Permiss
 
     space = models.ForeignKey(Space, on_delete=models.CASCADE)
     objects = ScopedManager(space='space')
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        if self.quantity_basis != "gross" or self.yield_ratio is not None:
+            from cuaderno.services.yield_integrity import assert_ingredient_yield_compatible
+            Space._base_manager.select_for_update().get(pk=self.space_id)
+            assert_ingredient_yield_compatible(self)
+        return super().save(*args, **kwargs)
 
     # def __str__(self):
     #     return f'{self.pk}: {self.amount} ' + (self.food.name if self.food else ' ') + (self.unit.name if self.unit else '')
