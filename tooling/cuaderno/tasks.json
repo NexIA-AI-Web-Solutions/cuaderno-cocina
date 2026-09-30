@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "progress_notice": "Estados de avance técnico, no aceptación de gates. Se trabaja en partes independientes aunque las dependencias sigan abiertas; solo DONE satisface dependencia. T034 requiere nuevo artefacto; T037 final no iniciado, hay revisiones parciales por bloques.",
+  "progress_notice": "Estados de avance técnico, no aceptación de gates. Solo DONE satisface dependencia. T034 tiene builda3c205924ZPASS pero upgrade final pendiente; T035 restore213552Z/rollback214236ZPASS locales, no actualización/productivo. T036 manual/guía actualizados y SBOM153/453, sin cierreJS/capturas/scan válido. T037/T038 finales abiertos. El propietario autorizó pushGitHub al cerrar tanda, noVPS.",
   "tasks": [
     {
       "id": "T001",
@@ -748,7 +748,8 @@
       ],
       "review_required": true,
       "evidence": [
-        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md",
+        "docs/cuaderno/evidence/2026-09-30-continuacion.md"
       ]
     },
     {
@@ -768,7 +769,8 @@
       ],
       "review_required": true,
       "evidence": [
-        "docs/cuaderno/evidence/2026-09-29-integrity-round.md"
+        "docs/cuaderno/evidence/2026-09-29-integrity-round.md",
+        "docs/cuaderno/evidence/2026-09-30-continuacion.md"
       ]
     },
     {

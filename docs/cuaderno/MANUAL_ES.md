@@ -1,6 +1,6 @@
 # Cuaderno Cocina — uso local
 
-La aplicación es Tandoor con módulos Cuaderno integrados. Preview local: `http://127.0.0.1:18081`, imagen933 del30 de septiembre, con costes, conversiones, alérgenos, producción, roles, almacén y PyJWT2.15. Build y smoke HTTP191420Z pasan; consulta STATUS para identidad y controles pendientes. La demo de desarrollo sigue en `18080` y no sustituye la imagen recompilada. G7 permanece abierto.
+La aplicación es Tandoor con módulos Cuaderno integrados. Preview local: `http://127.0.0.1:18081`, imagena3c del30 de septiembre, con costes, conversiones, alérgenos, producción, roles, almacén y PyJWT2.15. Build205924Z y seis smokes HTTP212029–212733 pasan sobre esta imagen. Consulta [STATUS](STATUS.md) para identidad y controles pendientes, y [PRODUCCION_ES](PRODUCCION_ES.md) para preparación del servidor, aún no desplegada. La demo de desarrollo en18080 no sustituye la imagen recompilada. G7 permanece abierto.
 
 Cuentas sintéticas, solo locales: `demo-esencial`, `demo-profesional` y `demo-integral`, contraseña de este ensayo `Demo-Cocina-2026!`. Cada una tiene su Space; no son cuentas de producción. El seed exige contraseña explícita y solo funciona sobre `cuaderno_demo` en entorno local.
 
@@ -11,7 +11,7 @@ $env:CUADERNO_DEMO_PASSWORD='Demo-Cocina-2026!'
 docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_demo
 ```
 
-Docker Desktop debe estar disponible. El script construye dependencias Python desde requisitos y constraints del checkout y el frontend desde `yarn.lock`, pudiendo reutilizar stages de Docker cacheados (como el frontend de933). Usa únicamente los contenedores/volúmenes `cuaderno-release`, no exige la antigua imagen local del pin. El primer build y las migraciones pueden tardar varios minutos. La identidad incluye HEAD y hash del contenido local, no presenta cambios sin commit como HEAD puro.
+Docker Desktop debe estar disponible. El script construye dependencias Python desde requisitos y constraints del checkout y el frontend desde `yarn.lock`, pudiendo reutilizar stages de Docker cacheados (a3c reutilizó el frontend construido ened4). Usa únicamente los contenedores/volúmenes `cuaderno-release`, no exige la antigua imagen local del pin. El primer build y las migraciones pueden tardar varios minutos: el ensayo actual duró1321.767s. La identidad incluye HEAD y hash del contenido local, no presenta cambios sin commit como HEAD puro. No editar archivos ni crear commits mientras construye.
 
 ## Esencial
 
@@ -80,10 +80,13 @@ Con ambos contenedores demo activos, publicados solo en loopback y sin otras esc
 $env:CUADERNO_ENV='local'
 $env:CUADERNO_BACKUP_TARGET='release'
 $env:CUADERNO_DEMO_PASSWORD='Demo-Cocina-2026!'
-python scripts/cuaderno/delivery_restore.py --round-trip
+docker cp scripts/cuaderno/restore_smoke.py cuaderno-release-web:/tmp/cuaderno_restore_smoke.py
+python scripts/cuaderno/check.py restore --allow-isolated-mutations
 ```
 
-Hace una copia coherente pausando únicamente la web local, vuelve a activarla en un bloque de limpieza y restaura en una base `cuaderno_restore_<identificador>` y un directorio media nuevos. Conserva los destinos para inspección. No cambia la base usada por la aplicación.
+Hace una copia coherente pausando únicamente la web local, vuelve a activarla en un bloque de limpieza y restaura en una base `cuaderno_restore_<identificador>` y un directorio media nuevos. Conserva los destinos para inspección. No cambia la base usada por la aplicación. El ensayo213552Z del a3c comprobó114tablas/949filas/110secuencias/3archivos; rollback214236Z repitió el mismo fingerprint funcional en otro destino y usando la imagen exacta, sin activar la copia.
+
+El comando `python scripts/cuaderno/check.py rollback-current --allow-isolated-mutations` está fijado al bundle local verificado `data/cuaderno/backups/20260930T212850Z-32d8a6a3`. Ese bundle y los reportes raw no se suben a GitHub: en otro checkout hay que generar y validar su propia copia, no inventar el archivo. Los scripts exigen entorno local y cuentas sintéticas; **no son automatización de backup productivo**.
 
 También conserva una base `cuaderno_restore_probe_<identificador>` para comprobar el dump antes de aceptarlo. El smoke funcional se ejecuta contra ese snapshot inmutable: login, permisos, costes y saldos no se comparan con una base viva que pudiera cambiar. Estos destinos deliberados se acumulan para diagnóstico; no hay limpieza automática ni eliminación de volúmenes.
 
@@ -91,7 +94,7 @@ La comprobación incluye las propiedades financieras y los documentos de servici
 
 El ensayo065043Z del30 de septiembre sobre imagen591 comparó mermas, reserva sintética de6L, reposición, preparación y desperdicio/reversión:114 tablas,931 filas,110 secuencias,3 media y dos tareas reales. Bundle `data/cuaderno/backups/20260930T064711Z-99941210`, destino nuevo conservado. No acredita recuperación en producción ni rollback completo. Los smokes posteriores añaden auditoría legítima: la BD viva no debe compararse con el punto del dump.
 
-Ensayo más reciente933 `190523Z-restore-9f9e8042`: PASS114tablas/945filas/110secuencias/3media, restore113.656s y pausa13.316s. Bundle `data/cuaderno/backups/20260930T190117Z-1dc8f603`, nuevo destino conservado; incluye6servicios y4tareas de preparación. Rollback aislado del mismo bundle/digest `191050Z-rollback-current-a1f15ae9` PASS106.046s con hash funcional idéntico. `check.py rollback-current --allow-isolated-mutations` apunta a ese bundle actual; `rollback` conserva el ensayo591 histórico. Ninguno sustituye el preview ni prueba recuperación en producción.
+Ensayo histórico933 `190523Z-restore-9f9e8042`: PASS114tablas/945filas/110secuencias/3media, restore113.656s y pausa13.316s. Bundle `data/cuaderno/backups/20260930T190117Z-1dc8f603`, destino conservado; incluye6servicios y4tareas de preparación. Rollback del mismo bundle/digest191050Z pasó106.046s. No es el bundle vigente de `rollback-current`: ese comando apunta ahora al a3c212850Z y pasó214236Z, como se explica arriba. `rollback` conserva el ensayo591 histórico. Ninguno activa la copia ni prueba recuperación productiva.
 
 El bundle queda en `data/cuaderno/backups/<fecha-identificador>/`: `database.dump`, `media.tar`, `manifest.json` y `restore-result.json`. Se comprueban hashes de los archivos, contenido/conteos de cada tabla, secuencias y hashes de cada media extraído. No edites el manifiesto para hacer pasar una copia dañada. Ante error se conserva el destino para diagnóstico.
 

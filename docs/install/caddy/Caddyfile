@@ -18,7 +18,8 @@
 	encode zstd gzip
 
 	request_body {
-		max_size 512MB
+		# 52 MiB exactos: mismo límite que el nginx embebido (52M).
+		max_size 54525952
 	}
 
 	reverse_proxy 127.0.0.1:8080 {

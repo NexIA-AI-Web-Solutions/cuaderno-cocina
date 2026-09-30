@@ -1,6 +1,6 @@
 # Procedencia e inventario de componentes
 
-Estado local del 2026-09-30: inventarios Python runtime, frontend instalado host y stage Linux de build validados contra el esquema oficial CycloneDX1.6. No se ha inventariado el cierre JavaScript empacado ni escaneado el SO/imagen. Se conserva la premisa contractual comunicada por el propietario y los avisos/licencias upstream; no se incorpora texto contractual privado.
+Estado local del 2026-09-30: inventarios Python runtime, frontend instalado host y stage Linux de build validados contra el esquema oficial CycloneDX1.6. No hay todavía cierre JavaScript empacado ni escaneo OS/imagen válido: los intentos Windows fallaron. Se conservan la premisa contractual y avisos/licencias upstream; no se incorpora texto contractual privado.
 
 | Componente | Pin | Uso |
 |---|---|---|
@@ -14,9 +14,11 @@ Fuentes: `../manifest/sources.lock.json`, `tooling/cuaderno/bootstrap-report.jso
 
 ## Python runtime
 
-Vigente933: imagen `sha256:9330b8cc446d9ef2924f4153b042fc578497aefad7443ad799baf2006554ae06`, build185612Z PASS1266.065s/sourcebb6a+worktree024c8 completo en STATUS. PyJWT2.15 observado/security4PASS185753Z. Audit185939Z exit1:153Python/63Alpine/unresolved0, únicamente OAuthlibadvisory por versión, con backport exacto conservado. SBOM191311Z PASS153, canónico `fc0b18c29aa57cc3961709fb37b8b4548062c18c758a7a66ad7d09df9f74207d`. Ed4 audit175100Z tenía además PyJWT2.14 advisory; SBOM175336Z canónico8acab859844e91eeb5e9d5dffad9fa8a260c49d3454b32cc65b4047c1c80fc55. No atribuir esos dos avisos a933.
+Vigentea3c: imagen/fuente f191+worktreee8999 completas en STATUS, build205924Z PASS1321.767s. Constraints153 comprobadas en build y runtime211202Z/conjunto2009d15b; pipcheck211213Z y PyJWT2.15/security4PASS211029Z. Audit211047Z exit1:153Python/63Alpine/unresolved0, únicamente OAuthlibadvisory por versión. Backport53f308e800db1005c58fe17e7310ad695a62947363f725de8259f387fa841114 reobservado en `oauthlib/oauth2/rfc6749/grant_types/authorization_code.py`. SBOM211058Z PASS153/canónico `ac5f19c7a16a3d550e38312add2d9e0e16bead9b78360510ef0c553717e014ef`. No aprobaciónOS/avisos por validar JSON.
 
-Rebuild933 cambió tres transitivas además de PyJWT: charset-normalizer3.5.1→3.5.2,filelock4.0.6→4.0.7,w3lib2.4.1→2.5.0. Cierre153versiones para CPython3.13/Alpineamd64 implementado3ea8bf323/reviewfresh, unit7PASS195519Z/SBOM153PASS195521Z/controlnegativodrift193614Z; nuevo build pendiente. Constraints y comprobación exact-set runtime/SBOM, version pins NO hashes de archives ni congelación OS/bytes; requisitos mantienen raíces y extras nativos.
+Histórico933: imagen `sha256:9330b8cc446d9ef2924f4153b042fc578497aefad7443ad799baf2006554ae06`, build185612Z PASS1266.065s/sourcebb6a+worktree024c8. PyJWT2.15/security4PASS185753Z. Audit185939Z exit1:153Python/63Alpine/unresolved0 y solo OAuthlibversión. SBOM191311Z canónico `fc0b18c29aa57cc3961709fb37b8b4548062c18c758a7a66ad7d09df9f74207d`. Ed4audit175100Z tenía además PyJWT2.14 advisory; SBOM175336Z canónico8acab859844e91eeb5e9d5dffad9fa8a260c49d3454b32cc65b4047c1c80fc55. No atribuir ambos avisos a933/a3c.
+
+Rebuild933 cambió tres transitivas además de PyJWT: charset-normalizer3.5.1→3.5.2,filelock4.0.6→4.0.7,w3lib2.4.1→2.5.0. Cierre153versiones CPython3.13/Alpineamd64 implementado3ea8bf323/reviewfresh y empacado en a3c: unit7PASS195519/SBOM153PASS195521/controlnegativodrift193614, build205924 y runtime211202 PASS153. Los pins NO son hashes de archives ni congelación OS/bytes; requisitos mantienen raíces y extras nativos.
 
 Corrección factual: stagefrontend/Node/node_modules no copiados, pero la dependencia Python nativa `nodejs-wheel-binaries==24.19.0` contiene `venv/lib/python3.13/site-packages/nodejs_wheel/bin/node`, observado en933 y registrado enSBOMPython. La afirmación histórica «Node ausente» era demasiado amplia.
 
@@ -46,4 +48,12 @@ Validar estructura no prueba ausencia de vulnerabilidades, contenido íntegro de
 
 ## Escaneo OS/imagen en preparación
 
-Grype0.119.0 instalado SOLO en data/cuaderno/tooling desde [release oficial immutable](https://github.com/anchore/grype/releases/tag/v0.119.0). ZipSHA1db5c23b8ba0038a04acebed9c17945e1ade68d9f83e2fe1c101e4fb1feb9a48 y exeSHA5fa9104fb0630b9cd8049b12cb7b29713ce58fcaf586a26b3ad93d418982a52c comprobados. DBschema6.1.9 construida2026-09-30T06:32:47Z, digest importxxh64:8803575133ab5141, archivoSHA04d141a255a18805a25dae81566dd3696c551be38bfe17929fd1008b338228d4. Wrapperbf4df540d conguardas/timeout/offline/root11unitGREEN195812Z y revisión independiente freshaprobada, sin scanner real aún. Se rehash tool/DB/archive y revalida imagen/binding final, rejectsignoredfindings. No mount del socket Docker ni de datos de otros proyectos. No aprobación G7 por inventario o instalación.
+Grype0.119.0 instalado SOLO en data/cuaderno/tooling desde [release oficial immutable](https://github.com/anchore/grype/releases/tag/v0.119.0). ZipSHA1db5c23b8ba0038a04acebed9c17945e1ade68d9f83e2fe1c101e4fb1feb9a48 y exeSHA5fa9104fb0630b9cd8049b12cb7b29713ce58fcaf586a26b3ad93d418982a52c comprobados. DBschema6.1.9/built2026-09-30T06:32:47Z/digestxxh64:8803575133ab5141/SHA04d141a255a18805a25dae81566dd3696c551be38bfe17929fd1008b338228d4. Wrapperbf4 + fixes7106(fullGit40)/cfff(DBstatusshape CLIreal), ROOTunit11PASS211252Z/reviewfresh. Se rehash tool/DB/archive y revalida imagen/binding final; ningúnignored finding se da por limpio.
+
+Intentos reales:210844Z FAILDBstatuspreflight (corregido);211543Z FAILscanner. GrypeWindows crea nombres de caché con `sha256:` que Windows rechaza; diagnóstico CLI confirma el fallo al catalogar capas. Se conserva el archivo exacto de imagen269268480bytes en `data/cuaderno/scans/ccb83f86-f85e-48b1-9758-75826e9168d2`; grype.json vacío NO es informe válido ni cero vulnerabilidades. No mount del socket Docker ni de otros proyectos.
+
+Linux0.119 preparado desde el mismo release, archiveSHA3fa2dc4b924621ab65404cf08d0b8438d896d80ab949c9d5a4ca283c36004c9b coincidente con checksums oficiales; binarioSHAe02ba25615668c6bae03473e3c6493b6dfffc2e4e419f65f9bd62555ac10cd0e. **No se ha ejecutado todavía el scanLinux**. Debe aislarse sin red/socket, usar el archive/DB fijados y conservar todos los hallazgos; no G7 por instalación.
+
+## Tooling de módulos frontend preparado, no integrado
+
+Commita447e1db1 añade `frontend_build_provenance.mjs` reutilizando el índice realpath de `frontend_inventory.mjs`. Observa módulos/chunks principales y SW por separado y hashea archivos finales; normaliza rutas, distingue virtual/unresolved/external y rechaza escapes/junctions. P1rootoutDirswap/P2testvacuocerrados con RED212417→ROOT11GREEN212643/freshreview. **Sin wiring Vite/Docker ni build real:** el test simula los bytes finales, no acredita orden Workbox efectivo ni cierre npm exacto. Inventario frontend453 revalidado211115Z en a3c, todavía cacheado del stageed4.

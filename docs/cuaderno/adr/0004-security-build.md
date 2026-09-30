@@ -1,6 +1,8 @@
 # ADR 0004 — Dependencias corregidas y build sin imagen local opaca
 
-2026-09-29, implementación en verificación. No altera sources.lock ni la imagen baseline intacta.
+Iniciado2026-09-29; build y runtime comprobados30sep, con audit por versión y escaneo válido todavía abiertos. No altera sources.lock ni la imagen baseline intacta; no aprobación globalG7.
+
+Actualización de evidencia30sep: builda3c205924Z PASS con153versions constrained; PyJWT2.15/security4PASS211029Z, audit211047Z exit1 SOLOOAuthlibversión y backport53f308e8 reobservado. Scans GrypeWindows210844/211543 fallaron, no escaneoOS válido; Linux preparado pendiente. Las referencias a591/933 posteriores conservan cronología, no sustituyen la identidad vigente de STATUS. Sin aprobaciónG7 ni producción.
 
 Se mantienen la rama Django 5.2 y las APIs nativas. Parches iniciales exactos Django 5.2.17/PyJWT 2.14.0, no actualización indiscriminada a latest. Fuentes primarias: [Django](https://www.djangoproject.com/weblog/2026/aug/04/security-releases/), [PyJWT](https://github.com/jpadilla/pyjwt/security/advisories/GHSA-w6j9-cwv2-h6wq). La actualización focal posterior a PyJWT2.15.0 se registra abajo, sin sustituir esta procedencia.
 

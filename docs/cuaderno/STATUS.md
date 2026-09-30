@@ -1,57 +1,46 @@
 # Estado del producto
 
-Actualización local del 30 de septiembre de 2026. HEAD `cb474ccf9`, rama `cuaderno/main`; G7 no firmado. Solo agentes hijos GPT-6.1 Sol, según la restricción Sol6.1/Luna6 del propietario; modelo efectivo de raíz no atribuido. Sin push, publicación, VPS, migración del cliente ni datos reales.
+Cierre de tanda local del 30 de septiembre de 2026. Rama `cuaderno/main`; **G7 sigue abierto**. El propietario autorizó ahora push a GitHub: primer push confirmado hasta `cfffdd338`, sin force ni PR. La documentación y el tooling posteriores se integran por separado. Solo hijos GPT‑6.1 Sol; no se atribuye un modelo efectivo a raíz. No VPS, datos reales ni migración del cliente.
 
-## Preview y código efectivo
+## Usar la aplicación
 
-Abre http://127.0.0.1:18081. Producto real derivado de Tandoor: Django/DRF, Vue/Vuetify y PostgreSQL. Los donantes no participan en runtime. Esencial500€+17€/mes, Profesional1000€+20€/mes e Integral1500€+30€/mes son metadata comercial; no se retiran funciones nativas útiles.
+Abre http://127.0.0.1:18081. [Manual español](MANUAL_ES.md), [arranque y preparación de producción](PRODUCCION_ES.md), [checklist](RELEASE_CHECKLIST.md). Cuentas SOLO DEMO: `demo-esencial`, `demo-profesional`, `demo-integral`; contraseña `Demo-Cocina-2026!`. Cada Space es independiente.
 
-- Imagen vigente: `sha256:9330b8cc446d9ef2924f4153b042fc578497aefad7443ad799baf2006554ae06`.
-- Fuente efectiva: `bb6a6f7f9930080d0ad2b5c333d43f0e9a7cbc3b+worktree.024c8ef20ad7005cf4fab4a9ddd1719deef04e1c892a0f21671d7ebda26a71c2`.
-- Build/arranque `185612Z-local-up-31ecfe42` PASS1266.065s, healthy. Reinstalación completa de dependencias Python y pip check correcto; frontend previamente construido desde lock reutilizado por cache. Fuente congelada hasta terminar; hash reobservado024c8 durante el build, identidad runtime coincidente.
-- Incluye privacidad nativa, conversiones, densidad, precisión, alérgenos, merma teórica, roles y reversión completa revisados; ahora PyJWT2.15.0 comprobado dentro de runtime. Comprobación de esquema cookbook0243/cuaderno0016 en anterior imagened4; nueva imagen no añade migraciones. Upgrade desde pin del artefacto nuevo aún pendiente.
-- No se copian Git, fuentes Vue, node_modules ni tests cookbook/cuaderno, comprobado dentro del runtime. **Corrección de alcance:** la dependencia Python nativa nodejs-wheel-binaries24.19.0 sí incluye `venv/lib/python3.13/site-packages/nodejs_wheel/bin/node`. La afirmación anterior «Node ausente» era demasiado amplia; el stage frontend no se copia, pero existe ese binario transitivo nativo.
-- ed4 y591 se conservan como imágenes anteriores. Restore933190523Z y rollback933191050Z PASS, bundle190117Z-1dc8f603:114tablas/945filas/110secuencias/3media y fingerprint funcional idéntico. Siempre BD/media nuevas; no activar rollback ni downgrade de esquema vivo. Upgrade933 desde pin todavía pendiente.
+Es Tandoor real: Django/DRF, Vue/Vuetify y PostgreSQL. Los donantes no participan en runtime. Esencial500€+17€/mes, Profesional1000€+20€/mes e Integral1500€+30€/mes son metadata comercial, no una pasarela; no se retiran funciones nativas útiles.
 
-Cuentas SOLO DEMO locales: `demo-esencial`, `demo-profesional`, `demo-integral`; contraseña en [MANUAL_ES](MANUAL_ES.md). Spaces sintéticos independientes; seis servicios conservados y saldo Integral aceite5L tras reversión. G0/18080 es entorno separado de tests, no el artefacto de entrega.
+## Artefacto comprobado
 
-## Resultados reales
+- Imagen vigente: `sha256:a3c426362270c835ed795741ff92c205c62cf40d53ac6c6905dc69d728a8598c`, healthy.
+- Fuente efectiva: `f191c6b29c5afb2e1b251b8ae446d4fa19205b64+worktree.e8999bc1868565229f2129adfa77543cdaa4b4b6262396bc04652f551d4a53fb`.
+- `205924Z-local-up-4298bc82` PASS1321.767s. Checkout congelado hasta terminar. Pythonstage636s reconstruido con153constraints, pipcheck y exact-set. Frontend CACHE del builded4: no nueva compilaciónVue.
+- Ya incluye guardFoodf8186, predicadoPackagecb474 y perfilDB_OPTIONSjitoffb1b7, además de las correcciones previas de privacidad, conversiones, densidad, precisión, alérgenos, merma teórica, roles y reversión.
+- Runtime `211202Z-runtime-python-lock-fd5073e9` PASS153/conjunto `2009d15b8f39b8051a5afe772e90487f898f91a38fdb6de15f23e163799e01bb`; `211213Z-runtime-pip-check-0a14d216` PASS; `211224Z-runtime-db-profile-a0382f10` muestra jit=off y libpq_options=-c jit=off.
+- Git, fuentesVue, node_modules y tests cookbook/cuaderno ausentes, reobservado. Node24.19.0 sí existe en la dependencia Python nativa nodejs-wheel-binaries; no afirmar ausencia absoluta.
+- Scanner7106/cfff y toolingJSa447 son cambios posteriores de checkout. El collector JS **no está conectado a Vite/Docker ni empacado**. No confundir su commit con la fuente f191 del preview.
 
-| Comprobación | Resultado y alcance |
+## Resultados de esta imagen
+
+| Comprobación | Resultado real |
 |---|---|
-| Seguridad PyJWT | `185753Z-pyjwt-security-b78a46d8` PASS4/4 en933/PyJWT2.15.0; RED2RecursionError/4 previo ened4. EnG0 security4PASS180654Z y OAuth/social50PASS180814Z. No bypass de firma ni explotación real afirmados. |
-| Audit runtime actual | `185939Z-runtime-audit-8981818f` exit1:153Python/63Alpine/unresolved0, solo OAuthlib3.3.1 GHSA-xpv3-w29h-x7cv; PyJWT ya no aparece. Backport OAuthlib exacto en build, no ocultar advisory por versión. No escaneo OS por este script. |
-| Native API | `180222Z-native-api-ae3b4c36` PASS674/674,757.15s sobre backend2e/PyJWT2.14. |
-| Native other | `174727Z-native-other-51d9b26c` PASS571/571,735.74s;1warning Pillow. Backend2e/PyJWT2.14. |
-| Native views | `181023Z-native-views-f11dfa0a` PASS34/34,64.85s sobre backend2e/PyJWT2.15. Particiones disjuntas; NO todos1279 bajo dependencia idéntica. |
-| Regresión privacidad PostgreSQL | `170621Z-privacy-hardening-regression-ff8b9d80` PASS206/206,673.378s: Food28/locks19/Recipe15/allergens13, operaciones, SQL, roles y reversión. Review independiente aprobada. |
-| Producción/roles/grupos | `170945Z-production-role-regression-e296de31` PASS40/40:15 merma/8roles/17grupos. Subreceta repetida conserva trazas, consume1.875 una vez, sin WASTE adicional. |
-| Precisión | `164752Z-ratio-regression-5078e68f` PASS91/91; costes unknown/incomplete conservados, scope estricto para producción/alérgenos. |
-| Integración ampliada | 341PASS115316Z es HISTÓRICO y no cubre todos los módulos posteriores. Ampliación y rerun pendientes. No sumar suites solapadas. |
-| UI | Merma21PASS170844Z y roles6PASS170825Z, SFC virtual y revisión independiente. Otros contratos UI históricos en evidencia. No DOM/Vuetify real/browser. |
-| Typecheck | `083231Z-typecheck-8df18f93` RED626, baseline650/ceroCuaderno-service-worker; antiguos PASS sin `-p` eran vacuos. |
-| Lint Cuaderno | `171100Z-format-916932d3` exit0; no lint global upstream. |
-| Rendimiento SOLO | `182336Z-performance-db94defa` RED5,359.062s tests. Coste250.363ms P95/15SQL cumple300; servicios145.135seq cumple500/1172.425concurrente falla; movimientos1283.217seq/4329.549concurrente y formatos1981.986seq/4033.174concurrente fallan500. Dataset/status/cardinalidades exactos, umbrales/muestras intactos. |
-| SBOM | Runtime933: Python153PASS191311Z canónico fc0b18c2; frontend stageLinux453PASS191332Z canónico359a23f4. Host451 histórico. Inventario instalado NO cierreJS. Cierre153versiones candidato/root7unitPASS195519Z y SBOM153PASS195521Z; nuevo build pendiente, no congela bytes/OS. |
-| Recuperación histórica591 | Upgrade070137Z PASS513.173s, restore065043Z PASS114tablas/931filas/110secuencias/3media; rollback completo aislado164259Z PASS171.554s. Nuevos destinos, hashes/fingerprint idénticos; sin reemplazar preview ni downgrade vivo. |
-| Browser | B04: cliente autorizado devuelve No browser is available/list=[]; capturas, responsive e impresión pendientes. Sin bypass ni claim iPad físico. |
+| PyJWT | `211029Z-pyjwt-security-5f56a50f` PASS4/4, PyJWT2.15.0. |
+| Audit Python | `211047Z-runtime-audit-5f274d52` exit1:153Python/63Alpine/unresolved0. Único aviso OAuthlib3.3.1 GHSA-xpv3-w29h-x7cv por versión; backport exacto53f308e8 reobservado. No se oculta ni equivale a scanOS. |
+| SBOM | Python153 PASS211058Z/canónicoac5f19c7; frontend453 PASS211115Z/canónico359a23f4. Árbol instalado, no cierreJS. |
+| HTTP tres ediciones | Genérico212029Z, precios212155Z, lecturas212324Z, preparación212448Z, reversión212611Z y waste212733Z PASS. Sin DOM; logins serializados. |
+| Alcance de escrituras | Genérico guarda dos finanzas y reutiliza dos servicios confirmados; preparación marca/desmarca cuatro veces y conserva auditoría. Reversión revalida servicioscancelled5/6/movimientos6/7 existentes, writes0; waste revalida4/5, no nueva producción o desperdicio. Saldo Integral5L. |
+| Backup/restore | `213552Z-restore-2172450d` PASS:114tablas/949filas/110secuencias/3media, BD/media nuevas;117.785s/pausa13.792s. Bundle `data/cuaderno/backups/20260930T212850Z-32d8a6a3`. |
+| Rollback aislado | `214236Z-rollback-current-6c30d463` PASS107.430s, DB `cuaderno_restore_rollback_db56b593d8b7`, imagen/fingerprint idénticos. Ensayo directo previo PASS115.782s también retenido; nunca activación del preview ni downgrade vivo. |
+| Documentación productiva | Ejemplo Compose validado con `214015Z-production-doc-config-43a4ed15` PASS solo sintaxis/config. No VPS/TLS/settings override ejecutados. |
 
-HTTP sobre **933**: genérico191420Z PASS, tres ediciones/costes, dosfinanzasPUTCSRF y dosservicios existentes con ficha, sin moverstock. Sobre anterior **ed4**: precios174053Z, preparación174430Z, reversión181056Z, desperdicio181249Z y lecturas181533Z PASS, repetir el artefacto final. Reversión creó Pro5/Integral6 cancelled y movimientos6/7; Integral5→4.6→5, V2/replay/conflicto/CSRF/ACL verificados. Waste revalida par4/5 antiguo, NO creación nueva. Lecturas admin/Responsable/allergensunknown, seis pares cruzados404 y stock/sheets intactos; no Guest/Cocina/downgradeHTTP. Preparación modifica cuatro checks y restaura sus estados, pero no verifica lectura de auditoría.
+Fingerprint funcional del backup y rollback: `07c232c3544bf4d91b86fef9ab182feebbcb332867d6e58d7518112ed6eb1315`. Dump `dcf40880166589e9948fe7b15aa3bf423d8e4c64bec98815ed8b6a517ef57b7a`. El manifiesto distingue ImageIDa3c de source_commit del checkouta447: este último **no sustituye TANDOOR_REFf191**.
 
-Smokes comprometidos/revisados: reversión root23unitPASS180809Z/commit0c6123402, lecturas12unitPASS181505Z/commitbb6a6f7f9. Recuperación solo producción propia verificable, saldo final releído; cancelled propio no provoca segundo POST. Su transporte fake unitario no es la aplicación.
+## Gates todavía abiertos
 
-## Correcciones y procedencia
+Rendimiento último `203010Z-performance-profile-35cb6393` **RED5**, dataset/umbrales/muestras intactos: coste303.960ms/15SQL falla300; servicios226.423seq y movimientos213.380seq cumplen500, concurrentes1026.090/1398.686 fallan; formatos530.232seq/2158.155conc fallan500. EXPLAIN formatos bajó712.464→53.789ms, no P95global. Regresión Food/Package/JIT89PGPASS202249Z/reviewfresh, sin cambiar ACL.
 
-Backend2e27bd8ab aplica visibilidad de Food/Recipe/grafo **antes** de paginación, Space-first antes de lookup/write/proveedor/reset y base managers para detectar FK contaminadas. Compartir Space o ser admin no concede recetas privadas. Dos fixtures nativos se corrigen solo en nodos exclusivos; expectativas10/2 intactas. **141829Z falló1/17, no PASS**; la cronología completa conserva todos los RED.
+Native API674PASS180222Z/other571PASS174727Z corresponden a backend2e/PyJWT2.14; views34PASS181023Z/OAuth50PASS180814Z a2.15. No1279 bajo153dependencias idénticas ni integración ampliada final. Integración341PASS115316Z histórica. Typecheck efectivo626RED frente baseline650, ceroCuaderno; no PASS vacuo. UI SFC virtual noDOM.
 
-Dinero y cantidades Decimal, contextos locales64, gratis explícito distinto de unknown. Producción descuenta bruto una vez; clasificación de merma es teórica y congelada, no otro movimiento. IDs de ingrediente repetidos son trazas legítimas, no sumar unidades distintas. Roles Consulta/Cocina/Responsable son aliases de grupos nativos, no RBAC nuevo ni Guest globalmente readonly.
+Scanner unit11PASS211252Z/reviewfresh y fixes7106/cfff. Scans reales210844Z (DBshape, corregido) y211543Z fallaron: GrypeWindows no puede crear nombres de caché de layers con `sha256:`. Reporte vacío no es scan válido. Archivo retenido; binario Linux0.119 descargado y checksum verificado, escaneoLinux aún pendiente. ToolingJSa44711unitPASS212643Z/reviewfresh, sin wiring/build ni cierre exacto.
 
-Cambios funcionales con TDD/revisión independiente y registros en [UPSTREAM_PATCHES](UPSTREAM_PATCHES.md), [REUSE_LEDGER](REUSE_LEDGER.md) y [evidencia cronológica](evidence/2026-09-30-continuacion.md). Donantes auditados, sin portar carpetas enteras ni ejecutarlos en producción. Menos consultas no demuestra P95.
+Upgrade desde pin al a3c pendiente; upgrade591070137Z histórico no lo acredita. B04 Browser autorizado no disponible: faltan capturas, responsividad, impresión y E2E. B01 export antiguo bloquea SOLOextractor; B02 iPad físico/B03VPS externos no ejecutados.
 
-## Gates abiertos y continuidad
-
-G0 capturas; G1/G3/G4 aceptación final de contratos y flujos; G2 preview utilizable pero impresión/responsive pendientes; G5 rendimiento/seguridad integral; G6 upgrade933 pendiente, restore/rollback933 PASARON y deben repetirse sobre el próximo artefacto; cierreJS/manual final pendientes; G7 revisión final no firmada. HTTP de producción/reversión pasó ened4: no es una carencia del backend.
-
-T032: guard SQL Food f8186 y predicadoPackage directo cb474ccf9, conjunta89PGPASS202249Z/390.970s/reviewfresh. SinPythonTOCTOU/IDs/cambioACL, todavía fuera933. NativeJIToff b1b7ab3b7/SHOWjit2GREEN. Último `203010Z-performance-profile-35cb6393` RED5,320.490s SOLO: coste303.960/15SQL falla300; servicios226.423seq ymovimientos213.380seq cumplen500, concurrentes1026.090/1398.686 fallan; formatos530.232seq/2158.155conc fallan500. Dataset/umbrales intactos. EXPLAIN formatos53.789ms frente712.464 previo, mejoraSQL sí/noP95 global. Sin procesos activos; próximo build. Cierre153Python3ea8bf323/unit7/SBOM153GREEN, VERSIONESno bytes/OS. Grypebf4df540d/unit11GREEN/reviewfresh, escaneo real pendiente.
-
-B01 export antiguo bloquea SOLOextractor, no importador genérico; B02 iPad físico/B03VPS no ejecutados; B04 afecta navegador autorizado. `tasks.json` conserva dependencias y REVIEW no es DONE. Próximos comandos/procesos en [RESUME](RESUME.md); aceptación en [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md). No publicar ni usar BD real.
+Los scripts operativos son locales y abortan en producción: no retirar guardas para el servidor. La guía productiva es preparatoria, con secretos externos, media autorizada, cookies Secure y validación de proxy/dominio pendientes de ensayo real. [RESUME](RESUME.md) contiene lo pendiente; [evidencia cronológica](evidence/2026-09-30-continuacion.md) conserva todos los RED y resultados históricos. REVIEW no significa DONE.

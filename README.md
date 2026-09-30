@@ -1,3 +1,9 @@
+## Cuaderno Cocina
+
+Fork real de Tandoor. [Uso local en español](docs/cuaderno/MANUAL_ES.md), [preparación de producción](docs/cuaderno/PRODUCCION_ES.md), [estado comprobado](docs/cuaderno/STATUS.md) y [aceptación pendiente](docs/cuaderno/RELEASE_CHECKLIST.md). Rama del producto: `cuaderno/main`. El preview local funciona en `http://127.0.0.1:18081`; no se declara despliegue de producción ni G7 completado.
+
+La documentación y los avisos de Tandoor se conservan a continuación.
+
 <h1 align="center">
   <br>
   <a href="https://tandoor.dev"><img src="https://github.com/vabene1111/recipes/raw/develop/docs/logo_color.svg" height="256px" width="256px"></a>

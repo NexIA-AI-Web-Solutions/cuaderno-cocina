@@ -1,7 +1,77 @@
 {
   "schema_version": 1,
-  "notice": "Comandos ejecutados en snapshots identificados por cada run. verified NO implica PASS ni cierre G7. Preview933/sourcebb6a+worktree024c8 enSTATUS, build185612Z PASS; commits posteriores todavía no empacados. G0 debe contener código actual; runtime-audit requiere script /tmp según manual. Typecheck efectivo -p tsconfig.app.json RED626/baseline650, PASS previos sin-p vacuos. Tests PostgreSQL solo namespaces declarados, sin solapar suites pesadas. Serializar build/upgrade/backup/restore/HTTP y login5/min/IP. Backups requieren script/imagen compatibles. StageLinux453 no es cierreJS; Python153constraints no bytes/OS. Scanner real pendiente, findings noPASSlimpio.",
+  "notice": "Registro de CLI reales; verified no implica PASS ni G7. Previewa3c/sourcef191+worktreee8999, build205924ZPASS; estado/evidencias separan checkout y artefacto. Python153 VERSIONES no bytes/OS, frontend453 instalado no cierreJS. GrypeWindows real falla en layers colon, Linuxscan pendiente. HTTP serial/login5min y recuperación nuevos destinos. Namespaces de tests aislados, no suitespesadas concurrentes. Typecheck626RED/baseline650 y performance203010RED5 conservados. Usuario autorizó pushGitHub al cerrar esta tanda, noVPS.",
   "commands": {
+    "production-doc-config": {
+      "purpose": "Valida sintaxis Compose del ejemplo de producción documentado con datos sintéticos; NO inicia servicios ni prueba VPS/TLS/settings override.",
+      "argv": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-Command",
+        "$prodGuide=Get-Content docs/cuaderno/PRODUCCION_ES.md -Raw; $yamlBlock=[regex]::Match($prodGuide, '(?ms)^```yaml\\r?\\n(.*?)^```[ \\t]*$'); if(-not $yamlBlock.Success){throw 'Falta bloque YAML único'}; $env:CUADERNO_IMAGE='sha256:a3c426362270c835ed795741ff92c205c62cf40d53ac6c6905dc69d728a8598c'; $env:CUADERNO_DOMAIN='cuaderno.invalid'; $env:CUADERNO_SECRET_KEY=[guid]::NewGuid().ToString('N')+[guid]::NewGuid().ToString('N'); $env:CUADERNO_DB_PASSWORD=[guid]::NewGuid().ToString('N'); $yamlBlock.Groups[1].Value | docker compose --project-name cuaderno-prod-doc-check -f - config --quiet; exit $LASTEXITCODE"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "a447e1db19745a792bdbb85a93bdc75e878730f0+docs-worktree",
+      "verification_note": "214015Z-production-doc-config-43a4ed15 PASS: YAML de la guía vía stdin/config --quiet, variables sintéticas efímeras no impresas; solo sintaxis, no VPS/TLS/settings override.",
+      "last_result": "214015Z-production-doc-config-43a4ed15 PASSconfig--quiet; no servicios iniciados."
+    },
+    "runtime-python-lock": {
+      "purpose": "Verifica el conjunto instalado EXACTO de 153 versiones Python del runtime local; no bytes ni OS.",
+      "argv": [
+        "docker",
+        "exec",
+        "cuaderno-release-web",
+        "/opt/recipes/venv/bin/python",
+        "/tmp/cuaderno_python_lock.py",
+        "--constraints",
+        "/opt/recipes/PYTHON-PRODUCTION.constraints.txt",
+        "--installed"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "f191c6b29c5afb2e1b251b8ae446d4fa19205b64",
+      "verification_note": "211202Z-runtime-python-lock-fd5073e9 PASS153 sobre a3c; conjunto2009d15b, scriptcopiado/tmp. No bytes/OS."
+    },
+    "runtime-pip-check": {
+      "purpose": "Comprueba coherencia de dependencias Python instaladas en el preview local efectivo.",
+      "argv": [
+        "docker",
+        "exec",
+        "cuaderno-release-web",
+        "/opt/recipes/venv/bin/pip",
+        "check"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "f191c6b29c5afb2e1b251b8ae446d4fa19205b64",
+      "verification_note": "211213Z-runtime-pip-check-0a14d216 PASS, No broken requirements found, runtimea3c153."
+    },
+    "runtime-db-profile": {
+      "purpose": "Lee SHOW jit y opciones libpq de la conexión nativa del preview; no modifica servidor/umbrales.",
+      "argv": [
+        "docker",
+        "exec",
+        "cuaderno-release-web",
+        "/opt/recipes/venv/bin/python",
+        "manage.py",
+        "shell",
+        "-c",
+        "from django.db import connection; cursor=connection.cursor(); cursor.execute('SHOW jit'); print('jit='+cursor.fetchone()[0]); print('libpq_options='+connection.settings_dict['OPTIONS']['options'])"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "f191c6b29c5afb2e1b251b8ae446d4fa19205b64",
+      "verification_note": "211224Z-runtime-db-profile-a0382f10 PASS: jit=off/libpq_options=-c jit=off enruntimea3c, lectura no aceptaciónP95."
+    },
     "package-food-regression": {
       "purpose": "Regresión PostgreSQL del predicado central Food/Package y perfil nativo JIT: privacidad, ancestros/FK, shares/revokes, grafos/locks, coste/alérgenos y consultas constantes; no P95.",
       "argv": ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=recipes.test_settings", "-e", "TEST_DB_OPTIONS={'options': '-c jit=off'}", "-e", "TEST_POSTGRES_DB=cuaderno_list_queries_20260930", "cuaderno-g0-t002-web", "/opt/recipes/venv/bin/python", "manage.py", "test", "cuaderno.tests.test_food_visibility_query_shape", "cuaderno.tests.test_food_visibility", "cuaderno.tests.test_native_recipe_visibility", "cuaderno.tests.test_package_query_efficiency", "cuaderno.tests.test_list_query_efficiency", "cuaderno.tests.test_allergen_read", "cuaderno.tests.test_costing_query_shape", "cuaderno.tests.test_visibility_locking", "cuaderno.tests.test_postgresql_runtime_profile", "--noinput", "--keepdb", "--verbosity", "2"],
@@ -16,15 +86,32 @@
     },
     "image-audit-unit": {
       "purpose": "Guardas auditor de imagen local: tool/DB/archivo/identidad y errores fail-closed. Transporte simulado, no escaneo real.",
-      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_image_audit", "-v"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
-      "verified_at_commit": "f8186f106+worktree", "verification_note": "195812Z-image-audit-unit-a542722f PASS11/11,2.248s, tras RED11/2FAIL+1ERROR. Reviewfresh aprobada; transporte fake, no scan."
+      "argv": [
+        "python",
+        "-m",
+        "unittest",
+        "scripts.cuaderno.test_image_audit",
+        "-v"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "cfffdd338494a1077ae315d86a4c0441837264f5",
+      "verification_note": "ROOT210718PASS11fullGit40 y ROOT211252Z-image-audit-unit-925b42fa PASS11/11,3.631s, DBstatusshape real exacto; ambosREDconductuales/reviewfresh. Transporte fake, no scanPASS."
     },
     "image-audit": {
       "purpose": "Grype0.119.0 SHA verificado con DB offline fija; exporta imagen EXACTA release loopback a destino nuevo, conserva hallazgos completos, ningún finding silenciado.",
-      "argv": ["python", "scripts/cuaderno/image_audit.py"],
-      "cwd": ".", "timeout_seconds": 3600, "isolated_mutations": true, "verified": true,
-      "verified_at_commit": "f8186f106+worktree", "verification_note": "CLI/toolpins/destinos inspeccionados y reviewfresh aprobado, rootunit11PASS195812Z. Escaneo real pendiente; exit2 por findings no limpio."
+      "argv": [
+        "python",
+        "scripts/cuaderno/image_audit.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 3600,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "cfffdd338494a1077ae315d86a4c0441837264f5",
+      "verification_note": "Ejecutado REAL:210844Z-image-audit-cab34375 FAILpreflightDBshape→fixcfff; 211543Z-image-audit-a734fd58 FAILscanner nativoWindows. Diagnóstico Grype0.119 crea caché layers sha256:... incompatible con nombresWindows. Archivo269268480 bytes preservado en scans/ccb83f86-f85e-48b1-9758-75826e9168d2, grype.json vacío: NO resultadoOS ni findings válidos. Linuxbinary descargado/verificado pero no scanLinux aún."
     },
     "postgres-runtime-profile": {
       "purpose": "PostgreSQL real SHOWjit de la conexión de aplicación OLTP; no modifica servidor ni oculta checks de rendimiento.",
@@ -35,17 +122,38 @@
     },
     "python-lock-unit": {
       "purpose": "Siete contratos del cierre Python: pins exactos/canónicos, conjunto/PURL/SBOM estricto, requisitosroot/extrasnativos y wiringDocker; no build real.",
-      "argv": ["python", "-m", "unittest", "scripts.cuaderno.test_python_lock", "-v"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "argv": [
+        "python",
+        "-m",
+        "unittest",
+        "scripts.cuaderno.test_python_lock",
+        "-v"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
       "verified_at_commit": "f8186f106+worktree",
-      "verification_note": "195434Z-python-lock-unit-4e5c1024 RED6 subcasosPURL/7tests→195519Z-python-lock-unit-9bfdd557 GREEN7/7. Reviewfresh aprobada. Constraints153 de runtime933, conjunto de versiones no bytes/OS; siguiente build real pendiente."
+      "verification_note": "195434Z RED6PURL/7tests→195519Z GREEN7/7/reviewfresh; 3ea8 empacadoa3cbuild205924Z y runtime211202PASS153. VERSIONESno bytes/OS."
     },
     "python-lock-sbom": {
       "purpose": "Compara las153constraints conSBOM933audit y requisitosproducción; rechazo de missing/extra/versiones, no apruebaadvisories.",
-      "argv": ["python", "scripts/cuaderno/python_lock.py", "--constraints", "tooling/cuaderno/python-production.constraints.txt", "--requirements", "requirements.txt", "--sbom", ".cuaderno-runs/20260930T185939Z-runtime-audit-8981818f.log"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "argv": [
+        "python",
+        "scripts/cuaderno/python_lock.py",
+        "--constraints",
+        "tooling/cuaderno/python-production.constraints.txt",
+        "--requirements",
+        "requirements.txt",
+        "--sbom",
+        ".cuaderno-runs/20260930T185939Z-runtime-audit-8981818f.log"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
       "verified_at_commit": "f8186f106+worktree",
-      "verification_note": "195521Z-python-lock-sbom-e79a0d5b PASS153, PURL/rootextras y versionset2009d15b. Commit3ea8bf323; nuevo build pendiente."
+      "verification_note": "195521Z-python-lock-sbom-e79a0d5b PASS153/PURL/rootextras/conjunto2009d15b deSBOM933. Commit3ea8 ya empacadoa3c205924Z, runtime211202PASS153. Este comando conservaSBOM933 como control histórico, no nuevoaudit."
     },
     "python-lock-drift": {
       "purpose": "Control negativo real: SBOMed4 debe fallar contra versiones933 por PyJWT y tres transitivas; exit1 esperado, NO gateverde.",
@@ -62,11 +170,19 @@
       "verification_note": "192020Z-food-query-regression-70d47f5f PASS86/86,401.685s, reviewfresh/commitf8186f106. AntesPackagepredicate directo y sinTESTDBjitoff. NoP95."
     },
     "rollback-current": {
-      "purpose": "Restore completo aislado del bundle933 verificado, imagenexacta/DB y media NUEVAS/fingerprint; no downgrade vivo ni activación externa.",
-      "argv": ["python", "scripts/cuaderno/delivery_rollback.py", "data/cuaderno/backups/20260930T190117Z-1dc8f603"],
-      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
-      "verified_at_commit": "bb6a6f7f9+worktree",
-      "verification_note": "191050Z-rollback-current-a1f15ae9 PASS106.046s, bundle190117Z-1dc8f603/imagen933exacta, newDBrollback_f9894600d58c/newmedia,114tablas/3media/fingerprint8ca35022 idéntico. Restorecompletoaislado, noactivación/downgradevivo."
+      "purpose": "Restore completo aislado del bundle a3c verificado; imagen exacta y BD/media nuevas, no activación o downgrade vivo.",
+      "argv": [
+        "python",
+        "scripts/cuaderno/delivery_rollback.py",
+        "data/cuaderno/backups/20260930T212850Z-32d8a6a3"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "a447e1db19745a792bdbb85a93bdc75e878730f0",
+      "verification_note": "Bundlea3c212850Z-32d8a6a3 probado restore213552Z; CLI directaPASS115.782s y runner214236Z-rollback-current-6c30d463 PASS107.430s (runner112.189s), newDBrollback_db56b593d8b7/newmedia,114tablas/3media/fingerprint07c232c3 idéntico. No activación/downgradevivo. Historical933191050Z conservado en evidencia.",
+      "last_result": "214236Z-rollback-current-6c30d463 PASS107.430s, reporte data/cuaderno/rollbacks/rollback-db56b593d8b7/rollback-result.json; ImageIDa3c exacta y destinosnuevos, fingerprint07c232c3."
     },
     "food-visibility-query-shape": {
       "purpose": "PostgreSQL real: guard único lazy sobre1500Food sin enlaces Recipe, EXPLAIN loops y privacidad árbol/share/revoke/FK/recipes=; no timing ni cambio de presupuestos.",
@@ -84,10 +200,16 @@
     },
     "release-read-contracts": {
       "purpose": "HTTP solo DEMOsloopback: rolResponsable/Space, alérgenos desconocido o declarado sin ausencia, seis crucesdenegados y stock/servicios intactos. SoloGETdominio, login/logout gestionan sesiones.",
-      "argv": ["python", "scripts/cuaderno/release_read_contracts.py"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "argv": [
+        "python",
+        "scripts/cuaderno/release_read_contracts.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
       "verified_at_commit": "2e27bd8ab+worktree",
-      "verification_note": "181533Z-release-read-contracts-ad95ff09 PASS sobreed4:3DEMOsroleadmin/allergensunknown/crossSpace404 y stock/sheetsintactos;0domainwrites, sesioneslogin/logout sí. Commitbb6a6f7f9."
+      "verification_note": "212324Z-release-read-contracts-0bbed5dd PASSa3c: tresResponsables/allergensunknown/seiscrossSpace404/0domainwrites. NoCocinaConsultaHTTP ni downgrade niDOM."
     },
     "pyjwt-security-g0": {
       "purpose": "Regresión PyJWT2.15 instalada explícitamente en G0 tras acabarAPI674: errores recursivos y compatibilidad de firma, sin tocar preview ni datos app.",
@@ -105,10 +227,19 @@
     },
     "pyjwt-security": {
       "purpose": "Cuatro tests sintéticos PyJWT sin red: payload recursivo DecodeError/JWKS antes de fetch y compatibilidad de firma; script copiado a /tmp del runtime identificado.",
-      "argv": ["docker", "exec", "cuaderno-release-web", "/opt/recipes/venv/bin/python", "/tmp/cuaderno_test_pyjwt_security.py"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
-      "verified_at_commit": "2e27bd8ab+worktree",
-      "verification_note": "175616Z-pyjwt-security-2d377603 RED2errores funcionales/4, PyJWT2.14.0 ened4; RecursionError en lugar de DecodeError antes de fetch, controles válidos PASS. Sin datos app."
+      "argv": [
+        "docker",
+        "exec",
+        "cuaderno-release-web",
+        "/opt/recipes/venv/bin/python",
+        "/tmp/cuaderno_test_pyjwt_security.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "cfffdd338494a1077ae315d86a4c0441837264f5",
+      "verification_note": "211029Z-pyjwt-security-5f56a50f PASS4/4,0.233s, runtimea3c/PyJWT2.15.0. RED previo175616Z2errores/4 ened4 conservado; scripts/tmp requieren copia explícita."
     },
     "operational-roles-ui": {
       "purpose": "Roles nativos españoles en SFC virtual/precios: contratos estrictos, petición edition reutilizada y respuestas tardías ignoradas; no DOM ni navegador.",
@@ -261,10 +392,17 @@
     },
     "release-service-reversal": {
       "purpose": "HTTP solo DEMO local18081: Profesional sin stock, Integral5→4.6→5; produce/reverse/replay/409/CSRF/Spaces. Retiene servicios y ledger, sin borrados.",
-      "argv": ["python", "scripts/cuaderno/release_service_reversal.py"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "argv": [
+        "python",
+        "scripts/cuaderno/release_service_reversal.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": true,
+      "verified": true,
       "verified_at_commit": "b20314bf0+worktree",
-      "verification_note": "181056Z-release-service-reversal-44f91838 PASS24.994s sobreed4: nuevosserviciosPro5/Integral6 cancelled, Integral5→4.6→5, CONSUME6/RECEIPT7; retry/conflict/CSRF/ACLverified. Root23PASS180809Z y aprobaciónfreshintegrity; commit0c6123402."
+      "verification_note": "181056Z-release-service-reversal-44f91838 PASS24.994s sobreed4: nuevosserviciosPro5/Integral6 cancelled, Integral5→4.6→5, CONSUME6/RECEIPT7; retry/conflict/CSRF/ACLverified. Root23PASS180809Z y aprobaciónfreshintegrity; commit0c6123402.",
+      "last_result": "212611Z-release-service-reversal-b32a0fc9 PASSa3c: replayservicioscancelled5/6 y movimientos6/7 existentes, writes0, conflictos/CSRF/crossSpace/Esencial ysaldo5 intacto. No nueva producción/reversión."
     },
     "native-conversion-api": {
       "purpose": "Regresión focal18 upstream con fixture Food correcto y contrato de aislamiento reforzado: sameSpace201/dedupe y creación por nombres locales, foreignIDs400/no copias y filas FKajenas invisibles.",
@@ -329,11 +467,32 @@
     },
     "native-api": {
       "purpose": "Partición disjunta upstream API674; misma suite, deadline remoto1100/outer1200, sin skips. Ejecutar sola y serial con otras particiones.",
-      "argv": ["python", "scripts/cuaderno/docker_test.py", "--container", "cuaderno-g0-t002-web", "--database", "cuaderno_native_profile_20260930", "--environment", "test", "--deadline", "1100", "--", "-o", "addopts=", "-q", "cookbook/tests/api", "--reuse-db", "--durations=20"],
-      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "argv": [
+        "python",
+        "scripts/cuaderno/docker_test.py",
+        "--container",
+        "cuaderno-g0-t002-web",
+        "--database",
+        "cuaderno_native_profile_20260930",
+        "--environment",
+        "test",
+        "--deadline",
+        "1100",
+        "--",
+        "-o",
+        "addopts=",
+        "-q",
+        "cookbook/tests/api",
+        "--reuse-db",
+        "--durations=20"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
       "verified_at_commit": "fa52ab9f0+worktree",
       "verification_note": "Collection082306Z confirma674 exactos; wrapperfa52/CLI real verificados. Composición no implica PASS de ejecución.",
-      "last_result": "180222Z-native-api-ae3b4c36 PASS674/674 en757.15s sobrebackend2e/G0PyJWT2.14, tras privacidad completa; sin skips. Other571 actualPASS174727Z. PyJWT2.15 instalado después de terminar API, OAuth50 actualPASS180814Z; views34 vigente pendiente."
+      "last_result": "180222Z-native-api-ae3b4c36 PASS674/674 en757.15s sobrebackend2e/G0PyJWT2.14, tras privacidad completa; sin skips. Other571 actualPASS174727Z. PyJWT2.15 instalado después de terminar API, OAuth50 actualPASS180814Z; views34PASS181023Z conbackend2e/PyJWT2.15; nativefinalbajo153deps siguependiente."
     },
     "native-other": {
       "purpose": "Partición disjunta upstream other571; misma suite, deadline remoto1100/outer1200, sin skips. Ejecutar sola y serial con otras particiones.",
@@ -425,16 +584,31 @@
     },
     "release-waste": {
       "purpose": "HTTP loopback18081 DEMO Integral: desperdicio0.125L/valor0.8EUR, causa/replay/conflicto/CSRF/ediciones y reversión compensatoria; conserva movimientos/logs, saldo vuelve5.",
-      "argv": ["python", "scripts/cuaderno/release_waste_smoke.py"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
-      "verified_at_commit": "620015607"
+      "argv": [
+        "python",
+        "scripts/cuaderno/release_waste_smoke.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "620015607",
+      "last_result": "212733Z-release-waste-eb3615b5 PASSa3c: replayWASTE4/reversal5,0.125L/0.8EUR/audit ysaldo5intactos. No creaciónnuevoWASTE."
     },
     "image-frontend-sbom": {
       "purpose": "Lee el inventario instalado del stage Linux preservado en runtime y valida CycloneDX1.6; NO cierre de módulos JS ni scan OS.",
-      "argv": ["pwsh.exe", "-NoProfile", "-Command", "$inventoryText = & docker exec cuaderno-release-web cat /opt/recipes/SBOM.frontend.cdx.json; if ($LASTEXITCODE -ne 0) { throw 'No se pudo leer SBOM de la imagen' }; $inventoryText | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "argv": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-Command",
+        "$inventoryText = & docker exec cuaderno-release-web cat /opt/recipes/SBOM.frontend.cdx.json; if ($LASTEXITCODE -ne 0) { throw 'No se pudo leer SBOM de la imagen' }; $inventoryText | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
       "verified_at_commit": "88be31ec5",
-      "last_result": "191332Z-image-frontend-sbom-b7bd3d9c PASS453, canónico359a23f409cd3d43362cb9fce654bbcb83259a5ebe0bc5d88b374e661ed0ca39 imagen933. Instalado stageLinux, NOcierreJS."
+      "last_result": "211115Z-image-frontend-sbom-f74e3b69 PASS453, canónico359a23f409cd3d43362cb9fce654bbcb83259a5ebe0bc5d88b374e661ed0ca39 imagena3c. Árbol instalado stageLinux cacheado, no cierreJS."
     },
     "almacen-panel": {
       "purpose": "SFC AlmacenPage compilado/montado en renderer virtual Vue: causa/key/error/draft y POST in-flight; widgets/API unitarios, no DOM ni navegador.",
@@ -475,10 +649,18 @@
     },
     "runtime-sbom-validate": {
       "purpose": "Valida solo el SBOM Python del último audit local registrado; no borra ni aprueba findings/advisories, no escanea SO/imagen.",
-      "argv": ["pwsh.exe", "-NoProfile", "-Command", "$ErrorActionPreference='Stop'; $auditRecord = Get-ChildItem .cuaderno-runs -Filter '*-runtime-audit-*.log' | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1; if (-not $auditRecord) { throw 'Falta audit runtime registrado' }; Write-Host ('SOURCE_AUDIT_LOG=' + $auditRecord.Name); $auditDocument = Get-Content -LiteralPath $auditRecord.FullName -TotalCount 1 | ConvertFrom-Json; $auditDocument.sbom | ConvertTo-Json -Depth 100 | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
+      "argv": [
+        "pwsh.exe",
+        "-NoProfile",
+        "-Command",
+        "$ErrorActionPreference='Stop'; $auditRecord = Get-ChildItem .cuaderno-runs -Filter '*-runtime-audit-*.log' | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1; if (-not $auditRecord) { throw 'Falta audit runtime registrado' }; Write-Host ('SOURCE_AUDIT_LOG=' + $auditRecord.Name); $auditDocument = Get-Content -LiteralPath $auditRecord.FullName -TotalCount 1 | ConvertFrom-Json; $auditDocument.sbom | ConvertTo-Json -Depth 100 | & python scripts/cuaderno/validate_sbom.py; exit $LASTEXITCODE"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
       "verified_at_commit": "88be31ec5+worktree",
-      "last_result": "175336Z-runtime-sbom-validate-10b06a64 PASS153; audit175100Zimagened4, hashcanonical8acab859844e91eeb5e9d5dffad9fa8a260c49d3454b32cc65b4047c1c80fc55; no apruebaadvisories."
+      "last_result": "211058Z-runtime-sbom-validate-cf430d2c PASS153 audit211047Zimagena3c, canónicoac5f19c7a16a3d550e38312add2d9e0e16bead9b78360510ef0c553717e014ef; no apruebaadvisories."
     },
     "upgrade-unit": {
       "purpose": "Retención de imagen para ensayo de upgrade: orden, identidad, namespace y abortos; solo transporte Docker simulado, no prueba de migración.",
@@ -500,9 +682,17 @@
     },
     "frontend-inventory-unit": {
       "purpose": "Inventario instalado confinado: paquetes scoped/anidados, purl, hashes, licencias declaradas y rechazos seguros; fixtures temporales.",
-      "argv": ["node", "--test", "scripts/cuaderno/test_frontend_inventory.mjs"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": false, "verified": true,
-      "verified_at_commit": "10ab4be3a+worktree"
+      "argv": [
+        "node",
+        "--test",
+        "scripts/cuaderno/test_frontend_inventory.mjs"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "a447e1db19745a792bdbb85a93bdc75e878730f0",
+      "verification_note": "212643Z-frontend-inventory-unit-f3f370c7 PASS11/11,2996.38ms. IncluyeTDDmodulegraph youtDirjunctionROOTswap(P1/P2 cerrados), reviewfresh independiente. Tooling a447 NO wiringVite/Docker ni nuevo build ni cierreJS exacto."
     },
     "frontend-inventory": {
       "purpose": "Inventario READONLY de vue3/node_modules instalado, incluyendo build/dev; NO prueba de contenido de imagen ni validación oficial del esquema.",
@@ -524,9 +714,16 @@
     },
     "release-preparation": {
       "purpose": "HTTP loopback18081 tres DEMO: hasta2servicios confirmados nuevos, checklist A-B-A/noop/conflicto/CSRF/ACL y snapshot/stock intactos; auditoría persistente.",
-      "argv": ["python", "scripts/cuaderno/release_preparation_smoke.py"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
-      "verified_at_commit": "7932eb3e3+worktree"
+      "argv": [
+        "python",
+        "scripts/cuaderno/release_preparation_smoke.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "7932eb3e3+worktree",
+      "last_result": "212448Z-release-preparation-880bdfde PASSa3c:4checklistwrites restaurados, servicios existentes3/4 sin nueva confirmación/stock; audit_verified_over_http=false."
     },
     "service-preparation-panel": {
       "purpose": "SFC real de preparación compilado y montado en renderer virtual Vue; API/widgets unitarios, carreras/conflicto/identidad/texto, NO DOM/navegador.",
@@ -554,9 +751,16 @@
     },
     "release-prices": {
       "purpose": "HTTP loopback18081 tres DEMO: historial e impacto GET de solo lectura, Decimal, permisos y entradas inválidas; no actualiza precios.",
-      "argv": ["python", "scripts/cuaderno/release_prices_smoke.py"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
-      "verified_at_commit": "f10279004+worktree"
+      "argv": [
+        "python",
+        "scripts/cuaderno/release_prices_smoke.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "f10279004+worktree",
+      "last_result": "212155Z-release-prices-51241214 PASSa3c, tresDEMOs/historial/impacto/invalidqueries/stock-sheetsintactos; readonlydominio."
     },
     "price-impact-ui": {
       "purpose": "Helper real de comparación por receta: Decimal textual, desconocidos, ACL contextual/envelopes y shape sin coerción.",
@@ -674,10 +878,17 @@
     },
     "release-http": {
       "purpose": "HTTP real solo loopback18081: tres DEMO, login/logout, costes, persistencia financiera protegida por CSRF y dos servicios sintéticos confirmados sin stock.",
-      "argv": ["python", "scripts/cuaderno/release_http_smoke.py", "--confirm-service"],
-      "cwd": ".", "timeout_seconds": 600, "isolated_mutations": true, "verified": true,
+      "argv": [
+        "python",
+        "scripts/cuaderno/release_http_smoke.py",
+        "--confirm-service"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 600,
+      "isolated_mutations": true,
+      "verified": true,
       "verified_at_commit": "998ba22a9",
-      "last_result": "191420Z-release-http-63400cad PASS933, tresDEMOs/costes, dosfinanzasPUTCSRF y dosservicios existentes confirmados/ficha; sinstock. NoDOM."
+      "last_result": "212029Z-release-http-cd0f44a8 PASSa3c, tresDEMOs/costes/finanzasCSRF y dosservicios existentesconfirmados, stockintacto; noDOM."
     },
     "release-http-unit": {
       "purpose": "Seis checks puros del smoke: destino loopback, rechazo de redirecciones, CSRF, entorno y Decimal textual.",
@@ -780,10 +991,19 @@
     },
     "runtime-audit": {
       "purpose": "Inventario Python efectivo/transitivo, Alpine y advisories PyPI versionados, sin datos de aplicación.",
-      "argv": ["docker", "exec", "cuaderno-release-web", "/opt/recipes/venv/bin/python", "/tmp/cuaderno_audit_dependencies.py"],
-      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": false, "verified": true,
-      "verified_at_commit": "88be31ec5+worktree",
-      "last_result": "185939Z-runtime-audit-8981818f exit1 imagen933:153Python/63Alpine/unresolved0; SOLOOAuthlib GHSA-xpv3-w29h-x7cv, backportexacto aplicado. PyJWT2.15 ya no reportado. NoescaneoOS."
+      "argv": [
+        "docker",
+        "exec",
+        "cuaderno-release-web",
+        "/opt/recipes/venv/bin/python",
+        "/tmp/cuaderno_audit_dependencies.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": false,
+      "verified": true,
+      "verified_at_commit": "cfffdd338494a1077ae315d86a4c0441837264f5",
+      "last_result": "211047Z-runtime-audit-5f274d52 exit1 imagena3c:153Python/63Alpine/unresolved0; SOLOOAuthlib GHSA-xpv3-w29h-x7cv conbackport53f308e8 reobservado. PyJWT2.15 no reportado. No scannerOS."
     },
     "purchase-constraints": {
       "purpose": "El indicador gratuito mantiene equivalencia exacta con precio cero también en PostgreSQL.",
@@ -889,10 +1109,16 @@
     },
     "local-up": {
       "purpose": "Construir el checkout y arrancar solo preview aislado cuaderno-release en loopback18081.",
-      "argv": ["python", "scripts/cuaderno/local_up.py"],
-      "cwd": ".", "timeout_seconds": 1800, "isolated_mutations": true, "verified": true,
-      "verified_at_commit": "88be31ec5+worktree.e9babaf9a96dce8dffbb87680f19d695a1e11d2e5d9c618f4baf07e8b4f734cc",
-      "last_result": "185612Z-local-up-31ecfe42 PASS1266.065s, imagen933/sourcebb6a6f7f9+worktree024c8 exacto enSTATUS, PyJWT2.15 y pipcheck correcto. Frontendcacheed4. Tests/Git/node_modules no copiados; Node nativo Python bundled sí presente."
+      "argv": [
+        "python",
+        "scripts/cuaderno/local_up.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 1800,
+      "isolated_mutations": true,
+      "verified": true,
+      "verified_at_commit": "f191c6b29c5afb2e1b251b8ae446d4fa19205b64+worktree.e8999bc1868565229f2129adfa77543cdaa4b4b6262396bc04652f551d4a53fb",
+      "last_result": "205924Z-local-up-4298bc82 PASS1321.767s, imagena3c/sourcef191+worktreee8999 exacto enSTATUS. Pythonstage636s constrained153/pipcheck/installed-set yOAuthbackport; frontendCACHEed4, no nueva compilaciónVue. Food/Package/JIT ya empacados. Git/Vue-source/node_modules/tests ausentes, NodePythonbundled24.19 presente."
     },
     "native-media-services": {
       "purpose": "Compartir adjuntos nativos sin publicar media privada y no vincular recetas privadas ajenas.",
@@ -982,10 +1208,17 @@
     },
     "restore": {
       "purpose": "Backup/restore a un destino local nuevo y validación de datos.",
-      "argv": ["python", "scripts/cuaderno/delivery_restore.py", "--round-trip"],
-      "cwd": ".", "timeout_seconds": 1200, "isolated_mutations": true, "verified": true,
+      "argv": [
+        "python",
+        "scripts/cuaderno/delivery_restore.py",
+        "--round-trip"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 1200,
+      "isolated_mutations": true,
+      "verified": true,
       "verified_at_commit": "88be31ec5+worktree",
-      "last_result": "20260930T065043Z-restore-84bdbe5b PASS imagen59172af037da:114tablas/931filas/110secuencias/3media;3usuarios/5costes/3saldos/4finanzas/4servicios/4preparaciones con2ítems reales y par WASTE/reversal. Destino nuevo, hashes de snapshot; NO rollback completo ni comparación con BD viva después de HTTP."
+      "last_result": "213552Z-restore-2172450d PASSa3c: bundle212850Z-32d8a6a3, nuevosDB/media,114tablas/949filas/110secuencias/3media, fingerprint07c232c3; restore117.785s/pausa13.792s. ImageIDa3c no confundir source_commitcheckouta447 conTANDOOR_REFf191. No activaciónproductiva."
     },
     "release": {
       "purpose": "Agregador de checks con propagación de cualquier fallo.",

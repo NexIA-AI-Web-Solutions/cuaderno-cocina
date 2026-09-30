@@ -1,6 +1,6 @@
 # ADR 0010 — Conjunto exacto de versiones Python de producción
 
-Estado: implementado, revisión independiente y contratos verdes; build real pendiente.
+Estado: implementado, revisión independiente, contratos y build real comprobados. Build205924Z-local-up-4298bc82 PASS1321.767s, imagen a3c/fuente f191+worktreee8999. Pythonstage verifica153pins/pipcheck; runtime211202Z-python-lock PASS153/conjunto2009d15b y211213Z-pip-check PASS. La identidad completa está en STATUS; no bytes ni OS congelados.
 
 Los builds ed4/933 con requisitos raíz fijados difirieron en cuatro versiones: PyJWT2.14→2.15, charset-normalizer3.5.1→3.5.2, filelock4.0.6→4.0.7 y w3lib2.4.1→2.5.0. La actualización PyJWT fue deliberada; las tres transitivas demostraron que solo fijar raíces no congela el conjunto instalado.
 
