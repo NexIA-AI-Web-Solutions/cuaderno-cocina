@@ -69,7 +69,15 @@ def execute(root: Path, name: str, *, allow_isolated_mutations: bool = False) ->
         result = subprocess.run(argv, cwd=cwd, text=True, encoding="utf-8", errors="replace", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout, check=False)
         code, text = result.returncode, result.stdout
     except subprocess.TimeoutExpired as exc:
-        code, text = 124, f"TIMEOUT: {exc}"
+        partial = exc.stdout
+        if isinstance(partial, bytes):
+            partial = partial.decode("utf-8", errors="replace")
+        elif partial is None:
+            partial = ""
+        elif not isinstance(partial, str):
+            partial = str(partial)
+        separator = "" if not partial or partial.endswith("\n") else "\n"
+        code, text = 124, f"{partial}{separator}TIMEOUT: {exc}"
     except OSError as exc:
         code, text = 127, f"EXEC ERROR: {exc}"
     try:
