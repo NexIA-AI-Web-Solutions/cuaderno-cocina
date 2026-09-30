@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -79,7 +80,13 @@ class PackageListView(APIView):
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
 
     def get(self, request):
-        rows = list(PackageFormat.objects.filter(space=request.space).order_by("pk").values(
+        packages = PackageFormat.objects.filter(
+            space=request.space, food__space=request.space, unit__space=request.space,
+        ).filter(
+            Q(food__recipe_id__isnull=True)
+            | Q(food__recipe_id__in=visible_recipes(request.user, request.space).values("pk"))
+        )
+        rows = list(packages.order_by("pk").values(
             "id", "food_id", "food__name", "unit_id", "unit__name", "label", "quantity", "is_reference",
         ))
         latest_by_package = {
@@ -88,7 +95,7 @@ class PackageListView(APIView):
                 "explicit_free": price["explicit_free"], "valid_from": price["valid_from"].isoformat(),
             }
             for price in PriceVersion.objects.filter(
-                space=request.space, package_id__in=[row["id"] for row in rows], valid_from__lte=timezone.now(),
+                space=request.space, package_id__in=packages.values("pk"), valid_from__lte=timezone.now(),
             ).order_by("package_id", "-valid_from", "-id").distinct("package_id").values(
                 "id", "package_id", "amount", "explicit_free", "valid_from",
             )
