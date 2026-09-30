@@ -3,6 +3,7 @@
         <v-card>
             <v-card-title>Formatos y precios</v-card-title>
             <v-card-text>
+                <operational-role-notice :role="operationalRole" />
                 <p class="mb-4">
                     El precio es del envase, sin existencias.
                     <span v-if="currency">La moneda del espacio es {{ currency }}.</span>
@@ -117,6 +118,7 @@
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import PriceHistoryPanel from '@/cuaderno/components/PriceHistoryPanel.vue'
+import OperationalRoleNotice from '@/cuaderno/components/OperationalRoleNotice.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError, decimalInput} from '@/cuaderno/forms'
 import {
@@ -128,6 +130,10 @@ import {
     editionCurrency,
     type PackageSummary,
 } from '@/cuaderno/priceHistoryUi'
+import {
+    editionOperationalRole,
+    type OperationalRole,
+} from '@/cuaderno/operationalRoleUi'
 
 type NativeChoice = {id: number; name?: string}
 
@@ -143,6 +149,7 @@ const createMessage = ref('')
 const createSucceeded = ref(false)
 const loadError = ref('')
 const currency = ref<string | null>(null)
+const operationalRole = ref<OperationalRole | null>(null)
 const packages = ref<PackageSummary[]>([])
 const selectedPackageId = ref<number | null>(null)
 const updatedPrice = ref('')
@@ -167,6 +174,7 @@ async function load() {
     loading.value = true
     loadError.value = ''
     currency.value = null
+    operationalRole.value = null
     const [result, editionResult] = await Promise.all([
         cuadernoFetch('/api/cuaderno/packages/', {signal: controller.signal}).then(readJson),
         cuadernoFetch('/api/cuaderno/edition/', {signal: controller.signal}).then(readJson),
@@ -174,6 +182,7 @@ async function load() {
     if (controller.signal.aborted || generation !== loadGeneration) return
     loading.value = false
     currency.value = editionResult.ok ? editionCurrency(editionResult.data) : null
+    operationalRole.value = editionResult.ok ? editionOperationalRole(editionResult.data) : null
     if (currency.value === null) {
         loadError.value = editionResult.ok
             ? 'El servidor no ha indicado una moneda válida. No se guardarán precios.'
