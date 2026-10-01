@@ -6,6 +6,8 @@ El código se mantiene en la rama `cuaderno/main` de `NexIA-AI-Web-Solutions/cua
 
 ## Uso local comprobado
 
+El propietario detuvo Cuaderno el 1 de octubre para liberar recursos y autorizó vaciar la caché Docker compartida. La imagen y los datos permanecen guardados. Para probar esa misma imagen sin rebuild ni seed, usa «Reanudar solo el preview existente» en [MANUAL_ES](MANUAL_ES.md). El procedimiento siguiente sirve para construir/instalar; reconstruirá la caché y no se ejecutó durante la parada.
+
 Desde la raíz del checkout, con Docker Desktop disponible:
 
 ```powershell

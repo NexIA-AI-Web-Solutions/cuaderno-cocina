@@ -1,5 +1,31 @@
 # Cuaderno Cocina — uso local
 
+**Estado actual, 1 de octubre:** el propietario pidió detener todos los servicios de Cuaderno para liberar recursos. El preview no está disponible hasta reanudarlo. Se conservan imagen, base y media; la caché de compilación Docker se eliminó.
+
+## Reanudar solo el preview existente
+
+Cuando quieras volver a probar la aplicación, con Docker Desktop disponible:
+
+```powershell
+docker start cuaderno-release-db
+docker start cuaderno-release-web
+```
+
+Espera a que termine el arranque y comprueba readiness:
+
+```powershell
+Invoke-RestMethod -Uri 'http://127.0.0.1:18081/health/ready/' -TimeoutSec 10
+```
+
+Abre la aplicación cuando responda `ready=true`. Estos comandos reutilizan la imagen existente y los datos guardados; no reconstruyen, no siembran datos y no reactivan los antiguos entornos de tests. Para volver a detener este preview:
+
+```powershell
+docker stop --timeout 30 cuaderno-release-web
+docker stop --timeout 30 cuaderno-release-db
+```
+
+No ejecutar `local_up.py` solo para reanudar: ese procedimiento construye desde el checkout y la caché ya está vacía. Las instrucciones y resultados de build siguientes describen la instalación y los ensayos anteriores.
+
 La aplicación es Tandoor con módulos Cuaderno integrados. Preview local: `http://127.0.0.1:18081`, imagena3c del30 de septiembre, con costes, conversiones, alérgenos, producción, roles, almacén y PyJWT2.15. Build205924Z y seis smokes HTTP212029–212733 pasan sobre esta imagen. Consulta [STATUS](STATUS.md) para identidad y controles pendientes, y [PRODUCCION_ES](PRODUCCION_ES.md) para preparación del servidor, aún no desplegada. La demo de desarrollo en18080 no sustituye la imagen recompilada. G7 permanece abierto.
 
 Cuentas sintéticas, solo locales: `demo-esencial`, `demo-profesional` y `demo-integral`, contraseña de este ensayo `Demo-Cocina-2026!`. Cada una tiene su Space; no son cuentas de producción. El seed exige contraseña explícita y solo funciona sobre `cuaderno_demo` en entorno local.

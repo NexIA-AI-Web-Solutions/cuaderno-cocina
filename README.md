@@ -1,6 +1,6 @@
 ## Cuaderno Cocina
 
-Fork real de Tandoor. [Uso local en español](docs/cuaderno/MANUAL_ES.md), [preparación de producción](docs/cuaderno/PRODUCCION_ES.md), [estado comprobado](docs/cuaderno/STATUS.md) y [aceptación pendiente](docs/cuaderno/RELEASE_CHECKLIST.md). Rama del producto: `cuaderno/main`. El preview local funciona en `http://127.0.0.1:18081`; no se declara despliegue de producción ni G7 completado.
+Fork real de Tandoor. [Uso local en español](docs/cuaderno/MANUAL_ES.md), [preparación de producción](docs/cuaderno/PRODUCCION_ES.md), [estado comprobado](docs/cuaderno/STATUS.md) y [aceptación pendiente](docs/cuaderno/RELEASE_CHECKLIST.md). Rama del producto: `cuaderno/main`. El propietario pidió detener la aplicación el 1 de octubre: el preview de `http://127.0.0.1:18081` requiere reanudación manual. Se conservan imágenes y datos; no se declara despliegue de producción ni G7 completado.
 
 La documentación y los avisos de Tandoor se conservan a continuación.
 

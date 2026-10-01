@@ -1,5 +1,7 @@
 # Aceptación final
 
+Estado actual, 1 de octubre 08:42 UTC: todos los contenedores de Cuaderno están detenidos por solicitud del propietario. El builder compartido quedó con caché 0 B; imágenes, volúmenes y datos se conservan. Los resultados healthy/HTTP/restore siguientes son evidencias anteriores, no disponibilidad actual. Esta parada no cierra G7.
+
 Nota del 1 de octubre: las copias locales citadas en este checklist se enviaron a la Papelera por petición del propietario. Los PASS conservan su evidencia histórica, pero repetir rollback requiere recuperar el bundle o generar y validar uno nuevo. La aplicación y sus volúmenes se conservaron; readiness siguió verde. La limpieza no cierra ningún gate.
 
 Previewa3c saludable, fuente f191+worktreee8999 exacta en [STATUS](STATUS.md). Build205924Z PASS1321.767s,153versiones verificadas/pipcheck/JIToff/PyJWT2.15. HTTP seis smokes PASS sobre esta imagen; backup/restore213552Z y rollback directo PASS sobre destinos nuevos. G7 sigue abierto. El propietario autorizó pushGitHub al cerrar esta tanda, **no VPS**.

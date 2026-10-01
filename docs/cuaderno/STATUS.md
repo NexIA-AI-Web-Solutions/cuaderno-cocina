@@ -1,5 +1,11 @@
 # Estado del producto
 
+## Parada solicitada el 1 de octubre, 08:42 UTC
+
+El propietario autorizó borrar toda la caché del builder compartido y detener Cuaderno. El integrador detuvo los 12 contenedores activos (2 web y 10 PostgreSQL), todos con salida 0 y política `restart=no`. Verificó cero contenedores Cuaderno activos, cero listeners en 18080/18081 y cero procesos o servicios Windows atribuibles a la app. Conservó Docker Desktop y los 8 contenedores activos de otros proyectos, sin detenerlos.
+
+`docker buildx prune --builder desktop-linux --all --force` terminó con exit 0: Docker informó `Total: 35.36GB`; `docker buildx du --builder desktop-linux` confirmó `Total: 0B`. Esa cifra es la salida de Docker, no una medición de reducción del archivo de disco virtual de Windows. La caché se regenerará en próximos builds. No se eliminaron imágenes, contenedores, volúmenes, recetas ni destinos restaurados; la imagen a3c sigue disponible. El preview permanece detenido hasta que el propietario lo reanude siguiendo el manual. G7 continúa abierto.
+
 ## Limpieza solicitada el 1 de octubre de 2026
 
 El propietario pidió retirar copias y caché. El integrador envió las 13 carpetas de `data/cuaderno/backups` a la Papelera (9 465 302 bytes, recuperables) y eliminó caché Docker identificada por IDs propios de Cuaderno: Docker informó 14,39 MB liberados. Conservó imágenes, contenedores, volúmenes, bases activas, destinos restaurados y caché sin atribución segura. Readiness del preview devolvió `ready=true` tras la limpieza. Las rutas de bundles citadas abajo son evidencia histórica: para repetir rollback hay que recuperar el bundle de la Papelera o generar y validar uno nuevo; no ejecutar los comandos fijados suponiendo que esos archivos aún existen.
@@ -8,13 +14,13 @@ Cierre de tanda local del 30 de septiembre de 2026. Rama `cuaderno/main`; **G7 s
 
 ## Usar la aplicación
 
-Abre http://127.0.0.1:18081. [Manual español](MANUAL_ES.md), [arranque y preparación de producción](PRODUCCION_ES.md), [checklist](RELEASE_CHECKLIST.md). Cuentas SOLO DEMO: `demo-esencial`, `demo-profesional`, `demo-integral`; contraseña `Demo-Cocina-2026!`. Cada Space es independiente.
+Reanuda primero el preview detenido siguiendo el [manual español](MANUAL_ES.md); después abre http://127.0.0.1:18081. [Arranque y preparación de producción](PRODUCCION_ES.md), [checklist](RELEASE_CHECKLIST.md). Cuentas SOLO DEMO: `demo-esencial`, `demo-profesional`, `demo-integral`; contraseña `Demo-Cocina-2026!`. Cada Space es independiente.
 
 Es Tandoor real: Django/DRF, Vue/Vuetify y PostgreSQL. Los donantes no participan en runtime. Esencial500€+17€/mes, Profesional1000€+20€/mes e Integral1500€+30€/mes son metadata comercial, no una pasarela; no se retiran funciones nativas útiles.
 
 ## Artefacto comprobado
 
-- Imagen vigente: `sha256:a3c426362270c835ed795741ff92c205c62cf40d53ac6c6905dc69d728a8598c`, healthy.
+- Imagen conservada: `sha256:a3c426362270c835ed795741ff92c205c62cf40d53ac6c6905dc69d728a8598c`, healthy en el ensayo previo; contenedor ahora detenido por petición del propietario.
 - Fuente efectiva: `f191c6b29c5afb2e1b251b8ae446d4fa19205b64+worktree.e8999bc1868565229f2129adfa77543cdaa4b4b6262396bc04652f551d4a53fb`.
 - `205924Z-local-up-4298bc82` PASS1321.767s. Checkout congelado hasta terminar. Pythonstage636s reconstruido con153constraints, pipcheck y exact-set. Frontend CACHE del builded4: no nueva compilaciónVue.
 - Ya incluye guardFoodf8186, predicadoPackagecb474 y perfilDB_OPTIONSjitoffb1b7, además de las correcciones previas de privacidad, conversiones, densidad, precisión, alérgenos, merma teórica, roles y reversión.
