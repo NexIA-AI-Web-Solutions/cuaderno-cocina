@@ -72,6 +72,8 @@ Este comando reanuda la demo existente; no instala desde cero ni recompila cambi
 
 ## Copia y recuperación local
 
+**Limpieza del 1 de octubre:** el propietario pidió retirar las copias locales. Las 13 carpetas de `data/cuaderno/backups` se enviaron a la Papelera y pueden recuperarse desde Windows. Los resultados de los ensayos siguientes siguen siendo históricos; sus bundles ya no están disponibles en las rutas citadas. Antes de repetir un rollback, recupera el bundle o genera y valida una copia nueva y configura su ruta. La limpieza no borró la base usada por la aplicación, los volúmenes ni los destinos restaurados.
+
 El procedimiento completo usa `delivery_restore.py`; el antiguo `backup.py` solo hacía un dump y no acredita recuperación de media.
 
 Con ambos contenedores demo activos, publicados solo en loopback y sin otras escrituras:

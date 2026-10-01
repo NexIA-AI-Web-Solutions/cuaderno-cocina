@@ -1,5 +1,9 @@
 # Estado del producto
 
+## Limpieza solicitada el 1 de octubre de 2026
+
+El propietario pidió retirar copias y caché. El integrador envió las 13 carpetas de `data/cuaderno/backups` a la Papelera (9 465 302 bytes, recuperables) y eliminó caché Docker identificada por IDs propios de Cuaderno: Docker informó 14,39 MB liberados. Conservó imágenes, contenedores, volúmenes, bases activas, destinos restaurados y caché sin atribución segura. Readiness del preview devolvió `ready=true` tras la limpieza. Las rutas de bundles citadas abajo son evidencia histórica: para repetir rollback hay que recuperar el bundle de la Papelera o generar y validar uno nuevo; no ejecutar los comandos fijados suponiendo que esos archivos aún existen.
+
 Cierre de tanda local del 30 de septiembre de 2026. Rama `cuaderno/main`; **G7 sigue abierto**. El propietario autorizó ahora push a GitHub: primer push confirmado hasta `cfffdd338`, sin force ni PR. La documentación y el tooling posteriores se integran por separado. Solo hijos GPT‑6.1 Sol; no se atribuye un modelo efectivo a raíz. No VPS, datos reales ni migración del cliente.
 
 ## Usar la aplicación

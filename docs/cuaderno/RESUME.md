@@ -1,5 +1,7 @@
 # Checkpoint de cierre — 30 de septiembre de 2026
 
+**Actualización del 1 de octubre:** por petición del propietario, las 13 carpetas de `data/cuaderno/backups` están ahora en la Papelera, no en el checkout. La base activa y los destinos de restore/rollback permanecen intactos. Recuperar la copia o generar y validar otra antes de repetir los comandos `rollback`/`rollback-current` fijados a bundles históricos; actualizar sus rutas solo después de comprobar el nuevo bundle. La caché Docker retirada liberó 14,39 MB; se conservó la caché compartida o sin atribución segura. Preview `ready=true` después de la limpieza.
+
 Tanda cerrándose a petición del propietario, con push GitHub autorizado; no ampliación a VPS o datos reales. Base de los cambios de documentación: `a447e1db1`; consultar `git rev-parse HEAD` para el commit final posterior. Primer push confirmó origin/cuaderno/main=cfffdd338, sin force/PR. Último push debe comprobarse con `git ls-remote --heads origin cuaderno/main`. Solo agentes hijos GPT‑6.1 Sol, sin recursión.
 
 ## Preview y comprobaciones
