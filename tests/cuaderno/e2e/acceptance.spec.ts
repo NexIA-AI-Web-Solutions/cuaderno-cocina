@@ -299,12 +299,18 @@ async function newAuthenticatedPage(browser: Browser, testInfo: TestInfo): Promi
   if (typeof storageState !== 'string' || typeof baseURL !== 'string') throw new Error('El proyecto no declaró auth/baseURL.')
   const context = await browser.newContext({storageState, baseURL})
   const page = await context.newPage()
-  await page.goto('/')
+  const health = await page.goto('/health/ready/')
+  expect(health?.status()).toBe(200)
   return {page, close: () => context.close()}
 }
 
-test('rechaza el segundo escritor de una línea de compra obsoleta', async ({browser, cleanPage}, testInfo) => {
-  await enterApp(cleanPage)
+test('rechaza el segundo escritor de una línea de compra obsoleta', async ({browser, cleanPage, identity}, testInfo) => {
+  const health = await cleanPage.goto('/health/ready/')
+  expect(health?.status()).toBe(200)
+  const edition = await api<{edition?: string; operational_role?: {code?: string}}>(cleanPage, '/api/cuaderno/edition/')
+  expect(edition.status).toBe(200)
+  expect(edition.body.edition).toBe(identity.edition)
+  expect(edition.body.operational_role?.code).toBe({consulta: 'guest', cocina: 'user', responsable: 'admin'}[identity.role])
   const list = await api(cleanPage, '/api/shopping-list-entry/?page_size=100')
   expect(list.status).toBe(200)
   const entry = rows(list.body).find(item => JSON.stringify(item).includes(fixturePrefix))
