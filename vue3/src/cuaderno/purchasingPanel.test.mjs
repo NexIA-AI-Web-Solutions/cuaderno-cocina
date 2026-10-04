@@ -58,7 +58,7 @@ test('pending receipt locks context controls and clears only its unchanged draft
     const api = moduleUrl(`export const cuadernoFetch = (url, options = {}) => globalThis.__purchasePanelTransport(url, options); export const readJson = async value => value;`)
     const forms = moduleUrl(`export const apiError = status => \`HTTP \${status}\`; export const decimalInput = value => /^\\d+(?:[.,]\\d+)?$/.test(String(value)) && /[1-9]/.test(String(value)) ? String(value).replace(',', '.') : null;`)
     const empty = moduleUrl('export default {render: () => null}')
-    const modelSelect = moduleUrl(`import {defineComponent,h} from ${JSON.stringify(import.meta.resolve('vue'))}; export default defineComponent({inheritAttrs:false, props:{modelValue:{default:null},label:String,disabled:Boolean}, emits:['update:modelValue'], setup:(props,ctx)=>()=>h('model-select',{...ctx.attrs,...props,'onUpdate:modelValue':v=>ctx.emit('update:modelValue',v)})})`)
+    const modelSelect = moduleUrl(`import {defineComponent,h} from ${JSON.stringify(import.meta.resolve('vue'))}; export default defineComponent({inheritAttrs:false, props:{modelValue:{default:null},label:String,disabled:Boolean,searchOnLoad:Boolean}, emits:['update:modelValue'], setup:(props,ctx)=>()=>h('model-select',{...ctx.attrs,...props,'onUpdate:modelValue':v=>ctx.emit('update:modelValue',v)})})`)
     const filename = 'PurchasingPanel.vue'
     const {descriptor, errors} = parse(readFileSync(new URL('./components/PurchasingPanel.vue', import.meta.url), 'utf8'), {filename})
     assert.deepEqual(errors, [])
@@ -79,6 +79,9 @@ test('pending receipt locks context controls and clears only its unchanged draft
     }
     app.mount(root); await flush()
     try {
+        const suppliers = all(root, node => node.type === 'model-select' && node.props.label === 'Proveedor')
+        assert.equal(suppliers.length, 2)
+        for (const supplier of suppliers) assert.equal(supplier.props.searchOnLoad, true)
         buttons(root, 'Recibir')[0].props.onClick(); await flush()
         field(root, 'Existencia de destino').props['onUpdate:modelValue']({id: 17})
         field(root, 'Cantidad recibida (unidad 5)').props['onUpdate:modelValue']('2,5')
@@ -111,7 +114,7 @@ test('Consulta keeps purchase history readable while every write control is disa
     const api = moduleUrl(`export const cuadernoFetch = (url, options = {}) => globalThis.__purchasePanelTransport(url, options); export const readJson = async value => value;`)
     const forms = moduleUrl(`export const apiError = status => \`HTTP \${status}\`; export const decimalInput = value => String(value);`)
     const stockMinimum = moduleUrl(`import {defineComponent,h} from ${JSON.stringify(import.meta.resolve('vue'))}; export default defineComponent({inheritAttrs:false,props:{canOperate:Boolean},setup:props=>()=>h('stock-minimum-panel',props)})`)
-    const modelSelect = moduleUrl(`import {defineComponent,h} from ${JSON.stringify(import.meta.resolve('vue'))}; export default defineComponent({inheritAttrs:false, props:{modelValue:{default:null},label:String,disabled:Boolean}, emits:['update:modelValue'], setup:(props,ctx)=>()=>h('model-select',{...ctx.attrs,...props,'onUpdate:modelValue':v=>ctx.emit('update:modelValue',v)})})`)
+    const modelSelect = moduleUrl(`import {defineComponent,h} from ${JSON.stringify(import.meta.resolve('vue'))}; export default defineComponent({inheritAttrs:false, props:{modelValue:{default:null},label:String,disabled:Boolean,searchOnLoad:Boolean}, emits:['update:modelValue'], setup:(props,ctx)=>()=>h('model-select',{...ctx.attrs,...props,'onUpdate:modelValue':v=>ctx.emit('update:modelValue',v)})})`)
     const filename = 'PurchasingPanel.vue'
     const {descriptor, errors} = parse(readFileSync(new URL('./components/PurchasingPanel.vue', import.meta.url), 'utf8'), {filename})
     assert.deepEqual(errors, [])
@@ -133,6 +136,9 @@ test('Consulta keeps purchase history readable while every write control is disa
     app.mount(root); await flush()
     try {
         assert.equal(all(root, node => node.props?.inert !== undefined).length, 0)
+        const suppliers = all(root, node => node.type === 'model-select' && node.props.label === 'Proveedor')
+        assert.equal(suppliers.length, 2)
+        for (const supplier of suppliers) assert.equal(supplier.props.searchOnLoad, false)
         for (const label of ['Formato de compra', 'Proveedor', 'Precio por envase', 'Oferta expresamente gratuita', 'Formato', 'Oferta (opcional)', 'Número de envases']) {
             assert.equal(field(root, label).props.disabled, true, label)
         }

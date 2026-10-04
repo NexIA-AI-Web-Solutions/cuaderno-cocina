@@ -101,7 +101,7 @@
                 <v-icon icon="fa-fw fas fa-shopping-cart"></v-icon>
             </v-btn>
 
-            <v-btn value="nearby">
+            <v-btn value="more" :aria-label="$t('More')">
                 <v-icon icon="fa-fw fas fa-bars"></v-icon>
                 <v-bottom-sheet activator="parent" close-on-content-click>
                     <v-list nav>

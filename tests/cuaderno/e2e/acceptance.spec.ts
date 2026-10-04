@@ -87,7 +87,7 @@ test('expone solo la navegación y APIs incluidas en la edición', async ({clean
       {exact: true},
     )).toBeVisible()
     await expect(cleanPage.getByRole('button', {name: 'Anotar servicio', exact: true})).toHaveCount(0)
-    await expect(cleanPage.getByLabel('Recetas', {exact: true})).toHaveCount(0)
+    await expect(cleanPage.getByRole('combobox', {name: 'Recetas', exact: true})).toHaveCount(0)
   } else if (!canOperate) {
     await expect(cleanPage.getByText(
       'Modo Consulta: las fichas están disponibles solo para lectura.',
@@ -236,12 +236,23 @@ test('no desborda en recetas, lista, inventario, precios, servicio y producción
 test('genera una vista de impresión PDF privada en el directorio del resultado', async ({cleanPage, identity}, testInfo) => {
   const route = featureMatrix.production.has(identity.edition) ? '/cuaderno/produccion' : '/cuaderno/precios'
   await cleanPage.goto(route)
+  if (featureMatrix.production.has(identity.edition)) {
+    await expect(cleanPage.getByRole('heading', {name: 'Producción', exact: true})).toBeVisible()
+  } else {
+    await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
+  }
+  await expect(cleanPage.getByText(fixturePrefix, {exact: false}).filter({visible: true}).first()).toBeVisible()
+  await cleanPage.evaluate(() => document.fonts.ready)
   await cleanPage.emulateMedia({media: 'print'})
+  await expect(cleanPage.getByText(fixturePrefix, {exact: false}).filter({visible: true}).first()).toBeVisible()
   const output = testInfo.outputPath(`cuaderno-${identity.edition}-${identity.role}-${identity.width}.pdf`)
   await cleanPage.pdf({path: output, format: 'A4', printBackground: true})
   const bytes = await readFile(output)
   expect(bytes.subarray(0, 4).toString('ascii')).toBe('%PDF')
   expect(bytes.length).toBeGreaterThan(1_000)
+  const structure = bytes.toString('latin1')
+  expect(structure).toMatch(/\/Type\s*\/Page\b/)
+  expect(structure.trimEnd().endsWith('%%EOF')).toBe(true)
 })
 
 test('repite una recepción con la misma clave una sola vez', async ({cleanPage, identity}) => {
@@ -292,21 +303,13 @@ async function newAuthenticatedPage(browser: Browser, testInfo: TestInfo): Promi
   return {page, close: () => context.close()}
 }
 
-test('rechaza el segundo escritor de una línea de compra obsoleta', async ({browser, cleanPage, identity}, testInfo) => {
+test('rechaza el segundo escritor de una línea de compra obsoleta', async ({browser, cleanPage}, testInfo) => {
   await enterApp(cleanPage)
-  if (identity.role === 'consulta') {
-    const denied = await api(cleanPage, '/api/shopping-list-entry/1/', {
-      method: 'PATCH', body: {checked: true}, headers: {'If-Match': '"e2e"'},
-    })
-    expect(denied.status).toBe(403)
-    return
-  }
-
   const list = await api(cleanPage, '/api/shopping-list-entry/?page_size=100')
   expect(list.status).toBe(200)
-  const entry = rows(list.body).find(item => JSON.stringify(item).includes(fixturePrefix)) || rows(list.body)[0]
+  const entry = rows(list.body).find(item => JSON.stringify(item).includes(fixturePrefix))
   if (!entry || typeof entry.id !== 'number' || typeof entry.updated_at !== 'string') {
-    throw new Error('El fixture necesita una línea de compra con id y updated_at.')
+    throw new Error(`El fixture necesita una línea de compra ${fixturePrefix} con id y updated_at.`)
   }
   const body = {checked: !Boolean(entry.checked)}
   const headers = {'If-Match': `"${entry.updated_at}"`}
@@ -314,10 +317,18 @@ test('rechaza el segundo escritor de una línea de compra obsoleta', async ({bro
   const right = await newAuthenticatedPage(browser, testInfo)
   try {
     const results = await Promise.all([
-      api(left.page, `/api/shopping-list-entry/${entry.id}/`, {method: 'PATCH', body, headers}),
-      api(right.page, `/api/shopping-list-entry/${entry.id}/`, {method: 'PATCH', body, headers}),
+      api<Record<string, unknown>>(left.page, `/api/shopping-list-entry/${entry.id}/`, {method: 'PATCH', body, headers}),
+      api<Record<string, unknown>>(right.page, `/api/shopping-list-entry/${entry.id}/`, {method: 'PATCH', body, headers}),
     ])
     expect(results.map(result => result.status).sort()).toEqual([200, 409])
+    const accepted = results.find(result => result.status === 200)
+    expect(accepted?.body.checked).toBe(body.checked)
+    expect(typeof accepted?.body.updated_at).toBe('string')
+
+    const current = await api<Record<string, unknown>>(cleanPage, `/api/shopping-list-entry/${entry.id}/`)
+    expect(current.status).toBe(200)
+    expect(current.body.checked).toBe(body.checked)
+    expect(current.body.updated_at).toBe(accepted?.body.updated_at)
   } finally {
     await Promise.all([left.close(), right.close()])
   }

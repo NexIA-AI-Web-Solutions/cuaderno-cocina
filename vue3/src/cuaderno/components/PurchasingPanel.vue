@@ -17,7 +17,7 @@
                         :disabled="!props.canOperate"
                         no-data-text="Crea primero un formato en Ingredientes y precios"
                     />
-                    <v-model-select v-model="offer.supplier" model="Supermarket" label="Proveedor" search-on-load create :disabled="!props.canOperate" />
+                    <v-model-select v-model="offer.supplier" model="Supermarket" label="Proveedor" :search-on-load="props.canOperate" create :disabled="!props.canOperate" />
                     <v-text-field
                         v-model="offer.amount"
                         label="Precio por envase"
@@ -46,7 +46,7 @@
                         :loading="loadingCatalog"
                         :disabled="!props.canOperate"
                     />
-                    <v-model-select v-model="draft.supplier" model="Supermarket" label="Proveedor" search-on-load :disabled="!props.canOperate" />
+                    <v-model-select v-model="draft.supplier" model="Supermarket" label="Proveedor" :search-on-load="props.canOperate" :disabled="!props.canOperate" />
                     <v-select
                         v-model="draft.offer"
                         :items="matchingOffers"
