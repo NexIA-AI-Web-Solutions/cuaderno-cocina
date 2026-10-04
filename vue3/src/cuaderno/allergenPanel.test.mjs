@@ -255,7 +255,7 @@ test('Esencial never requests services or mounts the production operation tree f
     }
 })
 
-test('Profesional Consulta loads readable services and keeps the complete operation tree disabled', async () => {
+test('Profesional Consulta loads readable services and disables writes individually', async () => {
     const mounted = await mount(
         url => url === '/api/cuaderno/services/'
             ? {ok: true, status: 200, data: []}
@@ -271,8 +271,15 @@ test('Profesional Consulta loads readable services and keeps the complete operat
         const readonly = all(mounted.root, node => node.type === 'v-alert'
             && textOf(node).includes('Modo Consulta: las fichas están disponibles solo para lectura.'))[0]
         assert.equal(readonly.props.role, 'status')
-        assert.equal(all(mounted.root, node => node.type === 'fieldset')[0].props.disabled, true)
-        assert.ok(button(mounted.root, 'Actualizar servicios'))
+        assert.equal(all(mounted.root, node => node.type === 'fieldset' && node.props.disabled).length, 0)
+        for (const label of ['Guardar rendimiento', 'Anotar servicio', 'Añadir línea', 'Consolidar', 'Declarar']) {
+            assert.equal(button(mounted.root, label).props.disabled, true, label)
+        }
+        for (const label of ['Nombre', 'Fecha del servicio', 'Cantidad obtenida', 'Componente y unidad']) {
+            assert.equal(field(mounted.root, label).props.disabled, true, label)
+        }
+        assert.equal(button(mounted.root, 'Actualizar servicios').props.disabled, false)
+        assert.equal(button(mounted.root, 'Imprimir fichas').props.disabled, false)
     } finally { mounted.close() }
 })
 
@@ -441,9 +448,8 @@ test('service cards render only frozen assessments and legacy snapshots stay unk
         for (const frozenPanel of snapshotPanels) {
             assert.doesNotMatch(String(frozenPanel.props.class || ''), /\bno-print\b/)
         }
-        const printToolbar = all(mounted.root, node => node.type === 'div'
-            && textOf(node).includes('Actualizar servicios')
-            && textOf(node).includes('Imprimir fichas'))[0]
+        const printToolbar = button(mounted.root, 'Actualizar servicios').parent
+        assert.equal(button(mounted.root, 'Imprimir fichas').parent, printToolbar)
         assert.match(String(printToolbar.props.class || ''), /\bno-print\b/)
     } finally { mounted.close() }
 })
