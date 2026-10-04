@@ -10,7 +10,7 @@ import {useTitle} from "@vueuse/core";
 // TODO type emit parameter (https://mokkapps.de/vue-tips/emit-event-from-composable)
 // TODO alternatively there seems to be a getContext method to get the calling context (good practice?)
 
-export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emit: any) {
+export function useModelEditorFunctions<T extends object>(modelName: EditorSupportedModels, emit: any) {
 
     const loading = ref(true)
     const editingObj = ref({} as T)
@@ -67,12 +67,8 @@ export function useModelEditorFunctions<T>(modelName: EditorSupportedModels, emi
      * apply the defaults to the item given in the itemsDefaults value of the setupState function
      * @param itemDefaults
      */
-    function applyItemDefaults(itemDefaults: T) {
-        if (Object.keys(itemDefaults).length > 0) {
-            Object.keys(itemDefaults).forEach(k => {
-                editingObj.value[k] = itemDefaults[k]
-            })
-        }
+    function applyItemDefaults(itemDefaults: Partial<T>) {
+        Object.assign(editingObj.value, itemDefaults)
     }
 
     /**

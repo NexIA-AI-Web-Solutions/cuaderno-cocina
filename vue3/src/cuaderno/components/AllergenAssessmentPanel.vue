@@ -17,7 +17,7 @@
                 <v-list-item v-for="food in assessment.foods" :key="food.id" :title="food.name">
                     <template #subtitle>
                         <span v-if="food.declarations.length">
-                            {{ food.declarations.map(declaration => `${declaration.name}: ${declaration.state === 'declared' ? 'declarado' : 'desconocido'}`).join(' · ') }}
+                            {{ food.declarations.map(declaration => `${declaration.name}: ${declaration.state === 'declared' ? 'declarado' : 'desconocido'}${allergenDeclarationAuditLabel(declaration) ? ` (${allergenDeclarationAuditLabel(declaration)})` : ''}`).join(' · ') }}
                         </span>
                         <span v-else>Sin declaraciones registradas · estado desconocido</span>
                     </template>
@@ -35,6 +35,7 @@
 import {
     ALLERGEN_SAFETY_NOTICE,
     allergenAssessmentLabel,
+    allergenDeclarationAuditLabel,
     type AllergenAssessment,
 } from '@/cuaderno/allergenUi'
 

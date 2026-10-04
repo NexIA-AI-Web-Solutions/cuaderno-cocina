@@ -39,7 +39,7 @@ export interface FoodShopping {
      * @type {number}
      * @memberof FoodShopping
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -70,6 +70,7 @@ export interface FoodShopping {
  * Check if a given object implements the FoodShopping interface.
  */
 export function instanceOfFoodShopping(value: object): value is FoodShopping {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('supermarketCategory' in value) || value['supermarketCategory'] === undefined) return false;
     if (!('shoppingLists' in value) || value['shoppingLists'] === undefined) return false;
@@ -86,7 +87,7 @@ export function FoodShoppingFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'pluralName': json['plural_name'] == null ? undefined : json['plural_name'],
         'supermarketCategory': SupermarketCategoryFromJSON(json['supermarket_category']),
@@ -98,14 +99,13 @@ export function FoodShoppingToJSON(json: any): FoodShopping {
     return FoodShoppingToJSONTyped(json, false);
 }
 
-export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'supermarket_category'|'shopping_lists'> | null, ignoreDiscriminator: boolean = false): any {
+export function FoodShoppingToJSONTyped(value?: Omit<FoodShopping, 'id'|'supermarket_category'|'shopping_lists'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'plural_name': value['pluralName'],
     };

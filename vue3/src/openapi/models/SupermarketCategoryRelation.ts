@@ -32,7 +32,7 @@ export interface SupermarketCategoryRelation {
      * @type {number}
      * @memberof SupermarketCategoryRelation
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {SupermarketCategory}
@@ -57,6 +57,7 @@ export interface SupermarketCategoryRelation {
  * Check if a given object implements the SupermarketCategoryRelation interface.
  */
 export function instanceOfSupermarketCategoryRelation(value: object): value is SupermarketCategoryRelation {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('category' in value) || value['category'] === undefined) return false;
     if (!('supermarket' in value) || value['supermarket'] === undefined) return false;
     return true;
@@ -72,7 +73,7 @@ export function SupermarketCategoryRelationFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'category': SupermarketCategoryFromJSON(json['category']),
         'supermarket': json['supermarket'],
         'order': json['order'] == null ? undefined : json['order'],
@@ -83,14 +84,13 @@ export function SupermarketCategoryRelationToJSON(json: any): SupermarketCategor
     return SupermarketCategoryRelationToJSONTyped(json, false);
 }
 
-export function SupermarketCategoryRelationToJSONTyped(value?: SupermarketCategoryRelation | null, ignoreDiscriminator: boolean = false): any {
+export function SupermarketCategoryRelationToJSONTyped(value?: Omit<SupermarketCategoryRelation, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'category': SupermarketCategoryToJSON(value['category']),
         'supermarket': value['supermarket'],
         'order': value['order'],

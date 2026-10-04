@@ -551,6 +551,46 @@ class ServiceWorkflowTests(ServiceFixtureMixin, TestCase):
         self.assertEqual(entry.amount, Decimal("16"))
 
 
+    def test_guest_service_reads_enforce_household_private_graph_and_revocation(self):
+        _, visible = self.create_plan()
+        with scopes_disabled():
+            guest = self.make_user("service-safe-read-guest", "guest", self.household)
+            private = Recipe.objects.create(
+                space=self.space, name="Private graph marker", servings=1,
+                created_by=self.outsider, private=True,
+            )
+            denied = ServicePlan.objects.create(
+                space=self.space, household=self.household, meal_plan=visible.meal_plan,
+                title="Denied graph marker", covers=1, created_by=self.user,
+                snapshot={"recipe_graph": {str(self.recipe.pk): [private.pk]}},
+            )
+            other_household = ServicePlan.objects.create(
+                space=self.space, household=self.other_household, meal_plan=visible.meal_plan,
+                title="Other household marker", covers=1, created_by=self.outsider,
+            )
+        client = self.client_for(guest)
+
+        def ids():
+            response = client.get("/api/cuaderno/services/")
+            self.assertEqual(response.status_code, 200, response.data)
+            rendered = str(response.data)
+            self.assertNotIn(other_household.title, rendered)
+            self.assertNotIn(private.name, rendered)
+            return {row["id"] for row in response.data}
+
+        self.assertEqual(ids(), {visible.pk})
+        self.assertEqual(client.get(f"/api/cuaderno/services/{denied.pk}/").status_code, 404)
+        self.assertEqual(client.get(f"/api/cuaderno/services/{other_household.pk}/").status_code, 404)
+        with scopes_disabled():
+            private.shared.add(guest)
+        self.assertEqual(ids(), {visible.pk, denied.pk})
+        self.assertEqual(client.get(f"/api/cuaderno/services/{denied.pk}/").status_code, 200)
+        with scopes_disabled():
+            private.shared.remove(guest)
+        self.assertEqual(ids(), {visible.pk})
+        self.assertEqual(client.get(f"/api/cuaderno/services/{denied.pk}/").status_code, 404)
+
+
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class ConcurrentServiceProductionTests(ServiceFixtureMixin, TransactionTestCase):
     reset_sequences = True

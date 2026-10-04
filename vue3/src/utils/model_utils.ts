@@ -1,4 +1,4 @@
-import {Food, Ingredient, Recipe, Unit} from "@/openapi";
+import {Ingredient, Recipe} from "@/openapi";
 
 /**
  * Returns true if the amount should be treated as singular (exactly 1).
@@ -12,7 +12,15 @@ export function isSingularAmount(amount: number): boolean {
  * returns a string representing an ingredient
  * @param ingredient
  */
-export function ingredientToString(ingredient: Ingredient) {
+type DisplayIngredient = {
+    amount: number
+    food?: {name: string, pluralName?: string | null} | null
+    unit?: {name: string, pluralName?: string | null} | null
+    note?: string | null
+    noAmount?: boolean
+}
+
+export function ingredientToString(ingredient: DisplayIngredient | undefined) {
     let content = []
 
     if (ingredient == undefined) {
@@ -40,7 +48,7 @@ export function ingredientToString(ingredient: Ingredient) {
  * @param ingredientFactor
  * @return food string or empty string if no food is available for the given ingredient
  */
-export function ingredientToFoodString(ingredient: Ingredient, ingredientFactor: number) {
+export function ingredientToFoodString(ingredient: DisplayIngredient, ingredientFactor: number) {
     if (ingredient.food) {
         return pluralString(ingredient.food, ingredient.amount * ingredientFactor, ingredient.noAmount)
     } else {
@@ -54,7 +62,7 @@ export function ingredientToFoodString(ingredient: Ingredient, ingredientFactor:
  * @param amount amount given in display
  * @param noAmount if true, always return singular
  */
-export function pluralString(object: Food | Unit, amount: number = 1, noAmount: boolean = false) {
+export function pluralString(object: {name: string, pluralName?: string | null}, amount: number = 1, noAmount: boolean = false) {
     if (noAmount || !object.pluralName) {
         return object.name ?? ''
     }
@@ -70,7 +78,7 @@ export function pluralString(object: Food | Unit, amount: number = 1, noAmount: 
  * @param ingredientFactor
  * @return unit name or empty string if no food is available for the given ingredient
  */
-export function ingredientToUnitString(ingredient: Ingredient, ingredientFactor: number) {
+export function ingredientToUnitString(ingredient: DisplayIngredient, ingredientFactor: number) {
     if (!ingredient.unit) return ''
     if (!ingredient.unit.pluralName || ingredient.noAmount) return ingredient.unit.name ?? ''
     if (isSingularAmount(ingredient.amount * ingredientFactor)) return ingredient.unit.name ?? ''

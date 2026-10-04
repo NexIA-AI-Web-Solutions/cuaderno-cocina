@@ -5,6 +5,7 @@ import {SourceImportStep, Step} from "@/openapi";
 interface StepLike {
     instruction?: string;
     ingredients?: Array<any>;
+    time?: number;
     showIngredientsTable?: boolean;
 }
 
@@ -18,10 +19,17 @@ function splitStepObject<T extends StepLike>(step: T, split_character: string) {
     if (step.instruction) {
         step.instruction.split(split_character).forEach(part => {
             if (part.trim() !== '') {
-                steps.push({instruction: part, ingredients: [], time: 0, showIngredientsTable: useUserPreferenceStore().userSettings.showStepIngredients!})
+                steps.push({
+                    ...step,
+                    instruction: part,
+                    ingredients: [],
+                    time: 0,
+                    showIngredientsTable: useUserPreferenceStore().userSettings.showStepIngredients!,
+                })
             }
         })
-        steps[0].ingredients = step.ingredients // put all ingredients from the original step in the ingredients of the first step of the split step list
+        const first = steps[0]
+        if (first) first.ingredients = step.ingredients // put all ingredients from the original step in the ingredients of the first step of the split step list
     }
     return steps
 }
@@ -74,11 +82,14 @@ export function mergeStep(step1: Step, step2: Step) {
 /**
  * Merge all steps of a given steps array into one
  */
-export function mergeAllSteps(steps: Step[] | SourceImportStep[]) {
-    if (steps.length > 1) {
-        steps[0].instruction = steps.map(s => s.instruction).join('\n')
-        steps[0].ingredients = steps.flatMap(s => s.ingredients)
-        steps = [steps[0]]
+export function mergeAllSteps<T extends Step | SourceImportStep>(steps: T[]): T[] {
+    const first = steps[0]
+    if (steps.length > 1 && first) {
+        first.instruction = steps.map(s => s.instruction).join('\n')
+        const ingredients: unknown[] = []
+        for (const step of steps) ingredients.push(...step.ingredients)
+        Object.assign(first, {ingredients})
+        steps = [first]
     } else {
         useMessageStore().addMessage(MessageType.ERROR, "no steps found to split")
     }

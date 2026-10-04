@@ -35,7 +35,7 @@
             </v-card-text>
             <v-card-actions>
                 <v-btn @click="leaveConfirmDialog = false; leaveGoTo = null">{{ $t('Cancel') }}</v-btn>
-                <v-btn :to="leaveGoTo" color="warning" v-if="!dialog">{{ $t('Confirm') }}</v-btn>
+                <v-btn :to="leaveGoTo ?? undefined" color="warning" v-if="!dialog">{{ $t('Confirm') }}</v-btn>
                 <v-btn @click="emit('close')" color="warning" v-if="dialog">{{ $t('Confirm') }}</v-btn>
             </v-card-actions>
         </v-card>
@@ -48,7 +48,7 @@
 import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import {EditorSupportedTypes, GenericModel} from "@/types/Models";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
-import {onBeforeRouteLeave, RouteLocationNormalized} from "vue-router";
+import {onBeforeRouteLeave} from "vue-router";
 import {onBeforeUnmount, onMounted, PropType, ref} from "vue";
 import {useDisplay} from "vuetify";
 
@@ -67,7 +67,7 @@ const props = defineProps({
 })
 
 const leaveConfirmDialog = ref(false)
-const leaveGoTo = ref<RouteLocationNormalized | null>(null)
+const leaveGoTo = ref<string | null>(null)
 
 onMounted(() => {
     window.addEventListener("keydown", keyEvent)
@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
 onBeforeRouteLeave((to, from) => {
     if (props.isChanged && !leaveConfirmDialog.value) {
         leaveConfirmDialog.value = true
-        leaveGoTo.value = to
+        leaveGoTo.value = to.fullPath
         return false
     }
     return true

@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="70vw" min-height="80vh" :activator="activator">
+    <v-dialog max-width="70vw" min-height="80vh" :activator="activator ?? undefined" v-model="dialog">
         <template v-slot:default="{ isActive }">
             <v-card>
                 <v-card-title>
@@ -122,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref} from 'vue'
+import {computed, type ComponentPublicInstance, type PropType, ref} from 'vue'
 import {Message, MessageType, useMessageStore} from "@/stores/MessageStore";
 import {DateTime} from "luxon";
 import {useClipboard} from "@vueuse/core";
@@ -132,8 +132,9 @@ const {copy} = useClipboard()
 const {t} = useI18n()
 
 const props = defineProps({
-    activator: {default: 'parent'}
+    activator: {type: [String, Object] as PropType<string | ComponentPublicInstance | null>, default: 'parent'}
 })
+const dialog = defineModel<boolean>({default: false})
 
 /**
  * loads messages from store and filters them according to selected message types
@@ -148,13 +149,13 @@ const displayItems = computed(() => {
     return items
 })
 
-const sortBy = ref([{key: 'createdAt', order: 'desc'}])
+const sortBy = ref([{key: 'createdAt', order: 'desc' as const}])
 const search = ref('')
 const tableHeaders = ref([
     {title: t('Type'), key: 'type'},
     {title: t('Created'), key: 'createdAt'},
     {title: t('Message'), key: 'msg'},
-    {title: t('Actions'), key: 'actions', align: 'end'},
+    {title: t('Actions'), key: 'actions', align: 'end' as const},
 ])
 const typeFilter = ref([MessageType.SUCCESS, MessageType.INFO, MessageType.WARNING, MessageType.ERROR])
 const detailItem = ref({} as Message)
@@ -165,7 +166,9 @@ const showDetailDialog = ref(false)
  */
 function addTestMessage() {
     let types = [MessageType.SUCCESS, MessageType.ERROR, MessageType.INFO, MessageType.WARNING]
-    useMessageStore().addMessage(types[Math.floor(Math.random() * types.length)], {title: 'Test', text: `Lorem Ipsum Lorem Ipsum Lorem Ipsum LINEBREAK \n Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum ${Math.random() * 1000}`}, 5000, {json: "data", 'msg': 'whatever', data: 1})
+    const type = types[Math.floor(Math.random() * types.length)]
+    if (!type) return
+    useMessageStore().addMessage(type, {title: 'Test', text: `Lorem Ipsum Lorem Ipsum Lorem Ipsum LINEBREAK \n Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum Lorem Ipsum ${Math.random() * 1000}`}, 5000, {json: "data", 'msg': 'whatever', data: 1})
 }
 
 </script>

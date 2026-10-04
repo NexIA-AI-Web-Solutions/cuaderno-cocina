@@ -8,11 +8,12 @@ silently becoming binary-float-derived money or quantities.
 from __future__ import annotations
 
 from decimal import Decimal
+from drf_spectacular.utils import extend_schema_field
 
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView, CuadernoIsOperator
 from rest_framework import serializers
 
 from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope
@@ -48,6 +49,7 @@ class StrictIdentifierField(serializers.IntegerField):
         return value
 
 
+@extend_schema_field(serializers.CharField())
 class DecimalStringField(serializers.Field):
     default_error_messages = {
         "invalid": "Debe ser un decimal enviado como texto.",
@@ -126,13 +128,14 @@ class ReplenishmentQuerySerializer(serializers.Serializer):
 
 
 def _integral(space):
-    profile, _ = SpaceProfile.objects.get_or_create(space=space)
+    from cuaderno.services.profiles import profile_for_space
+    profile = profile_for_space(space)
     if profile.edition != SpaceProfile.INTEGRAL:
         raise PermissionDenied("Esta operación pertenece a la edición integral.")
 
 
 class PurchaseOfferView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request):
         _integral(request.space)
@@ -150,7 +153,7 @@ class PurchaseOfferView(APIView):
 
 
 class PurchaseOrderView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request, order_id=None):
         _integral(request.space)
@@ -174,7 +177,7 @@ class PurchaseOrderView(APIView):
 
 
 class PurchaseReceiptView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request, order_id):
         _integral(request.space)
@@ -202,7 +205,7 @@ class PurchaseReceiptView(APIView):
 
 
 class PurchaseReceiptReverseView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def post(self, request, receipt_id):
         _integral(request.space)
@@ -224,7 +227,7 @@ class PurchaseReceiptReverseView(APIView):
 
 
 class ReplenishmentView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def post(self, request):
         _integral(request.space)

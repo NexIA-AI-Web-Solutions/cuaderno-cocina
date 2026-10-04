@@ -139,11 +139,11 @@ function loadRecipes() {
             queryParams.value = {sortOrder: '-created_at'}
             break;
         case 'random':
-            requestParameters.random = 'true'
+            requestParameters.random = true
             queryParams.value = {sortOrder: 'random'}
             break;
         case 'new':
-            requestParameters._new = 'true'
+            requestParameters._new = true
             queryParams.value = {sortOrder: '-created_at', createdonGte: DateTime.now().minus({days: 14}).toISODate()}
             break;
         case 'rating':
@@ -153,10 +153,12 @@ function loadRecipes() {
         case 'keyword':
             api.apiKeywordList({random: "true", limit: "1"}).then((r) => {
                 if (r.count > 0) {
-                    keyword.value = r.results[0]
-                    requestParameters.keywords = [keyword.value.id!]
+                    const selectedKeyword = r.results[0]
+                    if (!selectedKeyword) return
+                    keyword.value = selectedKeyword
+                    requestParameters.keywords = [selectedKeyword.id]
 
-                    queryParams.value = {keywords: keyword.value.id!}
+                    queryParams.value = {keywords: selectedKeyword.id}
 
                     doRecipeRequest(requestParameters)
                 } else {
@@ -167,11 +169,13 @@ function loadRecipes() {
         case 'created_by':
             api.apiUserList({}).then((r) => {
                 if (r.length > 0) {
-                    createdByUser.value = r[Math.floor(Math.random() * r.length)]
-                    requestParameters.createdby = createdByUser.value.id
-                    requestParameters.random = "true"
+                    const selectedUser = r[Math.floor(Math.random() * r.length)]
+                    if (!selectedUser) return
+                    createdByUser.value = selectedUser
+                    requestParameters.createdby = selectedUser.id
+                    requestParameters.random = true
 
-                    queryParams.value = {createdby: createdByUser.value.id!}
+                    queryParams.value = {createdby: selectedUser.id}
 
                     doRecipeRequest(requestParameters)
                 } else {

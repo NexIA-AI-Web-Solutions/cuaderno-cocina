@@ -12,6 +12,7 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 from django_scopes import scopes_disabled
 from rest_framework.test import APIClient
+from cuaderno.services.ledger import apply_movement
 
 from cookbook.models import Food, Household, InventoryEntry, InventoryLocation, Space, Supermarket, Unit, UserSpace
 from cuaderno.models import (
@@ -354,6 +355,49 @@ class PurchasingWorkflowTests(PurchasingFixtureMixin, TestCase):
             self.assertTrue(InventoryEntry.objects.filter(pk=expired.pk).exists())
         self.assertEqual(self.client_for(self.outsider).post("/api/cuaderno/replenishment/", {}, format="json").data["items"], [])
         self.assertEqual(self.client_for(self.guest).post("/api/cuaderno/replenishment/", {}, format="json").status_code, 403)
+
+
+    def test_guest_purchase_reads_are_household_scoped_and_foreign_ids_are_opaque(self):
+        own = self.create_order()
+        other_response = self.client_for(self.outsider).post(
+            "/api/cuaderno/purchase-orders/",
+            {"quantity": "5", "package": self.package.pk,
+             "supplier": self.supplier.pk, "package_count": "1"},
+            format="json",
+        )
+        self.assertEqual(other_response.status_code, 201, other_response.data)
+        other = PurchaseOrder.objects.get(pk=other_response.data["id"])
+        with scopes_disabled():
+            own_movement = apply_movement(
+                entry_id=self.entry.pk, space=self.space, user=self.user,
+                kind=StockMovement.RECEIPT, quantity="1",
+                idempotency_key="guest-household-own",
+            )
+            other_movement = apply_movement(
+                entry_id=self.other_entry.pk, space=self.space, user=self.outsider,
+                kind=StockMovement.RECEIPT, quantity="1",
+                idempotency_key="guest-household-other",
+            )
+        guest = self.client_for(self.guest)
+
+        listed = guest.get("/api/cuaderno/purchase-orders/")
+        movements = guest.get("/api/cuaderno/movements/")
+        self.assertEqual(listed.status_code, 200, listed.data)
+        self.assertEqual({row["id"] for row in listed.data}, {own.pk})
+        self.assertEqual(movements.status_code, 200, movements.data)
+        self.assertIn(own_movement.pk, {row["id"] for row in movements.data})
+        self.assertNotIn(other_movement.pk, {row["id"] for row in movements.data})
+        self.assertEqual(
+            guest.get(f"/api/cuaderno/purchase-orders/{other.pk}/").status_code, 404,
+        )
+        self.assertEqual(
+            guest.get(f"/api/cuaderno/purchase-orders/{other.pk}/receipts/").status_code, 404,
+        )
+        self.assertEqual(
+            guest.get(f"/api/cuaderno/stock-minimums/?household={self.other_household.pk}").status_code,
+            404,
+        )
+        self.assertNotIn(self.other_household.name, str(listed.data) + str(movements.data))
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])

@@ -214,7 +214,7 @@
                                     </template>
                                 </v-stepper-actions>
                             </v-stepper-window-item>
-                            <v-stepper-window-item value="image_chooser">
+                            <v-stepper-window-item value="image_chooser" v-if="importResponse.recipe">
                                 <v-row>
                                     <v-col cols="12" md="6">
                                         <h2 class="text-h5">{{ $t('Selected') }}</h2>
@@ -239,7 +239,7 @@
                                     </template>
                                 </v-stepper-actions>
                             </v-stepper-window-item>
-                            <v-stepper-window-item value="keywords_chooser">
+                            <v-stepper-window-item value="keywords_chooser" v-if="importResponse.recipe">
                                 <v-row>
                                     <v-col class="text-center">
                                         <v-btn-group border divided>
@@ -267,7 +267,7 @@
                                         <v-model-select model="Keyword" v-model="keywordSelect" create>
                                             <template #append>
                                                 <v-btn icon="$add" color="success"
-                                                       @click="keywordSelect.importKeyword = true; importResponse.recipe.keywords.push(keywordSelect); keywordSelect= null"
+                                                       @click="addSelectedKeyword"
                                                        :disabled="keywordSelect == null"></v-btn>
                                             </template>
                                         </v-model-select>
@@ -275,7 +275,7 @@
                                 </v-row>
 
                                 <v-list>
-                                    <v-list-item border v-for="k in importResponse.recipe.keywords" :key="k" :class="{'bg-success': k.importKeyword}"
+                                    <v-list-item border v-for="k in importResponse.recipe.keywords" :key="k.id ?? k.name" :class="{'bg-success': k.importKeyword}"
                                                  @click="k.importKeyword = !k.importKeyword">
                                         {{ k.label }}
                                         <template #append>
@@ -293,7 +293,7 @@
                                     </template>
                                 </v-stepper-actions>
                             </v-stepper-window-item>
-                            <v-stepper-window-item value="step_editor">
+                            <v-stepper-window-item value="step_editor" v-if="importResponse.recipe">
                                 <v-row>
                                     <v-col class="text-center">
                                         <v-btn-group border divided>
@@ -311,7 +311,7 @@
                                             <v-menu activator="parent">
                                                 <v-list>
                                                     <v-list-item prepend-icon="$delete" @click="deleteStep(s)">{{ $t('Delete') }}</v-list-item>
-                                                    <v-list-item prepend-icon="fa-solid fa-maximize" @click="splitStep(s, '\n')">{{ $t('Split') }}</v-list-item>
+                                                    <v-list-item prepend-icon="fa-solid fa-maximize" @click="importResponse.recipe && splitStep(importResponse.recipe.steps, s, '\n')">{{ $t('Split') }}</v-list-item>
                                                 </v-list>
                                             </v-menu>
                                         </v-btn>
@@ -362,7 +362,7 @@
 
                                             <v-text-field :label="$t('Unit')" v-model="editingIngredient.unit.name" :rules="['required']" v-if="editingIngredient.unit">
                                                 <template #append-inner>
-                                                    <v-btn icon="$delete" color="delete" @click="editingIngredient.unit = null"></v-btn>
+                                                    <v-btn icon="$delete" color="delete" @click="editingIngredient.unit = {name: ''}"></v-btn>
                                                 </template>
                                             </v-text-field>
                                             <v-btn prepend-icon="$create" color="create" class="mb-4" @click="editingIngredient.unit = {name: ''}" v-else>{{ $t('Unit') }}</v-btn>
@@ -384,7 +384,7 @@
                                     </template>
                                 </v-stepper-actions>
                             </v-stepper-window-item>
-                            <v-stepper-window-item value="confirm">
+                            <v-stepper-window-item value="confirm" v-if="importResponse.recipe">
                                 <v-card :loading="loading || fileApiLoading">
                                     <v-card-title>{{ importResponse.recipe.name }}</v-card-title>
                                     <v-row>
@@ -531,7 +531,7 @@
                                 </v-progress-linear>
 
                                 <v-list>
-                                    <v-list-item border v-for="r in urlListImportedRecipes" :title="r.name" :subtitle="r.sourceUrl" :key="r.id"
+                                    <v-list-item border v-for="r in urlListImportedRecipes" :title="r.name" :subtitle="r.sourceUrl ?? undefined" :key="r.id"
                                                  :to="{name: 'RecipeViewPage', params: {id: r.id}}" target="_blank">
 
                                     </v-list-item>
@@ -560,7 +560,7 @@
         </v-row>
     </v-container>
 
-    <step-ingredient-sorter-dialog :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe" v-model="dialogIngredientSorter"
+    <step-ingredient-sorter-dialog v-if="importResponse.recipe" :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe" v-model="dialogIngredientSorter"
                                    :ingredient-index="editingIngredientIndex"></step-ingredient-sorter-dialog>
 
 </template>
@@ -575,7 +575,7 @@ import {
     ApiApi,
     ImportLog,
     Recipe,
-    type RecipeFromSource,
+    type RecipeFromSourceRequest, Keyword, RecipeRequest, SourceImportRecipe,
     RecipeFromSourceResponse,
     type SourceImportIngredient,
     SourceImportKeyword,
@@ -600,6 +600,7 @@ import bookmarkletJs from '@/assets/bookmarklet_v3?url'
 import StepIngredientSorterDialog from "@/components/dialogs/StepIngredientSorterDialog.vue";
 import {mergeAllSteps, splitAllSteps, splitStep} from "@/utils/step_utils.ts";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import {sourceImportRequest} from "@/utils/sourceImport";
 import ExchangePanel from "@/cuaderno/components/ExchangePanel.vue";
 
 function doListImport() {
@@ -616,7 +617,7 @@ function importFromUrlList() {
 
         api.apiRecipeFromSourceCreate({recipeFromSource: {url: url}}).then(sourceResponse => {
             if (sourceResponse.recipe) {
-                api.apiRecipeCreate({recipe: sourceResponse.recipe}).then(recipe => {
+                api.apiRecipeCreate({recipe: sourceImportRequest(sourceResponse.recipe)}).then(recipe => {
                     urlListImportedRecipes.value.push(recipe)
                     updateRecipeImage(recipe.id!, null, sourceResponse.recipe?.imageUrl).then(imageResponse => {
                         setTimeout(importFromUrlList, 500)
@@ -684,16 +685,16 @@ const appImportMealPlans = ref(true)
 const appImportShoppingLists = ref(true)
 const appImportNutritionsPerServing = ref(false)
 const appImportLog = ref<null | ImportLog>(null)
-const image = ref<null | File>(null)
+const image = ref<File>()
 const aiMode = ref<'file' | 'text'>('file')
-const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider)
+const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider ?? undefined)
 const editAfterImport = ref(false)
 
 const bookmarkletToken = ref("")
 
-const importResponse = ref({} as RecipeFromSourceResponse)
-const keywordSelect = ref<null | SourceImportKeyword>(null)
-const editingIngredient = ref({} as SourceImportIngredient)
+const importResponse = ref<RecipeFromSourceResponse>({})
+const keywordSelect = ref<Keyword | null>(null)
+const editingIngredient = ref<SourceImportIngredient>({food: {name: ''}, unit: {name: ''}, amount: 0, originalText: ''})
 
 // stuff for ingredient mover, find some better solution at some point (finally merge importer/editor?)
 const editingIngredientIndex = ref(0)
@@ -723,10 +724,10 @@ onMounted(() => {
 /**
  * call server to load recipe from a given URl
  */
-function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSource) {
+function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSourceRequest) {
     let api = new ApiApi()
     loading.value = true
-    importResponse.value = {} as RecipeFromSourceResponse
+    importResponse.value = {}
 
     api.apiRecipeFromSourceCreate({recipeFromSource: recipeFromSourceRequest}).then(r => {
         if (r.recipeId != null) {
@@ -746,7 +747,7 @@ function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSource) {
             }
         }
     }).catch(err => {
-        err.response.json().then(r => {
+        err.response.json().then((r: RecipeFromSourceResponse) => {
             if (r.error) {
                 importResponse.value = r
             } else {
@@ -766,6 +767,7 @@ function loadRecipeFromAiImport() {
 
     if (selectedAiProvider.value == undefined) {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, "No AI Provider selected")
+        return
     }
 
     if (image.value != null && aiMode.value == 'file') {
@@ -824,9 +826,9 @@ function createRecipeFromImport() {
 
     if (importResponse.value.recipe) {
         loading.value = true
-        importResponse.value.recipe.keywords = importResponse.value.recipe.keywords.filter(k => k.importKeyword)
+        importResponse.value.recipe.keywords = (importResponse.value.recipe.keywords ?? []).filter(k => k.importKeyword)
 
-        api.apiRecipeCreate({recipe: importResponse.value.recipe}).then(recipe => {
+        api.apiRecipeCreate({recipe: sourceImportRequest(importResponse.value.recipe)}).then(recipe => {
             updateRecipeImage(recipe.id!, null, importResponse.value.recipe?.imageUrl).then(r => {
                 if (editAfterImport.value) {
                     router.push({name: 'ModelEditPage', params: {id: recipe.id, model: 'recipe'}})
@@ -902,8 +904,8 @@ function aiStepSort(providerId: number) {
     let api = new ApiApi()
     aiStepSortLoading.value = true
 
-    api.apiAiStepSortCreate({recipe: importResponse.value.recipe, provider: providerId}).then(r => {
-        importResponse.value.recipe = r
+    api.apiAiStepSortCreate({recipe: sourceImportRequest(importResponse.value.recipe), provider: providerId}).then(r => {
+        importResponse.value.recipe = importedRecipePreview(r)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
@@ -928,7 +930,7 @@ function autoSortIngredients() {
                 }
             })
             if (!found) {
-                importResponse.value.recipe!.steps[0].ingredients.push(i)
+                importResponse.value.recipe!.steps[0]?.ingredients.push(i)
             }
             // TODO implement a new "second try" algorithm if no exact match was found
             /*
@@ -958,7 +960,7 @@ function autoSortIngredients() {
  * @param status if keyword should be imported or not
  */
 function setAllKeywordsImportStatus(status: boolean) {
-    importResponse.value.recipe?.keywords.forEach(keyword => {
+    importResponse.value.recipe?.keywords?.forEach(keyword => {
         keyword.importKeyword = status
     })
 }
@@ -999,6 +1001,34 @@ function loadOrCreateBookmarkletToken() {
  */
 function resetImporter() {
     location.reload()
+}
+
+function addSelectedKeyword() {
+    const keyword = keywordSelect.value
+    const recipe = importResponse.value.recipe
+    if (!keyword || !recipe) return
+    recipe.keywords ??= []
+    recipe.keywords.push({id: keyword.id, name: keyword.name, label: keyword.name, importKeyword: true})
+    keywordSelect.value = null
+}
+
+function importedRecipePreview(recipe: Recipe): SourceImportRecipe {
+    return {
+        ...recipe,
+        sourceUrl: recipe.sourceUrl ?? '',
+        description: recipe.description ?? '',
+        keywords: (recipe.keywords ?? []).map(keyword => ({id: keyword.id, name: keyword.name, label: keyword.name, importKeyword: true})),
+        properties: (recipe.properties ?? []).filter(property => property.propertyAmount != null).map(property => ({
+            propertyType: property.propertyType, propertyAmount: property.propertyAmount ?? 0,
+        })),
+        steps: recipe.steps.map(step => ({
+            ...step, instruction: step.instruction ?? '',
+            ingredients: (step.ingredients ?? []).map(ingredient => ({
+                ...ingredient, food: ingredient.food ?? {name: ''}, unit: ingredient.unit ?? {name: ''},
+                note: ingredient.note ?? '', originalText: ingredient.originalText ?? '',
+            })),
+        })),
+    }
 }
 
 </script>

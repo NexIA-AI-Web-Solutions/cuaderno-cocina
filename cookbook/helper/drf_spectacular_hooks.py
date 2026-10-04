@@ -1,17 +1,37 @@
 # custom processing for schema
 # reason: DRF writable nested needs ID's to decide if a nested object should be created or updated
 # the API schema/client make ID's read only by default and strips them entirely in request objects (with COMPONENT_SPLIT_REQUEST enabled)
-# change the schema to make IDs optional but writable so they are included in the request
+# Separate request/response components: persisted responses have an ID, while
+# nested writes retain an optional writable ID to identify existing objects.
 
 def custom_postprocessing_hook(result, generator, request, public):
-    for c in result['components']['schemas'].keys():
-        # handle schemas used by the client to do requests on the server
-        if 'properties' in result['components']['schemas'][c] and 'id' in result['components']['schemas'][c]['properties']:
-            # make ID field not read only so it's not stripped from the request on the client
-            result['components']['schemas'][c]['properties']['id']['readOnly'] = False
-            # make ID field not required
-            if 'required' in result['components']['schemas'][c] and 'id' in result['components']['schemas'][c]['required']:
-                result['components']['schemas'][c]['required'].remove('id')
+    schemas = result['components']['schemas']
+    for name, component in schemas.items():
+        if name.endswith('Request'):
+            response_name = name.removesuffix('Request').removeprefix('Patched')
+            response = schemas.get(response_name, {})
+            identifier = response.get('properties', {}).get('id')
+            if identifier:
+                component.setdefault('properties', {})['id'] = {
+                    key: value for key, value in identifier.items() if key != 'readOnly'
+                }
+                if 'id' in component.get('required', []):
+                    component['required'].remove('id')
+        elif 'id' in component.get('properties', {}):
+            required = component.setdefault('required', [])
+            if 'id' not in required:
+                required.append('id')
+    # Keep stable SDK argument names while the referenced types gain Request.
+    for path in result.get('paths', {}).values():
+        for operation in path.values():
+            if not isinstance(operation, dict):
+                continue
+            body = operation.get('requestBody', {})
+            schema = body.get('content', {}).get('application/json', {}).get('schema', {})
+            reference = schema.get('$ref', '').rsplit('/', 1)[-1]
+            if reference.endswith('Request'):
+                name = reference.removesuffix('Request')
+                body['x-codegen-request-body-name'] = name[:1].lower() + name[1:]
 
     return result
 

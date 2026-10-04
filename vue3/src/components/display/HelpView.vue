@@ -469,7 +469,7 @@ const props = withDefaults(defineProps<{
 
 const {t} = useI18n()
 const route = useRoute()
-const drawer = defineModel()
+const drawer = defineModel<boolean>()
 const section = props.defaultSection || (typeof route.query.section === 'string' ? route.query.section : null)
 const window = ref(section || 'start')
 
@@ -510,7 +510,7 @@ const sortedCoverage = computed(() => {
     return Object.entries(localeCoverage)
         .filter(([filename]) => filename !== 'en')  // exclude source language
         .map(([filename, data]) => {
-            const code = filename.replaceAll('_', '-').toLowerCase()
+            const code = filename.split('_').join('-').toLowerCase()
             let name: string
             try {
                 name = displayNames.of(code) || filename

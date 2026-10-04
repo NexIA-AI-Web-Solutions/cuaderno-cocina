@@ -35,7 +35,7 @@
             <v-chip
                 v-bind="props"
                 :text="item.title"
-                :prepend-avatar="(modelClass.model.name == 'Recipe') ? item.raw.image : undefined"
+                :prepend-avatar="(modelClass.model.name == 'Recipe') ? (item.raw.image ?? undefined) : undefined"
             ></v-chip>
         </template>
 
@@ -58,7 +58,7 @@
                 </template>
             </v-list-item>
             <!-- normal items -> normal rendering -->
-            <v-list-item v-if="item.raw.id > 0"
+            <v-list-item v-if="(item.raw.id ?? 0) > 0"
                          v-bind="props"
                          :title="item.title"
             >
@@ -115,8 +115,7 @@
 
 import {computed, nextTick, onBeforeMount, onMounted, PropType, ref, watch} from "vue";
 import {useDebounceFn} from "@vueuse/core";
-import {Density} from "vuetify/lib/composables/density";
-import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
+import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
 import {useI18n} from "vue-i18n";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
@@ -124,6 +123,8 @@ import {useDisplay} from "vuetify";
 
 const {t} = useI18n()
 const {mobile} = useDisplay()
+type Density = 'default' | 'comfortable' | 'compact'
+type ModelOption = {id?: number; name?: string | null; image?: string | null}
 
 const emit = defineEmits(['update:modelValue', 'create'])
 
@@ -148,11 +149,11 @@ const props = defineProps({
     placeholder: {type: String, default: undefined},
 
     // model
-    modelValue: {type: [Object, Array, Number] as PropType<EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined | null>, default: undefined},
+    modelValue: {type: [Object, Array, Number] as PropType<ModelOption | ModelOption[] | number | number[] | undefined | null>, default: undefined},
 })
 
 
-const autoselectValue = ref<EditorSupportedTypes | EditorSupportedTypes[] | undefined | null>(undefined)
+const autoselectValue = ref<ModelOption | ModelOption[] | undefined | null>(undefined)
 
 const modelClass = ref({} as GenericModel)
 const loading = ref(false)
@@ -160,9 +161,9 @@ const hasFocus = ref(false)
 const hasLoadedOnce = ref(false)
 const editDialog = ref(false)
 const hasMoreItems = ref(false)
-const lastAddedItem = ref<EditorSupportedTypes>(undefined)
+const lastAddedItem = ref<ModelOption | undefined>(undefined)
 
-const items = ref([] as EditorSupportedTypes[])
+const items = ref<ModelOption[]>([])
 
 const search = ref<string | undefined>(undefined)
 
@@ -170,12 +171,12 @@ const search = ref<string | undefined>(undefined)
  * determine if the user should be able to create a new item based on create prop and if the item is already present
  */
 const showCreate = computed(() => {
-    const existingNames = items.value.filter(item => item.id != undefined).map(item => item[itemLabelAttribute.value].toLowerCase())
+    const existingNames = items.value.filter(item => item.id != undefined).map(item => optionLabel(item).toLowerCase())
 
     if (Array.isArray(autoselectValue.value)) {
-        existingNames.concat(autoselectValue.value.map(item => item[itemLabelAttribute.value].toLowerCase()))
+        existingNames.concat(autoselectValue.value.map(item => optionLabel(item).toLowerCase()))
     } else if (autoselectValue.value != undefined) {
-        existingNames.push(autoselectValue.value[itemLabelAttribute.value].toLowerCase())
+        existingNames.push(optionLabel(autoselectValue.value).toLowerCase())
     }
 
     return props.create && search.value != undefined && search.value.length > 0 && !existingNames.includes(search.value.toLowerCase())
@@ -187,7 +188,7 @@ const showCreate = computed(() => {
 const editingItemId = computed(() => {
     if (props.multiple && lastAddedItem.value) {
         return lastAddedItem.value.id
-    } else if (autoselectValue.value) {
+    } else if (autoselectValue.value && !Array.isArray(autoselectValue.value)) {
         return autoselectValue.value.id
     }
 
@@ -228,8 +229,7 @@ watch(autoselectValue, (newValue, oldValue) => {
  */
 watch(() => props.modelValue, (newValue, oldValue) => {
     // do not trigger update if value has not actually changed
-    if(newValue == oldValue ||
-        (Array.isArray(newValue) && Array.isArray(oldValue) && newValue.length === oldValue.length && newValue.every((item:number) => oldValue.includes(item)))){
+    if (modelValuesEqual(newValue, oldValue)) {
         return
     }
 
@@ -237,6 +237,16 @@ watch(() => props.modelValue, (newValue, oldValue) => {
 
     updateAutoselectValue(newValue)
 })
+
+function modelValuesEqual(
+    left: ModelOption | ModelOption[] | number | number[] | undefined | null,
+    right: ModelOption | ModelOption[] | number | number[] | undefined | null,
+): boolean {
+    if (left === right) return true
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false
+    const key = (value: ModelOption | number) => typeof value === 'number' ? value : value.id
+    return left.every((value, index) => key(value) === key(right[index]!))
+}
 
 
 /**
@@ -295,14 +305,12 @@ function searchItems() {
         }
 
         if (showCreate.value) {
-            let createItem = {}
-            createItem[itemLabelAttribute.value] = search.value
+            let createItem = optionWithLabel(search.value)
             items.value.splice(0, 0, createItem)
         }
 
         if (hasMoreItems.value) {
-            let infoItem = {id: -1}
-            infoItem[itemLabelAttribute.value] = t('ModelSelectResultsHelp')
+            let infoItem = optionWithLabel(t('ModelSelectResultsHelp'), -1)
             items.value.push(infoItem)
         }
 
@@ -362,7 +370,7 @@ async function createItem(name: string | undefined, edit: boolean) {
  * handle edit dialog updates depending on the mode the select is in
  * @param event
  */
-function handleModelEditorUpdate(event: EditorSupportedTypes) {
+function handleModelEditorUpdate(event: ModelOption) {
     if (props.multiple) {
         console.log('is multiple')
         if (Array.isArray(autoselectValue.value) && autoselectValue.value.length > 0) {
@@ -381,11 +389,11 @@ function handleModelEditorUpdate(event: EditorSupportedTypes) {
  * updates the internal autoselectValue from the external modelValue which might use IDs when return object is set to false
  * @param newValue
  */
-function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | number | number[] | undefined | null) {
+function updateAutoselectValue(newValue: ModelOption | ModelOption[] | number | number[] | undefined | null) {
     console.log('updating autoselect value', newValue)
     if (typeof newValue === 'number') {
-        if ((autoselectValue.value && autoselectValue.value.id! != newValue) || !autoselectValue.value) {
-            modelClass.value.retrieve(newValue).then((r: EditorSupportedTypes) => {
+        if (!autoselectValue.value || Array.isArray(autoselectValue.value) || autoselectValue.value.id !== newValue) {
+            modelClass.value.retrieve(newValue).then((r: ModelOption) => {
                 autoselectValue.value = r
             })
         }
@@ -395,8 +403,8 @@ function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedT
         if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
             // remove existing items no longer in external model
             // check before filtering because filtering triggers an update which causes an infinite loop
-            if (autoselectValue.value.findIndex((item: EditorSupportedTypes) => !newValue.includes(item.id!)) != -1) {
-                autoselectValue.value = autoselectValue.value.filter((item: EditorSupportedTypes) => newValue.includes(item.id!))
+            if (autoselectValue.value.findIndex(item => item.id !== undefined && !newValue.includes(item.id)) != -1) {
+                autoselectValue.value = autoselectValue.value.filter(item => item.id !== undefined && newValue.includes(item.id))
             }
 
             // remove already existing values from missingIds
@@ -410,7 +418,7 @@ function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedT
 
             Promise.all(
                 missingIds.map(id => modelClass.value.retrieve(id))
-            ).then((missingItems: EditorSupportedTypes[]) => {
+            ).then((missingItems: ModelOption[]) => {
                 if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
                     // check again items were not already added (might occur with race conditions)
                     const existingIds = new Set(autoselectValue.value.map(item => item.id))
@@ -436,7 +444,7 @@ function updateAutoselectValue(newValue: EditorSupportedTypes | EditorSupportedT
  * supports returning ids or objects
  * @param newValue
  */
-function updateModelValue(newValue: EditorSupportedTypes | EditorSupportedTypes[] | undefined | null) {
+function updateModelValue(newValue: ModelOption | ModelOption[] | undefined | null) {
     if (!props.returnObject) {
         console.log('returning value as ID(s)', newValue)
         if (Array.isArray(newValue)) {
@@ -448,6 +456,15 @@ function updateModelValue(newValue: EditorSupportedTypes | EditorSupportedTypes[
     } else {
         emit('update:modelValue', newValue)
     }
+}
+
+function optionLabel(item: ModelOption): string {
+    const value = (item as Record<string, unknown>)[itemLabelAttribute.value]
+    return typeof value === 'string' ? value : ''
+}
+
+function optionWithLabel(label: string | undefined, id?: number): ModelOption {
+    return {...(id === undefined ? {} : {id}), [itemLabelAttribute.value]: label ?? ''}
 }
 
 </script>

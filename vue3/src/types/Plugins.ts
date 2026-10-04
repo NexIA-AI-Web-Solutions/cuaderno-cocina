@@ -29,7 +29,8 @@ export type PluginModule = {
 const pluginModules = import.meta.glob('@/plugins/*/plugin.ts', { eager: true })
 export let TANDOOR_PLUGINS = [] as TandoorPlugin[]
 Object.values(pluginModules).forEach(module => {
-    if(!module.plugin.disabled){
-        TANDOOR_PLUGINS.push(module.plugin)
+    if (typeof module === 'object' && module !== null && 'plugin' in module) {
+        const plugin = (module as PluginModule).plugin
+        if (!plugin.disabled) TANDOOR_PLUGINS.push(plugin)
     }
 })

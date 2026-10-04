@@ -32,7 +32,7 @@ export interface Sync {
      * @type {number}
      * @memberof Sync
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {Storage}
@@ -75,6 +75,7 @@ export interface Sync {
  * Check if a given object implements the Sync interface.
  */
 export function instanceOfSync(value: object): value is Sync {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('storage' in value) || value['storage'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -91,7 +92,7 @@ export function SyncFromJSONTyped(json: any, ignoreDiscriminator: boolean): Sync
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'storage': StorageFromJSON(json['storage']),
         'path': json['path'] == null ? undefined : json['path'],
         'active': json['active'] == null ? undefined : json['active'],
@@ -105,14 +106,13 @@ export function SyncToJSON(json: any): Sync {
     return SyncToJSONTyped(json, false);
 }
 
-export function SyncToJSONTyped(value?: Omit<Sync, 'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function SyncToJSONTyped(value?: Omit<Sync, 'id'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'storage': StorageToJSON(value['storage']),
         'path': value['path'],
         'active': value['active'],

@@ -1,5 +1,5 @@
 import {acceptHMRUpdate, defineStore} from "pinia"
-import {ApiApi, MealPlan} from "@/openapi";
+import {ApiApi, MealPlan, MealPlanRequest} from "@/openapi";
 import {computed, ref} from "vue";
 import {DateTime} from "luxon";
 import {ErrorMessageType, MessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
@@ -105,7 +105,7 @@ export const useMealPlanStore = defineStore(_STORE_ID, () => {
         }
     }
 
-    function createObject(object: MealPlan) {
+    function createObject(object: MealPlanRequest) {
         const api = new ApiApi()
         loading.value = true
         return api.apiMealPlanCreate({mealPlan: object}).then((r) => {

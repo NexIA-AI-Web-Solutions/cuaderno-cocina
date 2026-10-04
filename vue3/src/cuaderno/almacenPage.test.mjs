@@ -59,16 +59,18 @@ const field = (root, label) => all(root, node => node.props?.label === label)[0]
 async function flush() { for (let index = 0; index < 8; index += 1) await Vue.nextTick() }
 
 let nextId = 0
-async function mount(transport) {
+async function mount(transport, {edition = 'integral', role = 'user'} = {}) {
     const id = ++nextId
     const calls = []
     const completed = []
+    const mountedBoundaries = []
     globalThis.__cuadernoAlmacenUnit ??= new Map()
-    globalThis.__cuadernoAlmacenUnit.set(id, {transport, calls, completed})
+    globalThis.__cuadernoAlmacenUnit.set(id, {transport, calls, completed, mountedBoundaries})
     const api = moduleUrl(`
         export const cuadernoFetch = (url, options = {}) => {
             const state = globalThis.__cuadernoAlmacenUnit.get(${id});
             state.calls.push({url, options});
+            if (url === '/api/cuaderno/edition/') return {ok: true, status: 200, data: {edition: ${JSON.stringify(edition)}, operational_role: {code: ${JSON.stringify(role)}, label: ${JSON.stringify({guest: 'Consulta', user: 'Cocina', admin: 'Responsable'}[role])}, space: 1, can_operate_cuaderno: ${role !== 'guest'}, can_manage_edition: ${role === 'admin'}, native_permissions_preserved: true}}};
             return state.transport(url, options);
         };
         export const readJson = async response => response;
@@ -99,7 +101,12 @@ async function mount(transport) {
             }),
         });
     `)
-    const emptyComponent = moduleUrl(`export default {render: () => null};`)
+    const purchasingPanel = moduleUrl(`
+        export default {setup() {
+            globalThis.__cuadernoAlmacenUnit.get(${id}).mountedBoundaries.push('purchasing-panel');
+            return () => null;
+        }};
+    `)
     const filename = 'AlmacenPage.vue'
     const source = readFileSync(new URL('./pages/AlmacenPage.vue', import.meta.url), 'utf8')
     const {descriptor, errors: parseErrors} = parse(source, {filename})
@@ -112,11 +119,19 @@ async function mount(transport) {
     const replacements = new Map([
         ['vue', import.meta.resolve('vue')],
         ['@/components/inputs/VModelSelect.vue', modelSelect],
-        ['@/cuaderno/components/PurchasingPanel.vue', emptyComponent],
+        ['@/cuaderno/components/PurchasingPanel.vue', purchasingPanel],
         ['@/cuaderno/api', api],
         ['@/cuaderno/forms', forms],
         ['@/cuaderno/inventoryRequests', requests],
         ['@/cuaderno/stockMovementUi', stockHelper],
+        ['@/cuaderno/navigationUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./navigationUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
+        ['@/cuaderno/operationalRoleUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./operationalRoleUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
     ])
     code = code.replace(/from (["'])([^"']+)\1/g, (original, quote, name) => {
         assert.ok(replacements.has(name), `Unexpected dependency ${name}`)
@@ -146,7 +161,7 @@ async function mount(transport) {
     }
     app.mount(root)
     await flush()
-    return {root, calls, completed, close() { app.unmount(); globalThis.__cuadernoAlmacenUnit.delete(id) }}
+    return {root, calls, completed, mountedBoundaries, close() { app.unmount(); globalThis.__cuadernoAlmacenUnit.delete(id) }}
 }
 
 async function enterWaste(root, {quantity = '1,50', cause = '  Rotura en cámara  '} = {}) {
@@ -162,6 +177,30 @@ async function confirmWaste(mounted) {
     await flush()
     return button(mounted.root, 'Confirmar').props.onClick()
 }
+
+test('direct navigation outside Integral explains the edition and mounts no warehouse boundary', async () => {
+    for (const edition of ['esencial', 'profesional']) {
+        const mounted = await mount(() => assert.fail('A protected warehouse request must not run.'), {edition})
+        try {
+            assert.deepEqual(mounted.calls.map(call => call.url), ['/api/cuaderno/edition/'])
+            assert.match(textOf(mounted.root), /El almacén está disponible en la edición Integral/)
+            assert.equal(field(mounted.root, 'Existencia del inventario'), undefined)
+            assert.equal(button(mounted.root, 'Actualizar historial'), undefined)
+            assert.deepEqual(mounted.mountedBoundaries, [])
+        } finally { mounted.close() }
+    }
+})
+
+test('Integral mounts warehouse boundaries and loads history after checking the edition', async () => {
+    const mounted = await mount(() => ({ok: true, status: 200, data: []}))
+    try {
+        assert.deepEqual(mounted.calls.map(call => call.url), [
+            '/api/cuaderno/edition/', '/api/cuaderno/movements/',
+        ])
+        assert.ok(field(mounted.root, 'Existencia del inventario'))
+        assert.deepEqual(mounted.mountedBoundaries, ['purchasing-panel'])
+    } finally { mounted.close() }
+})
 
 test('waste POST uses normalized cause and stable key; 409 preserves the complete draft', async () => {
     const mounted = await mount((url, options) => options.method === 'POST'

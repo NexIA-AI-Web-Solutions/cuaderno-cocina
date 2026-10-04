@@ -6,7 +6,7 @@
                 <v-col cols="12" md="4">
                     <v-label>{{ $t('Rating') }}</v-label>
                     <br/>
-                    <v-rating v-model="newCookLog.rating" clearable hover density="compact"></v-rating>
+                    <v-rating :model-value="newCookLog.rating ?? undefined" @update:model-value="newCookLog.rating = Number($event)" clearable hover density="compact"></v-rating>
                 </v-col>
                 <v-col cols="12" md="4">
 

@@ -76,9 +76,9 @@ class StockMinimumApiTests(PurchasingFixtureMixin, TestCase):
             response = self.client_for(self.user).put(self.url, payload, format="json")
             self.assert_json(response, 400)
 
-    def test_guest_and_non_integral_profiles_cannot_read_or_write(self):
+    def test_guest_reads_own_household_and_non_integral_profiles_cannot_read_or_write(self):
         guest = self.client_for(self.guest)
-        self.assert_json(guest.get(self.url), 403)
+        self.assert_json(guest.get(self.url), 200)
         self.assert_json(self.put_minimum(client=guest), 403)
         with scopes_disabled():
             profile = SpaceProfile.objects.get(space=self.space)

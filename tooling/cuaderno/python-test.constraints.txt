@@ -1,0 +1,24 @@
+# Exact test-only resolver closure, captured 2026-10-04 from
+# cuaderno-g0-t002-web:/opt/recipes/venv (Python 3.13 development environment; final checks use the immutable candidate).
+# Production packages remain governed by python-production.constraints.txt.
+coverage==7.16.2
+execnet==2.1.2
+factory_boy==3.3.3
+Faker==40.40.0
+inflection==0.5.1
+iniconfig==2.3.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+pytest==9.0.3
+pytest-asyncio==1.4.0
+pytest-cov==6.2.1
+pytest-django==4.11.1
+pytest-factoryboy==2.8.1
+pytest-html==4.1.1
+pytest-metadata==3.1.1
+pytest-xdist==3.8.0
+python-dateutil==2.9.0.post0
+six==1.17.0

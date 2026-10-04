@@ -21,10 +21,16 @@ import { mapValues } from '../runtime';
 export interface ShoppingListEntryBulk {
     /**
      * 
-     * @type {Array<any>}
+     * @type {Array<number>}
      * @memberof ShoppingListEntryBulk
      */
-    ids: Array<any>;
+    ids: Array<number>;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof ShoppingListEntryBulk
+     */
+    revisions?: { [key: string]: string; };
     /**
      * 
      * @type {boolean}
@@ -83,6 +89,7 @@ export function ShoppingListEntryBulkFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'ids': json['ids'],
+        'revisions': json['revisions'] == null ? undefined : json['revisions'],
         'checked': json['checked'] == null ? undefined : json['checked'],
         'timestamp': (new Date(json['timestamp'])),
         'shoppingListsAdd': json['shopping_lists_add'] == null ? undefined : json['shopping_lists_add'],
@@ -104,6 +111,7 @@ export function ShoppingListEntryBulkToJSONTyped(value?: Omit<ShoppingListEntryB
     return {
         
         'ids': value['ids'],
+        'revisions': value['revisions'],
         'checked': value['checked'],
         'shopping_lists_add': value['shoppingListsAdd'],
         'shopping_lists_remove': value['shoppingListsRemove'],

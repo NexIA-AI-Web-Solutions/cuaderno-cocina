@@ -4,9 +4,21 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
-from delivery_backup import media_manifest
-import local_up
-import restore_smoke
+if __package__:
+    from .delivery_backup import media_manifest
+    from . import restore_smoke
+    import importlib
+    import sys
+    scripts_directory = str(Path(__file__).resolve().parent)
+    sys.path.insert(0, scripts_directory)
+    try:
+        local_up = importlib.import_module("local_up")
+    finally:
+        sys.path.remove(scripts_directory)
+else:
+    from delivery_backup import media_manifest
+    import local_up
+    import restore_smoke
 
 
 class MediaValidationTest(unittest.TestCase):

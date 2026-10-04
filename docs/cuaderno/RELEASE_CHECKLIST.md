@@ -1,6 +1,12 @@
 # Aceptación final
 
-Estado actual, 1 de octubre 08:42 UTC: todos los contenedores de Cuaderno están detenidos por solicitud del propietario. El builder compartido quedó con caché 0 B; imágenes, volúmenes y datos se conservan. Los resultados healthy/HTTP/restore siguientes son evidencias anteriores, no disponibilidad actual. Esta parada no cierra G7.
+El cierre actual usa `scripts/cuaderno/candidate_check.py`, `release_manifest_collect.py` y `release_gate.py`. El resultado actual y los hashes de sus 17 pruebas se conservan en `.cuaderno-runs/release-manifest.json`; la explicación legible está en `.cuaderno-runs/RELEASE_REPORT.md`. Esta evidencia generada queda fuera de Git para no invalidar las fuentes congeladas ni publicar trazas/sesiones sintéticas. Las casillas históricas siguientes conservan su fecha: no son el dictamen del nuevo candidato.
+
+La matriz browser incluye Esencial/Profesional/Integral, Consulta/Cocina/Responsable, 390/768/1440 px y controles adicionales Firefox/WebKit. El informe distingue ejecuciones exploratorias de la imagen anterior y aceptación final. La certificación de iPad físico, datos del programa antiguo y VPS/TLS reales sigue requiriendo sus respectivos entornos.
+
+Estado actual, 4 de octubre: implementación autorizada en curso; [evidencia vigente](evidence/2026-10-04-implementacion.md). Los 17 checks finales deben corresponder al mismo commit limpio, Image ID y contexto. Regresión nativa, frontend, TypeScript, schema y tooling de trabajo pasan; rendimiento y aceptación completa del nuevo artefacto siguen abiertos. G7 no está cerrado.
+
+Estado histórico, 1 de octubre 08:42 UTC: todos los contenedores de Cuaderno se detuvieron por solicitud del propietario. El builder compartido quedó con caché 0 B; imágenes, volúmenes y datos se conservaron. Los resultados healthy/HTTP/restore siguientes son evidencias anteriores. Esta parada no cerró G7.
 
 Nota del 1 de octubre: las copias locales citadas en este checklist se enviaron a la Papelera por petición del propietario. Los PASS conservan su evidencia histórica, pero repetir rollback requiere recuperar el bundle o generar y validar uno nuevo. La aplicación y sus volúmenes se conservaron; readiness siguió verde. La limpieza no cierra ningún gate.
 

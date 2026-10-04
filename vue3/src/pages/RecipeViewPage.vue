@@ -57,8 +57,10 @@ onMounted(() => {
 function refreshData(recipeId: string) {
     const api = new ApiApi()
     recipe.value = {} as Recipe
+    const id = Number(recipeId)
+    if (!Number.isInteger(id) || id <= 0) return
 
-    let requestParameters: ApiRecipeRetrieveRequest = {id: props.id}
+    let requestParameters: ApiRecipeRetrieveRequest = {id}
     if (isShared.value) {
         requestParameters.share = shareToken.value!
     }

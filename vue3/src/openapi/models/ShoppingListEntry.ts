@@ -60,7 +60,7 @@ export interface ShoppingListEntry {
      * @type {number}
      * @memberof ShoppingListEntry
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {number}
@@ -135,6 +135,12 @@ export interface ShoppingListEntry {
     readonly updatedAt: Date;
     /**
      * 
+     * @type {string}
+     * @memberof ShoppingListEntry
+     */
+    readonly revision: string;
+    /**
+     * 
      * @type {Date}
      * @memberof ShoppingListEntry
      */
@@ -145,24 +151,20 @@ export interface ShoppingListEntry {
      * @memberof ShoppingListEntry
      */
     delayUntil?: Date | null;
-    /**
-     * If a mealplan id is given try to find existing or create new ShoppingListRecipe with that meal plan and link entry to it
-     * @type {number}
-     * @memberof ShoppingListEntry
-     */
-    mealplanId?: number;
 }
 
 /**
  * Check if a given object implements the ShoppingListEntry interface.
  */
 export function instanceOfShoppingListEntry(value: object): value is ShoppingListEntry {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('food' in value) || value['food'] === undefined) return false;
     if (!('amount' in value) || value['amount'] === undefined) return false;
     if (!('listRecipeData' in value) || value['listRecipeData'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
+    if (!('revision' in value) || value['revision'] === undefined) return false;
     return true;
 }
 
@@ -176,7 +178,7 @@ export function ShoppingListEntryFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'listRecipe': json['list_recipe'] == null ? undefined : json['list_recipe'],
         'shoppingLists': json['shopping_lists'] == null ? undefined : ((json['shopping_lists'] as Array<any>).map(ShoppingListFromJSON)),
         'food': FoodShoppingFromJSON(json['food']),
@@ -189,9 +191,9 @@ export function ShoppingListEntryFromJSONTyped(json: any, ignoreDiscriminator: b
         'createdBy': UserFromJSON(json['created_by']),
         'createdAt': (new Date(json['created_at'])),
         'updatedAt': (new Date(json['updated_at'])),
+        'revision': json['revision'],
         'completedAt': json['completed_at'] == null ? undefined : (new Date(json['completed_at'])),
         'delayUntil': json['delay_until'] == null ? undefined : (new Date(json['delay_until'])),
-        'mealplanId': json['mealplan_id'] == null ? undefined : json['mealplan_id'],
     };
 }
 
@@ -199,14 +201,13 @@ export function ShoppingListEntryToJSON(json: any): ShoppingListEntry {
     return ShoppingListEntryToJSONTyped(json, false);
 }
 
-export function ShoppingListEntryToJSONTyped(value?: Omit<ShoppingListEntry, 'list_recipe_data'|'created_by'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function ShoppingListEntryToJSONTyped(value?: Omit<ShoppingListEntry, 'id'|'list_recipe_data'|'created_by'|'created_at'|'updated_at'|'revision'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'list_recipe': value['listRecipe'],
         'shopping_lists': value['shoppingLists'] == null ? undefined : ((value['shoppingLists'] as Array<any>).map(ShoppingListToJSON)),
         'food': FoodShoppingToJSON(value['food']),
@@ -217,7 +218,6 @@ export function ShoppingListEntryToJSONTyped(value?: Omit<ShoppingListEntry, 'li
         'ingredient': value['ingredient'],
         'completed_at': value['completedAt'] == null ? value['completedAt'] : value['completedAt'].toISOString(),
         'delay_until': value['delayUntil'] == null ? value['delayUntil'] : value['delayUntil'].toISOString(),
-        'mealplan_id': value['mealplanId'],
     };
 }
 

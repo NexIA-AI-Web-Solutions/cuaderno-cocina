@@ -1,8 +1,7 @@
 import {useDjangoUrls} from "@/composables/useDjangoUrls";
 import {ref} from "vue";
 import {getCookie} from "@/utils/cookie";
-import {AiProvider, RecipeFromSourceResponseFromJSON, RecipeImageFromJSON, ResponseError, UserFile, UserFileFromJSON} from "@/openapi";
-import {tr} from "vuetify/locale";
+import {RecipeFromSourceResponseFromJSON, RecipeImageFromJSON, ResponseError, UserFile, UserFileFromJSON} from "@/openapi";
 
 
 /**
@@ -12,6 +11,10 @@ export function useFileApi() {
     const {getDjangoUrl} = useDjangoUrls()
 
     const fileApiLoading = ref(false)
+    const csrfHeaders = (): Record<string, string> => {
+        const token = getCookie('csrftoken')
+        return token ? {'X-CSRFToken': token} : {}
+    }
 
     /**
      * creates or updates an existing UserFile if an id is given
@@ -38,7 +41,7 @@ export function useFileApi() {
 
         return fetch(fetchUrl, {
             method: fetchMethod,
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             if (r.ok) {
@@ -70,7 +73,7 @@ export function useFileApi() {
 
         return fetch(getDjangoUrl(`api/recipe/${recipeId}/image/`), {
             method: 'PUT',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             return r.json().then(r => {
@@ -97,12 +100,12 @@ export function useFileApi() {
         }
         formData.append('text', text)
         formData.append('recipe_id', recipeId)
-        formData.append('ai_provider_id', providerId)
+        formData.append('ai_provider_id', providerId.toString())
         fileApiLoading.value = true
 
         return fetch(getDjangoUrl(`api/ai-import/`), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             return r.json().then(r => {
@@ -138,7 +141,7 @@ export function useFileApi() {
 
         return fetch(getDjangoUrl(`api/import/`), {
             method: 'POST',
-            headers: {'X-CSRFToken': getCookie('csrftoken')},
+            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             return r.json().then(r => {

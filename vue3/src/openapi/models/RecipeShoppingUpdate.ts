@@ -24,31 +24,20 @@ export interface RecipeShoppingUpdate {
      * @type {number}
      * @memberof RecipeShoppingUpdate
      */
-    id?: number;
-    /**
-     * Existing shopping list to update
-     * @type {number}
-     * @memberof RecipeShoppingUpdate
-     */
-    listRecipe?: number | null;
+    readonly id: number;
     /**
      * 
      * @type {Array<number | null>}
      * @memberof RecipeShoppingUpdate
      */
     ingredients: Array<number | null>;
-    /**
-     * Providing a list_recipe ID and servings of 0 will delete that shopping list.
-     * @type {number}
-     * @memberof RecipeShoppingUpdate
-     */
-    servings?: number | null;
 }
 
 /**
  * Check if a given object implements the RecipeShoppingUpdate interface.
  */
 export function instanceOfRecipeShoppingUpdate(value: object): value is RecipeShoppingUpdate {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('ingredients' in value) || value['ingredients'] === undefined) return false;
     return true;
 }
@@ -63,10 +52,8 @@ export function RecipeShoppingUpdateFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'listRecipe': json['list_recipe'] == null ? undefined : json['list_recipe'],
+        'id': json['id'],
         'ingredients': json['ingredients'],
-        'servings': json['servings'] == null ? undefined : json['servings'],
     };
 }
 
@@ -74,17 +61,14 @@ export function RecipeShoppingUpdateToJSON(json: any): RecipeShoppingUpdate {
     return RecipeShoppingUpdateToJSONTyped(json, false);
 }
 
-export function RecipeShoppingUpdateToJSONTyped(value?: RecipeShoppingUpdate | null, ignoreDiscriminator: boolean = false): any {
+export function RecipeShoppingUpdateToJSONTyped(value?: Omit<RecipeShoppingUpdate, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
-        'list_recipe': value['listRecipe'],
         'ingredients': value['ingredients'],
-        'servings': value['servings'],
     };
 }
 

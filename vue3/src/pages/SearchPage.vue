@@ -39,7 +39,7 @@
                                 <v-divider class="mt-2 mb-2"></v-divider>
 
                                 <v-autocomplete :items="availableFilters"
-                                                @update:model-value="(item:string) =>{ filters[item].enabled = true; nextTick(() => {addFilterSelect = null})}" density="compact"
+                                                @update:model-value="enableFilter" density="compact"
                                                 :label="$t('AddFilter')" v-model="addFilterSelect"></v-autocomplete>
 
                                 <v-model-select model="CustomFilter" v-model="selectedCustomFilter" density="compact">
@@ -187,10 +187,9 @@ import {useRouteQuery} from "@vueuse/router";
 import {boolOrUndefinedTransformer, numberOrUndefinedTransformer, routeQueryDateTransformer, stringToBool, toNumberArray} from "@/utils/utils";
 import {useDebouncedSearch} from "@/composables/useDebouncedSearch";
 import RandomIcon from "@/components/display/RandomIcon.vue";
-import {VSelect, VTextField, VNumberInput} from "vuetify/components";
+import {VSelect, VTextField, VNumberInput, VDataTable} from "vuetify/components";
 import RatingField from "@/components/inputs/RatingField.vue";
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
-import {EditorSupportedTypes} from "@/types/Models.ts";
 import BatchEditRecipeDialog from "@/components/dialogs/BatchEditRecipeDialog.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
@@ -226,14 +225,14 @@ const addFilterSelect = ref<string | null>(null)
 const hasFiltersApplied = ref(false)
 
 const tableHeaders = computed(() => {
-    let headers = [
-        {title: t('Image'), width: '1%', noBreak: true, key: 'image',},
+    let headers: NonNullable<InstanceType<typeof VDataTable>['$props']['headers']>[number][] = [
+        {title: t('Image'), width: '1%',  key: 'image',},
         {title: t('Name'), key: 'name',},
     ]
     if (mdAndUp.value) {
         headers.push({title: t('Keywords'), key: 'keywords',},)
     }
-    headers.push({title: t('Actions'), key: 'action', width: '1%', noBreak: true, align: 'end'},)
+    headers.push({title: t('Actions'), key: 'action', width: '1%',  align: 'end'},)
 
     return headers
 })
@@ -244,7 +243,7 @@ const recipes = ref([] as RecipeOverview[])
 const selectedCustomFilter = ref<null | CustomFilter>(null)
 const newFilterName = ref('')
 
-const selectedItems = ref([] as EditorSupportedTypes[])
+const selectedItems = ref<RecipeOverview[]>([])
 const batchDeleteDialog = ref(false)
 const batchEditDialog = ref(false)
 
@@ -261,8 +260,9 @@ watch(debouncedQuery, () => {
 onMounted(() => {
     // load filters that were previously enabled
     useUserPreferenceStore().deviceSettings.search_visibleFilters.forEach(f => {
-        if (f in filters.value) {
-            filters.value[f].enabled = true
+        const filter = filterByName.value.get(String(f))
+        if (filter) {
+            filter.enabled = true
         } else {
             useUserPreferenceStore().deviceSettings.search_visibleFilters.splice(useUserPreferenceStore().deviceSettings.search_visibleFilters.indexOf(f), 1)
         }
@@ -276,7 +276,7 @@ onMounted(() => {
  * perform the recipe search with the given options
  * @param options
  */
-function searchRecipes(options: VDataTableUpdateOptions) {
+function searchRecipes(options: Pick<VDataTableUpdateOptions, 'page'>) {
     let api = new ApiApi()
     loading.value = true
     hasFiltersApplied.value = false
@@ -293,7 +293,7 @@ function searchRecipes(options: VDataTableUpdateOptions) {
 
     Object.values(filters.value).forEach((filter) => {
         if (!isFilterDefaultValue(filter)) {
-            searchParameters[filter.id] = filter.modelValue
+            Object.assign(searchParameters, {[filter.id]: filter.modelValue})
             hasFiltersApplied.value = true
         }
     })
@@ -302,7 +302,7 @@ function searchRecipes(options: VDataTableUpdateOptions) {
         recipes.value = r.results
         tableItemCount.value = r.count
     }).catch(err => {
-        if (err.name !== 'AbortError' && err.cause.name !== 'AbortError') {
+        if (err.name !== 'AbortError' && err.cause?.name !== 'AbortError') {
             useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
         }
     }).finally(() => {
@@ -332,7 +332,8 @@ function reset() {
  * @param data
  */
 function handleRowClick(event: PointerEvent, data: any) {
-    router.push({name: 'RecipeViewPage', params: {id: recipes.value[data.index].id}})
+    const recipe = recipes.value[data.index]
+    if (recipe) router.push({name: 'RecipeViewPage', params: {id: recipe.id}})
 }
 
 /**
@@ -423,6 +424,7 @@ function createCustomFilter() {
  * load selected custom filter into the filters system
  */
 function loadSelectedCustomFilter() {
+    if (!selectedCustomFilter.value) return
     let customFilterParams = JSON.parse(selectedCustomFilter.value.search)
     if (customFilterParams['version'] == null) {
         customFilterParams = transformTandoor1Filter(customFilterParams)
@@ -471,15 +473,11 @@ function filtersToCustomFilterFormat() {
 function transformTandoor1Filter(customFilterParams: any) {
 
     // _or was basically an alias to the standard filter which behaves like an or filter
-    [['books_or', 'books'], ['foods_or', 'foods'], ['keywords_or', 'keywords'],].forEach(pair => {
-        if (customFilterParams[pair[1]] != null) {
-            if (customFilterParams[pair[2]] != null) {
-                customFilterParams[pair[2]].concat(customFilterParams[pair[1]])
-            } else {
-                customFilterParams[pair[2]] = customFilterParams[pair[1]]
-            }
+    for (const [legacy, current] of [['books_or', 'books'], ['foods_or', 'foods'], ['keywords_or', 'keywords']] as const) {
+        if (Array.isArray(customFilterParams[legacy])) {
+            customFilterParams[current] = [...(customFilterParams[current] ?? []), ...customFilterParams[legacy]]
         }
-    })
+    }
 
     if (customFilterParams['cookedon'] != null) {
         if (customFilterParams['cookedon'].startsWith('-')) {
@@ -571,7 +569,7 @@ const filters = ref({
             {value: "lastviewed", title: `${t('date_viewed')} (↑)`},
             {value: "-lastviewed", title: `${t('date_viewed')} (↓)`},
         ],
-        modelValue: useRouteQuery('sortOrder', "")
+        modelValue: useRouteQuery<string>('sortOrder', "")
     },
     keywords: {
         id: 'keywords',
@@ -737,7 +735,7 @@ const filters = ref({
         default: undefined,
         is: markRaw(VModelSelect),
         model: 'User',
-        modelValue: useRouteQuery('createdby', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('createdby', undefined, {transform: numberOrUndefinedTransformer}),
         returnObject: false,
     },
     units: {
@@ -781,7 +779,7 @@ const filters = ref({
         clearable: true,
         default: undefined,
         is: markRaw(RatingField),
-        modelValue: useRouteQuery('rating', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('rating', undefined, {transform: numberOrUndefinedTransformer}),
     },
     ratingGte: {
         id: 'ratingGte',
@@ -791,7 +789,7 @@ const filters = ref({
         clearable: true,
         default: undefined,
         is: markRaw(RatingField),
-        modelValue: useRouteQuery('ratingGte', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('ratingGte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     ratingLte: {
         id: 'ratingLte',
@@ -801,7 +799,7 @@ const filters = ref({
         clearable: true,
         default: undefined,
         is: markRaw(RatingField),
-        modelValue: useRouteQuery('ratingLte', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('ratingLte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     timescooked: {
         id: 'timescooked',
@@ -811,7 +809,7 @@ const filters = ref({
         default: undefined,
         clearable: true,
         is: markRaw(VNumberInput),
-        modelValue: useRouteQuery('timescooked', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('timescooked', undefined, {transform: numberOrUndefinedTransformer}),
     },
     timescookedGte: {
         id: 'timescookedGte',
@@ -821,7 +819,7 @@ const filters = ref({
         clearable: true,
         default: undefined,
         is: markRaw(VNumberInput),
-        modelValue: useRouteQuery('timescookedGte', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('timescookedGte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     timescookedLte: {
         id: 'timescookedLte',
@@ -831,7 +829,7 @@ const filters = ref({
         clearable: true,
         default: undefined,
         is: markRaw(VNumberInput),
-        modelValue: useRouteQuery('timescookedLte', undefined, {transform: numberOrUndefinedTransformer}),
+        modelValue: useRouteQuery<string | undefined, number | undefined>('timescookedLte', undefined, {transform: numberOrUndefinedTransformer}),
     },
     makenow: {
         id: 'makenow',
@@ -841,7 +839,7 @@ const filters = ref({
         default: "false",
         is: markRaw(VSelect),
         items: [{value: "true", title: 'Yes'}, {value: "false", title: 'No'}],
-        modelValue: useRouteQuery('makenow', "false"),
+        modelValue: useRouteQuery<string>('makenow', "false"),
     },
     cookedonGte: {
         id: 'cookedonGte',
@@ -944,6 +942,15 @@ const filters = ref({
         modelValue: useRouteQuery('includeChildren', 'true')
     },
 })
+
+const filterByName = computed(() => new Map(Object.entries(filters.value)))
+function enableFilter(name: string | null) {
+    if (!name) return
+    const filter = filterByName.value.get(name)
+    if (!filter) return
+    filter.enabled = true
+    nextTick(() => {addFilterSelect.value = null})
+}
 
 </script>
 

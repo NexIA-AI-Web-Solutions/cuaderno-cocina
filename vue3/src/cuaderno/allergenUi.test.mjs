@@ -10,6 +10,7 @@ const {
     allergenDeclarationName,
     allergenAssessmentEnvelope,
     allergenAssessmentLabel,
+    allergenDeclarationAuditLabel,
     unknownAllergenAssessment,
 } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
 
@@ -34,6 +35,25 @@ test('valid allergen envelopes preserve declared and unknown server states exact
     assert.deepEqual(allergenAssessmentEnvelope(unknown, 'recipe', 12), unknown)
     assert.equal(allergenAssessmentLabel('declared'), 'Alérgenos declarados')
     assert.equal(allergenAssessmentLabel('unknown'), 'Estado de alérgenos desconocido')
+})
+
+test('allergen audit metadata is validated, preserved and rendered in Spanish', () => {
+    const audited = {
+        ...foodEnvelope,
+        foods: [{...foodEnvelope.foods[0], declarations: [{
+            ...declaration, created_by: 42, created_at: '2026-10-04T12:30:00Z',
+        }]}],
+    }
+    assert.deepEqual(allergenAssessmentEnvelope(audited, 'food', 7), audited)
+    assert.match(allergenDeclarationAuditLabel(audited.foods[0].declarations[0]), /registrado el 4 oct 2026 · usuario 42/)
+    for (const metadata of [
+        {created_by: 0, created_at: '2026-10-04T12:30:00Z'},
+        {created_by: '42', created_at: '2026-10-04T12:30:00Z'},
+        {created_by: null, created_at: 'ayer'},
+    ]) {
+        const malformed = {...audited, foods: [{...audited.foods[0], declarations: [{...declaration, ...metadata}]}]}
+        assert.equal(allergenAssessmentEnvelope(malformed, 'food', 7), null)
+    }
 })
 
 test('envelope validation rejects incoherent scopes, unsafe states and coerced identifiers', () => {

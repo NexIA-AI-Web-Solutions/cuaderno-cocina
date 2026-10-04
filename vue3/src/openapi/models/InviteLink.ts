@@ -20,6 +20,13 @@ import {
     GroupToJSON,
     GroupToJSONTyped,
 } from './Group';
+import type { InviteLinkEmail } from './InviteLinkEmail';
+import {
+    InviteLinkEmailFromJSON,
+    InviteLinkEmailFromJSONTyped,
+    InviteLinkEmailToJSON,
+    InviteLinkEmailToJSONTyped,
+} from './InviteLinkEmail';
 import type { Household } from './Household';
 import {
     HouseholdFromJSON,
@@ -39,7 +46,7 @@ export interface InviteLink {
      * @type {number}
      * @memberof InviteLink
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -48,10 +55,10 @@ export interface InviteLink {
     readonly uuid: string;
     /**
      * 
-     * @type {string}
+     * @type {InviteLinkEmail}
      * @memberof InviteLink
      */
-    email?: string;
+    email?: InviteLinkEmail;
     /**
      * 
      * @type {Group}
@@ -112,6 +119,7 @@ export interface InviteLink {
  * Check if a given object implements the InviteLink interface.
  */
 export function instanceOfInviteLink(value: object): value is InviteLink {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('uuid' in value) || value['uuid'] === undefined) return false;
     if (!('group' in value) || value['group'] === undefined) return false;
     if (!('usedBy' in value) || value['usedBy'] === undefined) return false;
@@ -131,9 +139,9 @@ export function InviteLinkFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'uuid': json['uuid'],
-        'email': json['email'] == null ? undefined : json['email'],
+        'email': json['email'] == null ? undefined : InviteLinkEmailFromJSON(json['email']),
         'group': GroupFromJSON(json['group']),
         'household': json['household'] == null ? undefined : HouseholdFromJSON(json['household']),
         'validUntil': json['valid_until'] == null ? undefined : (new Date(json['valid_until'])),
@@ -150,15 +158,14 @@ export function InviteLinkToJSON(json: any): InviteLink {
     return InviteLinkToJSONTyped(json, false);
 }
 
-export function InviteLinkToJSONTyped(value?: Omit<InviteLink, 'uuid'|'used_by'|'created_by'|'created_at'|'email_sent'> | null, ignoreDiscriminator: boolean = false): any {
+export function InviteLinkToJSONTyped(value?: Omit<InviteLink, 'id'|'uuid'|'used_by'|'created_by'|'created_at'|'email_sent'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
-        'email': value['email'],
+        'email': InviteLinkEmailToJSON(value['email']),
         'group': GroupToJSON(value['group']),
         'household': HouseholdToJSON(value['household']),
         'valid_until': value['validUntil'] == null ? value['validUntil'] : value['validUntil'].toISOString().substring(0,10),

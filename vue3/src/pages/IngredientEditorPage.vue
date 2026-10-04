@@ -26,7 +26,7 @@
                                             </v-list-item>
                                             <v-list-item link prepend-icon="fa-solid fa-arrows-to-dot" :disabled="!selectedFood">
                                                 {{ $t('Merge') }}
-                                                <model-merge-dialog :source="[selectedFood]" model="Food"
+                                                <model-merge-dialog v-if="selectedFood" :source="[selectedFood]" model="Food"
                                                                     @change="(obj: Food) => {selectedFood = obj;refreshPage()} "></model-merge-dialog>
                                             </v-list-item>
 
@@ -57,13 +57,13 @@
                                         <v-list density="compact">
                                             <v-list-item link prepend-icon="$edit" :disabled="!selectedUnit">
                                                 {{ $t('Edit') }}
-                                                <model-edit-dialog model="Unit" :item="selectedUnit" activator="parent" @save="(obj: Food) => {selectedUnit = obj}"
+                                                <model-edit-dialog model="Unit" :item="selectedUnit" activator="parent" @save="(obj: Unit) => {selectedUnit = obj}"
                                                                    @delete="selectedUnit = null; refreshPage()"></model-edit-dialog>
                                             </v-list-item>
                                             <v-list-item link prepend-icon="fa-solid fa-arrows-to-dot" :disabled="!selectedUnit">
                                                 {{ $t('Merge') }}
-                                                <model-merge-dialog :source="[selectedUnit]" model="Unit"
-                                                                    @change="(obj: Food) => {selectedUnit = obj;refreshPage()} "></model-merge-dialog>
+                                                <model-merge-dialog v-if="selectedUnit" :source="[selectedUnit]" model="Unit"
+                                                                    @change="(obj: Unit) => {selectedUnit = obj;refreshPage()} "></model-merge-dialog>
                                             </v-list-item>
                                             <v-list-item link prepend-icon="$automation" :disabled="!selectedUnit">
                                                 {{ $t('Automate') }}
@@ -93,7 +93,8 @@
                 :items-length="tableItemCount"
                 :items-per-page="tablePageSize"
                 :headers="tableHeaders"
-                :expanded="items.flatMap((i:Ingredient) => i.id)"
+                :expanded="expandedRows"
+                :item-value="(item: EditorIngredient) => String(item.id)"
                 :page="tablePage"
                 :loading="ingredientsLoading"
                 disable-sort
@@ -156,7 +157,7 @@
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {ApiApi, ApiIngredientListRequest, Food, Ingredient, Unit} from "@/openapi";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import {useI18n} from "vue-i18n";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useUrlSearchParams} from "@vueuse/core";
@@ -164,6 +165,7 @@ import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import type {VDataTableUpdateOptions} from "@/vuetify.ts";
 
 const {t} = useI18n()
 const params = useUrlSearchParams('history', {})
@@ -177,8 +179,10 @@ const tableHeaders = [
     {title: t('Unit'), key: 'unit', minWidth: '120px', cellProps: {class: 'pr-0'}},
     {title: t('Food'), key: 'food', minWidth: '120px', cellProps: {class: 'pr-0'}},
     {title: t('Note'), key: 'note', minWidth: '120px', cellProps: {class: 'pr-0'}},
-    {key: 'action', width: '1%', noBreak: true, align: 'end'},
+    {key: 'action', width: '1%', noBreak: true, align: 'end' as const},
 ]
+
+const expandedRows = computed(() => items.value.map(item => String(item.id)))
 
 const tablePage = ref(1)
 const tablePageSize = ref(25)
@@ -274,7 +278,7 @@ function getAndLoadParameters() {
  * manually trigger item load
  */
 function refreshPage() {
-    loadItems({page: tablePage.value, itemsPerPage: tablePageSize.value})
+    loadItems({page: tablePage.value, itemsPerPage: tablePageSize.value, search: ''})
 }
 
 /**
@@ -285,7 +289,7 @@ function refreshPage() {
  * @param sortBy
  * @param groupBy
  */
-function loadItems({page, itemsPerPage, search, sortBy, groupBy}) {
+function loadItems({page, itemsPerPage}: VDataTableUpdateOptions) {
     // never load unfiltered, only load if at least one filter is set
     if (!selectedFood.value && !selectedUnit.value) {
         items.value = []

@@ -59,6 +59,11 @@ async function mount(transport) {
         export const decimalInput = value => String(value || '') || null;
     `)
     const empty = moduleUrl(`export default {render: () => null};`)
+    const history = moduleUrl(`
+        import {defineComponent, h} from ${JSON.stringify(vueUrl)};
+        export default defineComponent({props: {packageId: Number},
+            setup: props => () => h('price-history-panel', {packageId: props.packageId})});
+    `)
     const notice = moduleUrl(`
         import {defineComponent, h} from ${JSON.stringify(vueUrl)};
         export default defineComponent({props: {role: {default: null}},
@@ -81,7 +86,7 @@ async function mount(transport) {
     const replacements = new Map([
         ['vue', vueUrl], ['@/cuaderno/api', api], ['@/cuaderno/forms', forms],
         ['@/components/inputs/VModelSelect.vue', empty],
-        ['@/cuaderno/components/PriceHistoryPanel.vue', empty],
+        ['@/cuaderno/components/PriceHistoryPanel.vue', history],
         ['@/cuaderno/components/OperationalRoleNotice.vue', notice],
         ['@/cuaderno/priceHistoryUi', priceHelper], ['@/cuaderno/operationalRoleUi', roleHelper],
     ])
@@ -94,7 +99,7 @@ async function mount(transport) {
     const app = renderer().createApp(component)
     for (const name of ['v-container', 'v-card', 'v-card-title', 'v-card-text', 'v-row', 'v-col',
         'v-btn', 'v-alert', 'v-divider', 'v-progress-linear', 'v-list', 'v-list-item',
-        'v-list-item-title', 'v-list-item-subtitle', 'v-text-field', 'v-checkbox']) {
+        'v-list-item-title', 'v-list-item-subtitle', 'v-text-field', 'v-checkbox', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false,
             setup(_props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name,
                 context.attrs, [context.slots.default?.(), context.slots.append?.()]) }}))
@@ -142,5 +147,64 @@ test('a contradictory role fails closed without hiding native price content', as
         assert.equal(roleNotice(mounted.root).props.role, null)
         assert.match(textOf(mounted.root), /Formatos guardados/)
         assert.deepEqual(mounted.calls.map(call => call.url), ['/api/cuaderno/packages/', '/api/cuaderno/edition/'])
+    } finally { mounted.close() }
+})
+
+test('Consulta and unverified roles cannot submit price writes while Cocina can', async () => {
+    for (const [operationalRole, expectedDisabled] of [[role('guest'), true], [role('user'), false], [null, true]]) {
+        const mounted = await mount((url, options) => {
+            if (options.method) return assert.fail('Role gating must stop unauthorized POSTs')
+            if (url === '/api/cuaderno/packages/') return {ok: true, status: 200, data: []}
+            return operationalRole
+                ? {ok: true, status: 200, data: {currency: 'EUR', operational_role: operationalRole}}
+                : {ok: false, status: 503, data: {detail: 'offline'}}
+        })
+        try {
+            assert.equal(button(mounted.root, 'Guardar formato').props.disabled, expectedDisabled)
+            if (expectedDisabled) {
+                await button(mounted.root, 'Guardar formato').props.onClick()
+                await flush()
+                assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 0)
+            }
+        } finally { mounted.close() }
+    }
+})
+
+test('Consulta can select a saved package and read its history without exposing price mutation controls', async () => {
+    const row = {id: 8, food: 2, food_name: 'Aceite', unit: 3, unit_name: 'L', label: 'Garrafa',
+        quantity: '5', is_reference: true, current_price: null}
+    const mounted = await mount((url, options) => {
+        if (options.method) return assert.fail('Consulta must not submit a price write')
+        if (url === '/api/cuaderno/packages/') return {ok: true, status: 200, data: [row]}
+        return {ok: true, status: 200, data: {currency: 'EUR', operational_role: role('guest')}}
+    })
+    try {
+        const consult = button(mounted.root, 'Consultar historial')
+        assert.ok(consult, 'the read action must remain available to Consulta')
+        assert.notEqual(consult.props.disabled, true)
+        await consult.props.onClick()
+        await flush()
+        const history = all(mounted.root, node => node.type === 'price-history-panel')[0]
+        assert.equal(history.props.packageId, 8)
+        assert.equal(button(mounted.root, 'Actualizar precio'), undefined)
+        assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 0)
+    } finally { mounted.close() }
+})
+
+test('saved packages render envelope price, unit price and effective date in responsive representations', async () => {
+    const validFrom = '2026-10-04T10:00:00+02:00'
+    const row = {id: 1, food: 2, food_name: 'Aceite', unit: 3, unit_name: 'L', label: 'Garrafa',
+        quantity: '5', is_reference: true, current_price: {id: 4, amount: '32', explicit_free: false, valid_from: validFrom}}
+    const mounted = await mount(url => url === '/api/cuaderno/packages/'
+        ? {ok: true, status: 200, data: [row]}
+        : {ok: true, status: 200, data: {currency: 'EUR', operational_role: role('user')}})
+    try {
+        const text = textOf(mounted.root)
+        assert.match(text, /Aceite.+Garrafa/)
+        assert.match(text, /32 EUR/)
+        assert.match(text, /6,4000 EUR\/L/)
+        assert.ok(text.includes(new Intl.DateTimeFormat('es-ES', {dateStyle: 'medium'}).format(new Date(validFrom))))
+        assert.equal(all(mounted.root, node => node.type === 'v-table').length, 1)
+        assert.equal(all(mounted.root, node => String(node.props?.class || '').includes('package-cards')).length, 1)
     } finally { mounted.close() }
 })

@@ -138,11 +138,11 @@
 
         <v-card class="mt-1"
                 v-if="recipe.showIngredientOverview && !useUserPreferenceStore().isPrintMode">
-            <steps-overview :steps="recipe.steps" :ingredient-factor="ingredientFactor" @scale="(factor: number) => {servings = recipe.servings * factor}"></steps-overview>
+            <steps-overview :steps="recipe.steps" :ingredient-factor="ingredientFactor" @scale="(factor: number) => {servings = (recipe.servings ?? 1) * factor}"></steps-overview>
         </v-card>
 
         <v-card class="mt-1" v-for="(step, index) in recipe.steps" :key="step.id">
-            <step-view v-model="recipe.steps[index]" :step-number="index+1" :ingredientFactor="ingredientFactor"></step-view>
+            <step-view :model-value="step" @update:model-value="updateStep(index, $event)" :step-number="index+1" :ingredientFactor="ingredientFactor"></step-view>
         </v-card>
 
         <property-view v-model="recipe" :ingredientFactor="ingredientFactor"></property-view>
@@ -200,7 +200,7 @@
 <script setup lang="ts">
 
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
-import {AiProvider, ApiApi, Recipe} from "@/openapi"
+import {AiProvider, ApiApi, Recipe, type Step} from "@/openapi"
 import NumberScalerDialog from "@/components/inputs/NumberScalerDialog.vue"
 import StepsOverview from "@/components/display/StepsOverview.vue";
 import RecipeActivity from "@/components/display/RecipeActivity.vue";
@@ -220,6 +220,7 @@ import PrivateRecipeBadge from "@/components/display/PrivateRecipeBadge.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import RecipeScalingDialog from "@/components/dialogs/RecipeScalingDialog.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import {sourceImportRequest} from "@/utils/sourceImport.ts";
 
 const {request, release} = useWakeLock()
 const {doAiImport, fileApiLoading} = useFileApi()
@@ -231,7 +232,11 @@ const props = defineProps<{servings?: number}>()
 const servings = ref(props.servings ?? recipe.value.servings ?? 1)
 const showFullRecipeName = ref(false)
 
-const selectedAiProvider = ref<undefined | AiProvider>(useUserPreferenceStore().activeSpace.aiDefaultProvider)
+const selectedAiProvider = ref<AiProvider | undefined>(useUserPreferenceStore().activeSpace.aiDefaultProvider ?? undefined)
+
+function updateStep(index: number, step: Step) {
+    recipe.value.steps[index] = step
+}
 
 /**
  * factor for multiplying ingredient amounts based on recipe base servings and user selected servings
@@ -266,22 +271,17 @@ onBeforeUnmount(() => {
  */
 function aiConvertRecipe() {
     let api = new ApiApi()
+    const provider = selectedAiProvider.value
+    if (!provider) return
 
-    doAiImport(selectedAiProvider.value.id!, null, '', recipe.value.id!).then(r => {
+    doAiImport(provider.id, null, '', recipe.value.id.toString()).then(r => {
         if (r.recipe) {
-            recipe.value.internal = true
-            recipe.value.steps = r.recipe.steps
-            recipe.value.keywords = r.recipe.keywords
-            recipe.value.servings = r.recipe.servings
-            recipe.value.servingsText = r.recipe.servingsText
-            recipe.value.workingTime = r.recipe.workingTime
-            recipe.value.waitingTime = r.recipe.waitingTime
-
-            servings.value = r.recipe.servings
             loading.value = true
-
-            api.apiRecipeUpdate({id: recipe.value.id!, recipe: recipe.value}).then(r => {
-                recipe.value = r
+            const recipeRequest = sourceImportRequest(r.recipe)
+            recipeRequest.internal = true
+            api.apiRecipeUpdate({id: recipe.value.id, recipe: recipeRequest}).then(updatedRecipe => {
+                recipe.value = updatedRecipe
+                servings.value = updatedRecipe.servings ?? 1
             }).catch(err => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             }).finally(() => {

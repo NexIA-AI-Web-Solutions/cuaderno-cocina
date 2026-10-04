@@ -10,9 +10,9 @@
         </v-list-item-subtitle>
         <v-list-item-subtitle
             :to="{name: 'ModelListPage', params: {model: 'household'}}"
-            v-if="useUserPreferenceStore().activeUserSpace != null && useUserPreferenceStore().activeUserSpace.household != null">
+            v-if="activeHousehold">
             <i :class="THousehold.icon"></i>
-            {{ useUserPreferenceStore().activeUserSpace.household.name }}
+            {{ activeHousehold.name }}
         </v-list-item-subtitle>
         <v-list-item-subtitle class="cursor-pointer" @click="router.push({name: 'ModelListPage', params: {model: 'UserSpace'}})"
                               v-else>
@@ -27,8 +27,11 @@
 import {THousehold, TSpace} from "@/types/Models.ts";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {useRouter} from "vue-router";
+import {computed} from "vue";
 
 let router = useRouter()
+const userPreferences = useUserPreferenceStore()
+const activeHousehold = computed(() => userPreferences.activeUserSpace?.household ?? null)
 </script>
 
 <style scoped>

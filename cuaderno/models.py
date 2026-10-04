@@ -30,6 +30,11 @@ class SpaceProfile(models.Model):
 
     class Meta:
         verbose_name = "perfil de cuaderno"
+        constraints = [models.CheckConstraint(
+            condition=models.Q(target_food_cost_ratio__isnull=True)
+            | (models.Q(target_food_cost_ratio__gt=0) & models.Q(target_food_cost_ratio__lte=1)),
+            name="cuaderno_profile_target_ratio",
+        )]
 
 
 class PackageFormat(models.Model):
@@ -44,6 +49,7 @@ class PackageFormat(models.Model):
 
     class Meta:
         constraints = [
+            models.CheckConstraint(condition=models.Q(quantity__gt=0), name="cuaderno_package_positive_quantity"),
             models.UniqueConstraint(
                 fields=["space", "food"],
                 condition=models.Q(is_reference=True),
@@ -74,6 +80,8 @@ class PriceVersion(models.Model):
         ]
         indexes = [
             models.Index(fields=["package", "valid_from"]),
+            models.Index(fields=["space", "package", "-valid_from", "-id"],
+                         include=["amount", "explicit_free"], name="cuaderno_price_current_cover"),
         ]
 
 
@@ -99,6 +107,9 @@ class StockMovement(models.Model):
 
     class Meta:
         constraints = [
+            models.CheckConstraint(condition=models.Q(quantity__gt=0), name="cuaderno_movement_positive_quantity"),
+            models.CheckConstraint(condition=models.Q(kind__in=("receipt", "consume", "waste")), name="cuaderno_movement_valid_kind"),
+            models.CheckConstraint(condition=~models.Q(reverses=models.F("pk")), name="cuaderno_movement_no_self_reversal"),
             models.UniqueConstraint(fields=["space", "idempotency_key"], name="cuaderno_movement_idempotency"),
             models.UniqueConstraint(
                 fields=["reverses"],
@@ -108,6 +119,7 @@ class StockMovement(models.Model):
         ]
         indexes = [
             models.Index(fields=["space", "created_at"], name="cuaderno_movement_space_time"),
+            models.Index(fields=["space", "-id"], name="cuaderno_movement_space_id"),
         ]
 
 
@@ -214,7 +226,10 @@ class ServicePlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(
+        constraints = [
+            models.CheckConstraint(condition=models.Q(covers__gt=0), name="cuaderno_service_positive_covers"),
+            models.CheckConstraint(condition=models.Q(state__in=("draft", "confirmed", "produced", "cancelled")), name="cuaderno_service_valid_state"),
+            models.UniqueConstraint(
             fields=["space", "produced_key"], condition=~models.Q(produced_key=""), name="cuaderno_service_produced_key",
         )]
 
@@ -259,6 +274,13 @@ class AllergenDeclaration(models.Model):
     food = models.ForeignKey("cookbook.Food", on_delete=models.PROTECT, related_name="cuaderno_allergens")
     name = models.CharField(max_length=128)
     state = models.CharField(max_length=16, choices=STATES, default=UNKNOWN)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, null=True, blank=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(
+            condition=models.Q(state__in=("declared", "unknown")), name="cuaderno_allergen_valid_state",
+        )]
 
 
 class RecipeExchangeRecord(models.Model):
@@ -290,6 +312,9 @@ class RecipeYield(models.Model):
     unit = models.ForeignKey("cookbook.Unit", on_delete=models.PROTECT)
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=models.Q(quantity__gt=0), name="cuaderno_yield_positive_quantity")]
 
 
 class InventoryWriteRequest(models.Model):

@@ -72,7 +72,7 @@ const currentCoverage = computed(() => {
     if (!resolved || resolved === 'en') return 100
     // Find the FE file that matches
     for (const [filename, data] of Object.entries(localeCoverage)) {
-        if (filename.replaceAll('_', '-').toLowerCase() === resolved) {
+        if (filename.split('_').join('-').toLowerCase() === resolved) {
             return data.fe
         }
     }
@@ -98,7 +98,7 @@ onMounted(() => {
                     fe = 100
                 } else {
                     for (const [filename, data] of Object.entries(localeCoverage)) {
-                        if (filename.replaceAll('_', '-').toLowerCase() === resolved) {
+                        if (filename.split('_').join('-').toLowerCase() === resolved) {
                             fe = data.fe
                             break
                         }

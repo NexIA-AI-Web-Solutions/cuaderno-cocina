@@ -7,6 +7,7 @@ from importlib import metadata
 import json
 from pathlib import Path
 import re
+from urllib.parse import quote
 
 from packaging.requirements import InvalidRequirement, Requirement
 
@@ -100,9 +101,11 @@ def sbom_versions(path: Path) -> dict[str, str]:
     for row in rows:
         if not isinstance(row, dict) or not isinstance(row.get("purl"), str):
             raise ValueError("El conjunto contiene componentes no Python.")
-        match = re.fullmatch(r"pkg:pypi/([A-Za-z0-9][A-Za-z0-9._-]*)@([^/@?#%\s]+)", row["purl"])
-        if (match is None or canonical_name(match.group(1)) != canonical_name(row.get("name"))
-                or match.group(2) != row.get("version")):
+        name = canonical_name(row.get("name"))
+        version = row.get("version")
+        expected_purl = (f"pkg:pypi/{quote(name, safe='.-_')}@{quote(version, safe='.-_')}"
+                         if isinstance(version, str) and version else None)
+        if row["purl"] != expected_purl:
             raise ValueError("Identidad o versión PURL Python incoherente.")
     return version_set(rows)
 

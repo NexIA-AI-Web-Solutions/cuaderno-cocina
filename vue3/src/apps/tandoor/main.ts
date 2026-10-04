@@ -1,5 +1,5 @@
 import {createApp} from "vue";
-import {createRouter, createWebHistory} from 'vue-router'
+import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 import {createPinia} from 'pinia'
 // @ts-ignore
 import App from './Tandoor.vue'
@@ -12,9 +12,9 @@ import {createRulesPlugin} from 'vuetify/labs/rules'
 
 import {setupI18n} from "@/i18n";
 import MealPlanPage from "@/pages/MealPlanPage.vue";
-import {TANDOOR_PLUGINS, TandoorPlugin} from "@/types/Plugins.ts";
+import {TANDOOR_PLUGINS} from "@/types/Plugins.ts";
 
-let routes = [
+let routes: RouteRecordRaw[] = [
     {path: '/', component: () => import("@/pages/StartPage.vue"), name: 'StartPage'},
     {path: '/search', redirect: {name: 'StartPage'}},
     {path: '/test', component: () => import("@/pages/TestPage.vue"), name: 'view_test'},
@@ -52,7 +52,7 @@ let routes = [
     {path: '/:pathMatch(.*)*', component: () => import("@/pages/404Page.vue"), name: '404Page', meta: {title: 'NotFound'}},
 ]
 
-let settings = {
+let settings: RouteRecordRaw = {
     path: '/settings', component: () => import("@/pages/SettingsPage.vue"), name: 'SettingsPage', redirect: '/settings/account',
     children: [
         {path: 'account', component: () => import("@/components/settings/AccountSettings.vue"), name: 'AccountSettings', meta: {title: 'Settings'}},

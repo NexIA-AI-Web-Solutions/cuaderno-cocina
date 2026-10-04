@@ -20,6 +20,13 @@ import {
     MethodEnumToJSON,
     MethodEnumToJSONTyped,
 } from './MethodEnum';
+import type { ConnectorConfigUrl } from './ConnectorConfigUrl';
+import {
+    ConnectorConfigUrlFromJSON,
+    ConnectorConfigUrlFromJSONTyped,
+    ConnectorConfigUrlToJSON,
+    ConnectorConfigUrlToJSONTyped,
+} from './ConnectorConfigUrl';
 
 /**
  * Adds nested create feature
@@ -32,7 +39,7 @@ export interface Storage {
      * @type {number}
      * @memberof Storage
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -53,22 +60,10 @@ export interface Storage {
     username?: string | null;
     /**
      * 
-     * @type {string}
+     * @type {ConnectorConfigUrl}
      * @memberof Storage
      */
-    password?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof Storage
-     */
-    token?: string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof Storage
-     */
-    url?: string | null;
+    url?: ConnectorConfigUrl | null;
     /**
      * 
      * @type {string}
@@ -89,6 +84,7 @@ export interface Storage {
  * Check if a given object implements the Storage interface.
  */
 export function instanceOfStorage(value: object): value is Storage {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     return true;
@@ -104,13 +100,11 @@ export function StorageFromJSONTyped(json: any, ignoreDiscriminator: boolean): S
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'method': json['method'] == null ? undefined : MethodEnumFromJSON(json['method']),
         'username': json['username'] == null ? undefined : json['username'],
-        'password': json['password'] == null ? undefined : json['password'],
-        'token': json['token'] == null ? undefined : json['token'],
-        'url': json['url'] == null ? undefined : json['url'],
+        'url': json['url'] == null ? undefined : ConnectorConfigUrlFromJSON(json['url']),
         'path': json['path'] == null ? undefined : json['path'],
         'createdBy': json['created_by'],
     };
@@ -120,20 +114,17 @@ export function StorageToJSON(json: any): Storage {
     return StorageToJSONTyped(json, false);
 }
 
-export function StorageToJSONTyped(value?: Omit<Storage, 'created_by'> | null, ignoreDiscriminator: boolean = false): any {
+export function StorageToJSONTyped(value?: Omit<Storage, 'id'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'method': MethodEnumToJSON(value['method']),
         'username': value['username'],
-        'password': value['password'],
-        'token': value['token'],
-        'url': value['url'],
+        'url': ConnectorConfigUrlToJSON(value['url']),
         'path': value['path'],
     };
 }

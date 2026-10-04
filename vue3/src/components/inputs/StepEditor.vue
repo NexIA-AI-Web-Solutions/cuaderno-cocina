@@ -97,10 +97,10 @@
                                                 <v-menu activator="parent">
                                                     <v-list>
                                                         <v-list-item>
-                                                            <v-switch v-model="step.ingredients[index].isHeader" :label="$t('Headline')" hide-details></v-switch>
+                                                            <v-switch v-model="ingredient.isHeader" :label="$t('Headline')" hide-details></v-switch>
                                                         </v-list-item>
                                                         <v-list-item>
-                                                            <v-switch v-model="step.ingredients[index].noAmount" :label="$t('Disable_Amount')" hide-details></v-switch>
+                                                            <v-switch v-model="ingredient.noAmount" :label="$t('Disable_Amount')" hide-details></v-switch>
                                                         </v-list-item>
                                                         <v-list-item @click="editingIngredientIndex = index; dialogIngredientSorter = true" prepend-icon="fa-solid fa-sort">
                                                             {{ $t('Move') }}
@@ -117,7 +117,7 @@
                     </div>
 
                     <v-list v-if="mobile">
-                        <vue-draggable v-model="step.ingredients" handle=".drag-handle" :on-sort="sortIngredients" group="ingredients" empty-insert-threshold="25">
+                        <vue-draggable v-model="step.ingredients" handle=".drag-handle" :on-sort="sortIngredients" group="ingredients" :empty-insert-threshold="25">
                             <v-list-item v-for="(ingredient, index) in step.ingredients" :key="ingredient.id" border
                                          @click="editingIngredientIndex = index; dialogIngredientEditor = true">
                                 <ingredient-string :ingredient="ingredient"></ingredient-string>
@@ -189,35 +189,35 @@
                                    :ingredient-index="editingIngredientIndex"></step-ingredient-sorter-dialog>
 
     <v-bottom-sheet v-model="dialogIngredientEditor">
-        <v-card v-if="editingIngredientIndex >= 0">
+        <v-card v-if="editingIngredient">
             <v-closable-card-title :title="$t('Ingredient Editor')" v-model="dialogIngredientEditor"></v-closable-card-title>
             <v-card-text>
                 <v-form>
-                    <v-text-field :label="$t('Original_Text')" readonly v-model="step.ingredients[editingIngredientIndex].originalText"
-                                  v-if="step.ingredients[editingIngredientIndex].originalText"></v-text-field>
-                    <v-number-input v-model="step.ingredients[editingIngredientIndex].amount" inset control-variant="stacked" autofocus :label="$t('Amount')"
+                    <v-text-field :label="$t('Original_Text')" readonly v-model="editingIngredient.originalText"
+                                  v-if="editingIngredient.originalText"></v-text-field>
+                    <v-number-input v-model="editingIngredient.amount" inset control-variant="stacked" autofocus :label="$t('Amount')"
                                     :min="0" :precision="useUserPreferenceStore().userSettings.ingredientDecimals"
-                                    :disabled="step.ingredients[editingIngredientIndex].noAmount"
-                                    v-if="!step.ingredients[editingIngredientIndex].isHeader"></v-number-input>
-                    <v-model-select model="Unit" v-model="step.ingredients[editingIngredientIndex].unit"  v-if="!step.ingredients[editingIngredientIndex].isHeader"
-                                  :disabled="step.ingredients[editingIngredientIndex].noAmount"
+                                    :disabled="editingIngredient.noAmount"
+                                    v-if="!editingIngredient.isHeader"></v-number-input>
+                    <v-model-select model="Unit" v-model="editingIngredient.unit"  v-if="!editingIngredient.isHeader"
+                                  :disabled="editingIngredient.noAmount"
                                   create></v-model-select>
-                    <v-model-select model="Food" v-model="step.ingredients[editingIngredientIndex].food" v-if="!step.ingredients[editingIngredientIndex].isHeader"
+                    <v-model-select model="Food" v-model="editingIngredient.food" v-if="!editingIngredient.isHeader"
                                   create></v-model-select>
-                    <v-text-field :label="(step.ingredients[editingIngredientIndex].isHeader) ?$t('Headline')  : $t('Note')"
-                                  v-model="step.ingredients[editingIngredientIndex].note"></v-text-field>
+                    <v-text-field :label="editingIngredient.isHeader ? $t('Headline') : $t('Note')"
+                                  v-model="editingIngredient.note"></v-text-field>
 
                     <v-checkbox
-                        v-model="step.ingredients[editingIngredientIndex].isHeader"
+                        v-model="editingIngredient.isHeader"
                         :label="$t('Headline')"
                         :hint="$t('HeaderWarning')"
                         persistent-hint
-                        @update:modelValue="step.ingredients[editingIngredientIndex].unit = null; step.ingredients[editingIngredientIndex].food = null; step.ingredients[editingIngredientIndex].amount = 0"
+                        @update:modelValue="editingIngredient.unit = null; editingIngredient.food = null; editingIngredient.amount = 0"
                     ></v-checkbox>
                     <v-checkbox
-                        v-model="step.ingredients[editingIngredientIndex].noAmount"
+                        v-model="editingIngredient.noAmount"
                         :label="$t('Disable_Amount')"
-                        v-if="!step.ingredients[editingIngredientIndex].isHeader"
+                        v-if="!editingIngredient.isHeader"
                     ></v-checkbox>
                 </v-form>
                 <v-btn color="info" class="mt-2" @click="dialogIngredientEditor = false; dialogIngredientSorter = true" prepend-icon="fa-solid fa-sort">{{ $t('Move') }}</v-btn>
@@ -233,8 +233,8 @@
 </template>
 
 <script setup lang="ts">
-import {nextTick, ref} from 'vue'
-import {ApiApi, Ingredient, ParsedIngredient, Recipe, Step} from "@/openapi";
+import {computed, nextTick, ref} from 'vue'
+import {ApiApi, Ingredient, IngredientSimple, Recipe, Step} from "@/openapi";
 import StepMarkdownEditor from "@/components/inputs/StepMarkdownEditor.vue";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {useDisplay} from "vuetify";
@@ -268,6 +268,7 @@ const dialogIngredientParser = ref(false)
 const dialogIngredientSorter = ref(false)
 
 const editingIngredientIndex = ref(0)
+const editingIngredient = computed(() => step.value.ingredients[editingIngredientIndex.value] ?? null)
 const ingredientTextInput = ref("")
 
 /**
@@ -291,7 +292,10 @@ function parseAndInsertIngredients() {
         // clear out empty ingredients when pasting stuff (in part to remove initial ingredient)
         step.value.ingredients = step.value.ingredients.filter(i => i.food != null || i.note != null || i.amount != 0)
 
-        step.value.ingredients = step.value.ingredients.concat(r.ingredients)
+        // Parsed ingredients contain the writable ingredient fields but omit
+        // response-only relationship summaries. They are valid editor drafts.
+        const editableIngredients: Array<Ingredient | IngredientSimple> = step.value.ingredients
+        editableIngredients.push(...r.ingredients)
 
         ingredientTextInput.value = ""
         dialogIngredientParser.value = false
@@ -332,7 +336,8 @@ function insertAndFocusIngredient() {
             editingIngredientIndex.value = step.value.ingredients.length - 1
             dialogIngredientEditor.value = true
         } else {
-            document.getElementById(`id_input_amount_${props.stepIndex}_${step.value.ingredients.length - 1}`).select()
+            const input = document.getElementById(`id_input_amount_${props.stepIndex}_${step.value.ingredients.length - 1}`)
+            if (input instanceof HTMLInputElement) input.select()
         }
     })
 }

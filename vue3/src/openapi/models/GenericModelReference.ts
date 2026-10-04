@@ -24,7 +24,7 @@ export interface GenericModelReference {
      * @type {number}
      * @memberof GenericModelReference
      */
-    id?: number;
+    id: number;
     /**
      * 
      * @type {string}
@@ -43,6 +43,7 @@ export interface GenericModelReference {
  * Check if a given object implements the GenericModelReference interface.
  */
 export function instanceOfGenericModelReference(value: object): value is GenericModelReference {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('model' in value) || value['model'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
@@ -58,7 +59,7 @@ export function GenericModelReferenceFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'model': json['model'],
         'name': json['name'],
     };

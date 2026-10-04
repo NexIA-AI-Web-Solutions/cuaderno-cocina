@@ -1,0 +1,19 @@
+[Unit]
+Description=Backup verificado de Cuaderno Cocina
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=cuaderno-backup
+Group=cuaderno-backup
+WorkingDirectory=/opt/cuaderno/app
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/cuaderno/app/scripts/cuaderno/production_backup.py --env-file /etc/cuaderno/production.env --destination-parent /var/backups/cuaderno
+ReadOnlyPaths=/opt/cuaderno/app /etc/cuaderno/production.env
+ReadWritePaths=/var/backups/cuaderno
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+

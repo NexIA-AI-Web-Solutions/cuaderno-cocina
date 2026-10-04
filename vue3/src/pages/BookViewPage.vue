@@ -53,13 +53,13 @@
                     <v-window-item v-for="(entry, i) in recipes" :key="entry.id">
                         <v-row>
                             <v-col cols="12" md="6">
-                                <book-entry-card :recipe-overview="recipes[i]"></book-entry-card>
+                                <book-entry-card :recipe-overview="entry"></book-entry-card>
                                 <div class="text-center mt-1">
                                     <span class="text-disabled">{{ i + 1 }}</span>
                                 </div>
                             </v-col>
-                            <v-col cols="6" v-if="mdAndUp && recipes.length > i + 1">
-                                <book-entry-card :recipe-overview="recipes[i + 1]"></book-entry-card>
+                            <v-col cols="6" v-for="nextRecipe in (mdAndUp ? recipes.slice(i + 1, i + 2) : [])" :key="nextRecipe.id">
+                                <book-entry-card :recipe-overview="nextRecipe"></book-entry-card>
                                 <div class="text-center mt-1">
                                     <span class="text-disabled">{{ i + 2 }}</span>
                                 </div>
@@ -117,8 +117,10 @@ onMounted(() => {
 function loadBook() {
     const api = new ApiApi()
     loading.value = true
+    const bookId = Number(props.bookId)
+    if (!Number.isInteger(bookId) || bookId <= 0) return
 
-    api.apiRecipeBookRetrieve({id: props.bookId}).then(r => {
+    api.apiRecipeBookRetrieve({id: bookId}).then(r => {
         book.value = r
 
         entries.value = []
@@ -138,7 +140,7 @@ function recLoadEntries(page: number) {
     const api = new ApiApi()
     loadingEntries.value = true
 
-    api.apiRecipeBookEntryList({book: props.bookId, page: page, pageSize: 50}).then(r => {
+    api.apiRecipeBookEntryList({book: Number(props.bookId), page: page, pageSize: 50}).then(r => {
         r.results.forEach(rBE => {
             recipes.value.push(rBE.recipeContent)
         })

@@ -21,7 +21,7 @@
                             model="Food"
                             label="Alimento"
                             search-on-load
-                            :disabled="saving || editingId !== null"
+                            :disabled="!props.canOperate || saving || editingId !== null"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
@@ -30,7 +30,7 @@
                             model="Unit"
                             label="Unidad"
                             search-on-load
-                            :disabled="saving"
+                            :disabled="!props.canOperate || saving"
                         />
                     </v-col>
                     <v-col cols="12" sm="6" md="3">
@@ -43,7 +43,7 @@
                             label="Ubicación (opcional)"
                             clearable
                             no-data-text="No hay ubicaciones en el hogar activo"
-                            :disabled="saving || editingId !== null"
+                            :disabled="!props.canOperate || saving || editingId !== null"
                         />
                     </v-col>
                     <v-col cols="12" md="2">
@@ -53,7 +53,7 @@
                             inputmode="decimal"
                             autocomplete="off"
                             :error-messages="formError"
-                            :disabled="saving"
+                            :disabled="!props.canOperate || saving"
                         />
                     </v-col>
                 </v-row>
@@ -64,7 +64,7 @@
                     El alimento y el alcance identifican este mínimo. Para cambiarlos, deja la cantidad vacía y guarda para retirar el anterior; después crea uno nuevo.
                 </p>
                 <div class="d-flex align-center flex-wrap ga-2">
-                    <v-btn type="submit" color="primary" min-height="44" :loading="saving">Guardar mínimo</v-btn>
+                    <v-btn type="submit" color="primary" min-height="44" :loading="saving" :disabled="!props.canOperate">Guardar mínimo</v-btn>
                     <v-btn v-if="editingId !== null" variant="text" min-height="44" :disabled="saving" @click="clearDraft">
                         Cancelar edición
                     </v-btn>
@@ -82,7 +82,7 @@
                         {{ minimumScopeLabel(row.location_name) }} · actualizado {{ dateLabel(row.updated_at) }}
                     </v-list-item-subtitle>
                     <template #append>
-                        <v-btn variant="tonal" min-height="44" :disabled="saving" @click="editMinimum(row)">Editar</v-btn>
+                        <v-btn variant="tonal" min-height="44" :disabled="!props.canOperate || saving" @click="editMinimum(row)">Editar</v-btn>
                     </template>
                 </v-list-item>
             </v-list>
@@ -103,6 +103,7 @@ import type {StockMinimumRow} from '@/cuaderno/stockMinimumUi'
 
 type SelectedModel = {id?: number; name?: string} | null
 
+const props = withDefaults(defineProps<{canOperate?: boolean}>(), {canOperate: true})
 const emit = defineEmits<{loaded: [foods: Record<number, string>]}>()
 const rows = ref<StockMinimumRow[]>([])
 const householdName = ref('')
@@ -140,6 +141,7 @@ function clearDraft() {
 }
 
 function editMinimum(row: StockMinimumRow) {
+    if (!props.canOperate) return
     editingId.value = row.id
     draft.food = {id: row.food, name: row.food_name}
     draft.unit = {id: row.unit, name: row.unit_name}
@@ -180,6 +182,7 @@ async function loadMinimums() {
 }
 
 async function saveMinimum() {
+    if (!props.canOperate) return
     if (saving.value) return
     const parsed = stockMinimumBody(draft.food?.id, draft.unit?.id, draft.quantity, draft.location?.id ?? null)
     formError.value = parsed.error

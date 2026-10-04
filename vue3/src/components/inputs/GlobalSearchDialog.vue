@@ -8,7 +8,7 @@
         </v-btn>
     </slot>
 
-    <v-dialog v-model="dialog" location="id_dialog_anchor"
+    <v-dialog v-model="dialog"
               location-strategy="connected"
               :max-width="(mobile) ? '100vw': '800px'"
               :fullscreen="mobile"
@@ -224,7 +224,8 @@ function cardVariant(index: number) {
  */
 function goToSelectedRecipe(index: number) {
     dialog.value = false
-    let searchResult = searchResults.value[index]
+    const searchResult = searchResults.value[index]
+    if (!searchResult) return
 
     if (searchResult.type == 'link_advanced_search') {
         router.push({name: 'SearchPage', query: {'query': searchQuery.value}})

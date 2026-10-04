@@ -1,9 +1,9 @@
 <template>
 
-    <v-btn  ref="copyBtn" :color="color" :size="size" :density="density" @click="clickCopy()" :variant="variant">
+    <v-btn :color="color" :size="size" :density="density" @click="clickCopy()" :variant="variant">
         <slot name="default">
             <v-icon icon="$copy"></v-icon>
-            <v-tooltip v-model="showToolip" :target="btn" location="top">
+            <v-tooltip v-model="showToolip" target="parent" location="top">
                 <v-icon icon="$copy"></v-icon>
                 {{$t('Copied')}}!
             </v-tooltip>
@@ -15,7 +15,7 @@
 <script setup lang="ts">
 
 import {useClipboard} from "@vueuse/core";
-import {ref, useTemplateRef} from "vue";
+import {type PropType, ref} from "vue";
 
 const {copy} = useClipboard()
 
@@ -23,12 +23,11 @@ const props = defineProps({
     copyValue: {type: String, default: ''},
     color: {type: String, default: 'success'},
     size: {type: String, default: 'default'},
-    density: {type: String, default: 'default'},
-    variant: {type: String, default: 'elevated'},
+    density: {type: String as PropType<'default' | 'comfortable' | 'compact'>, default: 'default'},
+    variant: {type: String as PropType<'flat' | 'plain' | 'text' | 'elevated' | 'outlined' | 'tonal'>, default: 'elevated'},
 
 })
 
-const btn = useTemplateRef('copyBtn')
 const showToolip = ref(false)
 
 function clickCopy() {

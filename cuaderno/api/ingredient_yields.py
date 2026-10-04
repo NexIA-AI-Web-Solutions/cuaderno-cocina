@@ -7,13 +7,14 @@ from collections.abc import Mapping
 from django.contrib.admin.models import CHANGE, LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from cuaderno.services.profiles import profile_for_space
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView
 
 from cookbook.helper.permission_helper import (
     CustomRecipePermission,
@@ -128,7 +129,7 @@ class IngredientYieldView(APIView):
 
     @staticmethod
     def payload(request, recipe, ingredients=None):
-        profile, _ = SpaceProfile.objects.get_or_create(space=request.space)
+        profile = profile_for_space(request.space)
         ingredients = _ingredient_rows(recipe, lock=True) if ingredients is None else ingredients
         return Response({
             "recipe_id": recipe.pk,

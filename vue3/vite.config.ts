@@ -8,16 +8,23 @@ import type {Plugin} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vuetify, {transformAssetUrls} from 'vite-plugin-vuetify'
 import {VitePWA} from "vite-plugin-pwa";
-import {PluginModule} from "./src/types/Plugins";
 import {readFileSync, existsSync} from "node:fs";
+import {createBuildProvenance} from '../scripts/cuaderno/frontend_build_provenance.mjs';
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({command, mode, isSsrBuild, isPreview}) => {
     const buildInputs = await collectBuildInputs()
+    const provenance = command === 'build' ? createBuildProvenance({
+        projectRoot: resolve(__dirname, '..'),
+        vueRoot: __dirname,
+        nodeModulesRoot: resolve(__dirname, 'node_modules'),
+        outDir: resolve(__dirname, '../cookbook/static/vue3'),
+    }) : null
 
     return {
         base: mode == 'development' ? '/static/vue3/' : './',
         plugins: [
+            ...(provenance ? [provenance.mainPlugin] : []),
             localeCoveragePlugin(),
             vue({
                 template: {transformAssetUrls}
@@ -30,7 +37,9 @@ export default defineConfig(async ({command, mode, isSsrBuild, isPreview}) => {
                 strategies: 'injectManifest',
                 srcDir: 'src',
                 filename: 'service-worker.ts',
-            })
+                injectManifest: {buildPlugins: {rollup: provenance ? [provenance.serviceWorkerPlugin] : []}},
+            }),
+            ...(provenance ? [provenance.finalizePlugin] : []),
         ],
         resolve: {
             alias: {

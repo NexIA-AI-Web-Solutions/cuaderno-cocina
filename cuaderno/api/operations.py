@@ -1,20 +1,21 @@
 import json
 import hashlib
 from datetime import date, datetime, time
-from decimal import Decimal
-from zoneinfo import ZoneInfo
+from decimal import Decimal, localcontext
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView, CuadernoIsOperator
 
 from cookbook.helper.permission_helper import CustomIsGuest, CustomIsUser, CustomTokenHasReadWriteScope
 from cookbook.models import Food, Ingredient, InventoryEntry, MealPlan, MealType, Recipe, Step, Unit, UnitConversion
+from cuaderno.api.production import ProductionWriteSerializer, ProductionResponseSerializer
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.exchange import MAX_CATALOG_ITEMS, MAX_EXCHANGE_RECIPES, export_recipe_document, parse_recipe_document, validate_exchange_limits
 from cuaderno.domain.margin import food_cost_gap
@@ -25,7 +26,7 @@ from cuaderno.domain.stock import packs_to_buy, waste_value
 from cuaderno.models import AllergenDeclaration, RecipeExchangeRecord, RecipeYield, ServicePlan, SpaceProfile, StockMovement
 from cuaderno.services.ledger import IdempotencyConflict, apply_movement, replay_legacy_waste, reverse_movement
 from cuaderno.services.service_plans import (
-    accessible_service_plans,
+    accessible_service_plans, accessible_service_plan_rows, serialize_service_plan_row,
     cancel_service_plan,
     confirm_service_plan,
     produce_service_plan,
@@ -44,7 +45,8 @@ def _dec(value) -> str:
 
 
 def _require(space, minimum: str):
-    profile, _ = SpaceProfile.objects.get_or_create(space=space)
+    from cuaderno.services.profiles import profile_for_space
+    profile = profile_for_space(space)
     rank = {SpaceProfile.ESENCIAL: 1, SpaceProfile.PROFESIONAL: 2, SpaceProfile.INTEGRAL: 3}
     if rank[profile.edition] < rank[minimum]:
         raise PermissionDenied(f"Esta operación pertenece a la edición {minimum}.")
@@ -52,30 +54,13 @@ def _require(space, minimum: str):
 
 
 class MovementView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request):
-        from cuaderno.services.inventory_access import household_inventory
+        from cuaderno.api.views import RawJSONArrayResponse
+        from cuaderno.services.operational_reads import movement_document
         _require(request.space, SpaceProfile.INTEGRAL)
-        rows = household_inventory(request, StockMovement.objects.all(), "entry__inventory_location__household_id").order_by("-id").values(
-            "id", "kind", "quantity", "entry_id", "balance_after", "reverses_id", "created_at", "created_by_id", "metadata_snapshot",
-        )[:100]
-        return Response(
-            [
-                {
-                    "id": row["id"],
-                    "kind": row["kind"],
-                    "quantity": _dec(row["quantity"]),
-                    "entry": row["entry_id"],
-                    "balance": _dec(row["balance_after"]) if row["balance_after"] is not None else None,
-                    "reverses": row["reverses_id"],
-                    "created_at": row["created_at"].isoformat(),
-                    "created_by": row["created_by_id"],
-                    "metadata_snapshot": row["metadata_snapshot"],
-                }
-                for row in rows
-            ]
-        )
+        return RawJSONArrayResponse(movement_document(request))
 
     @transaction.atomic
     def post(self, request):
@@ -141,7 +126,7 @@ class MovementView(APIView):
 
 
 class PurchaseOrderView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     @transaction.atomic
     def post(self, request):
@@ -164,7 +149,7 @@ class PurchaseOrderView(APIView):
 
 
 class ReplenishmentView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def post(self, request):
         _require(request.space, SpaceProfile.INTEGRAL)
@@ -189,14 +174,14 @@ class ReplenishmentView(APIView):
 
 
 class ServicePlanView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request, plan_id=None):
         _require(request.space, SpaceProfile.PROFESIONAL)
         if plan_id is not None:
             rows = accessible_service_plans(request, plan_id).select_related("meal_plan").order_by("service_date", "id")
             return Response(serialize_service_plan(get_object_or_404(rows, pk=plan_id)))
-        return Response([serialize_service_plan(plan) for plan in accessible_service_plans(request, as_list=True)])
+        return Response([serialize_service_plan_row(row) for row in accessible_service_plan_rows(request)])
 
     @transaction.atomic
     def post(self, request, plan_id=None):
@@ -281,7 +266,7 @@ class ServicePlanView(APIView):
             space=request.space,
             defaults={"created_by": request.user, "default": False},
         )
-        start = timezone.make_aware(datetime.combine(service_date, time.min), ZoneInfo("Europe/Madrid"))
+        start = timezone.make_aware(datetime.combine(service_date, time.min), timezone.get_current_timezone())
         meal = MealPlan.objects.create(
             recipe=recipe,
             servings=covers.quantize(Decimal("0.0001")),
@@ -310,7 +295,7 @@ class ServicePlanView(APIView):
                 "meal_plan": meal.id,
                 "payment": None,
                 "stock_changed": before != after,
-                "timezone": "Europe/Madrid",
+                "timezone": timezone.get_current_timezone_name(),
                 "service_date": service_date.isoformat(),
                 "state": plan.state,
             },
@@ -319,19 +304,22 @@ class ServicePlanView(APIView):
 
 
 class ProductionSheetView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def post(self, request):
         _require(request.space, SpaceProfile.PROFESIONAL)
-        if request.data.get("service_plan") is not None:
+        serializer = ProductionWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if data.get("service_plan") is not None:
             plan = get_object_or_404(
-                accessible_service_plans(request, request.data.get("service_plan")).select_related("space"),
-                pk=request.data.get("service_plan"),
+                accessible_service_plans(request, data.get("service_plan")).select_related("space"),
+                pk=data.get("service_plan"),
             )
-            if request.data.get("action") == "produce":
+            if data.get("action") == "produce":
                 try:
                     plan, movement_ids, stock_changed = produce_service_plan(
-                        plan, request.user, request.data.get("idempotency_key")
+                        plan, request.user, data.get("idempotency_key")
                     )
                 except IdempotencyConflict as exc:
                     return Response(exc.detail, status=409)
@@ -357,22 +345,24 @@ class ProductionSheetView(APIView):
                 }
             )
         before = _balances(request.space)
-        edges = request.data.get("edges") or {}
-        start = request.data.get("start")
+        edges = data.get("edges") or {}
+        start = data.get("start")
         if start:
             try:
                 assert_no_cycle(start, edges)
             except DomainError as exc:
                 raise ValidationError({exc.code: exc.message}) from exc
-        totals = consolidate([(item["component"], item["quantity"]) for item in request.data.get("usages") or []])
+        totals = consolidate([(item["component"], item["quantity"]) for item in data.get("usages") or []])
         linked = {}
-        if request.data.get("recipe_ids"):
+        if data.get("recipe_ids"):
             try:
-                linked = sheet_from_recipes(request.data.get("recipe_ids"), request.space, request.user)
+                linked = sheet_from_recipes(data.get("recipe_ids"), request.space, request.user)
             except DomainError as exc:
                 raise ValidationError({exc.code: exc.message}) from exc
-            for key, value in linked["needs"].items():
-                totals[key] = totals.get(key, Decimal("0")) + Decimal(value)
+            with localcontext() as context:
+                context.prec = 64
+                for key, value in linked["needs"].items():
+                    totals[key] = totals.get(key, Decimal("0")) + Decimal(value)
         after = _balances(request.space)
         return Response(
             {
@@ -386,7 +376,7 @@ class ProductionSheetView(APIView):
 
 
 class RecipeYieldView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request, recipe_id):
         from cuaderno.services.costing import visible_recipes
@@ -410,7 +400,7 @@ class RecipeYieldView(APIView):
 
 
 class AllergenView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get_permissions(self):
         permissions = self.permission_classes
@@ -471,15 +461,16 @@ class AllergenView(APIView):
             food=food,
             name=name,
             state=state,
+            created_by=request.user,
         )
         return Response(
-            {"id": row.id, "state": row.state, "undeclared_means_absent": False},
+            {"id": row.id, "state": row.state, "created_by": row.created_by_id, "created_at": row.created_at.isoformat(), "undeclared_means_absent": False},
             status=201,
         )
 
 
 class RecipeExchangeView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     @staticmethod
     def export_limit_response():

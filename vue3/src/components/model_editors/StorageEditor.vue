@@ -49,7 +49,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['create', 'save', 'delete', 'close', 'changedState'])
-const {setupState, deleteObject, saveObject, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = useModelEditorFunctions<Storage>('Storage', emit)
+type EditableStorage = Storage & {password?: string | null, token?: string | null}
+const {setupState, deleteObject, saveObject, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = useModelEditorFunctions<EditableStorage>('Storage', emit)
 
 /**
  * watch prop changes and re-initialize editor

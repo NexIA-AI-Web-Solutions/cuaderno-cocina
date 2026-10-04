@@ -57,7 +57,7 @@
                             </template>
                             <template #item.expires="{item}">
                                 <template v-if="item.expires ">
-                                    <v-chip size="small" label :color="(item.expires < DateTime.now() ? 'error' : 'success')">
+                                    <v-chip size="small" label :color="DateTime.fromJSDate(item.expires) < DateTime.now() ? 'error' : 'success'">
                                         {{ DateTime.fromJSDate(item.expires).toLocaleString(DateTime.DATE_MED) }}
                                     </v-chip>
                                 </template>
@@ -79,7 +79,7 @@
                             </template>
                         </v-data-table-server>
 
-                        <inventory-entry-log-dialog v-model="entryLogDialog" :inventory-entry="entryLogEntry"></inventory-entry-log-dialog>
+                        <inventory-entry-log-dialog v-model="entryLogDialog" :inventory-entry="entryLogEntry ?? undefined"></inventory-entry-log-dialog>
 
                         <pantry-booking-dialog v-model="bookingDialog" :bookingMode="bookingMode" :inventoryEntryId="bookingEntry?.id"
                                                @update="loadItems({page: page, itemsPerPage: pageSize})"></pantry-booking-dialog>
@@ -96,7 +96,7 @@
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
 import {ApiApi, ApiInventoryEntryListRequest, Food, Ingredient, InventoryEntry, InventoryLocation} from "@/openapi";
-import {onMounted, PropType, ref, watch} from "vue";
+import {ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";
 import {VDataTableUpdateOptions} from "@/vuetify.ts";
@@ -116,13 +116,13 @@ const itemCount = ref(0)
 const page = ref(1)
 const pageSize = ref(useUserPreferenceStore().deviceSettings.general_tableItemsPerPage)
 
-const tableHeaders = ref([
+const tableHeaders = [
     {title: t('Code'), key: 'code'},
     {title: t('Food'), key: 'food'},
     {title: t('Expires'), key: 'expires',},
     {title: t('InventoryLocation'), key: 'inventoryLocation',},
-    {title: 'Actions', key: 'action', align: 'end'},
-])
+    {title: 'Actions', key: 'action', align: 'end' as const},
+]
 
 const entryLogDialog = ref(false)
 const entryLogEntry = ref<InventoryEntry | null>(null)
@@ -165,10 +165,10 @@ function loadItems(options: VDataTableUpdateOptions) {
     parameters.page = options.page
     parameters.pageSize = options.itemsPerPage
 
-    api.apiInventoryEntryList(parameters).then((r: any) => {
+    api.apiInventoryEntryList(parameters).then(r => {
         items.value = r.results
         itemCount.value = r.count
-    }).catch((err: any) => {
+    }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
         tableLoading.value = false

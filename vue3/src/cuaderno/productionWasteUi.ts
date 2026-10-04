@@ -52,7 +52,7 @@ function label(value: unknown): value is string {
 
 function decimalString(value: unknown): value is string {
     if (typeof value !== 'string' || value.length > 160 || !/^[0-9]+(?:\.[0-9]+)?$/.test(value)) return false
-    const [integer, fraction = ''] = value.split('.')
+    const [integer = '', fraction = ''] = value.split('.')
     const joined = `${integer}${fraction}`
     const first = joined.search(/[1-9]/)
     const significant = first === -1 ? 1 : joined.length - first
@@ -66,7 +66,7 @@ function decimalString(value: unknown): value is string {
 
 function ratioString(value: unknown): value is string {
     if (!decimalString(value) || !/[1-9]/.test(value)) return false
-    const [integer, fraction = ''] = value.split('.')
+    const [integer = '', fraction = ''] = value.split('.')
     const normalizedInteger = integer.replace(/^0+/, '') || '0'
     return normalizedInteger === '0' || (normalizedInteger === '1' && !/[1-9]/.test(fraction))
 }

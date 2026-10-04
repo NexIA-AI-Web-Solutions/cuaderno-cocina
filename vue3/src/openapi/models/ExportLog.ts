@@ -24,7 +24,7 @@ export interface ExportLog {
      * @type {number}
      * @memberof ExportLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -85,6 +85,7 @@ export interface ExportLog {
  * Check if a given object implements the ExportLog interface.
  */
 export function instanceOfExportLog(value: object): value is ExportLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
@@ -101,7 +102,7 @@ export function ExportLogFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'type': json['type'],
         'msg': json['msg'] == null ? undefined : json['msg'],
         'running': json['running'] == null ? undefined : json['running'],
@@ -118,14 +119,13 @@ export function ExportLogToJSON(json: any): ExportLog {
     return ExportLogToJSONTyped(json, false);
 }
 
-export function ExportLogToJSONTyped(value?: Omit<ExportLog, 'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function ExportLogToJSONTyped(value?: Omit<ExportLog, 'id'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'type': value['type'],
         'msg': value['msg'],
         'running': value['running'],

@@ -1,0 +1,71 @@
+From 813dac5dcb5902ed241e9b0d38abd2d847a335a9 Mon Sep 17 00:00:00 2001
+From: Mark Adler <git@madler.net>
+Date: Wed, 16 Sep 2026 17:55:36 -0700
+Subject: [PATCH] Avoid use of EAGAIN or EWOULDBLOCK if not defined.
+
+---
+ gzguts.h  | 14 ++++++++++++++
+ gzread.c  |  2 +-
+ gzwrite.c |  4 ++--
+ 3 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/gzguts.h b/gzguts.h
+index 266305debc..55a69d97e0 100644
+--- a/gzguts.h
++++ b/gzguts.h
+@@ -103,6 +103,20 @@
+ #  endif
+ #endif
+ 
++#ifdef EAGAIN
++#  ifdef EWOULDBLOCK
++#    define BLOCKED(e) ((e) == EAGAIN || (e) == EWOULDBLOCK)
++#  else
++#    define BLOCKED(e) ((e) == EAGAIN)
++#  endif
++#else
++#  ifdef EWOULDBLOCK
++#    define BLOCKED(e) ((e) == EWOULDBLOCK)
++#  else
++#    define BLOCKED(e) (0)
++#  endif
++#endif
++
+ /* unlike snprintf (which is required in C99), _snprintf does not guarantee
+    null termination of the result -- however this is only used in gzlib.c where
+    the result is assured to fit in the space provided */
+diff --git a/gzread.c b/gzread.c
+index 8b3e369dac..424f70486d 100644
+--- a/gzread.c
++++ b/gzread.c
+@@ -33,7 +33,7 @@ local int gz_load(gz_statep state, unsigned char *buf, unsigned len,
+         *have += (unsigned)ret;
+     } while (*have < len);
+     if (ret < 0) {
+-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
++        if (BLOCKED(errno)) {
+             state->again = 1;
+             if (*have != 0)
+                 return 0;
+diff --git a/gzwrite.c b/gzwrite.c
+index 44b6ae3dec..805c3f96be 100644
+--- a/gzwrite.c
++++ b/gzwrite.c
+@@ -79,7 +79,7 @@ local int gz_comp(gz_statep state, int flush) {
+             put = strm->avail_in > max ? max : strm->avail_in;
+             writ = (int)write(state->fd, strm->next_in, put);
+             if (writ < 0) {
+-                if (errno == EAGAIN || errno == EWOULDBLOCK)
++                if (BLOCKED(errno))
+                     state->again = 1;
+                 gz_error(state, Z_ERRNO, zstrerror());
+                 return -1;
+@@ -114,7 +114,7 @@ local int gz_comp(gz_statep state, int flush) {
+                       (unsigned)(strm->next_out - state->x.next);
+                 writ = (int)write(state->fd, state->x.next, put);
+                 if (writ < 0) {
+-                    if (errno == EAGAIN || errno == EWOULDBLOCK)
++                    if (BLOCKED(errno))
+                         state->again = 1;
+                     gz_error(state, Z_ERRNO, zstrerror());
+                     return -1;

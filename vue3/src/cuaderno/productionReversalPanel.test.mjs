@@ -109,6 +109,7 @@ async function mount(transport, initial = service()) {
         export const cuadernoFetch = (url, options = {}) => {
             const state = globalThis.__cuadernoProductionReversalUnit.get(${id});
             state.calls.push({url, options});
+            if (url === '/api/cuaderno/edition/') return {ok: true, status: 200, data: {edition: 'integral', operational_role: {code: 'user', label: 'Cocina', space: 1, can_operate_cuaderno: true, can_manage_edition: false, native_permissions_preserved: true}}};
             return state.transport(url, options);
         };
         export const readJson = async response => response;
@@ -118,6 +119,7 @@ async function mount(transport, initial = service()) {
         export const productionUsage = () => null;
         export const productionWarning = value => String(value?.code || value || '');
         export const serviceBody = () => null;
+        export const serviceCovers = () => null;
         export const yieldBody = () => null;
         export const confirmedCostLabel = () => '—';
     `)
@@ -170,6 +172,14 @@ async function mount(transport, initial = service()) {
         ['@/cuaderno/productionWasteUi', wasteHelper],
         ['@/cuaderno/forms', forms],
         ['@/cuaderno/inventoryRequests', requests],
+        ['@/cuaderno/operationalRoleUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./operationalRoleUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
+        ['@/cuaderno/navigationUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./navigationUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
         ['@/cuaderno/financeUi', finance],
     ])
     code = code.replace(/from (["'])([^"']+)\1/g, (original, quote, name) => {
@@ -200,7 +210,7 @@ async function mount(transport, initial = service()) {
     }
     app.mount(root)
     await flush()
-    assert.equal(calls[0].url, '/api/cuaderno/services/')
+    assert.ok(calls.some(call => call.url === '/api/cuaderno/services/'))
     return {root, calls, close() { app.unmount(); globalThis.__cuadernoProductionReversalUnit.delete(id) }}
 }
 
@@ -398,7 +408,7 @@ test('legacy or malformed classifications stay unknown and never trigger a live 
         const mounted = await mount(listThen(initial, () => assert.fail('No write expected')), initial)
         try {
             assert.equal(wastePanel(mounted.root).props.classification, null)
-            assert.deepEqual(mounted.calls.map(call => call.url), ['/api/cuaderno/services/'])
+            assert.deepEqual(mounted.calls.map(call => call.url).sort(), ['/api/cuaderno/edition/', '/api/cuaderno/services/'])
         } finally { mounted.close() }
     }
 })

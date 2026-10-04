@@ -3,7 +3,7 @@
         <v-card :loading="loading">
             <v-closable-card-title
                 :title="$t('delete_title', {type: $t(genericModel.model.localizationKey)})"
-                :sub-title="genericModel.getLabel(props.source)"
+                :sub-title="$t('BatchDeleteConfirm')"
                 :icon="genericModel.model.icon"
                 v-model="dialog"
             ></v-closable-card-title>

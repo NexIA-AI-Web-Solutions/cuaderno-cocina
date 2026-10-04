@@ -85,7 +85,10 @@ function service(id, allergens = undefined) {
 }
 
 let nextId = 0
-async function mount(transport, serviceRows = []) {
+async function mount(transport, serviceRows = [], edition = 'integral', operationalRole = {
+    code: 'user', label: 'Cocina', space: 1, can_operate_cuaderno: true,
+    can_manage_edition: false, native_permissions_preserved: true,
+}) {
     const id = ++nextId
     const calls = []
     globalThis.__cuadernoAllergenPanelUnit ??= new Map()
@@ -95,6 +98,9 @@ async function mount(transport, serviceRows = []) {
         export const cuadernoFetch = (url, options = {}) => {
             const state = globalThis.__cuadernoAllergenPanelUnit.get(${id});
             state.calls.push({url, options});
+            if (url === '/api/cuaderno/edition/') return Promise.resolve({ok: true, status: 200, data: {
+                edition: ${JSON.stringify(edition)}, operational_role: ${JSON.stringify(operationalRole)},
+            }});
             return state.transport(url, options);
         };
         export const readJson = async response => response;
@@ -103,7 +109,14 @@ async function mount(transport, serviceRows = []) {
         export const apiError = status => \`HTTP \${status}\`;
         export const productionUsage = () => null;
         export const productionWarning = value => String(value?.code || value || '');
-        export const serviceBody = () => null;
+        export const serviceCovers = (base, extra, cancelled) => {
+            if (!/^\\d+$/.test(base) || !/^\\d+$/.test(extra) || !/^\\d+$/.test(cancelled)) return null;
+            if (BigInt(base) + BigInt(extra) - BigInt(cancelled) < 1n) return null;
+            return {base_covers: base, extra, cancelled};
+        };
+        export const serviceBody = (title, covers, date, recipe) => title && /^\\d+$/.test(covers) && /^\\d{4}-\\d{2}-\\d{2}$/.test(date)
+            ? {title, covers, service_date: date, ...(recipe ? {recipe} : {})}
+            : null;
         export const yieldBody = () => null;
         export const confirmedCostLabel = () => '—';
     `)
@@ -171,6 +184,14 @@ async function mount(transport, serviceRows = []) {
         ['@/cuaderno/inventoryRequests', requests],
         ['@/cuaderno/financeUi', finance],
         ['@/cuaderno/allergenUi', helper],
+        ['@/cuaderno/operationalRoleUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./operationalRoleUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
+        ['@/cuaderno/navigationUi', moduleUrl(ts.transpileModule(
+            readFileSync(new URL('./navigationUi.ts', import.meta.url), 'utf8'),
+            {compilerOptions: {module: ts.ModuleKind.ESNext}},
+        ).outputText)],
         ['@/cuaderno/productionWasteUi', moduleUrl(ts.transpileModule(
             readFileSync(new URL('./productionWasteUi.ts', import.meta.url), 'utf8'),
             {compilerOptions: {module: ts.ModuleKind.ESNext}},
@@ -206,12 +227,54 @@ async function mount(transport, serviceRows = []) {
     }
     app.mount(root)
     await flush()
-    assert.equal(calls[0].url, '/api/cuaderno/services/')
+    if (edition !== 'esencial') assert.ok(calls.some(call => call.url === '/api/cuaderno/services/'))
     return {
         root, calls,
         close() { app.unmount(); globalThis.__cuadernoAllergenPanelUnit.delete(id) },
     }
 }
+
+test('Esencial never requests services or mounts the production operation tree for any role', async () => {
+    const roles = [
+        {code: 'guest', label: 'Consulta', can_operate_cuaderno: false, can_manage_edition: false},
+        {code: 'user', label: 'Cocina', can_operate_cuaderno: true, can_manage_edition: false},
+        {code: 'admin', label: 'Responsable', can_operate_cuaderno: true, can_manage_edition: true},
+    ]
+    for (const operationalRole of roles) {
+        const mounted = await mount(
+            url => assert.fail(`Esencial must not request ${url}`), [], 'esencial',
+            {...operationalRole, space: 1, native_permissions_preserved: true},
+        )
+        try {
+            assert.deepEqual(mounted.calls.map(call => call.url), ['/api/cuaderno/edition/'])
+            assert.match(textOf(mounted.root), /La producción está disponible en las ediciones Profesional e Integral\./)
+            assert.equal(all(mounted.root, node => node.type === 'model-select').length, 0)
+            assert.equal(button(mounted.root, 'Actualizar servicios'), undefined)
+            assert.equal(button(mounted.root, 'Anotar servicio'), undefined)
+        } finally { mounted.close() }
+    }
+})
+
+test('Profesional Consulta loads readable services and keeps the complete operation tree disabled', async () => {
+    const mounted = await mount(
+        url => url === '/api/cuaderno/services/'
+            ? {ok: true, status: 200, data: []}
+            : assert.fail(`Unexpected request ${url}`),
+        [], 'profesional',
+        {code: 'guest', label: 'Consulta', space: 1, can_operate_cuaderno: false,
+            can_manage_edition: false, native_permissions_preserved: true},
+    )
+    try {
+        assert.deepEqual(mounted.calls.map(call => call.url), [
+            '/api/cuaderno/edition/', '/api/cuaderno/services/',
+        ])
+        const readonly = all(mounted.root, node => node.type === 'v-alert'
+            && textOf(node).includes('Modo Consulta: las fichas están disponibles solo para lectura.'))[0]
+        assert.equal(readonly.props.role, 'status')
+        assert.equal(all(mounted.root, node => node.type === 'fieldset')[0].props.disabled, true)
+        assert.ok(button(mounted.root, 'Actualizar servicios'))
+    } finally { mounted.close() }
+})
 
 test('changing food aborts and clears the previous assessment; late data cannot cross selections', async () => {
     let releaseFirst
@@ -382,5 +445,32 @@ test('service cards render only frozen assessments and legacy snapshots stay unk
             && textOf(node).includes('Actualizar servicios')
             && textOf(node).includes('Imprimir fichas'))[0]
         assert.match(String(printToolbar.props.class || ''), /\bno-print\b/)
+    } finally { mounted.close() }
+})
+
+test('service form shows the cover breakdown and submits the three native counters', async () => {
+    let submitted
+    const mounted = await mount((url, options) => {
+        if (url === '/api/cuaderno/services/' && options.method === 'POST') {
+            submitted = JSON.parse(options.body)
+            return {ok: true, status: 201, data: {covers: '10', stock_changed: false, meal_plan: 'created'}}
+        }
+        if (url === '/api/cuaderno/services/') return {ok: true, status: 200, data: []}
+        return assert.fail(`Unexpected request ${url}`)
+    })
+    try {
+        field(mounted.root, 'Nombre').props['onUpdate:modelValue']('Cena')
+        field(mounted.root, 'Fecha del servicio').props['onUpdate:modelValue']('2026-10-25')
+        field(mounted.root, 'Comensales previstos').props['onUpdate:modelValue']('12')
+        field(mounted.root, 'Altas').props['onUpdate:modelValue']('1')
+        field(mounted.root, 'Cancelaciones').props['onUpdate:modelValue']('3')
+        await flush()
+        assert.match(textOf(mounted.root), /Total del servicio:\s*10 comensales/)
+        await button(mounted.root, 'Anotar servicio').props.onClick()
+        await flush()
+        assert.deepEqual(submitted, {
+            title: 'Cena', service_date: '2026-10-25',
+            base_covers: '12', extra: '1', cancelled: '3',
+        })
     } finally { mounted.close() }
 })

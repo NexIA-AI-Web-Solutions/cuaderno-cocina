@@ -28,13 +28,13 @@
     <v-table density="compact">
         <tbody>
         <template v-for="(i, idx) in ingredients" :key="i.id">
-            <tr @click="i.checked = !i.checked">
+            <tr @click="toggleChecked(i)">
                 <template v-if="i.isHeader">
                     <td colspan="5" class="font-weight-bold">{{ i.note }}</td>
                 </template>
                 <template v-else>
                     <td style="width: 1%; text-wrap: nowrap" class="pa-0 d-print-none" v-if="showCheckbox">
-                        <v-checkbox-btn v-model="i.checked" color="success" v-if="!i.isHeader"></v-checkbox-btn>
+                        <v-checkbox-btn :model-value="isChecked(i)" @update:model-value="toggleChecked(i)" @click.stop color="success" v-if="!i.isHeader"></v-checkbox-btn>
                     </td>
                     <!-- display calculated food amount or empty cell -->
                     <td style="width: 1%; text-wrap: nowrap"
@@ -100,7 +100,7 @@
 
 <script lang="ts" setup>
 import {ApiApi, Ingredient, ShoppingListEntry} from "@/openapi";
-import {computed, ref} from "vue";
+import {ref} from "vue";
 import {calculateFoodAmount} from "../../utils/number_utils";
 import {useUserPreferenceStore} from "../../stores/UserPreferenceStore";
 import {ingredientToFoodString, ingredientToUnitString} from "@/utils/model_utils.ts";
@@ -132,25 +132,16 @@ const props = defineProps({
 const ingredients = defineModel<Ingredient[]>({required: true})
 
 const openNoteIdx = ref<number | null>(null)
+const checkedIngredientIds = ref(new Set<number>())
 
-const tableHeaders = computed(() => {
-    let headers = [
-        {title: '', key: 'checked', align: 'start', width: '1%', noBreak: true, cellProps: {class: 'pa-0'}},
-        {title: '', key: 'amount', align: 'start', width: '1%', noBreak: true, cellProps: {class: 'pr-1'}},
-        {title: '', key: 'unit.name', align: 'start', width: '1%', noBreak: true, cellProps: {class: 'pr-1'}},
-        {title: '', key: 'food.name'},
-    ]
-    if (props.showNotes) {
-        headers.push(
-            {title: '', key: 'note', align: 'end',}
-        )
-    }
+function isChecked(ingredient: Ingredient): boolean {
+    return checkedIngredientIds.value.has(ingredient.id)
+}
 
-    return headers
-})
-
-function handleRowClick(event: PointerEvent, data: any) {
-    ingredients.value[data.index].checked = !ingredients.value[data.index].checked
+function toggleChecked(ingredient: Ingredient) {
+    const next = new Set(checkedIngredientIds.value)
+    next.has(ingredient.id) ? next.delete(ingredient.id) : next.add(ingredient.id)
+    checkedIngredientIds.value = next
 }
 
 function addToShopping(ingredient: Ingredient) {

@@ -1,10 +1,10 @@
 <template>
-    <v-text-field :label="$t('Shopping_input_placeholder')" density="compact" @keyup.enter="addIngredient()" v-model="ingredientInput" :loading="props.loading" hide-detail
+    <v-text-field :label="$t('Shopping_input_placeholder')" density="compact" @keyup.enter="parseIngredient()" v-model="ingredientInput" :loading="props.loading" hide-detail
                   v-if="!useUserPreferenceStore().deviceSettings.shopping_input_autocomplete" s>
         <template #append>
             <v-btn
                 density="comfortable"
-                @click="addIngredient()"
+                @click="parseIngredient()"
                 :icon="ingredientInputIcon"
                 color="create"
             ></v-btn>
@@ -36,7 +36,7 @@
 
 
 import {PropType, ref} from "vue";
-import {ApiApi, Food, FoodSimple,  ShoppingListEntry, ShoppingListRecipe, Unit} from "@/openapi";
+import {ApiApi, Food, FoodSimple, ShoppingListEntryRequest, ShoppingListRecipe, Unit} from "@/openapi";
 import {useShoppingStore} from "@/stores/ShoppingStore";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import Multiselect from "@vueform/multiselect";
@@ -65,7 +65,7 @@ function addIngredient(amount: number, unit: Unit | null, food: Food|FoodSimple 
         unit: unit,
         food: food,
         shoppingLists: useShoppingStore().shoppingLists.filter(sl => useUserPreferenceStore().deviceSettings.shopping_selected_shopping_lists.includes(sl.id))
-    } as ShoppingListEntry
+    } as ShoppingListEntryRequest
 
     if (props.mealPlanId) {
         sle.mealplanId = props.mealPlanId

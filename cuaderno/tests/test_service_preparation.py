@@ -404,7 +404,9 @@ class ServicePreparationTests(PreparationFixtureMixin, TestCase):
         self.assertEqual(self.update_preparation(plan, item_id, True, revision, user=self.outsider).status_code, 404)
 
         guest = self.make_user("service-guest", "guest", self.household)
-        self.assertEqual(self.preparation(plan, user=guest).status_code, 403)
+        readable = self.preparation(plan, user=guest)
+        self.assertEqual(readable.status_code, 200, readable.data)
+        self.assertIs(readable.data["can_edit"], False)
         self.assertEqual(self.update_preparation(plan, item_id, True, revision, user=guest).status_code, 403)
 
         with scopes_disabled():

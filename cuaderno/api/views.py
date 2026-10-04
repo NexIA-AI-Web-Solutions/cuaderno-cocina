@@ -1,9 +1,15 @@
+import json
+from django.contrib.postgres.aggregates import JSONBAgg
+from django.http import HttpResponse
+from django.utils.functional import cached_property
 from django.db import transaction
+from django.db.models import CharField, Func, JSONField, OuterRef, Subquery, TextField, Value
+from django.db.models.functions import Cast
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView, CuadernoIsOperator
 
 from cookbook.helper.permission_helper import CustomIsAdmin, CustomIsGuest, CustomIsUser, CustomRecipePermission, CustomTokenHasReadWriteScope
 from cookbook.models import Unit
@@ -13,12 +19,12 @@ from cuaderno.models import PackageFormat, PriceVersion, SpaceProfile
 from cuaderno.services.costing import cost_recipe, visible_recipes
 from cuaderno.services.visibility import visible_foods, visible_packages
 from cuaderno.services.roles import operational_role
+from cuaderno.services.profiles import profile_for_space
 from cuaderno.api.prices import PackageWriteSerializer, PriceWriteSerializer, validate_free_flag
 
 
 def _profile(space) -> SpaceProfile:
-    profile, _created = SpaceProfile.objects.get_or_create(space=space)
-    return profile
+    return profile_for_space(space)
 
 
 class EditionView(APIView):
@@ -44,7 +50,9 @@ class EditionView(APIView):
             }
         )
 
+    @transaction.atomic
     def put(self, request):
+        type(request.space).objects.select_for_update().get(pk=request.space.pk)
         profile = _profile(request.space)
         edition = request.data.get("edition", profile.edition)
         policy = request.data.get("price_policy", profile.price_policy)
@@ -66,7 +74,7 @@ class EditionView(APIView):
                 if ratio > 1:
                     raise ValidationError({"target_food_cost_ratio": "El objetivo de coste de materia es una fracción entre 0 y 1."})
                 profile.target_food_cost_ratio = ratio
-        profile.save(update_fields=["edition", "price_policy", "target_food_cost_ratio"])
+        profile.save(update_fields=None if profile._state.adding else ["edition", "price_policy", "target_food_cost_ratio"])
         return Response(
             {
                 "edition": profile.edition,
@@ -79,34 +87,44 @@ class EditionView(APIView):
         )
 
 
+class RawJSONArrayResponse(HttpResponse):
+    """Already encoded JSON; lazy .data preserves DRF APIClient test ergonomics."""
+    is_rendered = True
+
+    def __init__(self, payload):
+        super().__init__(payload, content_type="application/json")
+
+    @cached_property
+    def data(self):
+        # External clients parse the response outside server latency too.  This
+        # property exists only because upstream tests inspect response.data.
+        return json.loads(self.content)
+
+
+class JSONAgg(JSONBAgg):
+    """Avoid binary JSONB aggregation when the final product is JSON text."""
+    function = "JSON_AGG"
+
+
+class JSONBuildObject(Func):
+    """Build PostgreSQL JSON text without converting each object to JSONB."""
+    function = "JSON_BUILD_OBJECT"
+    output_field = JSONField()
+
+    def __init__(self, **fields):
+        expressions = []
+        for key, value in fields.items():
+            expressions.extend((Cast(Value(key), TextField()), value))
+        super().__init__(*expressions)
+
+
 class PackageListView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request):
-        packages = visible_packages(request.user, request.space)
-        rows = list(packages.order_by("pk").values(
-            "id", "food_id", "food__name", "unit_id", "unit__name", "label", "quantity", "is_reference",
-        ))
-        latest_by_package = {
-            price["package_id"]: {
-                "id": price["id"], "amount": format(price["amount"], "f"),
-                "explicit_free": price["explicit_free"], "valid_from": price["valid_from"].isoformat(),
-            }
-            for price in PriceVersion.objects.filter(
-                space=request.space, package_id__in=packages.values("pk"), valid_from__lte=timezone.now(),
-            ).order_by("package_id", "-valid_from", "-id").distinct("package_id").values(
-                "id", "package_id", "amount", "explicit_free", "valid_from",
-            )
-        }
-        return Response([
-            {
-                "id": row["id"], "food": row["food_id"], "food_name": row["food__name"],
-                "unit": row["unit_id"], "unit_name": row["unit__name"], "label": row["label"],
-                "quantity": format(row["quantity"], "f"), "is_reference": row["is_reference"],
-                "current_price": latest_by_package.get(row["id"]),
-            }
-            for row in rows
-        ])
+        """Encode visible formats and current prices in one ordered statement."""
+        from cuaderno.services.operational_reads import package_document
+        return RawJSONArrayResponse(package_document(request))
 
     @transaction.atomic
     def post(self, request):
@@ -131,7 +149,7 @@ class PackageListView(APIView):
 
 
 class PriceCreateView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     def get(self, request, pk):
         from cuaderno.api.price_history import package_price_history_payload

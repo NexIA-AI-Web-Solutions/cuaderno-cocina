@@ -14,13 +14,13 @@
                     hide-details
                 >
                     <template #prepend>
-                        <v-btn density="compact" icon="fa-solid fa-chevron-left" variant="plain" @click="date = props.headerProps.previousFullPeriod"></v-btn>
+                        <v-btn density="compact" icon="fa-solid fa-chevron-left" variant="plain" :disabled="!props.headerProps.previousFullPeriod" @click="setDate(props.headerProps.previousFullPeriod)"></v-btn>
                     </template>
                     <template #append-inner>
                         <v-btn density="compact" icon="fa-solid fa-calendar-day" variant="plain" @click.stop="date = new Date()"></v-btn>
                     </template>
                     <template #append>
-                        <v-btn density="compact" icon="fa-solid fa-chevron-right" variant="plain" @click="date = props.headerProps.nextFullPeriod"></v-btn>
+                        <v-btn density="compact" icon="fa-solid fa-chevron-right" variant="plain" :disabled="!props.headerProps.nextFullPeriod" @click="setDate(props.headerProps.nextFullPeriod)"></v-btn>
                     </template>
                 </v-date-input>
             </v-col>
@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 
-import {IHeaderProps} from "vue-simple-calendar/dist/src/IHeaderProps";
+import {IHeaderProps} from "vue-simple-calendar";
 import {ref, watch} from "vue";
 import {VDateInput} from "vuetify/labs/VDateInput";
 import {DateTime} from "luxon";
@@ -45,6 +45,10 @@ const props = defineProps({
 })
 
 const date = ref(new Date())
+
+function setDate(value: Date | null) {
+    if (value) date.value = value
+}
 
 watch(() => date.value, (newValue, oldValue) => {
     emit('input', newValue)

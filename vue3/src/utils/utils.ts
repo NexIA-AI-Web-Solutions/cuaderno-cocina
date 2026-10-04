@@ -33,13 +33,14 @@ export function getNestedProperty(object: any, path: string): any {
 export function uploadRecipeImage(recipeId: number, file: File) {
     let formData = new FormData()
     formData.append('image', file)
+    const csrfToken = getCookie('csrftoken')
 
     //TODO proper URL finding (sub path setups)
     // TODO maybe better use existing URL clients response functions for parsing
 
     fetch('/api/recipe/' + recipeId + '/image/', {
         method: 'PUT',
-        headers: {'X-CSRFToken': getCookie('csrftoken')},
+        headers: csrfToken ? {'X-CSRFToken': csrfToken} : {},
         body: formData
     }).then(r => {
         r.json().then(r => {
@@ -96,6 +97,6 @@ export const boolOrUndefinedTransformer = {
  * routeQueryParam transformer for number fields converting string numbers to real numbers and allowing undefined for resettable parameters
  */
 export const numberOrUndefinedTransformer = {
-    get: (value: string | null | undefined) => ((value == null) ? undefined : Number(value)),
-    set: (value: string | null | undefined) => ((value == null) ? undefined : value.toString())
+    get: (value: string | null | undefined): number | undefined => ((value == null) ? undefined : Number(value)),
+    set: (value: number | null | undefined): string | undefined => ((value == null) ? undefined : value.toString())
 }

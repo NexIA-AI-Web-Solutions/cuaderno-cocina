@@ -11,9 +11,9 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView, CuadernoIsOperator
 
-from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope
+from cookbook.helper.permission_helper import CustomTokenHasReadWriteScope, has_group_permission
 from cookbook.models import Space
 from cuaderno.api.ingredient_yields import RevisionField
 from cuaderno.api.prices import JsonBooleanField, JsonIdentifierField
@@ -73,7 +73,7 @@ def _locked_items(plan: ServicePlan) -> list[ServicePreparationItem]:
 
 
 class ServicePreparationView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     @transaction.atomic
     def get(self, request, plan_id):
@@ -82,7 +82,9 @@ class ServicePreparationView(APIView):
         # snapshot isolation for unrelated native writers.
         plan = _locked_plan(request, plan_id)
         _require_professional(plan.space)
-        return Response(preparation_payload(plan, _locked_items(plan)))
+        payload = preparation_payload(plan, _locked_items(plan))
+        payload["can_edit"] = payload["can_edit"] and has_group_permission(request, ["user"])
+        return Response(payload)
 
     @transaction.atomic
     def put(self, request, plan_id):

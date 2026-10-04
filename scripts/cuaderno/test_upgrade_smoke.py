@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import os
+import json
+from pathlib import Path
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -26,7 +29,10 @@ class FakeDocker:
         elif command[:4] == ["docker", "image", "inspect", "cuaderno-cocina:local"]:
             stdout = RELEASE_IMAGE_ID + "\n"
         elif command[:4] == ["docker", "image", "inspect", RETAINED_TAG]:
-            stdout = self.retained_image_id + "\n"
+            stdout = ("10001:10001\n" if command[-1] == "{{.Config.User}}"
+                      else self.retained_image_id + "\n")
+        elif command[:4] == ["docker", "image", "inspect", RELEASE_IMAGE_ID]:
+            stdout = RELEASE_IMAGE_ID + "\n"
         else:
             stdout = ""
         return SimpleNamespace(stdout=stdout, returncode=0)
@@ -64,6 +70,7 @@ class UpgradeSmokeOrchestrationTests(unittest.TestCase):
         self.assertLess(tag_index, verify_index)
         self.assertLess(verify_index, network_index)
         self.assertLess(verify_index, database_index)
+        self.assertIn(["docker", "network", "create", "--internal", f"cuaderno-upgrade-{SUFFIX}"], docker.calls)
 
     def test_release_preflight_migration_and_assertions_use_only_retained_tag(self):
         docker = FakeDocker()
@@ -87,6 +94,18 @@ class UpgradeSmokeOrchestrationTests(unittest.TestCase):
             if command[:4] == ["docker", "image", "inspect", "cuaderno-cocina:local"]
         ]
         self.assertEqual(len(local_inspections), 1)
+        assertion_command = next(
+            command for command in release_commands
+            if command[-3:-1] == ["shell", "-c"]
+        )
+        assertions = assertion_command[-1]
+        self.assertIn("0017_release_integrity_and_allergen_audit", assertions)
+        self.assertIn("cuaderno_package_positive_quantity", assertions)
+        self.assertIn("cuaderno_price_current_cover", assertions)
+        self.assertIn(
+            ["docker", "image", "inspect", RETAINED_TAG, "--format", "{{.Config.User}}"],
+            docker.calls,
+        )
 
     def test_retained_image_mismatch_aborts_before_network_or_database_creation(self):
         docker = FakeDocker(retained_image_id="sha256:" + "8" * 64)
@@ -109,6 +128,58 @@ class UpgradeSmokeOrchestrationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "entorno local aislado"):
                 upgrade_smoke.main()
 
+        self.assertEqual(docker.calls, [])
+
+    def test_candidate_mode_requires_matching_context_and_uses_exact_image_id(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name).resolve()
+        evidence = root / ".cuaderno-runs"
+        evidence.mkdir()
+        source = "a" * 40 + "+worktree." + "b" * 64
+        context = {"image_id": RELEASE_IMAGE_ID, "source_identity": source}
+        context_path = evidence / "candidate.json"
+        context_path.write_text(json.dumps(context), encoding="utf-8")
+        validated = []
+        docker = FakeDocker()
+        environ = {
+            "CUADERNO_ENV": "test", "CUADERNO_CANDIDATE_IMAGE": RELEASE_IMAGE_ID,
+            "CUADERNO_SOURCE_IDENTITY": source, "CUADERNO_CANDIDATE_CONTEXT": str(context_path),
+        }
+        uuids = [SimpleNamespace(hex="password-secret"), SimpleNamespace(hex=SUFFIX)]
+        with patch.object(upgrade_smoke, "ROOT", root), patch.object(
+            upgrade_smoke.uuid, "uuid4", side_effect=uuids
+        ), patch.object(upgrade_smoke.time, "sleep"):
+            self.assertEqual(upgrade_smoke.main(
+                environ=environ, process_runner=docker,
+                context_validator=lambda document, checkout: validated.append((document, checkout)),
+            ), 0)
+        self.assertEqual(validated, [(context, root)])
+        self.assertIn(
+            ["docker", "image", "inspect", RELEASE_IMAGE_ID, "--format", "{{.Id}}"], docker.calls,
+        )
+        self.assertFalse(any("cuaderno-cocina:local" in command for command in docker.calls))
+
+    def test_candidate_mode_rejects_context_mismatch_before_docker(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name).resolve()
+        evidence = root / ".cuaderno-runs"
+        evidence.mkdir()
+        path = evidence / "candidate.json"
+        path.write_text(json.dumps({
+            "image_id": "sha256:" + "8" * 64,
+            "source_identity": "a" * 40 + "+worktree." + "b" * 64,
+        }), encoding="utf-8")
+        docker = FakeDocker()
+        environ = {
+            "CUADERNO_ENV": "test", "CUADERNO_CANDIDATE_IMAGE": RELEASE_IMAGE_ID,
+            "CUADERNO_SOURCE_IDENTITY": "a" * 40 + "+worktree." + "b" * 64,
+            "CUADERNO_CANDIDATE_CONTEXT": str(path),
+        }
+        with patch.object(upgrade_smoke, "ROOT", root), self.assertRaisesRegex(ValueError, "no coincide"):
+            upgrade_smoke.main(environ=environ, process_runner=docker,
+                               context_validator=lambda *_: self.fail("must not validate"))
         self.assertEqual(docker.calls, [])
 
 

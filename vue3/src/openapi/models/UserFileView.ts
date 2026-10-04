@@ -32,7 +32,7 @@ export interface UserFileView {
      * @type {number}
      * @memberof UserFileView
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -75,6 +75,7 @@ export interface UserFileView {
  * Check if a given object implements the UserFileView interface.
  */
 export function instanceOfUserFileView(value: object): value is UserFileView {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('fileDownload' in value) || value['fileDownload'] === undefined) return false;
     if (!('preview' in value) || value['preview'] === undefined) return false;
@@ -94,7 +95,7 @@ export function UserFileViewFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'fileDownload': json['file_download'],
         'preview': json['preview'],
@@ -108,14 +109,13 @@ export function UserFileViewToJSON(json: any): UserFileView {
     return UserFileViewToJSONTyped(json, false);
 }
 
-export function UserFileViewToJSONTyped(value?: Omit<UserFileView, 'file_download'|'preview'|'file_size_kb'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function UserFileViewToJSONTyped(value?: Omit<UserFileView, 'id'|'file_download'|'preview'|'file_size_kb'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
     };
 }

@@ -24,7 +24,7 @@ export interface ShoppingList {
      * @type {number}
      * @memberof ShoppingList
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -49,6 +49,7 @@ export interface ShoppingList {
  * Check if a given object implements the ShoppingList interface.
  */
 export function instanceOfShoppingList(value: object): value is ShoppingList {
+    if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
@@ -62,7 +63,7 @@ export function ShoppingListFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'color': json['color'] == null ? undefined : json['color'],
@@ -73,14 +74,13 @@ export function ShoppingListToJSON(json: any): ShoppingList {
     return ShoppingListToJSONTyped(json, false);
 }
 
-export function ShoppingListToJSONTyped(value?: ShoppingList | null, ignoreDiscriminator: boolean = false): any {
+export function ShoppingListToJSONTyped(value?: Omit<ShoppingList, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'description': value['description'],
         'color': value['color'],

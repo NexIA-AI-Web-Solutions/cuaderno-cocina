@@ -263,8 +263,41 @@ class ListQueryEfficiencyTests(ServiceFixtureMixin, TestCase):
         self.assertTrue(all(set(row) == {
             "id", "kind", "quantity", "entry", "balance", "reverses", "created_at", "created_by", "metadata_snapshot",
         } for row in response.data))
+        entry_selects = self._model_selects(captured, "cookbook_inventoryentry")
+        self.assertEqual(len(entry_selects), 1)
+        self.assertIn("ARRAY_AGG", entry_selects[0])
+        self.assertNotIn('"cuaderno_stockmovement"', entry_selects[0])
         movement_selects = self._model_selects(captured, "cuaderno_stockmovement")
         self.assertEqual(len(movement_selects), 1)
+        self.assertRegex(movement_selects[0], r'movement\.entry_id\s*=\s*ANY')
         projection = movement_selects[0].split(" FROM ", 1)[0]
         self.assertNotIn('"cookbook_inventoryentry".', projection)
         self.assertLessEqual(len(captured), 7)
+
+    def test_service_list_rejects_float_snapshot_ids_instead_of_rounding_them(self):
+        visible = self._service(self.recipe, "Visible integer identifiers")
+        fractional = float(self.recipe.pk) + 0.5
+        float_root = self._service(
+            self.recipe,
+            "Fractional snapshot root",
+            snapshot={"recipe_id": fractional},
+        )
+        float_child = self._service(
+            self.recipe,
+            "Fractional snapshot child",
+            snapshot={"recipe_graph": {str(self.recipe.pk): [fractional]}},
+        )
+        integral_float = self._service(
+            self.recipe,
+            "Integral float is still a non-JSON-integer",
+            snapshot={"recipe_graph": {str(self.recipe.pk): [float(self.recipe.pk)]}},
+        )
+
+        response = self.client_for(self.user).get("/api/cuaderno/services/")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        ids = {row["id"] for row in response.data}
+        self.assertIn(visible.pk, ids)
+        for malformed in (float_root, float_child, integral_float):
+            self.assertNotIn(malformed.pk, ids)
+            self.assertNotIn(malformed.title, str(response.data))

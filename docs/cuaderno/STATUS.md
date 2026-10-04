@@ -1,5 +1,23 @@
 # Estado del producto
 
+## Candidato local de cierre — 4 de octubre
+
+La continuidad actual ejecuta los gates del candidato y la aceptación multiagente real. El resultado verificable se guarda fuera de las fuentes congeladas en `.cuaderno-runs/release-manifest.json` y `.cuaderno-runs/RELEASE_REPORT.md`; una implementación o un informe antiguo no sustituyen ese resultado. El preview local está autorizado en http://127.0.0.1:18081. No hay autorización nueva de despliegue externo.
+
+Correcciones adicionales: build reproducible de APKs Alpine y enlace Node/zlib con hashes runtime; aceptación explícita de findings mediante pruebas de remediación, sin ocultar el scan bruto; cola de compras conserva cambios/undo ante 401/403/500; Consulta conserva acciones de lectura en compras; GET de Spaces sin perfil no inserta datos; impresión del navegador elimina la navegación y su padding. El benchmark de trabajo más reciente anterior al cierre era RED2, no RED6. Los presupuestos y el dataset permanecen intactos.
+
+Tooling completo con Python 3.13 y pins de CI: **286 PASS**. El host Python 3.14 con PyJWT anterior había producido dos errores; ese entorno no es el runtime certificado. El gate definitivo exige fuente limpia, una imagen inmutable y los 17 registros reales, incluidos regresión nativa, integración, recuperación, escaneo y navegador. Los resultados finales deben consultarse en el informe generado, que no modifica las fuentes mientras se miden.
+
+## Implementación del 4 de octubre en curso
+
+El propietario autorizó resolver la auditoría y completar la aceptación con varios agentes y Playwright. Se ha reanudado el entorno local aislado. Cambios y resultados actuales en [evidencia de implementación](evidence/2026-10-04-implementacion.md). El candidato final aún debe completar los gates. Los resultados del 30 de septiembre que siguen son históricos y no representan la nueva imagen.
+
+Comprobaciones vigentes de trabajo: 1279 tests nativos PASS; 149 tests frontend PASS con cierre autónomo; TypeScript global sin diagnósticos, incluido Node 24.21.0 fijado por digest; 241 tests de tooling PASS en Python 3.13; OpenAPI sin errores/avisos y SDK reproducido. Tras dos tests SQL rojos, las optimizaciones de JSON y movimientos pasan 49 regresiones de payload/permisos. Estos resultados proceden de entornos de trabajo distintos: todavía no acreditan los 17 checks de una imagen final única. El último benchmark de trabajo fue RED6 y queda visible en la evidencia; el nuevo runtime y la aceptación multiagente están en curso.
+
+## Auditoría documental previa a la implementación (histórico)
+
+Nueva [auditoría integral](AUDITORIA_2026-10-04.md) con 27 hallazgos, criterios de aceptación y mapa de las 38 tareas; [comprobaciones de esta sesión](evidence/2026-10-04-auditoria.md). No se reanudó la aplicación ni se implementaron las correcciones. Los gates mantienen su estado. El typecheck local actual arroja 629 diagnósticos, tres en Cuaderno, con vue-tsc 3.3.5/TypeScript 5.9.3; no confundirlo con el resultado histórico de 626/cero Cuaderno citado debajo. Los resultados runtime que siguen conservan su fecha y alcance originales.
+
 ## Parada solicitada el 1 de octubre, 08:42 UTC
 
 El propietario autorizó borrar toda la caché del builder compartido y detener Cuaderno. El integrador detuvo los 12 contenedores activos (2 web y 10 PostgreSQL), todos con salida 0 y política `restart=no`. Verificó cero contenedores Cuaderno activos, cero listeners en 18080/18081 y cero procesos o servicios Windows atribuibles a la app. Conservó Docker Desktop y los 8 contenedores activos de otros proyectos, sin detenerlos.

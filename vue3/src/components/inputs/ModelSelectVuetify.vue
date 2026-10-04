@@ -62,7 +62,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, PropType, ref, Ref, watch} from 'vue'
 import {ApiApi} from "@/openapi/index.js";
-import {Models} from "@/types/Models";
+import {EditorSupportedModels} from "@/types/Models";
 import {VAutocomplete, VCombobox} from "vuetify/components";
 import {useDebouncedSearch} from "@/composables/useDebouncedSearch";
 
@@ -77,7 +77,7 @@ const props = defineProps(
 
         itemName: {type: String, default: 'name'},
         itemValue: {type: String, default: 'id'},
-        model: {type: String as PropType<Models>, required: true},
+        model: {type: String as PropType<EditorSupportedModels>, required: true},
 
 
         // old props
@@ -160,7 +160,7 @@ function search(query: string) {
     const api = new ApiApi()
     search_loading.value = true
     api[`api${props.model}List`]({query: query}, {signal: signal.value}).then(r => {
-        if (r.results) {
+        if (typeof r === 'object' && r !== null && 'results' in r && Array.isArray(r.results)) {
             items.value = r.results
             if (props.allowCreate && search_query.value != '') {
                 // TODO check if search_query is already in items

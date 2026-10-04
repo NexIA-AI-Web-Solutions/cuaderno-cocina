@@ -46,7 +46,7 @@ export interface InventoryLog {
      * @type {number}
      * @memberof InventoryLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {InventoryEntry}
@@ -103,6 +103,7 @@ export interface InventoryLog {
  * Check if a given object implements the InventoryLog interface.
  */
 export function instanceOfInventoryLog(value: object): value is InventoryLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('entry' in value) || value['entry'] === undefined) return false;
     if (!('oldInventoryLocation' in value) || value['oldInventoryLocation'] === undefined) return false;
     if (!('newInventoryLocation' in value) || value['newInventoryLocation'] === undefined) return false;
@@ -120,7 +121,7 @@ export function InventoryLogFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'entry': InventoryEntryFromJSON(json['entry']),
         'bookingType': json['booking_type'] == null ? undefined : BookingTypeEnumFromJSON(json['booking_type']),
         'oldAmount': json['old_amount'] == null ? undefined : json['old_amount'],
@@ -136,14 +137,13 @@ export function InventoryLogToJSON(json: any): InventoryLog {
     return InventoryLogToJSONTyped(json, false);
 }
 
-export function InventoryLogToJSONTyped(value?: Omit<InventoryLog, 'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function InventoryLogToJSONTyped(value?: Omit<InventoryLog, 'id'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'entry': InventoryEntryToJSON(value['entry']),
         'booking_type': BookingTypeEnumToJSON(value['bookingType']),
         'old_amount': value['oldAmount'],

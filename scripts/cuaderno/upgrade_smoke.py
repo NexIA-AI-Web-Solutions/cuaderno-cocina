@@ -1,8 +1,10 @@
 """Upgrade an untouched Tandoor pin in a NEW isolated synthetic PostgreSQL."""
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import time
 import uuid
@@ -10,6 +12,8 @@ import uuid
 ROOT = Path(__file__).resolve().parents[2]
 PIN_IMAGE = "cuaderno-g0-t002-app:f77a459f"
 PIN_IMAGE_ID = "sha256:68946d4df1351cf5b30c7c606243856d65681439d6db4436baed9298d88cea8b"
+IMAGE_RE = re.compile(r"sha256:[0-9a-f]{64}\Z")
+SOURCE_RE = re.compile(r"[0-9a-f]{40}\+worktree\.[0-9a-f]{64}\Z")
 
 PIN_FIXTURE = '''
 import json
@@ -115,8 +119,30 @@ with scopes_disabled():
         assert cursor.fetchone()
         cursor.execute("SELECT 1 FROM django_migrations WHERE app='cuaderno' AND name='0016_servicepreparationitem'")
         assert cursor.fetchone()
+        cursor.execute("SELECT 1 FROM django_migrations WHERE app='cuaderno' AND name='0017_release_integrity_and_allergen_audit'")
+        assert cursor.fetchone()
         cursor.execute("SELECT 1 FROM django_migrations WHERE app='cookbook' AND name='0243_ingredient_yield_policy'")
         assert cursor.fetchone()
+        cursor.execute("SELECT conname FROM pg_constraint WHERE conname = ANY(%s)", [[
+            "cuaderno_allergen_valid_state", "cuaderno_package_positive_quantity",
+            "cuaderno_yield_positive_quantity", "cuaderno_service_positive_covers",
+            "cuaderno_service_valid_state", "cuaderno_profile_target_ratio",
+            "cuaderno_movement_positive_quantity", "cuaderno_movement_valid_kind",
+            "cuaderno_movement_no_self_reversal",
+        ]])
+        assert set(row[0] for row in cursor.fetchall()) == {
+            "cuaderno_allergen_valid_state", "cuaderno_package_positive_quantity",
+            "cuaderno_yield_positive_quantity", "cuaderno_service_positive_covers",
+            "cuaderno_service_valid_state", "cuaderno_profile_target_ratio",
+            "cuaderno_movement_positive_quantity", "cuaderno_movement_valid_kind",
+            "cuaderno_movement_no_self_reversal",
+        }
+        cursor.execute("SELECT indexname FROM pg_indexes WHERE indexname = ANY(%s)", [[
+            "cuaderno_price_current_cover", "cuaderno_movement_space_id",
+        ]])
+        assert set(row[0] for row in cursor.fetchall()) == {
+            "cuaderno_price_current_cover", "cuaderno_movement_space_id",
+        }
     assert ServicePreparationItem._meta.db_table in connection.introspection.table_names()
     assert ServicePreparationItem.objects.count() == 0
     package = PackageFormat.objects.create(space=space, food=entry.food, unit=entry.unit, label="Synthetic 5L", quantity=5)
@@ -227,17 +253,71 @@ assert finance_after.status_code == 200, finance_after.content
 assert hashlib.sha256(json.dumps(
     finance_after.json()["finance"], ensure_ascii=False, sort_keys=True, separators=(",", ":"),
 ).encode("utf-8")).hexdigest() == financial_hash
-print("CUADERNO_UPGRADE_OK: native users/roles/Spaces/Household/private recipe/Step/amounts/stock and finance hash preserved; migration 0016 empty then persistent preparation check/stale/noop verified")
+print("CUADERNO_UPGRADE_OK: native users/roles/Spaces/Household/private recipe/Step/amounts/stock and finance hash preserved; migrations 0016/0017 plus integrity constraints/indexes and persistent preparation check/stale/noop verified")
 '''
 
 
-def main():
-    if os.environ.get("CUADERNO_ENV") not in {"local", "test", "development"}:
+def _strict_context(path: Path) -> dict:
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError(f"Clave duplicada en contexto candidato: {key}")
+            result[key] = value
+        return result
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=pairs,
+                           parse_constant=lambda item: (_ for _ in ()).throw(ValueError(item)))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("No se pudo leer el contexto candidato estricto.") from exc
+    if not isinstance(value, dict):
+        raise ValueError("El contexto candidato debe ser un objeto JSON.")
+    return value
+
+
+def _candidate_image(environ: dict[str, str], *, root: Path, context_validator=None) -> str | None:
+    image = environ.get("CUADERNO_CANDIDATE_IMAGE")
+    if image is None:
+        return None
+    source = environ.get("CUADERNO_SOURCE_IDENTITY")
+    raw_context = environ.get("CUADERNO_CANDIDATE_CONTEXT")
+    if IMAGE_RE.fullmatch(image) is None or not source or SOURCE_RE.fullmatch(source) is None or not raw_context:
+        raise ValueError("La identidad candidata exige image SHA, source identity y contexto exactos.")
+    context_path = Path(raw_context)
+    if not context_path.is_absolute():
+        context_path = root / context_path
+    if context_path.is_symlink():
+        raise ValueError("El contexto candidato no puede ser un enlace.")
+    try:
+        evidence = (root / ".cuaderno-runs").resolve(strict=True)
+        context_path = context_path.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("No existe el contexto candidato.") from exc
+    if not context_path.is_file() or context_path.parent != evidence:
+        raise ValueError("El contexto candidato debe ser un archivo regular directo de .cuaderno-runs.")
+    context = _strict_context(context_path)
+    if context.get("image_id") != image or context.get("source_identity") != source:
+        raise ValueError("El contexto no coincide con la imagen/fuente candidata solicitada.")
+    if context_validator is None:
+        try:
+            from . import candidate_context
+        except ImportError:
+            import candidate_context
+        context_validator = candidate_context.same_candidate
+    context_validator(context, root)
+    return image
+
+
+def main(*, environ=None, process_runner=None, context_validator=None):
+    environ = dict(os.environ if environ is None else environ)
+    process_runner = subprocess.run if process_runner is None else process_runner
+    if environ.get("CUADERNO_ENV") not in {"local", "test", "development"}:
         raise ValueError("Solo un entorno local aislado; nunca datos reales.")
+    candidate_image = _candidate_image(environ, root=ROOT, context_validator=context_validator)
     password = uuid.uuid4().hex
 
     def run(argv, *, check=True):
-        result = subprocess.run(argv, cwd=ROOT, text=True, encoding="utf-8", errors="replace",
+        result = process_runner(argv, cwd=ROOT, text=True, encoding="utf-8", errors="replace",
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=900)
         print(result.stdout.replace(password, "[REDACTED]"), end="")
         if check and result.returncode:
@@ -247,9 +327,10 @@ def main():
     pin = run(["docker", "image", "inspect", PIN_IMAGE, "--format", "{{.Id}}"])
     if pin.stdout.strip() != PIN_IMAGE_ID:
         raise ValueError("Imagen pin no coincide con baseline intacto.")
-    release = run(["docker", "image", "inspect", "cuaderno-cocina:local", "--format", "{{.Id}}"])
+    release_ref = candidate_image or "cuaderno-cocina:local"
+    release = run(["docker", "image", "inspect", release_ref, "--format", "{{.Id}}"])
     release_image = release.stdout.strip()
-    if not release_image.startswith("sha256:") or len(release_image) != 71:
+    if IMAGE_RE.fullmatch(release_image) is None or (candidate_image and release_image != candidate_image):
         raise ValueError("Identidad de imagen release no válida.")
     suffix = uuid.uuid4().hex[:12]
     # Docker Desktop/containerd can stop resolving an untagged manifest-list
@@ -260,10 +341,13 @@ def main():
     retained = run(["docker", "image", "inspect", release_tag, "--format", "{{.Id}}"])
     if retained.stdout.strip() != release_image:
         raise ValueError("La imagen retenida no coincide con el artefacto inspeccionado.")
+    runtime_user = run(["docker", "image", "inspect", release_tag, "--format", "{{.Config.User}}"])
+    if not runtime_user.stdout.strip() or runtime_user.stdout.strip().lower() in {"0", "0:0", "root", "root:root"}:
+        raise ValueError("La imagen candidata no declara un usuario runtime no-root.")
     namespace = f"cuaderno-upgrade-{suffix}"
     database = f"cuaderno_upgrade_{suffix}"
     db_container = f"{namespace}-db"
-    run(["docker", "network", "create", namespace])
+    run(["docker", "network", "create", "--internal", namespace])
     run(["docker", "run", "-d", "--name", db_container, "--network", namespace,
          "-e", "POSTGRES_USER=upgrade_runner", "-e", f"POSTGRES_PASSWORD={password}",
          "-e", f"POSTGRES_DB={database}", "postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea"])

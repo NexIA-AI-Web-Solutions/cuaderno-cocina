@@ -66,7 +66,7 @@ export interface InventoryLocation {
      * @type {number}
      * @memberof InventoryLocation
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -91,6 +91,7 @@ export interface InventoryLocation {
  * Check if a given object implements the InventoryLocation interface.
  */
 export function instanceOfInventoryLocation(value: object): value is InventoryLocation {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('household' in value) || value['household'] === undefined) return false;
     return true;
@@ -106,7 +107,7 @@ export function InventoryLocationFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'isFreezer': json['is_freezer'] == null ? undefined : json['is_freezer'],
         'household': HouseholdFromJSON(json['household']),
@@ -117,14 +118,13 @@ export function InventoryLocationToJSON(json: any): InventoryLocation {
     return InventoryLocationToJSONTyped(json, false);
 }
 
-export function InventoryLocationToJSONTyped(value?: InventoryLocation | null, ignoreDiscriminator: boolean = false): any {
+export function InventoryLocationToJSONTyped(value?: Omit<InventoryLocation, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'is_freezer': value['isFreezer'],
         'household': HouseholdToJSON(value['household']),

@@ -24,7 +24,7 @@ export interface SourceImportDuplicate {
      * @type {number}
      * @memberof SourceImportDuplicate
      */
-    id?: number;
+    id: number;
     /**
      * 
      * @type {string}
@@ -37,6 +37,7 @@ export interface SourceImportDuplicate {
  * Check if a given object implements the SourceImportDuplicate interface.
  */
 export function instanceOfSourceImportDuplicate(value: object): value is SourceImportDuplicate {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
@@ -51,7 +52,7 @@ export function SourceImportDuplicateFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
     };
 }

@@ -7,8 +7,17 @@ const source = readFileSync(new URL('./priceHistoryUi.ts', import.meta.url), 'ut
 const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
 const {
     editionCurrency, optionalPackagePrice, packageSummaries, priceAmountLabel, priceHistoryEnvelope,
-    priceHistoryRequest, priceTimingLabel, priceVersionBody, priceWriteResponse,
+    priceHistoryRequest, priceTimingLabel, priceVersionBody, priceWriteResponse, pricePerBaseLabel, priceDateLabel,
 } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+
+test('package summary labels expose exact unit price and effective Spanish date', () => {
+    assert.equal(pricePerBaseLabel('32', '5', 'EUR', 'L'), '6,4000 EUR/L')
+    assert.equal(pricePerBaseLabel('1', '3', 'EUR', 'kg'), '0,3333 EUR/kg')
+    assert.equal(pricePerBaseLabel('0', '3', 'EUR', 'kg'), '0,0000 EUR/kg')
+    assert.equal(pricePerBaseLabel('1', '0', 'EUR'), '—')
+    assert.equal(priceDateLabel('2026-09-30T10:00:00+02:00'), new Intl.DateTimeFormat('es-ES', {dateStyle: 'medium'}).format(new Date('2026-09-30T10:00:00+02:00')))
+    assert.equal(priceDateLabel('not-a-date'), '—')
+})
 
 
 test('price update accepts exact Spanish decimals up to DecimalField 32/16 without floats', () => {

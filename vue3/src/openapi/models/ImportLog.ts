@@ -32,7 +32,7 @@ export interface ImportLog {
      * @type {number}
      * @memberof ImportLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -87,6 +87,7 @@ export interface ImportLog {
  * Check if a given object implements the ImportLog interface.
  */
 export function instanceOfImportLog(value: object): value is ImportLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     if (!('keyword' in value) || value['keyword'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
@@ -104,7 +105,7 @@ export function ImportLogFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'type': json['type'],
         'msg': json['msg'] == null ? undefined : json['msg'],
         'running': json['running'] == null ? undefined : json['running'],
@@ -120,14 +121,13 @@ export function ImportLogToJSON(json: any): ImportLog {
     return ImportLogToJSONTyped(json, false);
 }
 
-export function ImportLogToJSONTyped(value?: Omit<ImportLog, 'keyword'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function ImportLogToJSONTyped(value?: Omit<ImportLog, 'id'|'keyword'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'type': value['type'],
         'msg': value['msg'],
         'running': value['running'],

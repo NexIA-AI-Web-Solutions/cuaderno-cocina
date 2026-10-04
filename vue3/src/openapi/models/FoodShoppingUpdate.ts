@@ -13,14 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { DeleteEnum } from './DeleteEnum';
-import {
-    DeleteEnumFromJSON,
-    DeleteEnumFromJSONTyped,
-    DeleteEnumToJSON,
-    DeleteEnumToJSONTyped,
-} from './DeleteEnum';
-
 /**
  * 
  * @export
@@ -32,36 +24,14 @@ export interface FoodShoppingUpdate {
      * @type {number}
      * @memberof FoodShoppingUpdate
      */
-    id?: number;
-    /**
-     * Amount of food to add to the shopping list
-     * @type {number}
-     * @memberof FoodShoppingUpdate
-     */
-    amount?: number | null;
-    /**
-     * ID of unit to use for the shopping list
-     * @type {number}
-     * @memberof FoodShoppingUpdate
-     */
-    unit?: number | null;
-    /**
-     * When set to true will delete all food from active shopping lists.
-     * 
-     * * `true` - true
-     * @type {DeleteEnum}
-     * @memberof FoodShoppingUpdate
-     */
-    _delete: DeleteEnum | null;
+    readonly id: number;
 }
-
-
 
 /**
  * Check if a given object implements the FoodShoppingUpdate interface.
  */
 export function instanceOfFoodShoppingUpdate(value: object): value is FoodShoppingUpdate {
-    if (!('_delete' in value) || value['_delete'] === undefined) return false;
+    if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
@@ -75,10 +45,7 @@ export function FoodShoppingUpdateFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'amount': json['amount'] == null ? undefined : json['amount'],
-        'unit': json['unit'] == null ? undefined : json['unit'],
-        '_delete': DeleteEnumFromJSON(json['delete']),
+        'id': json['id'],
     };
 }
 
@@ -86,17 +53,13 @@ export function FoodShoppingUpdateToJSON(json: any): FoodShoppingUpdate {
     return FoodShoppingUpdateToJSONTyped(json, false);
 }
 
-export function FoodShoppingUpdateToJSONTyped(value?: FoodShoppingUpdate | null, ignoreDiscriminator: boolean = false): any {
+export function FoodShoppingUpdateToJSONTyped(value?: Omit<FoodShoppingUpdate, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
-        'amount': value['amount'],
-        'unit': value['unit'],
-        'delete': DeleteEnumToJSON(value['_delete']),
     };
 }
 

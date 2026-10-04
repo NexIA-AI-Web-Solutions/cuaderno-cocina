@@ -699,7 +699,7 @@ class KeywordLabelSerializer(serializers.ModelSerializer):
     label = serializers.SerializerMethodField('get_label')
 
     @extend_schema_field(str)
-    def get_label(self, obj):
+    def get_label(self, obj) -> str:
         return obj.name
 
     class Meta:
@@ -1407,6 +1407,9 @@ class RecipeOverviewSerializer(RecipeBaseSerializer):
                             'internal', 'servings', 'servings_text', 'diameter', 'diameter_text', 'rating', 'last_cooked', 'new', 'recent']
 
 
+from cookbook.schema import ComputedPropertySchema
+
+
 class RecipeSerializer(RecipeBaseSerializer):
     nutrition = NutritionInformationSerializer(allow_null=True, required=False)
     properties = PropertySerializer(many=True, required=False)
@@ -1426,7 +1429,7 @@ class RecipeSerializer(RecipeBaseSerializer):
             self.context['_cuaderno_recipe_policy'] = native_recipe_read_policy(instance, request)
         return super().to_representation(instance)
 
-    @extend_schema_field(serializers.JSONField)
+    @extend_schema_field(serializers.DictField(child=ComputedPropertySchema()))
     def get_food_properties(self, obj):
         # Skip expensive computation on CREATE - UI doesn't display it after create
         # User navigates to view page which triggers GET with full data
@@ -1505,19 +1508,19 @@ class FoodBatchUpdateSerializer(serializers.Serializer):
 
     category = serializers.IntegerField(required=False, allow_null=True)
 
-    substitute_add = serializers.ListField(child=serializers.IntegerField())
-    substitute_remove = serializers.ListField(child=serializers.IntegerField())
-    substitute_set = serializers.ListField(child=serializers.IntegerField())
+    substitute_add = serializers.ListField(child=serializers.IntegerField(), required=False)
+    substitute_remove = serializers.ListField(child=serializers.IntegerField(), required=False)
+    substitute_set = serializers.ListField(child=serializers.IntegerField(), required=False)
     substitute_remove_all = serializers.BooleanField(default=False)
 
-    inherit_fields_add = serializers.ListField(child=serializers.IntegerField())
-    inherit_fields_remove = serializers.ListField(child=serializers.IntegerField())
-    inherit_fields_set = serializers.ListField(child=serializers.IntegerField())
+    inherit_fields_add = serializers.ListField(child=serializers.IntegerField(), required=False)
+    inherit_fields_remove = serializers.ListField(child=serializers.IntegerField(), required=False)
+    inherit_fields_set = serializers.ListField(child=serializers.IntegerField(), required=False)
     inherit_fields_remove_all = serializers.BooleanField(default=False)
 
-    child_inherit_fields_add = serializers.ListField(child=serializers.IntegerField())
-    child_inherit_fields_remove = serializers.ListField(child=serializers.IntegerField())
-    child_inherit_fields_set = serializers.ListField(child=serializers.IntegerField())
+    child_inherit_fields_add = serializers.ListField(child=serializers.IntegerField(), required=False)
+    child_inherit_fields_remove = serializers.ListField(child=serializers.IntegerField(), required=False)
+    child_inherit_fields_set = serializers.ListField(child=serializers.IntegerField(), required=False)
     child_inherit_fields_remove_all = serializers.BooleanField(default=False)
 
     shopping_lists_add = serializers.ListField(child=serializers.IntegerField(), required=False)
@@ -1538,7 +1541,7 @@ class UserSpaceBatchUpdateSerializer(serializers.Serializer):
     user_spaces = serializers.ListField(child=serializers.IntegerField())
 
     household = serializers.IntegerField(required=False, allow_null=True)
-    group_set = serializers.ListField(child=serializers.IntegerField())
+    group_set = serializers.ListField(child=serializers.IntegerField(), required=False)
 
 
 class CustomFilterSerializer(SpacedModelSerializer, WritableNestedModelSerializer):
@@ -1758,6 +1761,13 @@ class FoodShoppingSerializer(serializers.ModelSerializer):
 
 
 class ShoppingListEntrySerializer(WritableNestedModelSerializer):
+    revision = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.CharField())
+    def get_revision(self, obj):
+        from cookbook.helper.shopping_revision import shopping_revision
+        return shopping_revision(obj)
+
     food = FoodShoppingSerializer(allow_null=True)
     unit = UnitSerializer(allow_null=True, required=False)
     shopping_lists = ShoppingListSerializer(many=True, required=False)
@@ -1836,9 +1846,9 @@ class ShoppingListEntrySerializer(WritableNestedModelSerializer):
         model = ShoppingListEntry
         fields = (
             'id', 'list_recipe', 'shopping_lists', 'food', 'unit', 'amount', 'order', 'checked', 'ingredient',
-            'list_recipe_data', 'created_by', 'created_at', 'updated_at', 'completed_at', 'delay_until', 'mealplan_id'
+            'list_recipe_data', 'created_by', 'created_at', 'updated_at', 'revision', 'completed_at', 'delay_until', 'mealplan_id'
         )
-        read_only_fields = ('id', 'created_by', 'created_at')
+        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
 
 
 class ShoppingListEntrySimpleCreateSerializer(serializers.Serializer):
@@ -1854,7 +1864,8 @@ class ShoppingListEntryBulkCreateSerializer(serializers.Serializer):
 
 
 class ShoppingListEntryBulkSerializer(serializers.Serializer):
-    ids = serializers.ListField()
+    ids = serializers.ListField(child=serializers.IntegerField(min_value=1), max_length=1000, allow_empty=False)
+    revisions = serializers.DictField(child=serializers.CharField(max_length=128), required=False)
     checked = serializers.BooleanField(required=False, allow_null=True)
     timestamp = serializers.DateTimeField(read_only=True, required=False)
 
@@ -1862,6 +1873,18 @@ class ShoppingListEntryBulkSerializer(serializers.Serializer):
     shopping_lists_remove = serializers.ListField(child=serializers.IntegerField(), required=False)
     shopping_lists_set = serializers.ListField(child=serializers.IntegerField(), required=False)
     shopping_lists_remove_all = serializers.BooleanField(default=False)
+
+    def validate_ids(self, value):
+        if len(value) != len(set(value)) or any(type(raw) is not int for raw in self.initial_data.get('ids', [])):
+            raise serializers.ValidationError('Indica identificadores enteros únicos.')
+        return value
+
+    def validate(self, attrs):
+        if attrs.get('checked') is None and not any(attrs.get(key) for key in (
+            'shopping_lists_add', 'shopping_lists_remove', 'shopping_lists_remove_all',
+        )) and 'shopping_lists_set' not in attrs:
+            raise serializers.ValidationError('Indica un cambio para la lista.')
+        return attrs
 
 
 # TODO deprecate
@@ -2062,7 +2085,7 @@ class InventoryEntrySerializer(SpacedModelSerializer, WritableNestedModelSeriali
                 metadata_before=before or {}, metadata_after=inventory_metadata(instance),
             )
 
-    def get_label(self, obj):
+    def get_label(self, obj) -> str:
         text = f'#{obj.code} - {round(obj.amount, 2)}'
         if obj.unit:
             text += f' ({obj.unit})'

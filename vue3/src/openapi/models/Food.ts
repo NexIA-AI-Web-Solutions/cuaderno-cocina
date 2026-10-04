@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { VisibleFoodSimple } from './VisibleFoodSimple';
+import {
+    VisibleFoodSimpleFromJSON,
+    VisibleFoodSimpleFromJSONTyped,
+    VisibleFoodSimpleToJSON,
+    VisibleFoodSimpleToJSONTyped,
+} from './VisibleFoodSimple';
 import type { ShoppingList } from './ShoppingList';
 import {
     ShoppingListFromJSON,
@@ -48,13 +55,6 @@ import {
     FoodInheritFieldToJSON,
     FoodInheritFieldToJSONTyped,
 } from './FoodInheritField';
-import type { FoodSimple } from './FoodSimple';
-import {
-    FoodSimpleFromJSON,
-    FoodSimpleFromJSONTyped,
-    FoodSimpleToJSON,
-    FoodSimpleToJSONTyped,
-} from './FoodSimple';
 import type { RecipeSimple } from './RecipeSimple';
 import {
     RecipeSimpleFromJSON,
@@ -108,7 +108,7 @@ export interface Food {
      * @type {number}
      * @memberof Food
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -214,10 +214,10 @@ export interface Food {
     ignoreShopping?: boolean;
     /**
      * 
-     * @type {Array<FoodSimple>}
+     * @type {Array<VisibleFoodSimple>}
      * @memberof Food
      */
-    substitute?: Array<FoodSimple> | null;
+    substitute?: Array<VisibleFoodSimple> | null;
     /**
      * 
      * @type {boolean}
@@ -260,6 +260,7 @@ export interface Food {
  * Check if a given object implements the Food interface.
  */
 export function instanceOfFood(value: object): value is Food {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('shopping' in value) || value['shopping'] === undefined) return false;
     if (!('parent' in value) || value['parent'] === undefined) return false;
@@ -279,7 +280,7 @@ export function FoodFromJSONTyped(json: any, ignoreDiscriminator: boolean): Food
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'pluralName': json['plural_name'] == null ? undefined : json['plural_name'],
         'description': json['description'] == null ? undefined : json['description'],
@@ -297,7 +298,7 @@ export function FoodFromJSONTyped(json: any, ignoreDiscriminator: boolean): Food
         'inheritFields': json['inherit_fields'] == null ? undefined : ((json['inherit_fields'] as Array<any>).map(FoodInheritFieldFromJSON)),
         'fullName': json['full_name'],
         'ignoreShopping': json['ignore_shopping'] == null ? undefined : json['ignore_shopping'],
-        'substitute': json['substitute'] == null ? undefined : ((json['substitute'] as Array<any>).map(FoodSimpleFromJSON)),
+        'substitute': json['substitute'] == null ? undefined : ((json['substitute'] as Array<any>).map(VisibleFoodSimpleFromJSON)),
         'substituteSiblings': json['substitute_siblings'] == null ? undefined : json['substitute_siblings'],
         'substituteChildren': json['substitute_children'] == null ? undefined : json['substitute_children'],
         'substituteOnhand': json['substitute_onhand'],
@@ -311,14 +312,13 @@ export function FoodToJSON(json: any): Food {
     return FoodToJSONTyped(json, false);
 }
 
-export function FoodToJSONTyped(value?: Omit<Food, 'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'> | null, ignoreDiscriminator: boolean = false): any {
+export function FoodToJSONTyped(value?: Omit<Food, 'id'|'shopping'|'parent'|'numchild'|'full_name'|'substitute_onhand'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'plural_name': value['pluralName'],
         'description': value['description'],
@@ -332,7 +332,7 @@ export function FoodToJSONTyped(value?: Omit<Food, 'shopping'|'parent'|'numchild
         'supermarket_category': SupermarketCategoryToJSON(value['supermarketCategory']),
         'inherit_fields': value['inheritFields'] == null ? undefined : ((value['inheritFields'] as Array<any>).map(FoodInheritFieldToJSON)),
         'ignore_shopping': value['ignoreShopping'],
-        'substitute': value['substitute'] == null ? undefined : ((value['substitute'] as Array<any>).map(FoodSimpleToJSON)),
+        'substitute': value['substitute'] == null ? undefined : ((value['substitute'] as Array<any>).map(VisibleFoodSimpleToJSON)),
         'substitute_siblings': value['substituteSiblings'],
         'substitute_children': value['substituteChildren'],
         'child_inherit_fields': value['childInheritFields'] == null ? undefined : ((value['childInheritFields'] as Array<any>).map(FoodInheritFieldToJSON)),

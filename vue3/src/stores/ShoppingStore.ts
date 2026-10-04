@@ -2,12 +2,13 @@ import {acceptHMRUpdate, defineStore} from "pinia"
 import {
     ApiApi,
     ApiShoppingListEntryListRequest,
-    Food,
     Recipe,
     ShoppingList,
     ShoppingListEntry,
+    ShoppingListEntryRequest,
     ShoppingListEntryBulk,
     ShoppingListRecipe,
+    ResponseError,
     Supermarket,
     SupermarketCategory
 } from "@/openapi";
@@ -201,7 +202,8 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
      */
     function hasFailedItems() {
         for (let i in itemCheckSyncQueue.value) {
-            if (itemCheckSyncQueue.value[i]['status'] === 'syncing_failed_before' || itemCheckSyncQueue.value[i]['status'] === 'waiting_failed_before') {
+            const queued = itemCheckSyncQueue.value[i]
+            if (queued && (queued.status === 'syncing_failed_before' || queued.status === 'waiting_failed_before')) {
                 return !syncQueueRunning.value
             }
         }
@@ -260,9 +262,11 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
 
             if (requestParameters.page == 1) {
                 if (r.next) {
-                    while (Math.ceil(r.count / requestParameters.pageSize) > requestParameters.page) {
-                        requestParameters.page = requestParameters.page + 1
-                        promises.push(recLoadShoppingListEntries(requestParameters))
+                    const pageSize = requestParameters.pageSize ?? 50
+                    let page = requestParameters.page ?? 1
+                    while (Math.ceil(r.count / pageSize) > page) {
+                        page += 1
+                        promises.push(recLoadShoppingListEntries({...requestParameters, page}))
                     }
                 }
 
@@ -307,7 +311,7 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
      * @param object entry to create
      * @param undo if the user should be able to undo the change or not
      */
-    function createObject(object: ShoppingListEntry, undo: boolean) {
+    function createObject(object: ShoppingListEntryRequest, undo: boolean) {
         const api = new ApiApi()
         return api.apiShoppingListEntryCreate({shoppingListEntry: object}).then((r) => {
             globalEntriesMap.value.set(r.id!, r)
@@ -337,7 +341,9 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         // object.updatedAt = DateTime.toLocaleString()
         // TODO setting timestamp on the client does not make sense because client and server clock might be out of sync and field will be overridden by server anyway
 
-        return api.apiShoppingListEntryUpdate({id: object.id!, shoppingListEntry: object}).then((r) => {
+        return api.apiShoppingListEntryUpdate({id: object.id!, shoppingListEntry: object}, {
+            headers: {'If-Match': `"${object.revision}"`},
+        }).then((r) => {
             globalEntriesMap.value.set(r.id!, r)
         }).catch((err) => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
@@ -423,19 +429,21 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
      * @param entry
      */
     function updateEntryInStructure(structure: IShoppingList, entry: ShoppingListEntry) {
+        if (!entry.food || entry.food.id === undefined || entry.id === undefined) return structure
         let groupingKey = getEntryCategoryKey(entry)
 
         if (!structure.categories.has(groupingKey)) {
             structure.categories.set(groupingKey, {'name': groupingKey, 'foods': new Map<number, IShoppingListFood>} as IShoppingListCategory)
         }
-        if (structure.categories.has(groupingKey)) {
-            if (!structure.categories.get(groupingKey).foods.has(entry.food.id)) {
-                structure.categories.get(groupingKey).foods.set(entry.food.id, {
+        const category = structure.categories.get(groupingKey)
+        if (category) {
+            if (!category.foods.has(entry.food.id)) {
+                category.foods.set(entry.food.id, {
                     food: entry.food,
                     entries: new Map<number, ShoppingListEntry>
                 } as IShoppingListFood)
             }
-            structure.categories.get(groupingKey).foods.get(entry.food.id).entries.set(entry.id, entry)
+            category.foods.get(entry.food.id)?.entries.set(entry.id, entry)
         }
 
         return structure
@@ -452,7 +460,9 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
             registerChange((checked ? 'CHECKED' : 'UNCHECKED'), entries)
         }
         let entryIdList: number[] = []
+        const revisions: Record<string, string> = {}
         entries.forEach(entry => {
+            revisions[String(entry.id)] = entry.revision
             entry.checked = checked
             globalEntriesMap.value.set(entry.id!, entry)
             entryIdList.push(entry.id!)
@@ -464,6 +474,7 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
 
         itemCheckSyncQueue.value.push({
             ids: entryIdList,
+            revisions,
             checked: checked,
             status: 'waiting',
         } as IShoppingSyncQueueEntry)
@@ -477,44 +488,71 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
      * Do NOT call this method directly, always call using runSyncQueue method to prevent simultaneous runs
      * @private
      */
-    function _replaySyncQueue() {
+    async function _replaySyncQueue() {
+        if (syncQueueRunning.value) return
         if (navigator.onLine || document.location.href.includes('localhost')) {
-            let api = new ApiApi()
-            let promises: Promise<void>[] = []
-
-            let updatedEntries = new Map<number, ShoppingListEntry>()
-            itemCheckSyncQueue.value.forEach((entry, index) => {
-                entry['status'] = ((entry['status'] === 'waiting_failed_before') ? 'syncing_failed_before' : 'syncing')
-                syncQueueRunning.value = true
-                let p = api.apiShoppingListEntryBulkCreate({shoppingListEntryBulk: entry}, {}).then((r) => {
-                    entry.ids.forEach(id => {
-                        let e = globalEntriesMap.value.get(id)
-                        if (e) {
-                            e.updatedAt = r.timestamp
-                            updatedEntries.set(id, e)
+            const api = new ApiApi()
+            syncQueueRunning.value = true
+            try {
+                while (itemCheckSyncQueue.value.length) {
+                    const entry = itemCheckSyncQueue.value[0]!
+                    entry.status = entry.status === 'waiting_failed_before' ? 'syncing_failed_before' : 'syncing'
+                    try {
+                        const result = await api.apiShoppingListEntryBulkCreate({shoppingListEntryBulk: entry})
+                        itemCheckSyncQueue.value.shift()
+                        for (const id of entry.ids) {
+                            const revision = result.revisions?.[String(id)]
+                            if (!revision) throw new Error('La lista no devolvió una revisión válida.')
+                            // Only our successful write advances already queued local intentions.
+                            for (const pending of itemCheckSyncQueue.value) {
+                                if (pending.ids.includes(id)) pending.revisions[String(id)] = revision
+                            }
+                            for (const history of undoStack.value) {
+                                history.entries = history.entries.map(item => item.id === id ? {...item, revision} : item)
+                            }
+                            const current = globalEntriesMap.value.get(id)
+                            if (current) globalEntriesMap.value.set(id, {...current, revision, updatedAt: result.timestamp})
                         }
-                    })
-                    itemCheckSyncQueue.value.splice(index, 1)
-                }).catch((err) => {
-                    if (err.name === "FetchError") {
-                        entry['status'] = 'waiting_failed_before'
-                    } else {
-                        itemCheckSyncQueue.value.splice(index, 1)
-                        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+                    } catch (error) {
+                        if (!(error instanceof ResponseError && error.response.status === 409)) {
+                            entry.status = 'waiting_failed_before'
+                            break
+                        }
+                        const affected = new Set(entry.ids)
+                        let expanded = true
+                        while (expanded) {
+                            expanded = false
+                            for (const pending of itemCheckSyncQueue.value) {
+                                if (!pending.ids.some(id => affected.has(id))) continue
+                                for (const id of pending.ids) {
+                                    if (!affected.has(id)) {
+                                        affected.add(id)
+                                        expanded = true
+                                    }
+                                }
+                            }
+                        }
+                        itemCheckSyncQueue.value = itemCheckSyncQueue.value.filter(
+                            pending => !pending.ids.some(id => affected.has(id)),
+                        )
+                        for (const id of affected) {
+                            try {
+                                const fresh = await api.apiShoppingListEntryRetrieve({id})
+                                globalEntriesMap.value.set(id, fresh)
+                            } catch (refreshError) {
+                                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, refreshError)
+                            }
+                        }
+                        undoStack.value = undoStack.value.filter(history => !history.entries.some(item => item.id !== undefined && affected.has(item.id)))
+                        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, error)
                     }
-                })
-                promises.push(p)
-            })
-
-            Promise.allSettled(promises).finally(() => {
-                globalEntriesMap.value = new Map([...globalEntriesMap.value, ...updatedEntries])
-                syncQueueRunning.value = false
-                //TODO proper function to splice/update structure as needed
-                //useShoppingStore().updateEntriesStructure()
-                if (itemCheckSyncQueue.value.length > 0) {
-                    runSyncQueue(500)
                 }
-            })
+            } finally {
+                globalEntriesMap.value = new Map(globalEntriesMap.value)
+                updateEntriesStructure()
+                syncQueueRunning.value = false
+                if (itemCheckSyncQueue.value.length > 0) runSyncQueue(5000)
+            }
         } else {
             // try again if internet after a few seconds
             runSyncQueue(5000)
@@ -565,19 +603,12 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
             registerChange((ignored ? 'IGNORE' : 'UNIGNORE'), entries)
         }
 
-        let foods = [] as Food[]
-
-        entries.forEach(e => {
-            if (!foods.includes(e.food!)) {
-                foods.push(e.food!)
-            }
-        })
+        const foodIds = new Set(entries.flatMap(entry => entry.food?.id === undefined ? [] : [entry.food.id]))
 
         setEntriesCheckedState(entries, ignored, false)
 
-        foods.forEach(food => {
-            food.ignoreShopping = ignored
-            api.apiFoodUpdate({food: food, id: food.id!}).catch(err => {
+        foodIds.forEach(id => {
+            api.apiFoodPartialUpdate({id, patchedFood: {ignoreShopping: ignored}}).catch(err => {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             })
         })
@@ -618,7 +649,7 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
      * @param {{}} entries set of entries
      */
     function registerChange(type: ShoppingOperationHistoryType, entries: ShoppingListEntry[]) {
-        undoStack.value.push({'type': type, 'entries': entries} as ShoppingOperationHistoryEntry)
+        undoStack.value.push({type, entries: entries.map(entry => ({...entry}))})
     }
 
     /**
@@ -637,12 +668,12 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
             } else if (type === 'CREATE') {
                 for (let i in entries) {
                     let e = entries[i]
-                    deleteObject(e, false)
+                    if (e) deleteObject(e, false)
                 }
             } else if (type === 'DESTROY') {
                 for (let i in entries) {
                     let e = entries[i]
-                    createObject(e, false)
+                    if (e) createObject(e, false)
                 }
             } else if (type === 'IGNORE' || type === 'UNIGNORE') {
                 setFoodIgnoredState(entries, (type === 'UNIGNORE'), false)
@@ -658,7 +689,9 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
         const foodIds: number[] = []
         shoppingListFoods.forEach(sLF => {
             sLF.food.supermarketCategory = category
-            sLF.entries.forEach(e => e.food.supermarketCategory = category)
+            sLF.entries.forEach((e, id) => {
+                if (e.food) sLF.entries.set(id, {...e, food: {...e.food, supermarketCategory: category}})
+            })
             foodIds.push(sLF.food.id!)
         })
 

@@ -21,3 +21,14 @@ export function inventoryRequests() {
         },
     }
 }
+
+export type ReceiptDraftIdentity = {order: number; entry: number; quantity: string}
+
+export function sameReceiptDraft(
+    order: number | null,
+    entry: number | null,
+    quantity: string,
+    submitted: ReceiptDraftIdentity,
+): boolean {
+    return order === submitted.order && entry === submitted.entry && quantity === submitted.quantity
+}

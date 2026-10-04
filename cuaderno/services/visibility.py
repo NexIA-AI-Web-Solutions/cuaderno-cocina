@@ -31,8 +31,7 @@ def coherent_steps(user, space):
 
 
 def _food_visibility_predicate(user, space, *, path_field="path", recipes=None):
-    foods = Food.objects.filter(space=space)
-    linked_foods = foods.filter(recipe_id__isnull=False)
+    linked_foods = Food.objects.filter(space=space, recipe_id__isnull=False)
     # Native full_name and parent expose ancestry. Hide the whole inaccessible
     # branch rather than returning a descendant with a private ancestor label.
     hidden_ancestors = Food.objects.filter(space=space, recipe_id__isnull=False).exclude(
@@ -40,8 +39,9 @@ def _food_visibility_predicate(user, space, *, path_field="path", recipes=None):
     ).annotate(_descendant_prefix=Substr(OuterRef(path_field), 1, Length("path"))).filter(
         path=F("_descendant_prefix"),
     )
-    # Keep the fast path inside the same statement/snapshot as the ACL. A
-    # Python exists() check would race with a newly linked private ancestor.
+    # The logically redundant fast branch lets PostgreSQL stop at the bounded
+    # movement index instead of scanning the ledger. Both checks share the
+    # same statement/snapshot, so a new private ancestor cannot race this ACL.
     return ~Exists(linked_foods) | ~Exists(hidden_ancestors)
 
 

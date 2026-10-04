@@ -30,12 +30,10 @@ type VDataTableProps = InstanceType<typeof VDataTable>['$props']
  * @param t translation function from calling context
  * @return instance of GenericModel
  */
-export function getGenericModelFromString(modelName: EditorSupportedModels, t: any): false | GenericModel {
-    if (SUPPORTED_MODELS.has(modelName.toLowerCase())) {
-        return new GenericModel(SUPPORTED_MODELS.get(modelName.toLowerCase()), t)
-    } else {
-        return false
-    }
+export function getGenericModelFromString(modelName: EditorSupportedModels, t: any): GenericModel {
+    const model = SUPPORTED_MODELS.get(modelName.toLowerCase())
+    if (!model) throw new Error(`Unsupported model: ${modelName}`)
+    return new GenericModel(model, t)
 }
 
 /**
@@ -63,9 +61,10 @@ export function getListModels() {
  * common list parameters shared by all generic models
  */
 type GenericListRequestParameter = {
-    page: number,
-    pageSize: number,
-    query: string,
+    page?: number,
+    pageSize?: number,
+    query?: string,
+    rootTree?: number,
 }
 
 /**
@@ -88,7 +87,7 @@ type DeleteRelationRequestParameter = {
 type ModelTableHeaders = {
     title: string,
     key: string,
-    align: 'end' | 'start',
+    align?: 'end' | 'start',
     hidden?: boolean,
 }
 
@@ -1103,7 +1102,7 @@ registerModel(TSearchFields)
  */
 export class GenericModel {
 
-    api: Object
+    api: Record<string, (...args: any[]) => Promise<any>>
     model: Model
     // TODO find out the type of the t useI18n object and use it here
     // TODO decouple context from Generic model so t does not need to be passed
@@ -1116,19 +1115,20 @@ export class GenericModel {
      */
     constructor(model: Model, t: any) {
         this.model = model
-        this.api = new ApiApi()
+        this.api = new ApiApi() as unknown as Record<string, (...args: any[]) => Promise<any>>
         this.t = t
     }
 
-    getTableHeaders(): VDataTableProps['headers'][] {
-        let tableHeaders: VDataTableProps['headers'][] = []
-        this.model.tableHeaders.forEach(header => {
-            if (!header.hidden) {
-                header.title = this.t(header.title)
-                tableHeaders.push(header as unknown as VDataTableProps['headers'])
-            }
-        })
-        return tableHeaders
+    endpoint(name: string) {
+        const endpoint = this.api[name]
+        if (!endpoint) throw new Error(`Unsupported API operation: ${name}`)
+        return endpoint.bind(this.api)
+    }
+
+    getTableHeaders(): NonNullable<VDataTableProps['headers']> {
+        return this.model.tableHeaders
+            .filter(header => !header.hidden)
+            .map(header => ({...header, title: this.t(header.title)}))
     }
 
     /**
@@ -1140,7 +1140,7 @@ export class GenericModel {
         if (this.model.disableList) {
             throw new Error('Cannot list on this model!')
         } else {
-            return this.api[`api${this.model.name}List`](genericListRequestParameter, initOverrides)
+            return this.endpoint(`api${this.model.name}List`)(genericListRequestParameter, initOverrides)
         }
     }
 
@@ -1150,13 +1150,13 @@ export class GenericModel {
      * @param obj object to create
      * @return promise of request
      */
-    create(obj: EditorSupportedTypes) {
+    create(obj: Record<string, unknown>) {
         if (this.model.disableCreate) {
             throw new Error('Cannot create on this model!')
         } else {
             let createRequestParams: any = {}
             createRequestParams[this.model.name.charAt(0).toLowerCase() + this.model.name.slice(1)] = obj
-            return this.api[`api${this.model.name}Create`](createRequestParams)
+            return this.endpoint(`api${this.model.name}Create`)(createRequestParams)
         }
     }
 
@@ -1174,7 +1174,7 @@ export class GenericModel {
             let updateRequestParams: any = {}
             updateRequestParams['id'] = id
             updateRequestParams[this.model.name.charAt(0).toLowerCase() + this.model.name.slice(1)] = obj
-            return this.api[`api${this.model.name}Update`](updateRequestParams)
+            return this.endpoint(`api${this.model.name}Update`)(updateRequestParams)
         }
     }
 
@@ -1190,7 +1190,7 @@ export class GenericModel {
         } else {
             let retrieveRequestParams: any = {}
             retrieveRequestParams['id'] = id
-            return this.api[`api${this.model.name}Retrieve`](retrieveRequestParams)
+            return this.endpoint(`api${this.model.name}Retrieve`)(retrieveRequestParams)
         }
     }
 
@@ -1206,7 +1206,7 @@ export class GenericModel {
         } else {
             let destroyRequestParams: any = {}
             destroyRequestParams['id'] = id
-            return this.api[`api${this.model.name}Destroy`](destroyRequestParams)
+            return this.endpoint(`api${this.model.name}Destroy`)(destroyRequestParams)
         }
     }
 
@@ -1222,7 +1222,7 @@ export class GenericModel {
             let mergeRequestParams: any = {id: source.id, target: target.id}
             mergeRequestParams[this.model.name.charAt(0).toLowerCase() + this.model.name.slice(1)] = {}
 
-            return this.api[`api${this.model.name}MergeUpdate`](mergeRequestParams)
+            return this.endpoint(`api${this.model.name}MergeUpdate`)(mergeRequestParams)
         }
     }
 
@@ -1238,7 +1238,7 @@ export class GenericModel {
             let moveRequestParams: any = {id: source.id, parent: parentId}
             moveRequestParams[this.model.name.charAt(0).toLowerCase() + this.model.name.slice(1)] = source
 
-            return this.api[`api${this.model.name}MoveUpdate`](moveRequestParams)
+            return this.endpoint(`api${this.model.name}MoveUpdate`)(moveRequestParams)
         }
     }
 
@@ -1248,7 +1248,7 @@ export class GenericModel {
      * @return promise of request
      */
     getDeleteProtecting(deleteRelationRequestParameter: DeleteRelationRequestParameter) {
-        return this.api[`api${this.model.name}ProtectingList`](deleteRelationRequestParameter)
+        return this.endpoint(`api${this.model.name}ProtectingList`)(deleteRelationRequestParameter)
     };
 
     /**
@@ -1257,7 +1257,7 @@ export class GenericModel {
      * @return promise of request
      */
     getDeleteCascading(deleteRelationRequestParameter: DeleteRelationRequestParameter) {
-        return this.api[`api${this.model.name}CascadingList`](deleteRelationRequestParameter)
+        return this.endpoint(`api${this.model.name}CascadingList`)(deleteRelationRequestParameter)
     };
 
     /**
@@ -1266,7 +1266,7 @@ export class GenericModel {
      * @return promise of request
      */
     getDeleteNulling(deleteRelationRequestParameter: DeleteRelationRequestParameter) {
-        return this.api[`api${this.model.name}NullingList`](deleteRelationRequestParameter)
+        return this.endpoint(`api${this.model.name}NullingList`)(deleteRelationRequestParameter)
     };
 
     /**

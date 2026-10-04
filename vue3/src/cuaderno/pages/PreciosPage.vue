@@ -12,26 +12,27 @@
                 </p>
                 <v-row>
                     <v-col cols="12" md="4">
-                        <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load />
+                        <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load :disabled="!canOperate" />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-model-select v-model="unit" model="Unit" label="Unidad del contenido" search-on-load />
+                        <v-model-select v-model="unit" model="Unit" label="Unidad del contenido" search-on-load :disabled="!canOperate" />
                     </v-col>
-                    <v-col cols="12" md="4"><v-text-field v-model="label" label="Formato" placeholder="Garrafa 5 L" /></v-col>
-                    <v-col cols="12" md="4"><v-text-field v-model="quantity" label="Contenido" placeholder="5" inputmode="decimal" /></v-col>
+                    <v-col cols="12" md="4"><v-text-field v-model="label" label="Formato" placeholder="Garrafa 5 L" :disabled="!canOperate" /></v-col>
+                    <v-col cols="12" md="4"><v-text-field v-model="quantity" label="Contenido" placeholder="5" inputmode="decimal" :disabled="!canOperate" /></v-col>
                     <v-col cols="12" md="4">
                         <v-text-field
                             v-model="price"
                             :label="currency ? `Precio ${currency}` : 'Precio (moneda no disponible)'"
                             placeholder="32,00"
                             inputmode="decimal"
+                            :disabled="!canOperate"
                             hint="Déjalo vacío si todavía no conoces el precio."
                             persistent-hint
                         />
-                        <v-checkbox v-model="newPackageExplicitFree" label="Gratis explícitamente" density="compact" hide-details="auto" />
+                        <v-checkbox v-model="newPackageExplicitFree" label="Gratis explícitamente" density="compact" hide-details="auto" :disabled="!canOperate" />
                     </v-col>
                     <v-col cols="12" md="4" class="d-flex align-center">
-                        <v-btn color="primary" :loading="saving" min-height="44" @click="save">Guardar formato</v-btn>
+                        <v-btn color="primary" :loading="saving" :disabled="!canOperate" min-height="44" @click="save">Guardar formato</v-btn>
                     </v-col>
                 </v-row>
                 <v-alert v-if="createMessage" :type="createSucceeded ? 'success' : 'error'" variant="tonal" class="mt-2" role="status">
@@ -51,45 +52,57 @@
                 <p v-if="!loading && !packages.length" class="my-4">
                     Todavía no hay formatos. Selecciona un ingrediente y su unidad para guardar el primero.
                 </p>
-                <v-list v-if="packages.length" lines="two" class="pa-0">
-                    <v-list-item v-for="item in packages" :key="item.id" class="package-row px-0">
-                        <v-list-item-title>{{ item.food_name }} — {{ item.label }}</v-list-item-title>
-                        <v-list-item-subtitle>
-                            {{ item.quantity }} {{ item.unit_name }}
-                            <span v-if="item.current_price">
-                                · {{ priceAmountLabel(item.current_price.amount, currency ?? '') }}
-                                <span v-if="item.current_price.explicit_free"> (gratis explícitamente)</span>
-                            </span>
-                            <span v-else> · precio desconocido</span>
-                        </v-list-item-subtitle>
-                        <template #append>
-                            <v-btn
-                                variant="outlined"
-                                min-height="44"
-                                :disabled="savingPrice"
-                                :aria-label="`Gestionar el precio de ${item.food_name}, ${item.label}`"
-                                @click="selectPackage(item.id)"
-                            >
-                                Gestionar precio
+                <v-table v-if="packages.length" class="package-table">
+                    <thead><tr><th>Ingrediente y formato</th><th>Contenido</th><th>Precio del envase</th><th>Precio por unidad base</th><th>Vigente desde</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                    <tbody>
+                        <tr v-for="item in packages" :key="item.id">
+                            <td>{{ item.food_name }} — {{ item.label }}</td>
+                            <td>{{ item.quantity }} {{ item.unit_name }}</td>
+                            <td>{{ packagePriceLabel(item) }}</td>
+                            <td>{{ packageBasePriceLabel(item) }}</td>
+                            <td>{{ item.current_price ? priceDateLabel(item.current_price.valid_from) : '—' }}</td>
+                            <td>
+                                <v-btn variant="outlined" min-height="44" :disabled="savingPrice"
+                                       :aria-label="`${canOperate ? 'Gestionar el precio' : 'Consultar el historial'} de ${item.food_name}, ${item.label}`" @click="selectPackage(item.id)">
+                                    {{ canOperate ? 'Gestionar precio' : 'Consultar historial' }}
+                                </v-btn>
+                            </td>
+                        </tr>
+                    </tbody>
+                </v-table>
+                <div v-if="packages.length" class="package-cards">
+                    <v-card v-for="item in packages" :key="`mobile-${item.id}`" variant="outlined" class="mb-3">
+                        <v-card-title class="text-body-1 text-wrap">{{ item.food_name }} — {{ item.label }}</v-card-title>
+                        <v-card-text>
+                            <dl class="package-values">
+                                <div><dt>Contenido</dt><dd>{{ item.quantity }} {{ item.unit_name }}</dd></div>
+                                <div><dt>Precio del envase</dt><dd>{{ packagePriceLabel(item) }}</dd></div>
+                                <div><dt>Precio por unidad base</dt><dd>{{ packageBasePriceLabel(item) }}</dd></div>
+                                <div><dt>Vigente desde</dt><dd>{{ item.current_price ? priceDateLabel(item.current_price.valid_from) : '—' }}</dd></div>
+                            </dl>
+                            <v-btn block variant="outlined" min-height="44" class="mt-3" :disabled="savingPrice"
+                                   :aria-label="`${canOperate ? 'Gestionar el precio' : 'Consultar el historial'} de ${item.food_name}, ${item.label}`" @click="selectPackage(item.id)">
+                                {{ canOperate ? 'Gestionar precio' : 'Consultar historial' }}
                             </v-btn>
-                        </template>
-                    </v-list-item>
-                </v-list>
+                        </v-card-text>
+                    </v-card>
+                </div>
             </v-card-text>
         </v-card>
 
         <v-card v-if="selectedPackage" class="mt-4">
             <v-card-title>{{ selectedPackage.food_name }} — {{ selectedPackage.label }}</v-card-title>
             <v-card-text>
-                <p class="text-body-2 mb-4">Añade el precio que entra en vigor ahora. Este formulario no programa fechas futuras.</p>
-                <v-row align="start">
+                <template v-if="canOperate">
+                    <p class="text-body-2 mb-4">Añade el precio que entra en vigor ahora. Este formulario no programa fechas futuras.</p>
+                    <v-row align="start">
                     <v-col cols="12" sm="7" md="5">
                         <v-text-field
                             v-model="updatedPrice"
                             :label="currency ? `Nuevo precio ${currency}` : 'Nuevo precio (moneda no disponible)'"
                             placeholder="32,00"
                             inputmode="decimal"
-                            :disabled="savingPrice"
+                            :disabled="savingPrice || !canOperate"
                             hint="Máximo 16 enteros y 16 decimales."
                             persistent-hint
                         />
@@ -98,16 +111,17 @@
                             label="Gratis explícitamente"
                             density="compact"
                             hide-details="auto"
-                            :disabled="savingPrice"
+                            :disabled="savingPrice || !canOperate"
                         />
                     </v-col>
                     <v-col cols="12" sm="5" md="3" class="d-flex align-center">
-                        <v-btn color="primary" min-height="44" :loading="savingPrice" @click="savePrice">Actualizar precio</v-btn>
+                        <v-btn color="primary" min-height="44" :loading="savingPrice" :disabled="!canOperate" @click="savePrice">Actualizar precio</v-btn>
                     </v-col>
-                </v-row>
-                <v-alert v-if="priceMessage" :type="priceSucceeded ? 'success' : 'error'" variant="tonal" class="mb-5" role="status">
-                    {{ priceMessage }}
-                </v-alert>
+                    </v-row>
+                    <v-alert v-if="priceMessage" :type="priceSucceeded ? 'success' : 'error'" variant="tonal" class="mb-5" role="status">
+                        {{ priceMessage }}
+                    </v-alert>
+                </template>
                 <price-history-panel :package-id="selectedPackage.id" :refresh-token="historyRefreshToken" />
             </v-card-text>
         </v-card>
@@ -125,6 +139,8 @@ import {
     optionalPackagePrice,
     packageSummaries,
     priceAmountLabel,
+    pricePerBaseLabel,
+    priceDateLabel,
     priceVersionBody,
     priceWriteResponse,
     editionCurrency,
@@ -159,6 +175,18 @@ const priceMessage = ref('')
 const priceSucceeded = ref(false)
 const historyRefreshToken = ref(0)
 const selectedPackage = computed(() => packages.value.find(item => item.id === selectedPackageId.value) ?? null)
+const canOperate = computed(() => operationalRole.value?.can_operate_cuaderno === true)
+
+function packagePriceLabel(item: PackageSummary) {
+    if (!item.current_price) return 'Precio desconocido'
+    const label = priceAmountLabel(item.current_price.amount, currency.value ?? '')
+    return item.current_price.explicit_free ? `${label} (gratis explícitamente)` : label
+}
+
+function packageBasePriceLabel(item: PackageSummary) {
+    if (!item.current_price || currency.value === null) return '—'
+    return pricePerBaseLabel(item.current_price.amount, item.quantity, currency.value, item.unit_name)
+}
 
 let loadGeneration = 0
 let priceGeneration = 0
@@ -204,7 +232,7 @@ async function load() {
 async function save() {
     createMessage.value = ''
     createSucceeded.value = false
-    if (saving.value) return
+    if (saving.value || !canOperate.value) return
     const content = decimalInput(quantity.value)
     const packagePrice = optionalPackagePrice(price.value, newPackageExplicitFree.value)
     if (!food.value?.id || !unit.value?.id || !label.value.trim() || !content || packagePrice.error) {
@@ -259,7 +287,7 @@ function selectPackage(packageId: number | null) {
 async function savePrice() {
     priceMessage.value = ''
     priceSucceeded.value = false
-    if (savingPrice.value || selectedPackage.value === null) return
+    if (savingPrice.value || selectedPackage.value === null || !canOperate.value) return
     if (currency.value === null) {
         priceMessage.value = 'No se puede actualizar el precio hasta confirmar la moneda del espacio. El formulario se conserva.'
         return
@@ -311,5 +339,14 @@ onBeforeUnmount(() => {
 <style scoped>
 .package-row {
     min-height: 64px;
+}
+.package-cards { display: none; }
+.package-values > div { display: flex; justify-content: space-between; gap: 1rem; }
+.package-values dt { font-weight: 600; }
+.package-values dd { margin: 0; text-align: end; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 700px) {
+    .package-table { display: none; }
+    .package-cards { display: block; }
 }
 </style>

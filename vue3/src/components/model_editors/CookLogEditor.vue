@@ -18,7 +18,7 @@
                     <v-col cols="12" md="4">
                         <v-label>{{ $t('Rating') }}</v-label>
                         <br/>
-                        <v-rating v-model="editingObj.rating" clearable hover density="compact"></v-rating>
+                        <v-rating :model-value="editingObj.rating ?? undefined" @update:model-value="editingObj.rating = Number($event)" clearable hover density="compact"></v-rating>
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-number-input :label="$t('Servings')" v-model="editingObj.servings" :precision="2"></v-number-input>

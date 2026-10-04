@@ -19,7 +19,7 @@
                                 <template #append>
                                     <v-btn icon>
                                         <v-icon icon="$create"></v-icon>
-                                        <model-edit-dialog model="InventoryLocation" @create="args => inventoryLocation = args"></model-edit-dialog>
+                                        <model-edit-dialog model="InventoryLocation" @create="(args: InventoryLocation) => inventoryLocation = args"></model-edit-dialog>
                                     </v-btn>
                                 </template>
                             </v-model-select>
@@ -74,7 +74,7 @@
                                 <template v-if="bookingConfirmEntry.expires">
                                     <p class="text-disabled mt-4">{{ $t('Expires') }}</p>
                                     <p>
-                                        <v-chip label :color="(bookingConfirmEntry.expires < DateTime.now() ? 'error' : 'success')">
+                                        <v-chip label :color="(DateTime.fromJSDate(bookingConfirmEntry.expires) < DateTime.now() ? 'error' : 'success')">
                                             {{ DateTime.fromJSDate(bookingConfirmEntry.expires).toLocaleString(DateTime.DATE_MED) }}
                                         </v-chip>
                                     </p>
@@ -400,10 +400,10 @@ function copyConfirmEntry() {
         unit.value = bookingConfirmEntry.value.unit
     }
     if (selectedCopyOptions.value.includes('expires')) {
-        expires.value = bookingConfirmEntry.value.expires
+        expires.value = bookingConfirmEntry.value.expires ?? undefined
     }
     if (selectedCopyOptions.value.includes('subLocation')) {
-        subLocation.value = bookingConfirmEntry.value.subLocation
+        subLocation.value = bookingConfirmEntry.value.subLocation ?? undefined
     }
 
     bookingMode.value = 'add'

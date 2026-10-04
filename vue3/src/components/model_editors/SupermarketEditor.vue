@@ -197,7 +197,8 @@ function sortCategoryRelations(startIndex: number = 0) {
                 if (index == 0) {
                     sc.order = 0
                 } else {
-                    sc.order = editingObjectSupermarketCategoriesRelations.value[index - 1].order! + 1
+                    const previousRelation = editingObjectSupermarketCategoriesRelations.value[index - 1]
+                    sc.order = (previousRelation?.order ?? -1) + 1
                 }
                 api.apiSupermarketCategoryRelationUpdate({id: sc.id!, supermarketCategoryRelation: sc}).catch((err: any) => {
                     useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
@@ -219,14 +220,16 @@ function addCategoryRelation(sCR: SupermarketCategoryRelation) {
 
     let relationIndex = editingObjectSupermarketCategoriesRelations.value.findIndex(e => e.category.id == sCR.category.id)
     if (relationIndex != -1) {
-        if (relationIndex != 0 && editingObjectSupermarketCategoriesRelations.value[relationIndex - 1]) {
-            sCR.order = editingObjectSupermarketCategoriesRelations.value[relationIndex - 1].order! + 1
+        const previousRelation = editingObjectSupermarketCategoriesRelations.value[relationIndex - 1]
+        if (relationIndex != 0 && previousRelation) {
+            sCR.order = (previousRelation.order ?? -1) + 1
         } else {
             sCR.order = 0
         }
     } else if (editingObjectSupermarketCategoriesRelations.value.length > 0) {
         // item will be added last to list so give it the highest order
-        sCR.order = editingObjectSupermarketCategoriesRelations.value[editingObjectSupermarketCategoriesRelations.value.length - 1].order! + 1
+        const lastRelation = editingObjectSupermarketCategoriesRelations.value[editingObjectSupermarketCategoriesRelations.value.length - 1]
+        sCR.order = (lastRelation?.order ?? -1) + 1
     }
 
     api.apiSupermarketCategoryRelationCreate({supermarketCategoryRelation: sCR}).then(r => {

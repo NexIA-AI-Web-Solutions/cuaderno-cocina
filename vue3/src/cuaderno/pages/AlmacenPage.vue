@@ -4,8 +4,10 @@
         <h1 class="text-h5 mb-3">Compras y movimientos</h1>
         <p class="mb-4">Los pedidos no cambian el saldo. Una recepción confirmada sí actualiza la existencia nativa y conserva su documento.</p>
         <v-alert v-if="editionError" type="info" class="mb-4" role="status">{{ editionError }}</v-alert>
+        <template v-if="warehouseEnabled">
+        <v-alert v-if="!canOperate" type="info" variant="tonal" class="mb-4" role="status">Modo Consulta: puedes revisar compras y movimientos, pero no modificarlos.</v-alert>
 
-        <purchasing-panel class="mb-6" />
+        <purchasing-panel class="mb-6" :can-operate="canOperate" />
 
         <v-row>
             <v-col cols="12" md="6">
@@ -13,21 +15,21 @@
                     <v-card-title>Movimiento manual</v-card-title>
                     <v-card-subtitle>Para recepciones de pedidos usa el flujo de compra superior.</v-card-subtitle>
                     <v-card-text>
-                        <v-model-select v-model="move.entry" model="InventoryEntry" label="Existencia del inventario" search-on-load :disabled="moving" />
+                        <v-model-select v-model="move.entry" model="InventoryEntry" label="Existencia del inventario" search-on-load :disabled="!canOperate || moving" />
                         <v-btn :to="{name: 'PantryPage'}" variant="text" min-height="44" class="mb-3">Crear o consultar existencias en la despensa</v-btn>
-                        <v-select v-model="move.kind" label="Tipo" :items="kinds" item-title="title" item-value="value" :disabled="moving" />
-                        <v-text-field v-model="move.quantity" label="Cantidad" inputmode="decimal" :disabled="moving" />
+                        <v-select v-model="move.kind" label="Tipo" :items="kinds" item-title="title" item-value="value" :disabled="!canOperate || moving" />
+                        <v-text-field v-model="move.quantity" label="Cantidad" inputmode="decimal" :disabled="!canOperate || moving" />
                         <v-text-field
                             v-if="move.kind === 'waste'"
                             v-model="move.cause"
                             label="Motivo del desperdicio"
                             aria-describedby="waste-cause-counter"
-                            :disabled="moving"
+                            :disabled="!canOperate || moving"
                         />
                         <p v-if="move.kind === 'waste'" id="waste-cause-counter" class="text-caption mt-n3 mb-3" aria-live="polite">
                             {{ standaloneWasteCauseLength(move.cause) }}/256 caracteres
                         </p>
-                        <v-btn color="primary" class="mr-2" :loading="moving" :disabled="moving" min-height="44" @click="requestMove">Aplicar movimiento</v-btn>
+                        <v-btn color="primary" class="mr-2" :loading="moving" :disabled="!canOperate || moving" min-height="44" @click="requestMove">Aplicar movimiento</v-btn>
                         <v-btn variant="text" :loading="loadingHistory" min-height="44" @click="loadHistory">Actualizar historial</v-btn>
                         <p class="mt-2" role="status" aria-live="polite">{{ moveMessage }}</p>
                     </v-card-text>
@@ -53,7 +55,7 @@
                                     </span>
                                 </v-list-item-subtitle>
                                 <template #append>
-                                    <v-btn v-if="canReverseGeneric(row, history)" variant="text" min-height="44" :disabled="moving" @click="reversal = row; confirmation = 'reverse'">Revertir</v-btn>
+                                    <v-btn v-if="canReverseGeneric(row, history)" variant="text" min-height="44" :disabled="!canOperate || moving" @click="reversal = row; confirmation = 'reverse'">Revertir</v-btn>
                                 </template>
                             </v-list-item>
                         </v-list>
@@ -72,10 +74,11 @@
                 <v-card-text>{{ confirmation === 'reverse' ? 'Se registrará un movimiento compensatorio. El original seguirá en el historial.' : `Se descontarán ${move.quantity} de la existencia seleccionada. Comprueba la cantidad antes de confirmar.` }}</v-card-text>
                 <v-card-actions>
                     <v-btn min-height="44" @click="confirmation = null">Cancelar</v-btn>
-                    <v-btn color="primary" min-height="44" @click="confirmMovement">Confirmar</v-btn>
+                    <v-btn color="primary" min-height="44" :disabled="!canOperate" @click="confirmMovement">Confirmar</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        </template>
     </v-container>
 </template>
 
@@ -86,6 +89,8 @@ import PurchasingPanel from '@/cuaderno/components/PurchasingPanel.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError, decimalInput} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {cuadernoNavigationCapabilities} from '@/cuaderno/navigationUi'
+import {editionOperationalRole} from '@/cuaderno/operationalRoleUi'
 import {
     buildStandaloneWasteCause,
     canReverseGeneric,
@@ -111,6 +116,8 @@ const loadingHistory = ref(false)
 const confirmation = ref<'waste' | 'reverse' | null>(null)
 const reversal = ref<any>(null)
 const pendingMovement = inventoryRequests()
+const canOperate = ref(false)
+const warehouseEnabled = ref(false)
 
 function movementKey(payload: unknown) {
     return pendingMovement.key('cuaderno-stock', payload)
@@ -127,6 +134,7 @@ function movementAuditLabel(row: any): string {
 }
 
 function requestMove() {
+    if (!canOperate.value) return
     if (moving.value) return
     if (!move.entry?.id || !decimalInput(move.quantity)) { moveMessage.value = 'Selecciona una existencia e indica una cantidad positiva.'; return }
     if (move.kind === 'waste' && !buildStandaloneWasteCause(move.cause)) {
@@ -137,6 +145,7 @@ function requestMove() {
     else sendMove()
 }
 function confirmMovement() {
+    if (!canOperate.value) return
     const action = confirmation.value
     confirmation.value = null
     if (action === 'reverse') return reverse(reversal.value)
@@ -187,6 +196,7 @@ async function sendMove() {
     if (reload) await loadHistory()
 }
 async function reverse(row: any) {
+    if (!canOperate.value) return
     if (moving.value || !canReverseGeneric(row, history.value)) return
     moving.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/', {
@@ -197,6 +207,7 @@ async function reverse(row: any) {
     if (ok) await loadHistory()
 }
 async function loadHistory() {
+    if (!warehouseEnabled.value) return
     loadingHistory.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/movements/'))
     loadingHistory.value = false
@@ -204,7 +215,22 @@ async function loadHistory() {
     else editionError.value = apiError(status, data)
 }
 
-onMounted(loadHistory)
+async function loadEdition() {
+    const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/edition/'))
+    canOperate.value = ok && editionOperationalRole(data)?.can_operate_cuaderno === true
+    if (!ok) {
+        editionError.value = apiError(status, data)
+        return
+    }
+    if (!cuadernoNavigationCapabilities(data).warehouse) {
+        editionError.value = 'El almacén está disponible en la edición Integral.'
+        return
+    }
+    warehouseEnabled.value = true
+    await loadHistory()
+}
+
+onMounted(loadEdition)
 </script>
 
 <style scoped>

@@ -24,7 +24,7 @@ export interface AiProvider {
      * @type {number}
      * @memberof AiProvider
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -37,12 +37,6 @@ export interface AiProvider {
      * @memberof AiProvider
      */
     description?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AiProvider
-     */
-    apiKey?: string;
     /**
      * 
      * @type {string}
@@ -85,6 +79,7 @@ export interface AiProvider {
  * Check if a given object implements the AiProvider interface.
  */
 export function instanceOfAiProvider(value: object): value is AiProvider {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('modelName' in value) || value['modelName'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
@@ -102,10 +97,9 @@ export function AiProviderFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
-        'apiKey': json['api_key'] == null ? undefined : json['api_key'],
         'modelName': json['model_name'],
         'url': json['url'] == null ? undefined : json['url'],
         'logCreditCost': json['log_credit_cost'] == null ? undefined : json['log_credit_cost'],
@@ -119,17 +113,15 @@ export function AiProviderToJSON(json: any): AiProvider {
     return AiProviderToJSONTyped(json, false);
 }
 
-export function AiProviderToJSONTyped(value?: Omit<AiProvider, 'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function AiProviderToJSONTyped(value?: Omit<AiProvider, 'id'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'description': value['description'],
-        'api_key': value['apiKey'],
         'model_name': value['modelName'],
         'url': value['url'],
         'log_credit_cost': value['logCreditCost'],

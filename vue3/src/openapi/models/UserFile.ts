@@ -32,19 +32,13 @@ export interface UserFile {
      * @type {number}
      * @memberof UserFile
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
      * @memberof UserFile
      */
     name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserFile
-     */
-    file?: string;
     /**
      * 
      * @type {string}
@@ -81,6 +75,7 @@ export interface UserFile {
  * Check if a given object implements the UserFile interface.
  */
 export function instanceOfUserFile(value: object): value is UserFile {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('fileDownload' in value) || value['fileDownload'] === undefined) return false;
     if (!('preview' in value) || value['preview'] === undefined) return false;
@@ -100,9 +95,8 @@ export function UserFileFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
-        'file': json['file'] == null ? undefined : json['file'],
         'fileDownload': json['file_download'],
         'preview': json['preview'],
         'fileSizeKb': json['file_size_kb'],
@@ -115,16 +109,14 @@ export function UserFileToJSON(json: any): UserFile {
     return UserFileToJSONTyped(json, false);
 }
 
-export function UserFileToJSONTyped(value?: Omit<UserFile, 'file_download'|'preview'|'file_size_kb'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function UserFileToJSONTyped(value?: Omit<UserFile, 'id'|'file_download'|'preview'|'file_size_kb'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
-        'file': value['file'],
     };
 }
 

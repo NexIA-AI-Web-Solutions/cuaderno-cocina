@@ -8,9 +8,8 @@
 
 
 import {defineAsyncComponent, PropType, ref, shallowRef, watch} from "vue";
-import {EditorSupportedModels, getGenericModelFromString} from "@/types/Models";
+import {type EditorSupportedModels, type EditorSupportedTypes, getGenericModelFromString} from "@/types/Models";
 import {useI18n} from "vue-i18n";
-import {MealPlan} from "@/openapi";
 
 const {t} = useI18n()
 
@@ -19,10 +18,10 @@ const emit = defineEmits(['create', 'save', 'delete'])
 const props = defineProps({
     model: { type: String as PropType<EditorSupportedModels>, required: true, },
     activator: {default: 'parent'},
-    item: {default: null},
+    item: {type: Object as PropType<EditorSupportedTypes | null>, default: null},
     itemId: {type: [Number, String], required: false, default: undefined},
-    itemDefaults: {required: false},
-    disabledFields: {default: []},
+    itemDefaults: {type: Object as PropType<Record<string, unknown>>, required: false},
+    disabledFields: {type: Array as PropType<string[]>, default: () => []},
     closeAfterCreate: {default: true},
     closeAfterSave: {default: true},
     closeAfterDelete: {default: true},
@@ -30,7 +29,7 @@ const props = defineProps({
 
 const editorComponent = shallowRef(getGenericModelFromString(props.model, t).model.editorComponent)
 
-const dialog = defineModel<Boolean|undefined>({default: undefined})
+const dialog = defineModel<boolean | undefined>({default: undefined})
 const dialogActivator = (dialog.value !== undefined) ? undefined : props.activator
 
 const editingObjChangedState = ref(false)

@@ -23,8 +23,8 @@ class PythonLockTests(unittest.TestCase):
                 parse_pins(text, constraints=True)
 
     def test_root_requirements_keep_extras_and_arbitrary_exact_pins(self):
-        roots = "django-allauth[mfa,socialaccount]==65.18.0\ncryptography===50.0.1"
-        pins = {"django-allauth": "65.18.0", "cryptography": "50.0.1"}
+        roots = "django-allauth[mfa,socialaccount]==65.19.7\ncryptography===50.0.1"
+        pins = {"django-allauth": "65.19.7", "cryptography": "50.0.1"}
         self.assertEqual(parse_pins(roots, constraints=False), pins)
         check_requirements(pins, roots)
         for changed in ({}, {"django-allauth": "65.17.0", "cryptography": "50.0.1"}):
@@ -63,7 +63,7 @@ class PythonLockTests(unittest.TestCase):
         pins = parse_pins(text, constraints=True)
         self.assertEqual(len(pins), 153)
         requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8").split("# Development", 1)[0]
-        self.assertIn("django-allauth[mfa,socialaccount]==65.18.0", requirements)
+        self.assertIn("django-allauth[mfa,socialaccount]==65.19.7", requirements)
         check_requirements(pins, requirements)
         self.assertEqual({name: pins[name] for name in ("pip", "setuptools", "wheel", "setuptools-rust")}, {
             "pip": "26.2.1", "setuptools": "84.0.0", "wheel": "0.46.2", "setuptools-rust": "1.10.2",
@@ -79,6 +79,17 @@ class PythonLockTests(unittest.TestCase):
                 path.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [{**row, "purl": purl}]}), encoding="utf-8")
                 with self.subTest(purl=purl), self.assertRaises(ValueError):
                     sbom_versions(path)
+
+    def test_sbom_purl_requires_canonical_percent_encoding(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "runtime.json"
+            row = {"name": "Local_Package", "version": "2.0+build", "purl": "pkg:pypi/local-package@2.0%2Bbuild"}
+            path.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [row]}), encoding="utf-8")
+            self.assertEqual(sbom_versions(path), {"local-package": "2.0+build"})
+            row["purl"] = "pkg:pypi/local-package@2.0+build"
+            path.write_text(json.dumps({"bomFormat": "CycloneDX", "components": [row]}), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                sbom_versions(path)
 
     def test_release_build_applies_constraints_to_all_installs_and_verifies_set(self):
         dockerfile = (ROOT / "deploy/cuaderno/Dockerfile").read_text(encoding="utf-8")

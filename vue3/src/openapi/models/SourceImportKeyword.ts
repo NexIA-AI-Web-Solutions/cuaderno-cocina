@@ -24,7 +24,7 @@ export interface SourceImportKeyword {
      * @type {number}
      * @memberof SourceImportKeyword
      */
-    id?: number | null;
+    id: number | null;
     /**
      * 
      * @type {string}
@@ -49,6 +49,7 @@ export interface SourceImportKeyword {
  * Check if a given object implements the SourceImportKeyword interface.
  */
 export function instanceOfSourceImportKeyword(value: object): value is SourceImportKeyword {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('label' in value) || value['label'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
@@ -64,7 +65,7 @@ export function SourceImportKeywordFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'label': json['label'],
         'name': json['name'],
         'importKeyword': json['import_keyword'] == null ? undefined : json['import_keyword'],

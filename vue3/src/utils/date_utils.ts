@@ -29,7 +29,9 @@ export function adjustDateRangeLength(dateRange: Date[], dayModifier: number) {
         if (dateRange.length == 0) {
             dateRange.push(new Date())
         } else {
-            let lastDate = DateTime.fromJSDate(dateRange[dateRange.length - 1])
+            const finalDate = dateRange[dateRange.length - 1]
+            if (!finalDate) return dateRange
+            let lastDate = DateTime.fromJSDate(finalDate)
             for (let i = 0; i < dayModifier; i++) {
                 dateRange.push(lastDate.plus({'days': (i + 1)}).toJSDate())
             }

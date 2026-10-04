@@ -60,7 +60,7 @@ const {
     editingObj,
     editingObjChanged,
     modelClass
-} = useModelEditorFunctions<ConnectorConfig>('ConnectorConfig', emit)
+} = useModelEditorFunctions<ConnectorConfig & {token?: string | null}>('ConnectorConfig', emit)
 
 /**
  * watch prop changes and re-initialize editor

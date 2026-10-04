@@ -52,7 +52,7 @@
 <script setup lang="ts">
 
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {computed, PropType, ref, watch} from "vue";
+import {computed, PropType, ref, toRaw, watch} from "vue";
 import {EditorSupportedModels, EditorSupportedTypes, getGenericModelFromString} from "@/types/Models";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
@@ -75,7 +75,8 @@ const loading = ref(false)
 const automate = ref(false)
 
 const genericModel = getGenericModelFromString(props.model, t)
-const target = ref<null | EditorSupportedTypes>(null)
+type MergeTarget = EditorSupportedTypes & {id?: number; name?: string | null; image?: string | null}
+const target = ref<null | MergeTarget>(null)
 
 const sourceItems = ref<EditorSupportedTypes[]>([])
 const failedItems = ref<EditorSupportedTypes[]>([])
@@ -104,19 +105,21 @@ function mergeModel() {
     let api = new ApiApi()
     let promises: Promise<any>[] = []
 
-    if (target.value != null) {
+    const selectedTarget = target.value === null ? null : toRaw(target.value) as EditorSupportedTypes
+    if (selectedTarget != null) {
         loading.value = true
 
         sourceItems.value.forEach(sourceItem => {
-            promises.push(genericModel.merge(sourceItem, target.value).then(r => {
+            const rawSource = toRaw(sourceItem) as EditorSupportedTypes
+            promises.push(genericModel.merge(rawSource, selectedTarget).then(() => {
 
                 updatedItems.value.push(sourceItem)
 
-                if (automate.value && target.value != null && Object.hasOwn(sourceItem, 'name') && Object.hasOwn(sourceItem, 'name')) {
+                if (automate.value && hasName(rawSource) && hasName(selectedTarget)) {
                     let automation = {
-                        name: `${t('Merge')} ${sourceItem.name} -> ${target.value.name}`.substring(0, 128),
-                        param1: sourceItem.name,
-                        param2: target.value.name,
+                        name: `${t('Merge')} ${rawSource.name} -> ${selectedTarget.name}`.substring(0, 128),
+                        param1: rawSource.name,
+                        param2: selectedTarget.name,
                         type: genericModel.model.mergeAutomation
                     } as Automation
                     promises.push(api.apiAutomationCreate({automation: automation}).catch(err => {
@@ -135,6 +138,10 @@ function mergeModel() {
 
     }
 
+}
+
+function hasName(value: EditorSupportedTypes): value is EditorSupportedTypes & {name: string} {
+    return typeof (value as {name?: unknown}).name === 'string'
 }
 
 </script>

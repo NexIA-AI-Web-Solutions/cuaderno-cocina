@@ -24,7 +24,7 @@ export interface KeywordLabel {
      * @type {number}
      * @memberof KeywordLabel
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -37,6 +37,7 @@ export interface KeywordLabel {
  * Check if a given object implements the KeywordLabel interface.
  */
 export function instanceOfKeywordLabel(value: object): value is KeywordLabel {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('label' in value) || value['label'] === undefined) return false;
     return true;
 }
@@ -51,7 +52,7 @@ export function KeywordLabelFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'label': json['label'],
     };
 }
@@ -60,14 +61,13 @@ export function KeywordLabelToJSON(json: any): KeywordLabel {
     return KeywordLabelToJSONTyped(json, false);
 }
 
-export function KeywordLabelToJSONTyped(value?: Omit<KeywordLabel, 'label'> | null, ignoreDiscriminator: boolean = false): any {
+export function KeywordLabelToJSONTyped(value?: Omit<KeywordLabel, 'id'|'label'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
     };
 }
 

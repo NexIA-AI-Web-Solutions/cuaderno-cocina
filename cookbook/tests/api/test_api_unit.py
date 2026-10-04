@@ -67,7 +67,7 @@ def sle_3_s2(obj_3, u2_s2, space_2):
 
 @pytest.mark.parametrize("arg", [
     ['a_u', 403],
-    ['g1_s1', 403],
+    ['g1_s1', 200],
     ['u1_s1', 200],
     ['a1_s1', 200],
 ])

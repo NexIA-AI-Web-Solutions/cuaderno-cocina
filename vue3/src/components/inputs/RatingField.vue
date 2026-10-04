@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 
-const model = defineModel<boolean>({required: true})
+const model = defineModel<number>({required: true})
 
 </script>
 

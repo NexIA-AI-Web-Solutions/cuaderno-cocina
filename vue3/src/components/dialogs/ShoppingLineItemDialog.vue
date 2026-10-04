@@ -79,8 +79,8 @@
                             <v-list-item-subtitle v-if="isDelayed(e)" class="text-info font-weight-bold">
                                 {{ $t('PostponedUntil') }} {{ DateTime.fromJSDate(e.delayUntil!).toLocaleString(DateTime.DATETIME_SHORT) }}
                             </v-list-item-subtitle>
-                            <v-list-item-subtitle v-if="e.shoppingLists.length > 0" class="text-info font-weight-bold">
-                                <shopping-lists-bar :shopping-lists="e.shoppingLists"></shopping-lists-bar>
+                            <v-list-item-subtitle v-if="(e.shoppingLists?.length ?? 0) > 0" class="text-info font-weight-bold">
+                                <shopping-lists-bar :shopping-lists="e.shoppingLists ?? []"></shopping-lists-bar>
                             </v-list-item-subtitle>
 
                             <v-btn-group divided border>
@@ -99,7 +99,7 @@
                                 </v-btn>
                                 <v-btn color="edit" icon="$edit" v-if="!e.ingredient">
                                     <v-icon icon="$edit"></v-icon>
-                                    <model-edit-dialog model="ShoppingListEntry" :item="e"
+                                    <model-edit-dialog model="ShoppingListEntry" :item-id="e.id"
                                                        @delete="useShoppingStore().entries.delete(e.id!); shoppingListFood.entries.delete(e.id!)"
                                                        @save="(args: ShoppingListEntry) => { useShoppingStore().entries.set(e.id!, args); shoppingListFood.entries.set(e.id!, args) }"></model-edit-dialog>
                                 </v-btn>
@@ -129,7 +129,7 @@
 <script setup lang="ts">
 
 import {computed, ref} from "vue";
-import {ApiApi, PatchedShoppingListEntry, ShoppingList, ShoppingListEntry, SupermarketCategory} from "@/openapi";
+import {ApiApi, PatchedShoppingListEntryRequest, ShoppingList, ShoppingListEntry, ShoppingListEntryRequest, SupermarketCategory} from "@/openapi";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {IShoppingListFood} from "@/types/Shopping";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
@@ -145,7 +145,7 @@ import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
 const {mobile} = useDisplay()
 
-const showDialog = defineModel<Boolean>()
+const showDialog = defineModel<boolean>()
 const shoppingListFood = defineModel<IShoppingListFood>('shoppingListFood', {required: true})
 
 const shoppingListUpdateLoading = ref(false)
@@ -179,8 +179,11 @@ function shoppingListUpdate(shoppingLists: ShoppingList[]) {
 
     shoppingListFood.value.entries.forEach(e => {
         e.shoppingLists = shoppingLists
-        promises.push(api.apiShoppingListEntryUpdate({id: e.id, shoppingListEntry: e}).then(r => {
-
+        promises.push(api.apiShoppingListEntryUpdate({id: e.id!, shoppingListEntry: e}, {
+            headers: {'If-Match': `"${e.revision}"`},
+        }).then(r => {
+            useShoppingStore().entries.set(r.id!, r)
+            shoppingListFood.value.entries.set(r.id!, r)
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         }))
@@ -205,7 +208,7 @@ function addEntryForFood() {
         food: shoppingListFood.value?.food,
         unit: null,
         amount: 1,
-    } as ShoppingListEntry, false).then((r: ShoppingListEntry | undefined) => {
+    } satisfies ShoppingListEntryRequest, false).then((r: ShoppingListEntry | undefined) => {
         if (r != undefined) {
             shoppingListFood.value?.entries.set(r.id!, r)
         }
@@ -228,8 +231,12 @@ function deleteAllEntries() {
  */
 function updateEntryAmount(entry: ShoppingListEntry) {
     let api = new ApiApi()
-    api.apiShoppingListEntryPartialUpdate({id: entry.id!, patchedShoppingListEntry: {amount: entry.amount} as PatchedShoppingListEntry}).then(r => {
-
+    api.apiShoppingListEntryPartialUpdate(
+        {id: entry.id!, patchedShoppingListEntry: {amount: entry.amount} satisfies PatchedShoppingListEntryRequest},
+        {headers: {'If-Match': `"${entry.revision}"`}},
+    ).then(r => {
+        useShoppingStore().entries.set(r.id!, r)
+        shoppingListFood.value.entries.set(r.id!, r)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
     })

@@ -6,13 +6,13 @@ El código se mantiene en la rama `cuaderno/main` de `NexIA-AI-Web-Solutions/cua
 
 ## Uso local comprobado
 
-El propietario detuvo Cuaderno el 1 de octubre para liberar recursos y autorizó vaciar la caché Docker compartida. La imagen y los datos permanecen guardados. Para probar esa misma imagen sin rebuild ni seed, usa «Reanudar solo el preview existente» en [MANUAL_ES](MANUAL_ES.md). El procedimiento siguiente sirve para construir/instalar; reconstruirá la caché y no se ejecutó durante la parada.
+La parada del 1 de octubre se conserva como evidencia histórica. El propietario autorizó el 4 de octubre continuar la implementación y los ensayos locales. El procedimiento siguiente construye un preview propio; no apunta a producción.
 
 Desde la raíz del checkout, con Docker Desktop disponible:
 
 ```powershell
 $env:CUADERNO_ENV='local'
-python scripts/cuaderno/check.py local-up --allow-isolated-mutations
+python scripts/cuaderno/local_up.py
 $env:CUADERNO_DEMO_PASSWORD='Demo-Cocina-2026!'
 docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_demo
 python scripts/cuaderno/check.py release-http --allow-isolated-mutations
@@ -31,7 +31,8 @@ Necesita Linux con Docker/Compose, espacio para PostgreSQL/media/copias y un dom
 ```bash
 commit=$(git rev-parse HEAD)
 source_hash=$(python3 -c 'from scripts.cuaderno.delivery_backup import source_manifest; print(source_manifest()["sha256"])')
-docker build -f deploy/cuaderno/Dockerfile --build-arg "SOURCE_COMMIT=$commit+worktree.$source_hash" -t "cuaderno-cocina:release-$commit" .
+python scripts/cuaderno/build_runtime_security_apks.py --output .cuaderno-runs/runtime-security-production
+docker build -f deploy/cuaderno/Dockerfile --build-context runtime_security=.cuaderno-runs/runtime-security-production --build-arg "SOURCE_COMMIT=$commit+worktree.$source_hash" -t "cuaderno-cocina:release-$commit" .
 docker image inspect "cuaderno-cocina:release-$commit" --format '{{.Id}}'
 ```
 
@@ -39,92 +40,18 @@ docker image inspect "cuaderno-cocina:release-$commit" --format '{{.Id}}'
 
 3. Guardar secretos fuera de Git, por ejemplo `/etc/cuaderno/production.env`, con permisos `0600`. Generar valores nuevos y largos para `CUADERNO_SECRET_KEY` y `CUADERNO_DB_PASSWORD`; no usar contraseñas DEMO ni copiar `data/cuaderno/local/compose.env`. Definir también `CUADERNO_DOMAIN=recetas.ejemplo.es`, sin esquema ni ruta.
 
-4. Preparar `/etc/cuaderno/production_settings.py`. El pin reconoce el proxy HTTPS, pero no expone variables de entorno para `SESSION_COOKIE_SECURE`/`CSRF_COOKIE_SECURE`: poner esos nombres en el `.env` no basta. Este módulo separado debe montarse en solo lectura; no modifica el núcleo Tandoor:
+4. Utilizar el perfil **incluido en la imagen**, [recipes/cuaderno_production_settings.py](../../recipes/cuaderno_production_settings.py). Exige secreto propio de al menos 50 caracteres, hosts explícitos y orígenes CSRF HTTPS; activa cookies Secure/HttpOnly, redirección HTTPS y nosniff, cierra el registro y la IA, y prohíbe reconstruir plugins al arrancar. No montar un módulo alternativo sobre este archivo: sus bytes forman parte del manifiesto verificado de la release.
 
-```python
-from recipes.settings import *
-from django.core.exceptions import ImproperlyConfigured
+5. Utilizar directamente [deploy/cuaderno/compose.production.yml](../../deploy/cuaderno/compose.production.yml), con proyecto `cuaderno-prod`. Esta configuración fija PostgreSQL, almacena datos y media en volúmenes propios, inicializa media para UID/GID 10001, publica la web solo en loopback y mantiene la BD sin puertos. Incluye reinicio, rotación de logs, límites de memoria/PIDs y tiempo de parada. El proceso supervisor detiene el contenedor si sale nginx o Gunicorn, permitiendo que la política de reinicio actúe. El healthcheck comprueba nginx → Django → PostgreSQL y migraciones pendientes.
 
-if DEBUG or SECRET_KEY == 'INSECURE_STANDARD_KEY_SET_IN_ENV' or len(SECRET_KEY) < 50:
-    raise ImproperlyConfigured('Producción exige DEBUG=0 y SECRET_KEY propia de al menos 50 caracteres.')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-ENABLE_SIGNUP = False
-SPACE_AI_ENABLED = False
-```
-
-5. Preparar `/etc/cuaderno/compose.yml` con este ejemplo. **Ejemplo operativo no arrancado aquí**; validar en el servidor antes de usarlo. Solo usa los servicios propios y el PostgreSQL fijado:
-
-```yaml
-services:
-  db:
-    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
-    environment:
-      POSTGRES_DB: cuaderno_prod
-      POSTGRES_USER: cuaderno_prod
-      POSTGRES_PASSWORD: ${CUADERNO_DB_PASSWORD:?secreto requerido}
-    volumes:
-      - database:/var/lib/postgresql/data
-    healthcheck:
-      test: [CMD-SHELL, pg_isready -U cuaderno_prod -d cuaderno_prod]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-  web:
-    image: ${CUADERNO_IMAGE:?Image ID local requerido}
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      - "127.0.0.1:8080:80"
-    environment:
-      DJANGO_SETTINGS_MODULE: recipes.cuaderno_production_settings
-      SECRET_KEY: ${CUADERNO_SECRET_KEY:?secreto requerido}
-      DB_ENGINE: django.db.backends.postgresql
-      DB_OPTIONS: "{'options': '-c jit=off'}"
-      POSTGRES_HOST: db
-      POSTGRES_PORT: "5432"
-      POSTGRES_DB: cuaderno_prod
-      POSTGRES_USER: cuaderno_prod
-      POSTGRES_PASSWORD: ${CUADERNO_DB_PASSWORD:?secreto requerido}
-      ALLOWED_HOSTS: 127.0.0.1,localhost,${CUADERNO_DOMAIN:?dominio requerido}
-      CSRF_TRUSTED_ORIGINS: https://${CUADERNO_DOMAIN:?dominio requerido}
-      ALLAUTH_TRUSTED_PROXY_COUNT: "1"
-      TZ: Europe/Madrid
-      CUADERNO_LANGUAGE: es
-      SPACE_AI_ENABLED: "0"
-      SPACE_DEFAULT_ALLOW_SHARING: "0"
-      ENABLE_SIGNUP: "0"
-      DEBUG: "0"
-      GUNICORN_MEDIA: "0"
-      GUNICORN_WORKERS: "2"
-      GUNICORN_THREADS: "2"
-      GUNICORN_TIMEOUT: "30"
-    volumes:
-      - media:/opt/recipes/mediafiles
-      - type: bind
-        source: /etc/cuaderno/production_settings.py
-        target: /opt/recipes/recipes/cuaderno_production_settings.py
-        read_only: true
-        bind:
-          create_host_path: false
-    healthcheck:
-      test: [CMD, /opt/recipes/venv/bin/python, -c, "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1/health/ready/', timeout=5))['ready'] is True"]
-      interval: 10s
-      timeout: 8s
-      start_period: 180s
-      retries: 60
-volumes:
-  database:
-  media:
-```
+El proxy HTTPS del host debe sobrescribir `X-Forwarded-Proto`; nginx lo transmite a Django y el perfil confía en ese encabezado dentro de esta topología con puerto privado. No publicar directamente el listener interno. Caddy y Compose deben usar el mismo dominio y el contador de proxies debe corresponder a los saltos reales.
 
 6. Validar sin imprimir secretos. El primer arranque aplica migraciones; hacerlo inicialmente con una BD nueva, nunca como ensayo contra la base real de un cliente:
 
 ```bash
-docker compose --project-name cuaderno-prod --env-file /etc/cuaderno/production.env -f /etc/cuaderno/compose.yml config --quiet
-docker compose --project-name cuaderno-prod --env-file /etc/cuaderno/production.env -f /etc/cuaderno/compose.yml up -d --wait --wait-timeout 600
-docker compose --project-name cuaderno-prod --env-file /etc/cuaderno/production.env -f /etc/cuaderno/compose.yml exec web /opt/recipes/venv/bin/python manage.py createsuperuser
+docker compose --project-name cuaderno-prod --env-file /etc/cuaderno/production.env -f deploy/cuaderno/compose.production.yml config --quiet
+docker compose --project-name cuaderno-prod --env-file /etc/cuaderno/production.env -f deploy/cuaderno/compose.production.yml up -d --wait --wait-timeout 600
+docker compose --project-name cuaderno-prod --env-file /etc/cuaderno/production.env -f deploy/cuaderno/compose.production.yml exec web /opt/recipes/venv/bin/python manage.py createsuperuser
 ```
 
 Crear el administrador interactivamente, sin credenciales por defecto. Importar el fragmento Caddy en su configuración existente y validar/recargar con el procedimiento del operador. Su variable `CUADERNO_DOMAIN` debe configurarse en el servicio de Caddy, o reemplazarse por el dominio concreto: el `.env` de Compose no se aplica automáticamente a Caddy. Comprobar HTTPS, login/logout, CSRF, cookies Secure, dirección real del cliente, media privada, dos Spaces, exportación y readiness. El contador de proxies debe ajustarse a los saltos realmente comprobados; no asumir que el ejemplo sirve para cualquier topología.
@@ -135,7 +62,18 @@ El fragmento limita el cuerpo a 54 525 952 bytes, exactamente 52 MiB como el ngi
 
 La copia debe incluir dump PostgreSQL consistente, media, hashes, Image ID, commit, versión de migraciones y configuración no secreta. Pausar **todos** los escritores durante el snapshot conjunto, con ventana comunicada, y reanudarlos incluso si falla la copia. No copiar media activa suponiendo coherencia. Guardar secretos por separado y cifrar copias externas; retención y destino externo aún no están configurados.
 
-Los scripts `delivery_backup.py`, `delivery_restore.py`, `delivery_rollback.py` y `upgrade_smoke.py` están restringidos a entornos sintéticos locales. **No quitar sus guardas ni apuntarlos a producción.** El procedimiento productivo de copia/restauración debe prepararse y ensayarse para sus nombres y credenciales propios: restaurar a BD y media NUEVAS, comparar hashes/conteos/secuencias/permisos/costes/saldos y solo entonces decidir la activación. No hay rollback productivo automático configurado.
+Para el proyecto productivo versionado existen dos herramientas separadas:
+
+```bash
+python3 scripts/cuaderno/production_backup.py --env-file /etc/cuaderno/production.env --destination-parent /var/backups/cuaderno
+python3 scripts/cuaderno/production_restore_verify.py /var/backups/cuaderno/BUNDLE --runtime-image sha256:IMAGE_ID
+```
+
+`production_backup.py` valida el archivo privado y destino, identifica únicamente `cuaderno-prod`, detiene su escritor web, rechaza clientes externos de BD, obtiene dump/media y hashes/conteos/secuencias, y reanuda la web en `finally`. No imprime ni guarda valores secretos. Cada ejecución crea un bundle nuevo. `production_restore_verify.py` verifica el bundle antes de actuar y restaura en red, BD y media nuevos, sin puertos publicados; con `--runtime-image` exige readiness de esa imagen exacta. Conserva recursos aislados e informe para revisión y nunca promueve ni sustituye `cuaderno-prod`.
+
+Las [unidades de backup](../../deploy/cuaderno/backup/README.md) son ejemplos para systemd; el operador debe revisar usuario, rutas, privilegios Docker y ventana antes de activarlas. La retención y copia cifrada remota requieren un destino y política elegidos por el operador. No se configura un proveedor externo ni se activa un temporizador automáticamente.
+
+Los scripts `delivery_backup.py`, `delivery_restore.py`, `delivery_rollback.py` y `upgrade_smoke.py` siguen restringidos a entornos sintéticos locales. No retirar sus guardas ni usarlos contra datos reales. La activación productiva y el rollback requieren una decisión del operador después de validar un destino restaurado; no ejecutar un binario antiguo sobre un esquema nuevo incompatible.
 
 Antes de actualizar: congelar imagen y checkout, obtener una copia verificada, ensayar migración sobre un destino nuevo y revisar cambios de esquema. Si hay migraciones incompatibles, la vuelta atrás requiere restauración completa; no poner un binario antiguo sobre el esquema nuevo. No usar `down -v`, `docker system prune` ni borrar volúmenes para actualizar.
 

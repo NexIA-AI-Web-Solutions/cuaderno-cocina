@@ -3,7 +3,7 @@
         <v-card :loading="recipeLoading || propertyTypesLoading">
             <v-card-title>{{ $t('Property_Editor') }}</v-card-title>
             <v-card-text>
-                <v-model-select model="Recipe" v-model="recipe" @update:model-value="loadRecipe(recipe.id!)">
+                <v-model-select model="Recipe" v-model="recipe" @update:model-value="recipe && loadRecipe(recipe.id)">
                     <template #append>
                         <v-btn icon="fa-solid fa-arrow-up-right-from-square" :to="{name : 'RecipeViewPage', params: {id: recipe.id }}" v-if="recipe != undefined"></v-btn>
                     </template>
@@ -151,7 +151,7 @@
         </v-row>
 
         <fdc-search-dialog v-model="fdcDialog"
-                           @selected="(fdcId:number) => {fdcSelectedIngredient.food.fdcId = fdcId; updateFoodFdcData(fdcSelectedIngredient)}"></fdc-search-dialog>
+                           @selected="selectFdcFood"></fdc-search-dialog>
     </v-container>
 
     <v-dialog v-model="dialog" max-width="600">
@@ -162,7 +162,7 @@
 
                 <v-model-select model="Unit" :label="$t('Properties_Food_Unit')" v-model="dialogUnit">
                     <template v-slot:append>
-                        <v-btn @click="changeAllUnits(dialogUnit)" icon="$save" color="save" :disabled="dialogUnit == undefined"></v-btn>
+                        <v-btn @click="dialogUnit && changeAllUnits(dialogUnit)" icon="$save" color="save" :disabled="dialogUnit == undefined"></v-btn>
                     </template>
                 </v-model-select>
 
@@ -181,7 +181,7 @@
 <script setup lang="ts">
 
 import {computed, onMounted, ref} from "vue";
-import {ApiApi, Food, Ingredient, Property, PropertyType, Recipe, Unit} from "@/openapi";
+import {ApiApi, Food, Ingredient, PropertyRequest, PropertyType, Recipe, Unit} from "@/openapi";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
@@ -192,7 +192,8 @@ import FdcSearchDialog from "@/components/dialogs/FdcSearchDialog.vue";
 import {openFdcPage} from "@/utils/fdc.ts";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
-type IngredientLoading = Ingredient & { loading?: boolean }
+type EditableFood = Omit<Food, 'properties'> & { properties: PropertyRequest[] }
+type IngredientLoading = Omit<Ingredient, 'food'> & { food: EditableFood, loading?: boolean }
 
 const params = useUrlSearchParams('history', {})
 
@@ -271,9 +272,10 @@ function buildIngredientMap() {
 
     if (recipe.value != undefined) {
         recipe.value.steps.forEach(step => {
-            step.ingredients.forEach(ingredient => {
+            (step.ingredients ?? []).forEach(ingredient => {
                 if (ingredient.food && !ingredients.value.has(ingredient.food.id!)) {
-                    let i: IngredientLoading = buildIngredientFoodProperties(ingredient)
+                    const i = buildIngredientFoodProperties(ingredient)
+                    if (!i) return
                     i.loading = false
                     ingredients.value.set(i.food.id!, i)
                 }
@@ -287,23 +289,25 @@ function buildIngredientMap() {
  * add null if no data exists for a property type to indicate a missing property
  * @param ingredient
  */
-function buildIngredientFoodProperties(ingredient: Ingredient) {
-    let existingProperties = new Map<number, Property>()
-    ingredient.food.properties!.forEach(fp => {
+function buildIngredientFoodProperties(ingredient: Ingredient): IngredientLoading | undefined {
+    if (!ingredient.food) return undefined
+    const food: EditableFood = {...ingredient.food, properties: []}
+    let existingProperties = new Map<number, PropertyRequest>();
+    (ingredient.food.properties ?? []).forEach(fp => {
         existingProperties.set(fp.propertyType.id!, fp)
     })
 
-    ingredient.food.properties = [] as Property[]
 
     propertyTypes.value.forEach(pt => {
-        if (existingProperties.has(pt.id!)) {
-            ingredient.food.properties!.push(existingProperties.get(pt.id!))
+        const existing = existingProperties.get(pt.id)
+        if (existing) {
+            food.properties.push(existing)
         } else {
-            ingredient.food.properties!.push({propertyType: pt, propertyAmount: null} as Property)
+            food.properties.push({propertyType: pt, propertyAmount: null})
         }
     })
 
-    return ingredient
+    return {...ingredient, food}
 }
 
 /**
@@ -311,7 +315,7 @@ function buildIngredientFoodProperties(ingredient: Ingredient) {
  * @param p
  * @param ingredient
  */
-function deleteFoodProperty(p: Property, ingredient: IngredientLoading) {
+function deleteFoodProperty(p: PropertyRequest, ingredient: IngredientLoading) {
     let api = new ApiApi()
 
     if (p.id) {
@@ -353,8 +357,8 @@ function updateFoodFdcData(ingredient: IngredientLoading) {
     if (ingredient.food.fdcId) {
         ingredient.loading = true
         api.apiFoodFdcCreate({id: ingredient.food.id!, food: ingredient.food}).then(r => {
-            ingredient.food = r
-            ingredients.value.set(r.id!, buildIngredientFoodProperties(ingredient))
+            const updated = buildIngredientFoodProperties({...ingredient, food: r})
+            if (updated) ingredients.value.set(r.id, updated)
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         }).finally(() => {
@@ -367,6 +371,13 @@ function updateFoodFdcData(ingredient: IngredientLoading) {
  * update all foods with the given unit
  * @param unit
  */
+function selectFdcFood(fdcId: number) {
+    const selected = fdcSelectedIngredient.value
+    if (!selected) return
+    selected.food.fdcId = fdcId
+    updateFoodFdcData(selected)
+}
+
 function changeAllUnits(unit: Unit) {
     ingredients.value.forEach(ingredient => {
         ingredient.food.propertiesFoodUnit = unit

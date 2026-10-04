@@ -38,12 +38,16 @@ def packs_to_buy(required, usable_stock, pack_size) -> tuple[Decimal, Decimal]:
     required = parse_decimal(required, allow_zero=True)
     usable = parse_decimal(usable_stock, allow_zero=True)
     pack = parse_decimal(pack_size, allow_zero=False)
-    missing = required - usable
-    if missing <= 0:
-        return Decimal("0"), Decimal("0")
-    packs = (missing / pack).to_integral_value(rounding=ROUND_CEILING)
-    return packs, packs * pack
+    with localcontext() as context:
+        context.prec = 64
+        missing = required - usable
+        if missing <= 0:
+            return Decimal("0"), Decimal("0")
+        packs = (missing / pack).to_integral_value(rounding=ROUND_CEILING)
+        return packs, packs * pack
 
 
 def waste_value(quantity, unit_valuation) -> Decimal:
-    return parse_decimal(quantity, allow_zero=True) * parse_decimal(unit_valuation, allow_zero=True)
+    with localcontext() as context:
+        context.prec = 64
+        return parse_decimal(quantity, allow_zero=True) * parse_decimal(unit_valuation, allow_zero=True)

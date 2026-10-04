@@ -58,7 +58,7 @@ export interface Keyword {
      * @type {number}
      * @memberof Keyword
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -114,6 +114,7 @@ export interface Keyword {
  * Check if a given object implements the Keyword interface.
  */
 export function instanceOfKeyword(value: object): value is Keyword {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('label' in value) || value['label'] === undefined) return false;
     if (!('parent' in value) || value['parent'] === undefined) return false;
@@ -134,7 +135,7 @@ export function KeywordFromJSONTyped(json: any, ignoreDiscriminator: boolean): K
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'label': json['label'],
         'description': json['description'] == null ? undefined : json['description'],
@@ -150,14 +151,13 @@ export function KeywordToJSON(json: any): Keyword {
     return KeywordToJSONTyped(json, false);
 }
 
-export function KeywordToJSONTyped(value?: Omit<Keyword, 'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'> | null, ignoreDiscriminator: boolean = false): any {
+export function KeywordToJSONTyped(value?: Omit<Keyword, 'id'|'label'|'parent'|'numchild'|'created_at'|'updated_at'|'full_name'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'description': value['description'],
     };

@@ -36,7 +36,7 @@ export interface UserSpaceBatchUpdate {
      * @type {Array<number>}
      * @memberof UserSpaceBatchUpdate
      */
-    groupSet: Array<number>;
+    groupSet?: Array<number>;
 }
 
 /**
@@ -44,7 +44,6 @@ export interface UserSpaceBatchUpdate {
  */
 export function instanceOfUserSpaceBatchUpdate(value: object): value is UserSpaceBatchUpdate {
     if (!('userSpaces' in value) || value['userSpaces'] === undefined) return false;
-    if (!('groupSet' in value) || value['groupSet'] === undefined) return false;
     return true;
 }
 
@@ -60,7 +59,7 @@ export function UserSpaceBatchUpdateFromJSONTyped(json: any, ignoreDiscriminator
         
         'userSpaces': json['user_spaces'],
         'household': json['household'] == null ? undefined : json['household'],
-        'groupSet': json['group_set'],
+        'groupSet': json['group_set'] == null ? undefined : json['group_set'],
     };
 }
 

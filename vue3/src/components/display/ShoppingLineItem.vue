@@ -10,7 +10,7 @@
         <!--        </div>-->
 
         <div class="color-marker-container">
-            <span :style="{background: sl.color}" v-for="sl in shoppingList"></span>
+            <span :style="{background: sl.color ?? undefined}" v-for="sl in shoppingList"></span>
         </div>
 
         <div class="flex-grow-1 p-2">
@@ -105,8 +105,8 @@ const itemContainerId = computed(() => {
  * tests if all entries of the given food are checked
  */
 const isChecked = computed(() => {
-    for (let i in entries.value) {
-        if (!entries.value[i].checked) {
+    for (const entry of entries.value) {
+        if (!entry.checked) {
             return false
         }
     }
@@ -148,8 +148,7 @@ const shoppingList = computed(() => {
 const amounts = computed((): ShoppingLineAmount[] => {
     let unitAmounts: ShoppingLineAmount[] = []
 
-    for (let i in entries.value) {
-        let e = entries.value[i]
+    for (const e of entries.value) {
 
 
         let unit = -1
@@ -196,8 +195,7 @@ const infoRow = computed(() => {
     let recipes = []
     let meal_pans = []
 
-    for (let i in entries.value) {
-        let e = entries.value[i]
+    for (const e of entries.value) {
 
 
         if (authors.indexOf(e.createdBy.displayName) === -1) {

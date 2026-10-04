@@ -25,11 +25,15 @@ import {Settings} from "luxon";
 function buildLocaleMap(localeFiles = import.meta.glob('@/locales/*.json'), checkCoverage = true): Map<string, string> {
     const map = new Map<string, string>()
     for (const path in localeFiles) {
-        const filename = path.split('/').slice(-1)[0].split('.')[0]
+        const pathParts = path.split('/')
+        const file = pathParts[pathParts.length - 1]
+        if (!file) continue
+        const filename = file.split('.')[0]
+        if (!filename) continue
         if (checkCoverage && filename !== 'en' && !qualifiedLocales.has(filename)) {
             continue
         }
-        const djangoCode = filename.replaceAll('_', '-').toLowerCase()
+        const djangoCode = filename.split('_').join('-').toLowerCase()
         map.set(djangoCode, filename)
     }
     return map
@@ -57,7 +61,7 @@ export function resolveLocale(code: string): string | null {
     const prefix = SUPPORT_LOCALES.find(l => l.startsWith(lc + '-'))
     if (prefix) return prefix                                            // prefix: 'nb' → 'nb-no'
     const base = lc.split('-')[0]
-    if (LOCALE_MAP.has(base)) return base                                // base: 'hu-hu' → 'hu'
+    if (base && LOCALE_MAP.has(base)) return base                        // base: 'hu-hu' → 'hu'
     return null
 }
 
@@ -82,7 +86,7 @@ export function setupI18n() {
 
     // async load plugin default locales
     TANDOOR_PLUGINS.forEach(plugin => {
-        plugin.defaultLocale.then(pluginMessages => {
+        plugin.defaultLocale.then((pluginMessages: Record<string, string>) => {
             i18n.global.mergeLocaleMessage('en', pluginMessages)
         })
     })
@@ -100,7 +104,7 @@ export function setupI18n() {
  */
 export async function loadLocaleMessages(i18n: I18n, locale: Locale) {
     // load locale messages, clone to avoid mutating the imported module object
-    let messages = {...en}
+    let messages: Record<string, string> = {...en}
     if (locale != 'en') {
         const filename = LOCALE_MAP.get(locale) || locale
         const mod = await import(`./locales/${filename}.json`).then((r: any) => r.default || r)

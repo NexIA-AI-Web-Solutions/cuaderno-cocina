@@ -55,6 +55,7 @@ export interface IShoppingExportEntry {
  */
 export interface IShoppingSyncQueueEntry {
     ids: number[],
+    revisions: Record<string, string>,
     checked: boolean,
     status: 'waiting' | 'syncing' | 'syncing_failed_before' | 'waiting_failed_before',
 }

@@ -23,6 +23,11 @@ from cuaderno.api.ingredient_yields import IngredientYieldView
 from cuaderno.api.stock_minimums import StockMinimumView
 from cuaderno.api.price_history import RecipePriceImpactView
 from cuaderno.api.preparation import ServicePreparationView
+from cuaderno.api.schema_annotations import (
+    PurchaseOrderDetailView, ServicePlanDetailView, apply_schema_annotations,
+)
+
+apply_schema_annotations()
 
 urlpatterns = [
     path("health/ready/", readiness),
@@ -37,13 +42,13 @@ urlpatterns = [
     path("api/cuaderno/orders/", PurchaseOrderView.as_view()),
     path("api/cuaderno/purchase-offers/", PurchaseOfferView.as_view()),
     path("api/cuaderno/purchase-orders/", PurchasingOrderView.as_view()),
-    path("api/cuaderno/purchase-orders/<int:order_id>/", PurchasingOrderView.as_view()),
+    path("api/cuaderno/purchase-orders/<int:order_id>/", PurchaseOrderDetailView.as_view()),
     path("api/cuaderno/purchase-orders/<int:order_id>/receipts/", PurchaseReceiptView.as_view()),
     path("api/cuaderno/purchase-receipts/<int:receipt_id>/reverse/", PurchaseReceiptReverseView.as_view()),
     path("api/cuaderno/replenishment/", ReplenishmentView.as_view()),
     path("api/cuaderno/stock-minimums/", StockMinimumView.as_view()),
     path("api/cuaderno/services/", ServicePlanView.as_view()),
-    path("api/cuaderno/services/<int:plan_id>/", ServicePlanView.as_view()),
+    path("api/cuaderno/services/<int:plan_id>/", ServicePlanDetailView.as_view()),
     path("api/cuaderno/services/<int:plan_id>/preparation/", ServicePreparationView.as_view()),
     path("api/cuaderno/production/", ProductionSheetView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/yield/", RecipeYieldView.as_view()),

@@ -24,7 +24,7 @@ export interface Household {
      * @type {number}
      * @memberof Household
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -49,6 +49,7 @@ export interface Household {
  * Check if a given object implements the Household interface.
  */
 export function instanceOfHousehold(value: object): value is Household {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -65,7 +66,7 @@ export function HouseholdFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'createdAt': (new Date(json['created_at'])),
         'updatedAt': (new Date(json['updated_at'])),
@@ -76,14 +77,13 @@ export function HouseholdToJSON(json: any): Household {
     return HouseholdToJSONTyped(json, false);
 }
 
-export function HouseholdToJSONTyped(value?: Omit<Household, 'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function HouseholdToJSONTyped(value?: Omit<Household, 'id'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
     };
 }

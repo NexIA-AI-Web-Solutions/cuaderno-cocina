@@ -41,7 +41,7 @@
 
 import {useI18n} from "vue-i18n";
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
-import {ApiApi, AutoMealPlan} from "@/openapi";
+import {ApiApi, type AutoMealPlanRequest, KeywordModeEnum} from "@/openapi";
 import {onMounted, ref} from "vue";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {VDateInput} from 'vuetify/labs/VDateInput'
@@ -63,9 +63,11 @@ const dialog = defineModel<boolean>({default: false})
 const loading = ref(false)
 
 const dateRangeValue = ref([] as Date[])
-const autoMealPlan = ref<Partial<AutoMealPlan>>({})
+const autoMealPlan = ref<AutoMealPlanRequest>({
+    startDate: new Date(), endDate: new Date(), mealTypeId: 0, servings: 1, addshopping: false,
+})
 const keywordIds = ref([] as number[])
-const keywordMode = ref('and')
+const keywordMode = ref<KeywordModeEnum>(KeywordModeEnum.And)
 
 onMounted(() => {
     initializeRequest()
@@ -79,11 +81,12 @@ function initializeRequest() {
         servings: 1,
         startDate: DateTime.now().toJSDate(),
         endDate: DateTime.now().plus({day: 7}).toJSDate(),
-        addshopping: useUserPreferenceStore().userSettings.mealplanAutoaddShopping,
+        mealTypeId: useUserPreferenceStore().userSettings.defaultMealType?.id ?? 0,
+        addshopping: useUserPreferenceStore().userSettings.mealplanAutoaddShopping ?? false,
     }
 
     keywordIds.value = []
-    keywordMode.value = 'and'
+    keywordMode.value = KeywordModeEnum.And
 
     dateRangeValue.value = []
     let currentDate = DateTime.fromJSDate(autoMealPlan.value.startDate).plus({day: 1}).toJSDate()
@@ -98,11 +101,14 @@ function initializeRequest() {
  * perform auto plan creation
  */
 function doAutoPlan() {
+    const startDate = dateRangeValue.value[0]
+    const endDate = dateRangeValue.value[dateRangeValue.value.length - 1]
+    if (!startDate || !endDate || autoMealPlan.value.mealTypeId <= 0) return
     let api = new ApiApi()
     loading.value = true
 
-    autoMealPlan.value.startDate = dateRangeValue.value[0]
-    autoMealPlan.value.endDate = dateRangeValue.value[dateRangeValue.value.length - 1]
+    autoMealPlan.value.startDate = startDate
+    autoMealPlan.value.endDate = endDate
 
     autoMealPlan.value.keywords = keywordIds.value
     autoMealPlan.value.keywordMode = keywordMode.value

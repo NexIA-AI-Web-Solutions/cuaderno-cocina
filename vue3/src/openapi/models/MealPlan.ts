@@ -39,7 +39,7 @@ export interface MealPlan {
      * @type {number}
      * @memberof MealPlan
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -112,18 +112,13 @@ export interface MealPlan {
      * @memberof MealPlan
      */
     readonly shopping: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof MealPlan
-     */
-    addshopping?: boolean;
 }
 
 /**
  * Check if a given object implements the MealPlan interface.
  */
 export function instanceOfMealPlan(value: object): value is MealPlan {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('servings' in value) || value['servings'] === undefined) return false;
     if (!('noteMarkdown' in value) || value['noteMarkdown'] === undefined) return false;
     if (!('fromDate' in value) || value['fromDate'] === undefined) return false;
@@ -145,7 +140,7 @@ export function MealPlanFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'title': json['title'] == null ? undefined : json['title'],
         'recipe': json['recipe'] == null ? undefined : RecipeOverviewFromJSON(json['recipe']),
         'servings': json['servings'],
@@ -158,7 +153,6 @@ export function MealPlanFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'recipeName': json['recipe_name'],
         'mealTypeName': json['meal_type_name'],
         'shopping': json['shopping'],
-        'addshopping': json['addshopping'] == null ? undefined : json['addshopping'],
     };
 }
 
@@ -166,14 +160,13 @@ export function MealPlanToJSON(json: any): MealPlan {
     return MealPlanToJSONTyped(json, false);
 }
 
-export function MealPlanToJSONTyped(value?: Omit<MealPlan, 'note_markdown'|'created_by'|'recipe_name'|'meal_type_name'|'shopping'> | null, ignoreDiscriminator: boolean = false): any {
+export function MealPlanToJSONTyped(value?: Omit<MealPlan, 'id'|'note_markdown'|'created_by'|'recipe_name'|'meal_type_name'|'shopping'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'title': value['title'],
         'recipe': RecipeOverviewToJSON(value['recipe']),
         'servings': value['servings'],
@@ -181,7 +174,6 @@ export function MealPlanToJSONTyped(value?: Omit<MealPlan, 'note_markdown'|'crea
         'from_date': value['fromDate'].toISOString(),
         'to_date': value['toDate'] == null ? value['toDate'] : value['toDate'].toISOString(),
         'meal_type': MealTypeToJSON(value['mealType']),
-        'addshopping': value['addshopping'],
     };
 }
 

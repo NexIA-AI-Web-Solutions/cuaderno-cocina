@@ -87,7 +87,8 @@ function initializeEditor(){
         setupState(props.item, props.itemId, {
             newItemFunction: () => {
                 editingObj.value.validUntil = DateTime.now().plus({month: 1}).toJSDate()
-                editingObj.value.group = groups.value[0]
+                const defaultGroup = groups.value[0]
+                if (defaultGroup) editingObj.value.group = defaultGroup
             },
             itemDefaults: props.itemDefaults
         })
@@ -113,7 +114,8 @@ function saveObject() {
     const wasCreate = !isUpdate()
     const emailProvided = !!editingObj.value.email
 
-    return baseSaveObject()?.then((r: InviteLink) => {
+    return baseSaveObject()?.then((r) => {
+        if (!r) return r
         // Show warning only when email was expected but failed
         if (wasCreate && emailProvided && r && !r.emailSent) {
             useMessageStore().addMessage(

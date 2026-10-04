@@ -56,7 +56,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['create', 'save', 'delete', 'close', 'changedState'])
-const {setupState, deleteObject, saveObject, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = useModelEditorFunctions<AiProvider>('AiProvider', emit)
+type EditableAiProvider = AiProvider & {apiKey?: string}
+const {setupState, deleteObject, saveObject, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = useModelEditorFunctions<EditableAiProvider>('AiProvider', emit)
 
 /**
  * watch prop changes and re-initialize editor

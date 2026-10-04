@@ -58,7 +58,7 @@ export interface SearchFields {
      * @type {number}
      * @memberof SearchFields
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -77,6 +77,7 @@ export interface SearchFields {
  * Check if a given object implements the SearchFields interface.
  */
 export function instanceOfSearchFields(value: object): value is SearchFields {
+    if (!('id' in value) || value['id'] === undefined) return false;
     return true;
 }
 
@@ -90,7 +91,7 @@ export function SearchFieldsFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'field': json['field'] == null ? undefined : json['field'],
     };
@@ -100,14 +101,13 @@ export function SearchFieldsToJSON(json: any): SearchFields {
     return SearchFieldsToJSONTyped(json, false);
 }
 
-export function SearchFieldsToJSONTyped(value?: SearchFields | null, ignoreDiscriminator: boolean = false): any {
+export function SearchFieldsToJSONTyped(value?: Omit<SearchFields, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'field': value['field'],
     };

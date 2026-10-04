@@ -16,51 +16,87 @@
 import * as runtime from '../runtime';
 import type {
   AccessToken,
+  AccessTokenRequest,
   AiLog,
   AiProvider,
+  AiProviderRequest,
+  AllergenAssessmentSchema,
+  AllergenWriteResultSchema,
+  AllergenWriteSchemaRequest,
   AutoMealPlan,
+  AutoMealPlanRequest,
   Automation,
+  AutomationRequest,
   BookmarkletImport,
+  BookmarkletImportRequest,
   ConnectorConfig,
+  ConnectorConfigRequest,
   CookLog,
+  CookLogRequest,
+  CuadernoProductionResponse,
+  CuadernoRecipeFinanceResponse,
+  CuadernoRecipeFinanceWriteRequest,
   CustomFilter,
-  EnterpriseBillingInvoice,
-  EnterpriseBillingPlan,
-  EnterpriseBillingProduct,
-  EnterpriseBillingReferralLink,
-  EnterpriseSocialEmbed,
-  EnterpriseSpace,
+  CustomFilterRequest,
+  EditionSchema,
+  EditionWriteSchemaRequest,
+  ExchangeDocumentSchema,
+  ExchangeImportDocumentSchemaRequest,
+  ExchangeImportResultSchema,
+  ExchangePreviewSchema,
+  ExportLimitSchema,
   ExportLog,
-  ExportRequest,
+  ExportLogRequest,
+  ExportRequestRequest,
   FdcQuery,
   Food,
   FoodBatchUpdate,
+  FoodBatchUpdateRequest,
   FoodInheritField,
+  FoodRequest,
   FoodShoppingUpdate,
+  FoodShoppingUpdateRequest,
   Group,
   Household,
+  HouseholdRequest,
   ImportLog,
-  ImportOpenData,
+  ImportLogRequest,
   ImportOpenDataMetaData,
+  ImportOpenDataRequest,
   ImportOpenDataResponse,
   Ingredient,
-  IngredientParserRequest,
+  IngredientParserRequestRequest,
   IngredientParserResponse,
+  IngredientRequest,
+  IngredientYieldSchema,
+  IngredientYieldWriteRequest,
   InventoryEntry,
+  InventoryEntryRequest,
   InventoryLocation,
+  InventoryLocationRequest,
   InventoryLog,
   InviteLink,
+  InviteLinkRequest,
   Keyword,
+  KeywordRequest,
+  LegacyOrderResultSchema,
+  LegacyOrderWriteSchemaRequest,
   Localization,
   MealPlan,
+  MealPlanRequest,
   MealType,
-  OpenDataCategory,
-  OpenDataConversion,
-  OpenDataFood,
-  OpenDataProperty,
-  OpenDataStore,
-  OpenDataUnit,
-  OpenDataVersion,
+  MealTypeRequest,
+  MinimumWriteRequest,
+  MovementResultSchema,
+  MovementSchema,
+  MovementWriteSchemaRequest,
+  OfferSchema,
+  OfferWriteRequest,
+  OrderActionRequest,
+  OrderSchema,
+  OrderWriteRequest,
+  PackageSchema,
+  PackageWriteRequest,
   PaginatedAiLogList,
   PaginatedAiProviderList,
   PaginatedAutomationList,
@@ -68,13 +104,6 @@ import type {
   PaginatedConnectorConfigList,
   PaginatedCookLogList,
   PaginatedCustomFilterList,
-  PaginatedEnterpriseBillingInvoiceList,
-  PaginatedEnterpriseBillingPlanList,
-  PaginatedEnterpriseBillingProductList,
-  PaginatedEnterpriseBillingReferralLinkList,
-  PaginatedEnterpriseSocialEmbedList,
-  PaginatedEnterpriseSocialRecipeSearchList,
-  PaginatedEnterpriseSpaceList,
   PaginatedExportLogList,
   PaginatedFoodList,
   PaginatedGenericModelReferenceList,
@@ -88,13 +117,6 @@ import type {
   PaginatedKeywordList,
   PaginatedMealPlanList,
   PaginatedMealTypeList,
-  PaginatedOpenDataCategoryList,
-  PaginatedOpenDataConversionList,
-  PaginatedOpenDataFoodList,
-  PaginatedOpenDataPropertyList,
-  PaginatedOpenDataStoreList,
-  PaginatedOpenDataUnitList,
-  PaginatedOpenDataVersionList,
   PaginatedPropertyList,
   PaginatedPropertyTypeList,
   PaginatedRecipeBookEntryList,
@@ -117,195 +139,297 @@ import type {
   PaginatedUserFileList,
   PaginatedUserSpaceList,
   PaginatedViewLogList,
-  PatchedAccessToken,
-  PatchedAiProvider,
-  PatchedAutomation,
-  PatchedBookmarkletImport,
-  PatchedConnectorConfig,
-  PatchedCookLog,
-  PatchedCustomFilter,
-  PatchedEnterpriseBillingInvoice,
-  PatchedEnterpriseBillingPlan,
-  PatchedEnterpriseBillingProduct,
-  PatchedEnterpriseBillingReferralLink,
-  PatchedEnterpriseSocialEmbed,
-  PatchedEnterpriseSpace,
-  PatchedExportLog,
-  PatchedFood,
-  PatchedHousehold,
-  PatchedImportLog,
-  PatchedIngredient,
-  PatchedInventoryEntry,
-  PatchedInventoryLocation,
-  PatchedInviteLink,
-  PatchedKeyword,
-  PatchedMealPlan,
-  PatchedMealType,
-  PatchedOpenDataCategory,
-  PatchedOpenDataConversion,
-  PatchedOpenDataFood,
-  PatchedOpenDataProperty,
-  PatchedOpenDataStore,
-  PatchedOpenDataUnit,
-  PatchedOpenDataVersion,
-  PatchedProperty,
-  PatchedPropertyType,
-  PatchedRecipe,
-  PatchedRecipeBook,
-  PatchedRecipeBookEntry,
-  PatchedRecipeImport,
-  PatchedSearchPreference,
-  PatchedShoppingList,
-  PatchedShoppingListEntry,
-  PatchedShoppingListRecipe,
-  PatchedSpace,
-  PatchedStep,
-  PatchedStorage,
-  PatchedSupermarket,
-  PatchedSupermarketCategory,
-  PatchedSupermarketCategoryRelation,
-  PatchedSync,
-  PatchedUnit,
-  PatchedUnitConversion,
-  PatchedUser,
-  PatchedUserPreference,
-  PatchedUserSpace,
-  PatchedViewLog,
+  PatchedAccessTokenRequest,
+  PatchedAiProviderRequest,
+  PatchedAutomationRequest,
+  PatchedBookmarkletImportRequest,
+  PatchedConnectorConfigRequest,
+  PatchedCookLogRequest,
+  PatchedCustomFilterRequest,
+  PatchedExportLogRequest,
+  PatchedFoodRequest,
+  PatchedHouseholdRequest,
+  PatchedImportLogRequest,
+  PatchedIngredientRequest,
+  PatchedInventoryEntryRequest,
+  PatchedInventoryLocationRequest,
+  PatchedInviteLinkRequest,
+  PatchedKeywordRequest,
+  PatchedMealPlanRequest,
+  PatchedMealTypeRequest,
+  PatchedPropertyRequest,
+  PatchedPropertyTypeRequest,
+  PatchedRecipeBookEntryRequest,
+  PatchedRecipeBookRequest,
+  PatchedRecipeImportRequest,
+  PatchedRecipeRequest,
+  PatchedSearchPreferenceRequest,
+  PatchedShoppingListEntryRequest,
+  PatchedShoppingListRecipeRequest,
+  PatchedShoppingListRequest,
+  PatchedSpaceRequest,
+  PatchedStepRequest,
+  PatchedStorageRequest,
+  PatchedSupermarketCategoryRelationRequest,
+  PatchedSupermarketCategoryRequest,
+  PatchedSupermarketRequest,
+  PatchedSyncRequest,
+  PatchedUnitConversionRequest,
+  PatchedUnitRequest,
+  PatchedUserPreferenceRequest,
+  PatchedUserRequest,
+  PatchedUserSpaceRequest,
+  PatchedViewLogRequest,
+  PreparationSchema,
+  PreparationWriteRequest,
+  PriceHistorySchema,
+  PriceImpactSchema,
+  PriceSummarySchema,
+  PriceWriteRequest,
+  ProductionWriteSchemaRequest,
   Property,
+  PropertyRequest,
   PropertyType,
+  PropertyTypeRequest,
+  ReceiptReverseRequest,
+  ReceiptSchema,
+  ReceiptWriteRequest,
   Recipe,
   RecipeBatchUpdate,
+  RecipeBatchUpdateRequest,
   RecipeBook,
   RecipeBookEntry,
+  RecipeBookEntryRequest,
+  RecipeBookRequest,
+  RecipeCostSchema,
   RecipeFlat,
-  RecipeFromSource,
+  RecipeFromSourceRequest,
   RecipeFromSourceResponse,
   RecipeImage,
   RecipeImport,
+  RecipeImportRequest,
+  RecipeRequest,
   RecipeShoppingUpdate,
+  RecipeShoppingUpdateRequest,
   RecipeSimple,
+  RecipeYieldSchema,
+  RecipeYieldWriteSchemaRequest,
+  ReplenishmentQueryRequest,
+  ReplenishmentSchema,
   SearchFields,
   SearchPreference,
   ServerSettings,
+  ServiceActionResultSchema,
+  ServiceActionWriteSchemaRequest,
+  ServiceCreateResultSchema,
+  ServiceCreateSchemaRequest,
+  ServicePlanSchema,
   ShareLink,
   ShoppingList,
   ShoppingListEntry,
   ShoppingListEntryBulk,
   ShoppingListEntryBulkCreate,
+  ShoppingListEntryBulkCreateRequest,
+  ShoppingListEntryBulkRequest,
+  ShoppingListEntryRequest,
   ShoppingListRecipe,
+  ShoppingListRecipeRequest,
+  ShoppingListRequest,
   Space,
+  SpaceRequest,
   Step,
+  StepRequest,
+  StockMinimumSchema,
   Storage,
-  StripeCheckoutSessionRequest,
-  StripeCheckoutSessionResponse,
-  StripePortal,
+  StorageRequest,
   Supermarket,
   SupermarketCategory,
   SupermarketCategoryRelation,
+  SupermarketCategoryRelationRequest,
+  SupermarketCategoryRequest,
+  SupermarketRequest,
   Sync,
   SyncLog,
+  SyncRequest,
   Unit,
   UnitConversion,
+  UnitConversionRequest,
+  UnitRequest,
   User,
   UserFile,
   UserPreference,
   UserSpace,
   UserSpaceBatchUpdate,
+  UserSpaceBatchUpdateRequest,
+  UserSpaceRequest,
   ViewLog,
+  ViewLogRequest,
 } from '../models/index';
 import {
     AccessTokenFromJSON,
     AccessTokenToJSON,
+    AccessTokenRequestFromJSON,
+    AccessTokenRequestToJSON,
     AiLogFromJSON,
     AiLogToJSON,
     AiProviderFromJSON,
     AiProviderToJSON,
+    AiProviderRequestFromJSON,
+    AiProviderRequestToJSON,
+    AllergenAssessmentSchemaFromJSON,
+    AllergenAssessmentSchemaToJSON,
+    AllergenWriteResultSchemaFromJSON,
+    AllergenWriteResultSchemaToJSON,
+    AllergenWriteSchemaRequestFromJSON,
+    AllergenWriteSchemaRequestToJSON,
     AutoMealPlanFromJSON,
     AutoMealPlanToJSON,
+    AutoMealPlanRequestFromJSON,
+    AutoMealPlanRequestToJSON,
     AutomationFromJSON,
     AutomationToJSON,
+    AutomationRequestFromJSON,
+    AutomationRequestToJSON,
     BookmarkletImportFromJSON,
     BookmarkletImportToJSON,
+    BookmarkletImportRequestFromJSON,
+    BookmarkletImportRequestToJSON,
     ConnectorConfigFromJSON,
     ConnectorConfigToJSON,
+    ConnectorConfigRequestFromJSON,
+    ConnectorConfigRequestToJSON,
     CookLogFromJSON,
     CookLogToJSON,
+    CookLogRequestFromJSON,
+    CookLogRequestToJSON,
+    CuadernoProductionResponseFromJSON,
+    CuadernoProductionResponseToJSON,
+    CuadernoRecipeFinanceResponseFromJSON,
+    CuadernoRecipeFinanceResponseToJSON,
+    CuadernoRecipeFinanceWriteRequestFromJSON,
+    CuadernoRecipeFinanceWriteRequestToJSON,
     CustomFilterFromJSON,
     CustomFilterToJSON,
-    EnterpriseBillingInvoiceFromJSON,
-    EnterpriseBillingInvoiceToJSON,
-    EnterpriseBillingPlanFromJSON,
-    EnterpriseBillingPlanToJSON,
-    EnterpriseBillingProductFromJSON,
-    EnterpriseBillingProductToJSON,
-    EnterpriseBillingReferralLinkFromJSON,
-    EnterpriseBillingReferralLinkToJSON,
-    EnterpriseSocialEmbedFromJSON,
-    EnterpriseSocialEmbedToJSON,
-    EnterpriseSpaceFromJSON,
-    EnterpriseSpaceToJSON,
+    CustomFilterRequestFromJSON,
+    CustomFilterRequestToJSON,
+    EditionSchemaFromJSON,
+    EditionSchemaToJSON,
+    EditionWriteSchemaRequestFromJSON,
+    EditionWriteSchemaRequestToJSON,
+    ExchangeDocumentSchemaFromJSON,
+    ExchangeDocumentSchemaToJSON,
+    ExchangeImportDocumentSchemaRequestFromJSON,
+    ExchangeImportDocumentSchemaRequestToJSON,
+    ExchangeImportResultSchemaFromJSON,
+    ExchangeImportResultSchemaToJSON,
+    ExchangePreviewSchemaFromJSON,
+    ExchangePreviewSchemaToJSON,
+    ExportLimitSchemaFromJSON,
+    ExportLimitSchemaToJSON,
     ExportLogFromJSON,
     ExportLogToJSON,
-    ExportRequestFromJSON,
-    ExportRequestToJSON,
+    ExportLogRequestFromJSON,
+    ExportLogRequestToJSON,
+    ExportRequestRequestFromJSON,
+    ExportRequestRequestToJSON,
     FdcQueryFromJSON,
     FdcQueryToJSON,
     FoodFromJSON,
     FoodToJSON,
     FoodBatchUpdateFromJSON,
     FoodBatchUpdateToJSON,
+    FoodBatchUpdateRequestFromJSON,
+    FoodBatchUpdateRequestToJSON,
     FoodInheritFieldFromJSON,
     FoodInheritFieldToJSON,
+    FoodRequestFromJSON,
+    FoodRequestToJSON,
     FoodShoppingUpdateFromJSON,
     FoodShoppingUpdateToJSON,
+    FoodShoppingUpdateRequestFromJSON,
+    FoodShoppingUpdateRequestToJSON,
     GroupFromJSON,
     GroupToJSON,
     HouseholdFromJSON,
     HouseholdToJSON,
+    HouseholdRequestFromJSON,
+    HouseholdRequestToJSON,
     ImportLogFromJSON,
     ImportLogToJSON,
-    ImportOpenDataFromJSON,
-    ImportOpenDataToJSON,
+    ImportLogRequestFromJSON,
+    ImportLogRequestToJSON,
     ImportOpenDataMetaDataFromJSON,
     ImportOpenDataMetaDataToJSON,
+    ImportOpenDataRequestFromJSON,
+    ImportOpenDataRequestToJSON,
     ImportOpenDataResponseFromJSON,
     ImportOpenDataResponseToJSON,
     IngredientFromJSON,
     IngredientToJSON,
-    IngredientParserRequestFromJSON,
-    IngredientParserRequestToJSON,
+    IngredientParserRequestRequestFromJSON,
+    IngredientParserRequestRequestToJSON,
     IngredientParserResponseFromJSON,
     IngredientParserResponseToJSON,
+    IngredientRequestFromJSON,
+    IngredientRequestToJSON,
+    IngredientYieldSchemaFromJSON,
+    IngredientYieldSchemaToJSON,
+    IngredientYieldWriteRequestFromJSON,
+    IngredientYieldWriteRequestToJSON,
     InventoryEntryFromJSON,
     InventoryEntryToJSON,
+    InventoryEntryRequestFromJSON,
+    InventoryEntryRequestToJSON,
     InventoryLocationFromJSON,
     InventoryLocationToJSON,
+    InventoryLocationRequestFromJSON,
+    InventoryLocationRequestToJSON,
     InventoryLogFromJSON,
     InventoryLogToJSON,
     InviteLinkFromJSON,
     InviteLinkToJSON,
+    InviteLinkRequestFromJSON,
+    InviteLinkRequestToJSON,
     KeywordFromJSON,
     KeywordToJSON,
+    KeywordRequestFromJSON,
+    KeywordRequestToJSON,
+    LegacyOrderResultSchemaFromJSON,
+    LegacyOrderResultSchemaToJSON,
+    LegacyOrderWriteSchemaRequestFromJSON,
+    LegacyOrderWriteSchemaRequestToJSON,
     LocalizationFromJSON,
     LocalizationToJSON,
     MealPlanFromJSON,
     MealPlanToJSON,
+    MealPlanRequestFromJSON,
+    MealPlanRequestToJSON,
     MealTypeFromJSON,
     MealTypeToJSON,
-    OpenDataCategoryFromJSON,
-    OpenDataCategoryToJSON,
-    OpenDataConversionFromJSON,
-    OpenDataConversionToJSON,
-    OpenDataFoodFromJSON,
-    OpenDataFoodToJSON,
-    OpenDataPropertyFromJSON,
-    OpenDataPropertyToJSON,
-    OpenDataStoreFromJSON,
-    OpenDataStoreToJSON,
-    OpenDataUnitFromJSON,
-    OpenDataUnitToJSON,
-    OpenDataVersionFromJSON,
-    OpenDataVersionToJSON,
+    MealTypeRequestFromJSON,
+    MealTypeRequestToJSON,
+    MinimumWriteRequestFromJSON,
+    MinimumWriteRequestToJSON,
+    MovementResultSchemaFromJSON,
+    MovementResultSchemaToJSON,
+    MovementSchemaFromJSON,
+    MovementSchemaToJSON,
+    MovementWriteSchemaRequestFromJSON,
+    MovementWriteSchemaRequestToJSON,
+    OfferSchemaFromJSON,
+    OfferSchemaToJSON,
+    OfferWriteRequestFromJSON,
+    OfferWriteRequestToJSON,
+    OrderActionRequestFromJSON,
+    OrderActionRequestToJSON,
+    OrderSchemaFromJSON,
+    OrderSchemaToJSON,
+    OrderWriteRequestFromJSON,
+    OrderWriteRequestToJSON,
+    PackageSchemaFromJSON,
+    PackageSchemaToJSON,
+    PackageWriteRequestFromJSON,
+    PackageWriteRequestToJSON,
     PaginatedAiLogListFromJSON,
     PaginatedAiLogListToJSON,
     PaginatedAiProviderListFromJSON,
@@ -320,20 +444,6 @@ import {
     PaginatedCookLogListToJSON,
     PaginatedCustomFilterListFromJSON,
     PaginatedCustomFilterListToJSON,
-    PaginatedEnterpriseBillingInvoiceListFromJSON,
-    PaginatedEnterpriseBillingInvoiceListToJSON,
-    PaginatedEnterpriseBillingPlanListFromJSON,
-    PaginatedEnterpriseBillingPlanListToJSON,
-    PaginatedEnterpriseBillingProductListFromJSON,
-    PaginatedEnterpriseBillingProductListToJSON,
-    PaginatedEnterpriseBillingReferralLinkListFromJSON,
-    PaginatedEnterpriseBillingReferralLinkListToJSON,
-    PaginatedEnterpriseSocialEmbedListFromJSON,
-    PaginatedEnterpriseSocialEmbedListToJSON,
-    PaginatedEnterpriseSocialRecipeSearchListFromJSON,
-    PaginatedEnterpriseSocialRecipeSearchListToJSON,
-    PaginatedEnterpriseSpaceListFromJSON,
-    PaginatedEnterpriseSpaceListToJSON,
     PaginatedExportLogListFromJSON,
     PaginatedExportLogListToJSON,
     PaginatedFoodListFromJSON,
@@ -360,20 +470,6 @@ import {
     PaginatedMealPlanListToJSON,
     PaginatedMealTypeListFromJSON,
     PaginatedMealTypeListToJSON,
-    PaginatedOpenDataCategoryListFromJSON,
-    PaginatedOpenDataCategoryListToJSON,
-    PaginatedOpenDataConversionListFromJSON,
-    PaginatedOpenDataConversionListToJSON,
-    PaginatedOpenDataFoodListFromJSON,
-    PaginatedOpenDataFoodListToJSON,
-    PaginatedOpenDataPropertyListFromJSON,
-    PaginatedOpenDataPropertyListToJSON,
-    PaginatedOpenDataStoreListFromJSON,
-    PaginatedOpenDataStoreListToJSON,
-    PaginatedOpenDataUnitListFromJSON,
-    PaginatedOpenDataUnitListToJSON,
-    PaginatedOpenDataVersionListFromJSON,
-    PaginatedOpenDataVersionListToJSON,
     PaginatedPropertyListFromJSON,
     PaginatedPropertyListToJSON,
     PaginatedPropertyTypeListFromJSON,
@@ -418,146 +514,176 @@ import {
     PaginatedUserSpaceListToJSON,
     PaginatedViewLogListFromJSON,
     PaginatedViewLogListToJSON,
-    PatchedAccessTokenFromJSON,
-    PatchedAccessTokenToJSON,
-    PatchedAiProviderFromJSON,
-    PatchedAiProviderToJSON,
-    PatchedAutomationFromJSON,
-    PatchedAutomationToJSON,
-    PatchedBookmarkletImportFromJSON,
-    PatchedBookmarkletImportToJSON,
-    PatchedConnectorConfigFromJSON,
-    PatchedConnectorConfigToJSON,
-    PatchedCookLogFromJSON,
-    PatchedCookLogToJSON,
-    PatchedCustomFilterFromJSON,
-    PatchedCustomFilterToJSON,
-    PatchedEnterpriseBillingInvoiceFromJSON,
-    PatchedEnterpriseBillingInvoiceToJSON,
-    PatchedEnterpriseBillingPlanFromJSON,
-    PatchedEnterpriseBillingPlanToJSON,
-    PatchedEnterpriseBillingProductFromJSON,
-    PatchedEnterpriseBillingProductToJSON,
-    PatchedEnterpriseBillingReferralLinkFromJSON,
-    PatchedEnterpriseBillingReferralLinkToJSON,
-    PatchedEnterpriseSocialEmbedFromJSON,
-    PatchedEnterpriseSocialEmbedToJSON,
-    PatchedEnterpriseSpaceFromJSON,
-    PatchedEnterpriseSpaceToJSON,
-    PatchedExportLogFromJSON,
-    PatchedExportLogToJSON,
-    PatchedFoodFromJSON,
-    PatchedFoodToJSON,
-    PatchedHouseholdFromJSON,
-    PatchedHouseholdToJSON,
-    PatchedImportLogFromJSON,
-    PatchedImportLogToJSON,
-    PatchedIngredientFromJSON,
-    PatchedIngredientToJSON,
-    PatchedInventoryEntryFromJSON,
-    PatchedInventoryEntryToJSON,
-    PatchedInventoryLocationFromJSON,
-    PatchedInventoryLocationToJSON,
-    PatchedInviteLinkFromJSON,
-    PatchedInviteLinkToJSON,
-    PatchedKeywordFromJSON,
-    PatchedKeywordToJSON,
-    PatchedMealPlanFromJSON,
-    PatchedMealPlanToJSON,
-    PatchedMealTypeFromJSON,
-    PatchedMealTypeToJSON,
-    PatchedOpenDataCategoryFromJSON,
-    PatchedOpenDataCategoryToJSON,
-    PatchedOpenDataConversionFromJSON,
-    PatchedOpenDataConversionToJSON,
-    PatchedOpenDataFoodFromJSON,
-    PatchedOpenDataFoodToJSON,
-    PatchedOpenDataPropertyFromJSON,
-    PatchedOpenDataPropertyToJSON,
-    PatchedOpenDataStoreFromJSON,
-    PatchedOpenDataStoreToJSON,
-    PatchedOpenDataUnitFromJSON,
-    PatchedOpenDataUnitToJSON,
-    PatchedOpenDataVersionFromJSON,
-    PatchedOpenDataVersionToJSON,
-    PatchedPropertyFromJSON,
-    PatchedPropertyToJSON,
-    PatchedPropertyTypeFromJSON,
-    PatchedPropertyTypeToJSON,
-    PatchedRecipeFromJSON,
-    PatchedRecipeToJSON,
-    PatchedRecipeBookFromJSON,
-    PatchedRecipeBookToJSON,
-    PatchedRecipeBookEntryFromJSON,
-    PatchedRecipeBookEntryToJSON,
-    PatchedRecipeImportFromJSON,
-    PatchedRecipeImportToJSON,
-    PatchedSearchPreferenceFromJSON,
-    PatchedSearchPreferenceToJSON,
-    PatchedShoppingListFromJSON,
-    PatchedShoppingListToJSON,
-    PatchedShoppingListEntryFromJSON,
-    PatchedShoppingListEntryToJSON,
-    PatchedShoppingListRecipeFromJSON,
-    PatchedShoppingListRecipeToJSON,
-    PatchedSpaceFromJSON,
-    PatchedSpaceToJSON,
-    PatchedStepFromJSON,
-    PatchedStepToJSON,
-    PatchedStorageFromJSON,
-    PatchedStorageToJSON,
-    PatchedSupermarketFromJSON,
-    PatchedSupermarketToJSON,
-    PatchedSupermarketCategoryFromJSON,
-    PatchedSupermarketCategoryToJSON,
-    PatchedSupermarketCategoryRelationFromJSON,
-    PatchedSupermarketCategoryRelationToJSON,
-    PatchedSyncFromJSON,
-    PatchedSyncToJSON,
-    PatchedUnitFromJSON,
-    PatchedUnitToJSON,
-    PatchedUnitConversionFromJSON,
-    PatchedUnitConversionToJSON,
-    PatchedUserFromJSON,
-    PatchedUserToJSON,
-    PatchedUserPreferenceFromJSON,
-    PatchedUserPreferenceToJSON,
-    PatchedUserSpaceFromJSON,
-    PatchedUserSpaceToJSON,
-    PatchedViewLogFromJSON,
-    PatchedViewLogToJSON,
+    PatchedAccessTokenRequestFromJSON,
+    PatchedAccessTokenRequestToJSON,
+    PatchedAiProviderRequestFromJSON,
+    PatchedAiProviderRequestToJSON,
+    PatchedAutomationRequestFromJSON,
+    PatchedAutomationRequestToJSON,
+    PatchedBookmarkletImportRequestFromJSON,
+    PatchedBookmarkletImportRequestToJSON,
+    PatchedConnectorConfigRequestFromJSON,
+    PatchedConnectorConfigRequestToJSON,
+    PatchedCookLogRequestFromJSON,
+    PatchedCookLogRequestToJSON,
+    PatchedCustomFilterRequestFromJSON,
+    PatchedCustomFilterRequestToJSON,
+    PatchedExportLogRequestFromJSON,
+    PatchedExportLogRequestToJSON,
+    PatchedFoodRequestFromJSON,
+    PatchedFoodRequestToJSON,
+    PatchedHouseholdRequestFromJSON,
+    PatchedHouseholdRequestToJSON,
+    PatchedImportLogRequestFromJSON,
+    PatchedImportLogRequestToJSON,
+    PatchedIngredientRequestFromJSON,
+    PatchedIngredientRequestToJSON,
+    PatchedInventoryEntryRequestFromJSON,
+    PatchedInventoryEntryRequestToJSON,
+    PatchedInventoryLocationRequestFromJSON,
+    PatchedInventoryLocationRequestToJSON,
+    PatchedInviteLinkRequestFromJSON,
+    PatchedInviteLinkRequestToJSON,
+    PatchedKeywordRequestFromJSON,
+    PatchedKeywordRequestToJSON,
+    PatchedMealPlanRequestFromJSON,
+    PatchedMealPlanRequestToJSON,
+    PatchedMealTypeRequestFromJSON,
+    PatchedMealTypeRequestToJSON,
+    PatchedPropertyRequestFromJSON,
+    PatchedPropertyRequestToJSON,
+    PatchedPropertyTypeRequestFromJSON,
+    PatchedPropertyTypeRequestToJSON,
+    PatchedRecipeBookEntryRequestFromJSON,
+    PatchedRecipeBookEntryRequestToJSON,
+    PatchedRecipeBookRequestFromJSON,
+    PatchedRecipeBookRequestToJSON,
+    PatchedRecipeImportRequestFromJSON,
+    PatchedRecipeImportRequestToJSON,
+    PatchedRecipeRequestFromJSON,
+    PatchedRecipeRequestToJSON,
+    PatchedSearchPreferenceRequestFromJSON,
+    PatchedSearchPreferenceRequestToJSON,
+    PatchedShoppingListEntryRequestFromJSON,
+    PatchedShoppingListEntryRequestToJSON,
+    PatchedShoppingListRecipeRequestFromJSON,
+    PatchedShoppingListRecipeRequestToJSON,
+    PatchedShoppingListRequestFromJSON,
+    PatchedShoppingListRequestToJSON,
+    PatchedSpaceRequestFromJSON,
+    PatchedSpaceRequestToJSON,
+    PatchedStepRequestFromJSON,
+    PatchedStepRequestToJSON,
+    PatchedStorageRequestFromJSON,
+    PatchedStorageRequestToJSON,
+    PatchedSupermarketCategoryRelationRequestFromJSON,
+    PatchedSupermarketCategoryRelationRequestToJSON,
+    PatchedSupermarketCategoryRequestFromJSON,
+    PatchedSupermarketCategoryRequestToJSON,
+    PatchedSupermarketRequestFromJSON,
+    PatchedSupermarketRequestToJSON,
+    PatchedSyncRequestFromJSON,
+    PatchedSyncRequestToJSON,
+    PatchedUnitConversionRequestFromJSON,
+    PatchedUnitConversionRequestToJSON,
+    PatchedUnitRequestFromJSON,
+    PatchedUnitRequestToJSON,
+    PatchedUserPreferenceRequestFromJSON,
+    PatchedUserPreferenceRequestToJSON,
+    PatchedUserRequestFromJSON,
+    PatchedUserRequestToJSON,
+    PatchedUserSpaceRequestFromJSON,
+    PatchedUserSpaceRequestToJSON,
+    PatchedViewLogRequestFromJSON,
+    PatchedViewLogRequestToJSON,
+    PreparationSchemaFromJSON,
+    PreparationSchemaToJSON,
+    PreparationWriteRequestFromJSON,
+    PreparationWriteRequestToJSON,
+    PriceHistorySchemaFromJSON,
+    PriceHistorySchemaToJSON,
+    PriceImpactSchemaFromJSON,
+    PriceImpactSchemaToJSON,
+    PriceSummarySchemaFromJSON,
+    PriceSummarySchemaToJSON,
+    PriceWriteRequestFromJSON,
+    PriceWriteRequestToJSON,
+    ProductionWriteSchemaRequestFromJSON,
+    ProductionWriteSchemaRequestToJSON,
     PropertyFromJSON,
     PropertyToJSON,
+    PropertyRequestFromJSON,
+    PropertyRequestToJSON,
     PropertyTypeFromJSON,
     PropertyTypeToJSON,
+    PropertyTypeRequestFromJSON,
+    PropertyTypeRequestToJSON,
+    ReceiptReverseRequestFromJSON,
+    ReceiptReverseRequestToJSON,
+    ReceiptSchemaFromJSON,
+    ReceiptSchemaToJSON,
+    ReceiptWriteRequestFromJSON,
+    ReceiptWriteRequestToJSON,
     RecipeFromJSON,
     RecipeToJSON,
     RecipeBatchUpdateFromJSON,
     RecipeBatchUpdateToJSON,
+    RecipeBatchUpdateRequestFromJSON,
+    RecipeBatchUpdateRequestToJSON,
     RecipeBookFromJSON,
     RecipeBookToJSON,
     RecipeBookEntryFromJSON,
     RecipeBookEntryToJSON,
+    RecipeBookEntryRequestFromJSON,
+    RecipeBookEntryRequestToJSON,
+    RecipeBookRequestFromJSON,
+    RecipeBookRequestToJSON,
+    RecipeCostSchemaFromJSON,
+    RecipeCostSchemaToJSON,
     RecipeFlatFromJSON,
     RecipeFlatToJSON,
-    RecipeFromSourceFromJSON,
-    RecipeFromSourceToJSON,
+    RecipeFromSourceRequestFromJSON,
+    RecipeFromSourceRequestToJSON,
     RecipeFromSourceResponseFromJSON,
     RecipeFromSourceResponseToJSON,
     RecipeImageFromJSON,
     RecipeImageToJSON,
     RecipeImportFromJSON,
     RecipeImportToJSON,
+    RecipeImportRequestFromJSON,
+    RecipeImportRequestToJSON,
+    RecipeRequestFromJSON,
+    RecipeRequestToJSON,
     RecipeShoppingUpdateFromJSON,
     RecipeShoppingUpdateToJSON,
+    RecipeShoppingUpdateRequestFromJSON,
+    RecipeShoppingUpdateRequestToJSON,
     RecipeSimpleFromJSON,
     RecipeSimpleToJSON,
+    RecipeYieldSchemaFromJSON,
+    RecipeYieldSchemaToJSON,
+    RecipeYieldWriteSchemaRequestFromJSON,
+    RecipeYieldWriteSchemaRequestToJSON,
+    ReplenishmentQueryRequestFromJSON,
+    ReplenishmentQueryRequestToJSON,
+    ReplenishmentSchemaFromJSON,
+    ReplenishmentSchemaToJSON,
     SearchFieldsFromJSON,
     SearchFieldsToJSON,
     SearchPreferenceFromJSON,
     SearchPreferenceToJSON,
     ServerSettingsFromJSON,
     ServerSettingsToJSON,
+    ServiceActionResultSchemaFromJSON,
+    ServiceActionResultSchemaToJSON,
+    ServiceActionWriteSchemaRequestFromJSON,
+    ServiceActionWriteSchemaRequestToJSON,
+    ServiceCreateResultSchemaFromJSON,
+    ServiceCreateResultSchemaToJSON,
+    ServiceCreateSchemaRequestFromJSON,
+    ServiceCreateSchemaRequestToJSON,
+    ServicePlanSchemaFromJSON,
+    ServicePlanSchemaToJSON,
     ShareLinkFromJSON,
     ShareLinkToJSON,
     ShoppingListFromJSON,
@@ -568,34 +694,58 @@ import {
     ShoppingListEntryBulkToJSON,
     ShoppingListEntryBulkCreateFromJSON,
     ShoppingListEntryBulkCreateToJSON,
+    ShoppingListEntryBulkCreateRequestFromJSON,
+    ShoppingListEntryBulkCreateRequestToJSON,
+    ShoppingListEntryBulkRequestFromJSON,
+    ShoppingListEntryBulkRequestToJSON,
+    ShoppingListEntryRequestFromJSON,
+    ShoppingListEntryRequestToJSON,
     ShoppingListRecipeFromJSON,
     ShoppingListRecipeToJSON,
+    ShoppingListRecipeRequestFromJSON,
+    ShoppingListRecipeRequestToJSON,
+    ShoppingListRequestFromJSON,
+    ShoppingListRequestToJSON,
     SpaceFromJSON,
     SpaceToJSON,
+    SpaceRequestFromJSON,
+    SpaceRequestToJSON,
     StepFromJSON,
     StepToJSON,
+    StepRequestFromJSON,
+    StepRequestToJSON,
+    StockMinimumSchemaFromJSON,
+    StockMinimumSchemaToJSON,
     StorageFromJSON,
     StorageToJSON,
-    StripeCheckoutSessionRequestFromJSON,
-    StripeCheckoutSessionRequestToJSON,
-    StripeCheckoutSessionResponseFromJSON,
-    StripeCheckoutSessionResponseToJSON,
-    StripePortalFromJSON,
-    StripePortalToJSON,
+    StorageRequestFromJSON,
+    StorageRequestToJSON,
     SupermarketFromJSON,
     SupermarketToJSON,
     SupermarketCategoryFromJSON,
     SupermarketCategoryToJSON,
     SupermarketCategoryRelationFromJSON,
     SupermarketCategoryRelationToJSON,
+    SupermarketCategoryRelationRequestFromJSON,
+    SupermarketCategoryRelationRequestToJSON,
+    SupermarketCategoryRequestFromJSON,
+    SupermarketCategoryRequestToJSON,
+    SupermarketRequestFromJSON,
+    SupermarketRequestToJSON,
     SyncFromJSON,
     SyncToJSON,
     SyncLogFromJSON,
     SyncLogToJSON,
+    SyncRequestFromJSON,
+    SyncRequestToJSON,
     UnitFromJSON,
     UnitToJSON,
     UnitConversionFromJSON,
     UnitConversionToJSON,
+    UnitConversionRequestFromJSON,
+    UnitConversionRequestToJSON,
+    UnitRequestFromJSON,
+    UnitRequestToJSON,
     UserFromJSON,
     UserToJSON,
     UserFileFromJSON,
@@ -606,12 +756,18 @@ import {
     UserSpaceToJSON,
     UserSpaceBatchUpdateFromJSON,
     UserSpaceBatchUpdateToJSON,
+    UserSpaceBatchUpdateRequestFromJSON,
+    UserSpaceBatchUpdateRequestToJSON,
+    UserSpaceRequestFromJSON,
+    UserSpaceRequestToJSON,
     ViewLogFromJSON,
     ViewLogToJSON,
+    ViewLogRequestFromJSON,
+    ViewLogRequestToJSON,
 } from '../models/index';
 
 export interface ApiAccessTokenCreateRequest {
-    accessToken: Omit<AccessToken, 'token'|'created'|'updated'>;
+    accessToken: AccessTokenRequest;
 }
 
 export interface ApiAccessTokenDestroyRequest {
@@ -620,7 +776,7 @@ export interface ApiAccessTokenDestroyRequest {
 
 export interface ApiAccessTokenPartialUpdateRequest {
     id: number;
-    patchedAccessToken?: Omit<PatchedAccessToken, 'token'|'created'|'updated'>;
+    patchedAccessToken?: PatchedAccessTokenRequest;
 }
 
 export interface ApiAccessTokenRetrieveRequest {
@@ -629,12 +785,12 @@ export interface ApiAccessTokenRetrieveRequest {
 
 export interface ApiAccessTokenUpdateRequest {
     id: number;
-    accessToken: Omit<AccessToken, 'token'|'created'|'updated'>;
+    accessToken: AccessTokenRequest;
 }
 
 export interface ApiAiImportCreateRequest {
     aiProviderId: number;
-    file: string | null;
+    file: Blob | null;
     text: string | null;
     recipeId: string | null;
 }
@@ -656,7 +812,7 @@ export interface ApiAiProviderCascadingListRequest {
 }
 
 export interface ApiAiProviderCreateRequest {
-    aiProvider: Omit<AiProvider, 'createdAt'|'updatedAt'>;
+    aiProvider: AiProviderRequest;
 }
 
 export interface ApiAiProviderDestroyRequest {
@@ -677,7 +833,7 @@ export interface ApiAiProviderNullingListRequest {
 
 export interface ApiAiProviderPartialUpdateRequest {
     id: number;
-    patchedAiProvider?: Omit<PatchedAiProvider, 'createdAt'|'updatedAt'>;
+    patchedAiProvider?: PatchedAiProviderRequest;
 }
 
 export interface ApiAiProviderProtectingListRequest {
@@ -693,20 +849,20 @@ export interface ApiAiProviderRetrieveRequest {
 
 export interface ApiAiProviderUpdateRequest {
     id: number;
-    aiProvider: Omit<AiProvider, 'createdAt'|'updatedAt'>;
+    aiProvider: AiProviderRequest;
 }
 
 export interface ApiAiStepSortCreateRequest {
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: RecipeRequest;
     provider?: number;
 }
 
 export interface ApiAutoPlanCreateRequest {
-    autoMealPlan: AutoMealPlan;
+    autoMealPlan: AutoMealPlanRequest;
 }
 
 export interface ApiAutomationCreateRequest {
-    automation: Omit<Automation, 'createdBy'>;
+    automation: AutomationRequest;
 }
 
 export interface ApiAutomationDestroyRequest {
@@ -721,7 +877,7 @@ export interface ApiAutomationListRequest {
 
 export interface ApiAutomationPartialUpdateRequest {
     id: number;
-    patchedAutomation?: Omit<PatchedAutomation, 'createdBy'>;
+    patchedAutomation?: PatchedAutomationRequest;
 }
 
 export interface ApiAutomationRetrieveRequest {
@@ -730,11 +886,11 @@ export interface ApiAutomationRetrieveRequest {
 
 export interface ApiAutomationUpdateRequest {
     id: number;
-    automation: Omit<Automation, 'createdBy'>;
+    automation: AutomationRequest;
 }
 
 export interface ApiBookmarkletImportCreateRequest {
-    bookmarkletImport: Omit<BookmarkletImport, 'createdBy'|'createdAt'>;
+    bookmarkletImport: BookmarkletImportRequest;
 }
 
 export interface ApiBookmarkletImportDestroyRequest {
@@ -748,7 +904,7 @@ export interface ApiBookmarkletImportListRequest {
 
 export interface ApiBookmarkletImportPartialUpdateRequest {
     id: number;
-    patchedBookmarkletImport?: Omit<PatchedBookmarkletImport, 'createdBy'|'createdAt'>;
+    patchedBookmarkletImport?: PatchedBookmarkletImportRequest;
 }
 
 export interface ApiBookmarkletImportRetrieveRequest {
@@ -757,7 +913,7 @@ export interface ApiBookmarkletImportRetrieveRequest {
 
 export interface ApiBookmarkletImportUpdateRequest {
     id: number;
-    bookmarkletImport: Omit<BookmarkletImport, 'createdBy'|'createdAt'>;
+    bookmarkletImport: BookmarkletImportRequest;
 }
 
 export interface ApiConnectorConfigCascadingListRequest {
@@ -768,7 +924,7 @@ export interface ApiConnectorConfigCascadingListRequest {
 }
 
 export interface ApiConnectorConfigCreateRequest {
-    connectorConfig: Omit<ConnectorConfig, 'createdBy'>;
+    connectorConfig: ConnectorConfigRequest;
 }
 
 export interface ApiConnectorConfigDestroyRequest {
@@ -789,7 +945,7 @@ export interface ApiConnectorConfigNullingListRequest {
 
 export interface ApiConnectorConfigPartialUpdateRequest {
     id: number;
-    patchedConnectorConfig?: Omit<PatchedConnectorConfig, 'createdBy'>;
+    patchedConnectorConfig?: PatchedConnectorConfigRequest;
 }
 
 export interface ApiConnectorConfigProtectingListRequest {
@@ -805,11 +961,11 @@ export interface ApiConnectorConfigRetrieveRequest {
 
 export interface ApiConnectorConfigUpdateRequest {
     id: number;
-    connectorConfig: Omit<ConnectorConfig, 'createdBy'>;
+    connectorConfig: ConnectorConfigRequest;
 }
 
 export interface ApiCookLogCreateRequest {
-    cookLog: Omit<CookLog, 'createdBy'|'updatedAt'>;
+    cookLog: CookLogRequest;
 }
 
 export interface ApiCookLogDestroyRequest {
@@ -824,7 +980,7 @@ export interface ApiCookLogListRequest {
 
 export interface ApiCookLogPartialUpdateRequest {
     id: number;
-    patchedCookLog?: Omit<PatchedCookLog, 'createdBy'|'updatedAt'>;
+    patchedCookLog?: PatchedCookLogRequest;
 }
 
 export interface ApiCookLogRetrieveRequest {
@@ -833,11 +989,11 @@ export interface ApiCookLogRetrieveRequest {
 
 export interface ApiCookLogUpdateRequest {
     id: number;
-    cookLog: Omit<CookLog, 'createdBy'|'updatedAt'>;
+    cookLog: CookLogRequest;
 }
 
 export interface ApiCustomFilterCreateRequest {
-    customFilter: Omit<CustomFilter, 'createdBy'>;
+    customFilter: CustomFilterRequest;
 }
 
 export interface ApiCustomFilterDestroyRequest {
@@ -856,7 +1012,7 @@ export interface ApiCustomFilterListRequest {
 
 export interface ApiCustomFilterPartialUpdateRequest {
     id: number;
-    patchedCustomFilter?: Omit<PatchedCustomFilter, 'createdBy'>;
+    patchedCustomFilter?: PatchedCustomFilterRequest;
 }
 
 export interface ApiCustomFilterRetrieveRequest {
@@ -865,381 +1021,19 @@ export interface ApiCustomFilterRetrieveRequest {
 
 export interface ApiCustomFilterUpdateRequest {
     id: number;
-    customFilter: Omit<CustomFilter, 'createdBy'>;
+    customFilter: CustomFilterRequest;
 }
 
 export interface ApiDownloadFileRetrieveRequest {
     fileId: number;
 }
 
-export interface ApiEnterpriseBillingInvoiceCreateRequest {
-    enterpriseBillingInvoice: Omit<EnterpriseBillingInvoice, 'createdAt'>;
-}
-
-export interface ApiEnterpriseBillingInvoiceDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingInvoiceDownloadRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingInvoiceListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseBillingInvoicePartialUpdateRequest {
-    id: number;
-    patchedEnterpriseBillingInvoice?: Omit<PatchedEnterpriseBillingInvoice, 'createdAt'>;
-}
-
-export interface ApiEnterpriseBillingInvoiceRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingInvoiceUpdateRequest {
-    id: number;
-    enterpriseBillingInvoice: Omit<EnterpriseBillingInvoice, 'createdAt'>;
-}
-
-export interface ApiEnterpriseBillingPlanCreateRequest {
-    enterpriseBillingPlan: EnterpriseBillingPlan;
-}
-
-export interface ApiEnterpriseBillingPlanDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingPlanListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseBillingPlanPartialUpdateRequest {
-    id: number;
-    patchedEnterpriseBillingPlan?: PatchedEnterpriseBillingPlan;
-}
-
-export interface ApiEnterpriseBillingPlanRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingPlanUpdateRequest {
-    id: number;
-    enterpriseBillingPlan: EnterpriseBillingPlan;
-}
-
-export interface ApiEnterpriseBillingProductCreateRequest {
-    enterpriseBillingProduct: EnterpriseBillingProduct;
-}
-
-export interface ApiEnterpriseBillingProductDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingProductListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseBillingProductPartialUpdateRequest {
-    id: number;
-    patchedEnterpriseBillingProduct?: PatchedEnterpriseBillingProduct;
-}
-
-export interface ApiEnterpriseBillingProductRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingProductUpdateRequest {
-    id: number;
-    enterpriseBillingProduct: EnterpriseBillingProduct;
-}
-
-export interface ApiEnterpriseBillingReferralLinkCreateRequest {
-    enterpriseBillingReferralLink: Omit<EnterpriseBillingReferralLink, 'createdAt'>;
-}
-
-export interface ApiEnterpriseBillingReferralLinkDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingReferralLinkListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseBillingReferralLinkPartialUpdateRequest {
-    id: number;
-    patchedEnterpriseBillingReferralLink?: Omit<PatchedEnterpriseBillingReferralLink, 'createdAt'>;
-}
-
-export interface ApiEnterpriseBillingReferralLinkRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseBillingReferralLinkUpdateRequest {
-    id: number;
-    enterpriseBillingReferralLink: Omit<EnterpriseBillingReferralLink, 'createdAt'>;
-}
-
-export interface ApiEnterpriseBillingStripeCheckoutSessionCreateRequest {
-    stripeCheckoutSessionRequest?: StripeCheckoutSessionRequest;
-}
-
-export interface ApiEnterpriseSocialEmbedCreateRequest {
-    enterpriseSocialEmbed: EnterpriseSocialEmbed;
-}
-
-export interface ApiEnterpriseSocialEmbedDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseSocialEmbedListRequest {
-    page?: number;
-    pageSize?: number;
-    token?: string;
-}
-
-export interface ApiEnterpriseSocialEmbedPartialUpdateRequest {
-    id: number;
-    patchedEnterpriseSocialEmbed?: PatchedEnterpriseSocialEmbed;
-}
-
-export interface ApiEnterpriseSocialEmbedRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseSocialEmbedUpdateRequest {
-    id: number;
-    enterpriseSocialEmbed: EnterpriseSocialEmbed;
-}
-
-export interface ApiEnterpriseSocialKeywordCascadingListRequest {
-    id: number;
-    cache?: boolean;
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSocialKeywordCreateRequest {
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
-}
-
-export interface ApiEnterpriseSocialKeywordDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseSocialKeywordListRequest {
-    limit?: string;
-    page?: number;
-    pageSize?: number;
-    query?: string;
-    random?: string;
-    root?: number;
-    rootTree?: number;
-    tree?: number;
-    updatedAt?: string;
-}
-
-export interface ApiEnterpriseSocialKeywordMergeUpdateRequest {
-    id: number;
-    target: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
-}
-
-export interface ApiEnterpriseSocialKeywordMoveUpdateRequest {
-    id: number;
-    parent: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
-}
-
-export interface ApiEnterpriseSocialKeywordNullingListRequest {
-    id: number;
-    cache?: boolean;
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSocialKeywordPartialUpdateRequest {
-    id: number;
-    patchedKeyword?: Omit<PatchedKeyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
-}
-
-export interface ApiEnterpriseSocialKeywordProtectingListRequest {
-    id: number;
-    cache?: boolean;
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSocialKeywordRetrieveRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseSocialKeywordUpdateRequest {
-    id: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
-}
-
-export interface ApiEnterpriseSocialRecipeAipropertiesCreateRequest {
-    id: number;
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
-    provider?: number;
-}
-
-export interface ApiEnterpriseSocialRecipeBatchUpdateUpdateRequest {
-    recipeBatchUpdate: RecipeBatchUpdate;
-}
-
-export interface ApiEnterpriseSocialRecipeCascadingListRequest {
-    id: number;
-    cache?: boolean;
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSocialRecipeCreateRequest {
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
-}
-
-export interface ApiEnterpriseSocialRecipeDeleteExternalPartialUpdateRequest {
-    id: number;
-    patchedRecipe?: Omit<PatchedRecipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
-}
-
-export interface ApiEnterpriseSocialRecipeDestroyRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseSocialRecipeImageUpdateRequest {
-    id: number;
-    image?: string | null;
-    imageUrl?: string | null;
-}
-
-export interface ApiEnterpriseSocialRecipeListRequest {
-    books?: Array<number>;
-    booksAnd?: Array<number>;
-    booksAndNot?: Array<number>;
-    booksOr?: Array<number>;
-    booksOrNot?: Array<number>;
-    cookedonGte?: Date;
-    cookedonLte?: Date;
-    createdby?: number;
-    createdon?: Date;
-    createdonGte?: Date;
-    createdonLte?: Date;
-    filter?: number;
-    foods?: Array<number>;
-    foodsAnd?: Array<number>;
-    foodsAndNot?: Array<number>;
-    foodsOr?: Array<number>;
-    foodsOrNot?: Array<number>;
-    includeChildren?: boolean;
-    internal?: boolean;
-    keyword?: number;
-    keywords?: Array<number>;
-    keywordsAnd?: Array<number>;
-    keywordsAndNot?: Array<number>;
-    keywordsOr?: Array<number>;
-    keywordsOrNot?: Array<number>;
-    makenow?: boolean;
-    _new?: boolean;
-    numRecent?: number;
-    page?: number;
-    pageSize?: number;
-    query?: string;
-    random?: boolean;
-    rating?: number;
-    ratingGte?: number;
-    ratingLte?: number;
-    sortOrder?: string;
-    timescooked?: number;
-    timescookedGte?: number;
-    timescookedLte?: number;
-    token?: string;
-    units?: number;
-    updatedon?: Date;
-    updatedonGte?: Date;
-    updatedonLte?: Date;
-    viewedonGte?: Date;
-    viewedonLte?: Date;
-}
-
-export interface ApiEnterpriseSocialRecipeNullingListRequest {
-    id: number;
-    cache?: boolean;
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSocialRecipePartialUpdateRequest {
-    id: number;
-    patchedRecipe?: Omit<PatchedRecipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
-}
-
-export interface ApiEnterpriseSocialRecipeProtectingListRequest {
-    id: number;
-    cache?: boolean;
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSocialRecipeRelatedListRequest {
-    id: number;
-}
-
-export interface ApiEnterpriseSocialRecipeRetrieveRequest {
-    id: number;
-    share?: string;
-    token?: string;
-}
-
-export interface ApiEnterpriseSocialRecipeShoppingUpdateRequest {
-    id: number;
-    recipeShoppingUpdate: RecipeShoppingUpdate;
-}
-
-export interface ApiEnterpriseSocialRecipeUpdateRequest {
-    id: number;
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
-}
-
-export interface ApiEnterpriseSpaceCreateRequest {
-    enterpriseSpace?: Omit<EnterpriseSpace, 'space'|'billingLicensedModules'|'billingCustomerId'|'billingPlan'|'billingSubscriptionId'|'billingSubscriptionStatus'|'billingMonthlyPrice'>;
-}
-
-export interface ApiEnterpriseSpaceDestroyRequest {
-    space: number;
-}
-
-export interface ApiEnterpriseSpaceListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiEnterpriseSpacePartialUpdateRequest {
-    space: number;
-    patchedEnterpriseSpace?: Omit<PatchedEnterpriseSpace, 'space'|'billingLicensedModules'|'billingCustomerId'|'billingPlan'|'billingSubscriptionId'|'billingSubscriptionStatus'|'billingMonthlyPrice'>;
-}
-
-export interface ApiEnterpriseSpaceRetrieveRequest {
-    space: number;
-}
-
-export interface ApiEnterpriseSpaceUpdateRequest {
-    space: number;
-    enterpriseSpace?: Omit<EnterpriseSpace, 'space'|'billingLicensedModules'|'billingCustomerId'|'billingPlan'|'billingSubscriptionId'|'billingSubscriptionStatus'|'billingMonthlyPrice'>;
-}
-
 export interface ApiExportCreateRequest {
-    exportRequest: ExportRequest;
+    exportRequest: ExportRequestRequest;
 }
 
 export interface ApiExportLogCreateRequest {
-    exportLog: Omit<ExportLog, 'createdBy'|'createdAt'>;
+    exportLog: ExportLogRequest;
 }
 
 export interface ApiExportLogDestroyRequest {
@@ -1253,7 +1047,7 @@ export interface ApiExportLogListRequest {
 
 export interface ApiExportLogPartialUpdateRequest {
     id: number;
-    patchedExportLog?: Omit<PatchedExportLog, 'createdBy'|'createdAt'>;
+    patchedExportLog?: PatchedExportLogRequest;
 }
 
 export interface ApiExportLogRetrieveRequest {
@@ -1262,7 +1056,7 @@ export interface ApiExportLogRetrieveRequest {
 
 export interface ApiExportLogUpdateRequest {
     id: number;
-    exportLog: Omit<ExportLog, 'createdBy'|'createdAt'>;
+    exportLog: ExportLogRequest;
 }
 
 export interface ApiFdcSearchRetrieveRequest {
@@ -1272,12 +1066,12 @@ export interface ApiFdcSearchRetrieveRequest {
 
 export interface ApiFoodAipropertiesCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    food: FoodRequest;
     provider?: number;
 }
 
 export interface ApiFoodBatchUpdateUpdateRequest {
-    foodBatchUpdate: FoodBatchUpdate;
+    foodBatchUpdate: FoodBatchUpdateRequest;
 }
 
 export interface ApiFoodCascadingListRequest {
@@ -1288,7 +1082,7 @@ export interface ApiFoodCascadingListRequest {
 }
 
 export interface ApiFoodCreateRequest {
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    food: FoodRequest;
 }
 
 export interface ApiFoodDestroyRequest {
@@ -1297,7 +1091,7 @@ export interface ApiFoodDestroyRequest {
 
 export interface ApiFoodFdcCreateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    food: FoodRequest;
 }
 
 export interface ApiFoodInheritFieldRetrieveRequest {
@@ -1319,13 +1113,13 @@ export interface ApiFoodListRequest {
 export interface ApiFoodMergeUpdateRequest {
     id: number;
     target: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    food: FoodRequest;
 }
 
 export interface ApiFoodMoveUpdateRequest {
     id: number;
     parent: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    food: FoodRequest;
 }
 
 export interface ApiFoodNullingListRequest {
@@ -1337,7 +1131,7 @@ export interface ApiFoodNullingListRequest {
 
 export interface ApiFoodPartialUpdateRequest {
     id: number;
-    patchedFood?: Omit<PatchedFood, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    patchedFood?: PatchedFoodRequest;
 }
 
 export interface ApiFoodProtectingListRequest {
@@ -1353,12 +1147,12 @@ export interface ApiFoodRetrieveRequest {
 
 export interface ApiFoodShoppingUpdateRequest {
     id: number;
-    foodShoppingUpdate: FoodShoppingUpdate;
+    foodShoppingUpdate: FoodShoppingUpdateRequest;
 }
 
 export interface ApiFoodUpdateRequest {
     id: number;
-    food: Omit<Food, 'shopping'|'parent'|'numchild'|'fullName'|'substituteOnhand'>;
+    food: FoodRequest;
 }
 
 export interface ApiGetExternalFileLinkRetrieveRequest {
@@ -1374,7 +1168,7 @@ export interface ApiGroupRetrieveRequest {
 }
 
 export interface ApiHouseholdCreateRequest {
-    household: Omit<Household, 'createdAt'|'updatedAt'>;
+    household: HouseholdRequest;
 }
 
 export interface ApiHouseholdDestroyRequest {
@@ -1388,7 +1182,7 @@ export interface ApiHouseholdListRequest {
 
 export interface ApiHouseholdPartialUpdateRequest {
     id: number;
-    patchedHousehold?: Omit<PatchedHousehold, 'createdAt'|'updatedAt'>;
+    patchedHousehold?: PatchedHouseholdRequest;
 }
 
 export interface ApiHouseholdRetrieveRequest {
@@ -1397,18 +1191,18 @@ export interface ApiHouseholdRetrieveRequest {
 
 export interface ApiHouseholdUpdateRequest {
     id: number;
-    household: Omit<Household, 'createdAt'|'updatedAt'>;
+    household: HouseholdRequest;
 }
 
 export interface ApiImportCreateRequest {
     aiProviderId: number;
-    file: string | null;
+    file: Blob | null;
     text: string | null;
     recipeId: string | null;
 }
 
 export interface ApiImportLogCreateRequest {
-    importLog: Omit<ImportLog, 'keyword'|'createdBy'|'createdAt'>;
+    importLog: ImportLogRequest;
 }
 
 export interface ApiImportLogDestroyRequest {
@@ -1422,7 +1216,7 @@ export interface ApiImportLogListRequest {
 
 export interface ApiImportLogPartialUpdateRequest {
     id: number;
-    patchedImportLog?: Omit<PatchedImportLog, 'keyword'|'createdBy'|'createdAt'>;
+    patchedImportLog?: PatchedImportLogRequest;
 }
 
 export interface ApiImportLogRetrieveRequest {
@@ -1431,15 +1225,15 @@ export interface ApiImportLogRetrieveRequest {
 
 export interface ApiImportLogUpdateRequest {
     id: number;
-    importLog: Omit<ImportLog, 'keyword'|'createdBy'|'createdAt'>;
+    importLog: ImportLogRequest;
 }
 
 export interface ApiImportOpenDataCreateRequest {
-    importOpenData: ImportOpenData;
+    importOpenData: ImportOpenDataRequest;
 }
 
 export interface ApiIngredientCreateRequest {
-    ingredient: Omit<Ingredient, 'conversions'|'usedInRecipes'|'checked'>;
+    ingredient: IngredientRequest;
 }
 
 export interface ApiIngredientDestroyRequest {
@@ -1454,12 +1248,12 @@ export interface ApiIngredientListRequest {
 }
 
 export interface ApiIngredientParserPostCreateRequest {
-    ingredientParserRequest?: IngredientParserRequest;
+    ingredientParserRequest?: IngredientParserRequestRequest;
 }
 
 export interface ApiIngredientPartialUpdateRequest {
     id: number;
-    patchedIngredient?: Omit<PatchedIngredient, 'conversions'|'usedInRecipes'|'checked'>;
+    patchedIngredient?: PatchedIngredientRequest;
 }
 
 export interface ApiIngredientRetrieveRequest {
@@ -1468,7 +1262,7 @@ export interface ApiIngredientRetrieveRequest {
 
 export interface ApiIngredientUpdateRequest {
     id: number;
-    ingredient: Omit<Ingredient, 'conversions'|'usedInRecipes'|'checked'>;
+    ingredient: IngredientRequest;
 }
 
 export interface ApiInventoryEntryCascadingListRequest {
@@ -1478,8 +1272,13 @@ export interface ApiInventoryEntryCascadingListRequest {
     pageSize?: number;
 }
 
+export interface ApiInventoryEntryConsumeCreateRequest {
+    id: number;
+    inventoryEntry: InventoryEntryRequest;
+}
+
 export interface ApiInventoryEntryCreateRequest {
-    inventoryEntry: Omit<InventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    inventoryEntry: InventoryEntryRequest;
 }
 
 export interface ApiInventoryEntryDestroyRequest {
@@ -1504,7 +1303,7 @@ export interface ApiInventoryEntryNullingListRequest {
 
 export interface ApiInventoryEntryPartialUpdateRequest {
     id: number;
-    patchedInventoryEntry?: Omit<PatchedInventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    patchedInventoryEntry?: PatchedInventoryEntryRequest;
 }
 
 export interface ApiInventoryEntryProtectingListRequest {
@@ -1520,7 +1319,7 @@ export interface ApiInventoryEntryRetrieveRequest {
 
 export interface ApiInventoryEntryUpdateRequest {
     id: number;
-    inventoryEntry: Omit<InventoryEntry, 'label'|'createdAt'|'createdBy'>;
+    inventoryEntry: InventoryEntryRequest;
 }
 
 export interface ApiInventoryLocationCascadingListRequest {
@@ -1531,7 +1330,7 @@ export interface ApiInventoryLocationCascadingListRequest {
 }
 
 export interface ApiInventoryLocationCreateRequest {
-    inventoryLocation: InventoryLocation;
+    inventoryLocation: InventoryLocationRequest;
 }
 
 export interface ApiInventoryLocationDestroyRequest {
@@ -1552,7 +1351,7 @@ export interface ApiInventoryLocationNullingListRequest {
 
 export interface ApiInventoryLocationPartialUpdateRequest {
     id: number;
-    patchedInventoryLocation?: PatchedInventoryLocation;
+    patchedInventoryLocation?: PatchedInventoryLocationRequest;
 }
 
 export interface ApiInventoryLocationProtectingListRequest {
@@ -1568,7 +1367,7 @@ export interface ApiInventoryLocationRetrieveRequest {
 
 export interface ApiInventoryLocationUpdateRequest {
     id: number;
-    inventoryLocation: InventoryLocation;
+    inventoryLocation: InventoryLocationRequest;
 }
 
 export interface ApiInventoryLogListRequest {
@@ -1590,7 +1389,7 @@ export interface ApiInviteLinkCascadingListRequest {
 }
 
 export interface ApiInviteLinkCreateRequest {
-    inviteLink: Omit<InviteLink, 'uuid'|'usedBy'|'createdBy'|'createdAt'|'emailSent'>;
+    inviteLink?: InviteLinkRequest;
 }
 
 export interface ApiInviteLinkDestroyRequest {
@@ -1617,7 +1416,7 @@ export interface ApiInviteLinkNullingListRequest {
 
 export interface ApiInviteLinkPartialUpdateRequest {
     id: number;
-    patchedInviteLink?: Omit<PatchedInviteLink, 'uuid'|'usedBy'|'createdBy'|'createdAt'|'emailSent'>;
+    patchedInviteLink?: PatchedInviteLinkRequest;
 }
 
 export interface ApiInviteLinkProtectingListRequest {
@@ -1633,7 +1432,7 @@ export interface ApiInviteLinkRetrieveRequest {
 
 export interface ApiInviteLinkUpdateRequest {
     id: number;
-    inviteLink: Omit<InviteLink, 'uuid'|'usedBy'|'createdBy'|'createdAt'|'emailSent'>;
+    inviteLink?: InviteLinkRequest;
 }
 
 export interface ApiKeywordCascadingListRequest {
@@ -1644,7 +1443,7 @@ export interface ApiKeywordCascadingListRequest {
 }
 
 export interface ApiKeywordCreateRequest {
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
+    keyword: KeywordRequest;
 }
 
 export interface ApiKeywordDestroyRequest {
@@ -1666,13 +1465,13 @@ export interface ApiKeywordListRequest {
 export interface ApiKeywordMergeUpdateRequest {
     id: number;
     target: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
+    keyword: KeywordRequest;
 }
 
 export interface ApiKeywordMoveUpdateRequest {
     id: number;
     parent: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
+    keyword: KeywordRequest;
 }
 
 export interface ApiKeywordNullingListRequest {
@@ -1684,7 +1483,7 @@ export interface ApiKeywordNullingListRequest {
 
 export interface ApiKeywordPartialUpdateRequest {
     id: number;
-    patchedKeyword?: Omit<PatchedKeyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
+    patchedKeyword?: PatchedKeywordRequest;
 }
 
 export interface ApiKeywordProtectingListRequest {
@@ -1700,11 +1499,11 @@ export interface ApiKeywordRetrieveRequest {
 
 export interface ApiKeywordUpdateRequest {
     id: number;
-    keyword: Omit<Keyword, 'label'|'parent'|'numchild'|'createdAt'|'updatedAt'|'fullName'>;
+    keyword: KeywordRequest;
 }
 
 export interface ApiMealPlanCreateRequest {
-    mealPlan: Omit<MealPlan, 'noteMarkdown'|'createdBy'|'recipeName'|'mealTypeName'|'shopping'>;
+    mealPlan: MealPlanRequest;
 }
 
 export interface ApiMealPlanDestroyRequest {
@@ -1727,7 +1526,7 @@ export interface ApiMealPlanListRequest {
 
 export interface ApiMealPlanPartialUpdateRequest {
     id: number;
-    patchedMealPlan?: Omit<PatchedMealPlan, 'noteMarkdown'|'createdBy'|'recipeName'|'mealTypeName'|'shopping'>;
+    patchedMealPlan?: PatchedMealPlanRequest;
 }
 
 export interface ApiMealPlanRetrieveRequest {
@@ -1736,7 +1535,7 @@ export interface ApiMealPlanRetrieveRequest {
 
 export interface ApiMealPlanUpdateRequest {
     id: number;
-    mealPlan: Omit<MealPlan, 'noteMarkdown'|'createdBy'|'recipeName'|'mealTypeName'|'shopping'>;
+    mealPlan: MealPlanRequest;
 }
 
 export interface ApiMealTypeCascadingListRequest {
@@ -1747,7 +1546,7 @@ export interface ApiMealTypeCascadingListRequest {
 }
 
 export interface ApiMealTypeCreateRequest {
-    mealType: Omit<MealType, 'createdBy'>;
+    mealType: MealTypeRequest;
 }
 
 export interface ApiMealTypeDestroyRequest {
@@ -1768,7 +1567,7 @@ export interface ApiMealTypeNullingListRequest {
 
 export interface ApiMealTypePartialUpdateRequest {
     id: number;
-    patchedMealType?: Omit<PatchedMealType, 'createdBy'>;
+    patchedMealType?: PatchedMealTypeRequest;
 }
 
 export interface ApiMealTypeProtectingListRequest {
@@ -1784,209 +1583,11 @@ export interface ApiMealTypeRetrieveRequest {
 
 export interface ApiMealTypeUpdateRequest {
     id: number;
-    mealType: Omit<MealType, 'createdBy'>;
-}
-
-export interface ApiOpenDataCategoryCreateRequest {
-    openDataCategory: Omit<OpenDataCategory, 'createdBy'>;
-}
-
-export interface ApiOpenDataCategoryDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataCategoryListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataCategoryPartialUpdateRequest {
-    id: number;
-    patchedOpenDataCategory?: Omit<PatchedOpenDataCategory, 'createdBy'>;
-}
-
-export interface ApiOpenDataCategoryRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataCategoryUpdateRequest {
-    id: number;
-    openDataCategory: Omit<OpenDataCategory, 'createdBy'>;
-}
-
-export interface ApiOpenDataConversionCreateRequest {
-    openDataConversion: Omit<OpenDataConversion, 'createdBy'>;
-}
-
-export interface ApiOpenDataConversionDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataConversionListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataConversionPartialUpdateRequest {
-    id: number;
-    patchedOpenDataConversion?: Omit<PatchedOpenDataConversion, 'createdBy'>;
-}
-
-export interface ApiOpenDataConversionRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataConversionUpdateRequest {
-    id: number;
-    openDataConversion: Omit<OpenDataConversion, 'createdBy'>;
-}
-
-export interface ApiOpenDataFDCRetrieveRequest {
-    id: string;
-}
-
-export interface ApiOpenDataFoodCreateRequest {
-    openDataFood: Omit<OpenDataFood, 'createdBy'>;
-}
-
-export interface ApiOpenDataFoodDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataFoodFdcCreateRequest {
-    id: number;
-    openDataFood: Omit<OpenDataFood, 'createdBy'>;
-}
-
-export interface ApiOpenDataFoodListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataFoodPartialUpdateRequest {
-    id: number;
-    patchedOpenDataFood?: Omit<PatchedOpenDataFood, 'createdBy'>;
-}
-
-export interface ApiOpenDataFoodRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataFoodUpdateRequest {
-    id: number;
-    openDataFood: Omit<OpenDataFood, 'createdBy'>;
-}
-
-export interface ApiOpenDataPropertyCreateRequest {
-    openDataProperty: Omit<OpenDataProperty, 'createdBy'>;
-}
-
-export interface ApiOpenDataPropertyDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataPropertyListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataPropertyPartialUpdateRequest {
-    id: number;
-    patchedOpenDataProperty?: Omit<PatchedOpenDataProperty, 'createdBy'>;
-}
-
-export interface ApiOpenDataPropertyRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataPropertyUpdateRequest {
-    id: number;
-    openDataProperty: Omit<OpenDataProperty, 'createdBy'>;
-}
-
-export interface ApiOpenDataStoreCreateRequest {
-    openDataStore: Omit<OpenDataStore, 'createdBy'>;
-}
-
-export interface ApiOpenDataStoreDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataStoreListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataStorePartialUpdateRequest {
-    id: number;
-    patchedOpenDataStore?: Omit<PatchedOpenDataStore, 'createdBy'>;
-}
-
-export interface ApiOpenDataStoreRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataStoreUpdateRequest {
-    id: number;
-    openDataStore: Omit<OpenDataStore, 'createdBy'>;
-}
-
-export interface ApiOpenDataUnitCreateRequest {
-    openDataUnit: Omit<OpenDataUnit, 'createdBy'>;
-}
-
-export interface ApiOpenDataUnitDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataUnitListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataUnitPartialUpdateRequest {
-    id: number;
-    patchedOpenDataUnit?: Omit<PatchedOpenDataUnit, 'createdBy'>;
-}
-
-export interface ApiOpenDataUnitRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataUnitUpdateRequest {
-    id: number;
-    openDataUnit: Omit<OpenDataUnit, 'createdBy'>;
-}
-
-export interface ApiOpenDataVersionCreateRequest {
-    openDataVersion: OpenDataVersion;
-}
-
-export interface ApiOpenDataVersionDestroyRequest {
-    id: number;
-}
-
-export interface ApiOpenDataVersionListRequest {
-    page?: number;
-    pageSize?: number;
-}
-
-export interface ApiOpenDataVersionPartialUpdateRequest {
-    id: number;
-    patchedOpenDataVersion?: PatchedOpenDataVersion;
-}
-
-export interface ApiOpenDataVersionRetrieveRequest {
-    id: number;
-}
-
-export interface ApiOpenDataVersionUpdateRequest {
-    id: number;
-    openDataVersion: OpenDataVersion;
+    mealType: MealTypeRequest;
 }
 
 export interface ApiPropertyCreateRequest {
-    property: Property;
+    property: PropertyRequest;
 }
 
 export interface ApiPropertyDestroyRequest {
@@ -2000,7 +1601,7 @@ export interface ApiPropertyListRequest {
 
 export interface ApiPropertyPartialUpdateRequest {
     id: number;
-    patchedProperty?: PatchedProperty;
+    patchedProperty?: PatchedPropertyRequest;
 }
 
 export interface ApiPropertyRetrieveRequest {
@@ -2015,7 +1616,7 @@ export interface ApiPropertyTypeCascadingListRequest {
 }
 
 export interface ApiPropertyTypeCreateRequest {
-    propertyType: PropertyType;
+    propertyType: PropertyTypeRequest;
 }
 
 export interface ApiPropertyTypeDestroyRequest {
@@ -2037,7 +1638,7 @@ export interface ApiPropertyTypeNullingListRequest {
 
 export interface ApiPropertyTypePartialUpdateRequest {
     id: number;
-    patchedPropertyType?: PatchedPropertyType;
+    patchedPropertyType?: PatchedPropertyTypeRequest;
 }
 
 export interface ApiPropertyTypeProtectingListRequest {
@@ -2053,22 +1654,22 @@ export interface ApiPropertyTypeRetrieveRequest {
 
 export interface ApiPropertyTypeUpdateRequest {
     id: number;
-    propertyType: PropertyType;
+    propertyType: PropertyTypeRequest;
 }
 
 export interface ApiPropertyUpdateRequest {
     id: number;
-    property: Property;
+    property: PropertyRequest;
 }
 
 export interface ApiRecipeAipropertiesCreateRequest {
     id: number;
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: RecipeRequest;
     provider?: number;
 }
 
 export interface ApiRecipeBatchUpdateUpdateRequest {
-    recipeBatchUpdate: RecipeBatchUpdate;
+    recipeBatchUpdate: RecipeBatchUpdateRequest;
 }
 
 export interface ApiRecipeBookCascadingListRequest {
@@ -2079,7 +1680,7 @@ export interface ApiRecipeBookCascadingListRequest {
 }
 
 export interface ApiRecipeBookCreateRequest {
-    recipeBook: Omit<RecipeBook, 'createdBy'>;
+    recipeBook: RecipeBookRequest;
 }
 
 export interface ApiRecipeBookDestroyRequest {
@@ -2087,7 +1688,7 @@ export interface ApiRecipeBookDestroyRequest {
 }
 
 export interface ApiRecipeBookEntryCreateRequest {
-    recipeBookEntry: Omit<RecipeBookEntry, 'bookContent'|'recipeContent'>;
+    recipeBookEntry: RecipeBookEntryRequest;
 }
 
 export interface ApiRecipeBookEntryDestroyRequest {
@@ -2103,7 +1704,7 @@ export interface ApiRecipeBookEntryListRequest {
 
 export interface ApiRecipeBookEntryPartialUpdateRequest {
     id: number;
-    patchedRecipeBookEntry?: Omit<PatchedRecipeBookEntry, 'bookContent'|'recipeContent'>;
+    patchedRecipeBookEntry?: PatchedRecipeBookEntryRequest;
 }
 
 export interface ApiRecipeBookEntryRetrieveRequest {
@@ -2112,7 +1713,7 @@ export interface ApiRecipeBookEntryRetrieveRequest {
 
 export interface ApiRecipeBookEntryUpdateRequest {
     id: number;
-    recipeBookEntry: Omit<RecipeBookEntry, 'bookContent'|'recipeContent'>;
+    recipeBookEntry: RecipeBookEntryRequest;
 }
 
 export interface ApiRecipeBookListRequest {
@@ -2135,7 +1736,7 @@ export interface ApiRecipeBookNullingListRequest {
 
 export interface ApiRecipeBookPartialUpdateRequest {
     id: number;
-    patchedRecipeBook?: Omit<PatchedRecipeBook, 'createdBy'>;
+    patchedRecipeBook?: PatchedRecipeBookRequest;
 }
 
 export interface ApiRecipeBookProtectingListRequest {
@@ -2151,7 +1752,7 @@ export interface ApiRecipeBookRetrieveRequest {
 
 export interface ApiRecipeBookUpdateRequest {
     id: number;
-    recipeBook: Omit<RecipeBook, 'createdBy'>;
+    recipeBook: RecipeBookRequest;
 }
 
 export interface ApiRecipeCascadingListRequest {
@@ -2162,12 +1763,12 @@ export interface ApiRecipeCascadingListRequest {
 }
 
 export interface ApiRecipeCreateRequest {
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: RecipeRequest;
 }
 
 export interface ApiRecipeDeleteExternalPartialUpdateRequest {
     id: number;
-    patchedRecipe?: Omit<PatchedRecipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    patchedRecipe?: PatchedRecipeRequest;
 }
 
 export interface ApiRecipeDestroyRequest {
@@ -2175,17 +1776,17 @@ export interface ApiRecipeDestroyRequest {
 }
 
 export interface ApiRecipeFromSourceCreateRequest {
-    recipeFromSource?: RecipeFromSource;
+    recipeFromSource?: RecipeFromSourceRequest;
 }
 
 export interface ApiRecipeImageUpdateRequest {
     id: number;
-    image?: string | null;
+    image?: Blob | null;
     imageUrl?: string | null;
 }
 
 export interface ApiRecipeImportCreateRequest {
-    recipeImport: Omit<RecipeImport, 'createdAt'>;
+    recipeImport: RecipeImportRequest;
 }
 
 export interface ApiRecipeImportDestroyRequest {
@@ -2193,12 +1794,12 @@ export interface ApiRecipeImportDestroyRequest {
 }
 
 export interface ApiRecipeImportImportAllCreateRequest {
-    recipeImport: Omit<RecipeImport, 'createdAt'>;
+    recipeImport: RecipeImportRequest;
 }
 
 export interface ApiRecipeImportImportRecipeCreateRequest {
     id: number;
-    recipeImport: Omit<RecipeImport, 'createdAt'>;
+    recipeImport: RecipeImportRequest;
 }
 
 export interface ApiRecipeImportListRequest {
@@ -2208,7 +1809,7 @@ export interface ApiRecipeImportListRequest {
 
 export interface ApiRecipeImportPartialUpdateRequest {
     id: number;
-    patchedRecipeImport?: Omit<PatchedRecipeImport, 'createdAt'>;
+    patchedRecipeImport?: PatchedRecipeImportRequest;
 }
 
 export interface ApiRecipeImportRetrieveRequest {
@@ -2217,7 +1818,7 @@ export interface ApiRecipeImportRetrieveRequest {
 
 export interface ApiRecipeImportUpdateRequest {
     id: number;
-    recipeImport: Omit<RecipeImport, 'createdAt'>;
+    recipeImport: RecipeImportRequest;
 }
 
 export interface ApiRecipeListRequest {
@@ -2276,7 +1877,7 @@ export interface ApiRecipeNullingListRequest {
 
 export interface ApiRecipePartialUpdateRequest {
     id: number;
-    patchedRecipe?: Omit<PatchedRecipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    patchedRecipe?: PatchedRecipeRequest;
 }
 
 export interface ApiRecipeProtectingListRequest {
@@ -2297,12 +1898,12 @@ export interface ApiRecipeRetrieveRequest {
 
 export interface ApiRecipeShoppingUpdateRequest {
     id: number;
-    recipeShoppingUpdate: RecipeShoppingUpdate;
+    recipeShoppingUpdate: RecipeShoppingUpdateRequest;
 }
 
 export interface ApiRecipeUpdateRequest {
     id: number;
-    recipe: Omit<Recipe, 'image'|'createdBy'|'createdAt'|'updatedAt'|'foodProperties'|'rating'|'lastCooked'>;
+    recipe: RecipeRequest;
 }
 
 export interface ApiSearchFieldsRetrieveRequest {
@@ -2311,7 +1912,7 @@ export interface ApiSearchFieldsRetrieveRequest {
 
 export interface ApiSearchPreferencePartialUpdateRequest {
     user: number;
-    patchedSearchPreference?: Omit<PatchedSearchPreference, 'user'>;
+    patchedSearchPreference?: PatchedSearchPreferenceRequest;
 }
 
 export interface ApiSearchPreferenceRetrieveRequest {
@@ -2330,7 +1931,7 @@ export interface ApiShoppingListCascadingListRequest {
 }
 
 export interface ApiShoppingListCreateRequest {
-    shoppingList?: ShoppingList;
+    shoppingList?: ShoppingListRequest;
 }
 
 export interface ApiShoppingListDestroyRequest {
@@ -2338,11 +1939,11 @@ export interface ApiShoppingListDestroyRequest {
 }
 
 export interface ApiShoppingListEntryBulkCreateRequest {
-    shoppingListEntryBulk: Omit<ShoppingListEntryBulk, 'timestamp'>;
+    shoppingListEntryBulk: ShoppingListEntryBulkRequest;
 }
 
 export interface ApiShoppingListEntryCreateRequest {
-    shoppingListEntry: Omit<ShoppingListEntry, 'listRecipeData'|'createdBy'|'createdAt'|'updatedAt'>;
+    shoppingListEntry: ShoppingListEntryRequest;
 }
 
 export interface ApiShoppingListEntryDestroyRequest {
@@ -2358,7 +1959,8 @@ export interface ApiShoppingListEntryListRequest {
 
 export interface ApiShoppingListEntryPartialUpdateRequest {
     id: number;
-    patchedShoppingListEntry?: Omit<PatchedShoppingListEntry, 'listRecipeData'|'createdBy'|'createdAt'|'updatedAt'>;
+    ifMatch?: string;
+    patchedShoppingListEntry?: PatchedShoppingListEntryRequest;
 }
 
 export interface ApiShoppingListEntryRetrieveRequest {
@@ -2367,7 +1969,8 @@ export interface ApiShoppingListEntryRetrieveRequest {
 
 export interface ApiShoppingListEntryUpdateRequest {
     id: number;
-    shoppingListEntry: Omit<ShoppingListEntry, 'listRecipeData'|'createdBy'|'createdAt'|'updatedAt'>;
+    shoppingListEntry: ShoppingListEntryRequest;
+    ifMatch?: string;
 }
 
 export interface ApiShoppingListListRequest {
@@ -2384,7 +1987,7 @@ export interface ApiShoppingListNullingListRequest {
 
 export interface ApiShoppingListPartialUpdateRequest {
     id: number;
-    patchedShoppingList?: PatchedShoppingList;
+    patchedShoppingList?: PatchedShoppingListRequest;
 }
 
 export interface ApiShoppingListProtectingListRequest {
@@ -2396,11 +1999,11 @@ export interface ApiShoppingListProtectingListRequest {
 
 export interface ApiShoppingListRecipeBulkCreateEntriesCreateRequest {
     id: number;
-    shoppingListEntryBulkCreate: ShoppingListEntryBulkCreate;
+    shoppingListEntryBulkCreate: ShoppingListEntryBulkCreateRequest;
 }
 
 export interface ApiShoppingListRecipeCreateRequest {
-    shoppingListRecipe: Omit<ShoppingListRecipe, 'recipeData'|'mealPlanData'|'createdBy'>;
+    shoppingListRecipe: ShoppingListRecipeRequest;
 }
 
 export interface ApiShoppingListRecipeDestroyRequest {
@@ -2415,7 +2018,7 @@ export interface ApiShoppingListRecipeListRequest {
 
 export interface ApiShoppingListRecipePartialUpdateRequest {
     id: number;
-    patchedShoppingListRecipe?: Omit<PatchedShoppingListRecipe, 'recipeData'|'mealPlanData'|'createdBy'>;
+    patchedShoppingListRecipe?: PatchedShoppingListRecipeRequest;
 }
 
 export interface ApiShoppingListRecipeRetrieveRequest {
@@ -2424,7 +2027,7 @@ export interface ApiShoppingListRecipeRetrieveRequest {
 
 export interface ApiShoppingListRecipeUpdateRequest {
     id: number;
-    shoppingListRecipe: Omit<ShoppingListRecipe, 'recipeData'|'mealPlanData'|'createdBy'>;
+    shoppingListRecipe: ShoppingListRecipeRequest;
 }
 
 export interface ApiShoppingListRetrieveRequest {
@@ -2433,11 +2036,11 @@ export interface ApiShoppingListRetrieveRequest {
 
 export interface ApiShoppingListUpdateRequest {
     id: number;
-    shoppingList?: ShoppingList;
+    shoppingList?: ShoppingListRequest;
 }
 
 export interface ApiSpaceCreateRequest {
-    space?: Omit<Space, 'createdBy'|'createdAt'|'maxRecipes'|'maxFileStorageMb'|'maxUsers'|'allowSharing'|'demo'|'userCount'|'recipeCount'|'fileSizeMb'|'aiMonthlyCreditsUsed'>;
+    space?: SpaceRequest;
 }
 
 export interface ApiSpaceListRequest {
@@ -2447,7 +2050,7 @@ export interface ApiSpaceListRequest {
 
 export interface ApiSpacePartialUpdateRequest {
     id: number;
-    patchedSpace?: Omit<PatchedSpace, 'createdBy'|'createdAt'|'maxRecipes'|'maxFileStorageMb'|'maxUsers'|'allowSharing'|'demo'|'userCount'|'recipeCount'|'fileSizeMb'|'aiMonthlyCreditsUsed'>;
+    patchedSpace?: PatchedSpaceRequest;
 }
 
 export interface ApiSpaceRetrieveRequest {
@@ -2456,11 +2059,11 @@ export interface ApiSpaceRetrieveRequest {
 
 export interface ApiSpaceUpdateRequest {
     id: number;
-    space?: Omit<Space, 'createdBy'|'createdAt'|'maxRecipes'|'maxFileStorageMb'|'maxUsers'|'allowSharing'|'demo'|'userCount'|'recipeCount'|'fileSizeMb'|'aiMonthlyCreditsUsed'>;
+    space?: SpaceRequest;
 }
 
 export interface ApiStepCreateRequest {
-    step: Omit<Step, 'instructionsMarkdown'|'stepRecipeData'|'numrecipe'>;
+    step: StepRequest;
 }
 
 export interface ApiStepDestroyRequest {
@@ -2476,7 +2079,7 @@ export interface ApiStepListRequest {
 
 export interface ApiStepPartialUpdateRequest {
     id: number;
-    patchedStep?: Omit<PatchedStep, 'instructionsMarkdown'|'stepRecipeData'|'numrecipe'>;
+    patchedStep?: PatchedStepRequest;
 }
 
 export interface ApiStepRetrieveRequest {
@@ -2485,7 +2088,7 @@ export interface ApiStepRetrieveRequest {
 
 export interface ApiStepUpdateRequest {
     id: number;
-    step: Omit<Step, 'instructionsMarkdown'|'stepRecipeData'|'numrecipe'>;
+    step: StepRequest;
 }
 
 export interface ApiStorageCascadingListRequest {
@@ -2496,7 +2099,7 @@ export interface ApiStorageCascadingListRequest {
 }
 
 export interface ApiStorageCreateRequest {
-    storage: Omit<Storage, 'createdBy'>;
+    storage: StorageRequest;
 }
 
 export interface ApiStorageDestroyRequest {
@@ -2517,7 +2120,7 @@ export interface ApiStorageNullingListRequest {
 
 export interface ApiStoragePartialUpdateRequest {
     id: number;
-    patchedStorage?: Omit<PatchedStorage, 'createdBy'>;
+    patchedStorage?: PatchedStorageRequest;
 }
 
 export interface ApiStorageProtectingListRequest {
@@ -2533,7 +2136,7 @@ export interface ApiStorageRetrieveRequest {
 
 export interface ApiStorageUpdateRequest {
     id: number;
-    storage: Omit<Storage, 'createdBy'>;
+    storage: StorageRequest;
 }
 
 export interface ApiSupermarketCascadingListRequest {
@@ -2551,7 +2154,7 @@ export interface ApiSupermarketCategoryCascadingListRequest {
 }
 
 export interface ApiSupermarketCategoryCreateRequest {
-    supermarketCategory: SupermarketCategory;
+    supermarketCategory: SupermarketCategoryRequest;
 }
 
 export interface ApiSupermarketCategoryDestroyRequest {
@@ -2570,7 +2173,7 @@ export interface ApiSupermarketCategoryListRequest {
 export interface ApiSupermarketCategoryMergeUpdateRequest {
     id: number;
     target: number;
-    supermarketCategory: SupermarketCategory;
+    supermarketCategory: SupermarketCategoryRequest;
 }
 
 export interface ApiSupermarketCategoryNullingListRequest {
@@ -2582,7 +2185,7 @@ export interface ApiSupermarketCategoryNullingListRequest {
 
 export interface ApiSupermarketCategoryPartialUpdateRequest {
     id: number;
-    patchedSupermarketCategory?: PatchedSupermarketCategory;
+    patchedSupermarketCategory?: PatchedSupermarketCategoryRequest;
 }
 
 export interface ApiSupermarketCategoryProtectingListRequest {
@@ -2593,7 +2196,7 @@ export interface ApiSupermarketCategoryProtectingListRequest {
 }
 
 export interface ApiSupermarketCategoryRelationCreateRequest {
-    supermarketCategoryRelation: SupermarketCategoryRelation;
+    supermarketCategoryRelation: SupermarketCategoryRelationRequest;
 }
 
 export interface ApiSupermarketCategoryRelationDestroyRequest {
@@ -2611,7 +2214,7 @@ export interface ApiSupermarketCategoryRelationListRequest {
 
 export interface ApiSupermarketCategoryRelationPartialUpdateRequest {
     id: number;
-    patchedSupermarketCategoryRelation?: PatchedSupermarketCategoryRelation;
+    patchedSupermarketCategoryRelation?: PatchedSupermarketCategoryRelationRequest;
 }
 
 export interface ApiSupermarketCategoryRelationRetrieveRequest {
@@ -2620,7 +2223,7 @@ export interface ApiSupermarketCategoryRelationRetrieveRequest {
 
 export interface ApiSupermarketCategoryRelationUpdateRequest {
     id: number;
-    supermarketCategoryRelation: SupermarketCategoryRelation;
+    supermarketCategoryRelation: SupermarketCategoryRelationRequest;
 }
 
 export interface ApiSupermarketCategoryRetrieveRequest {
@@ -2629,11 +2232,11 @@ export interface ApiSupermarketCategoryRetrieveRequest {
 
 export interface ApiSupermarketCategoryUpdateRequest {
     id: number;
-    supermarketCategory: SupermarketCategory;
+    supermarketCategory: SupermarketCategoryRequest;
 }
 
 export interface ApiSupermarketCreateRequest {
-    supermarket: Omit<Supermarket, 'categoryToSupermarket'>;
+    supermarket: SupermarketRequest;
 }
 
 export interface ApiSupermarketDestroyRequest {
@@ -2658,7 +2261,7 @@ export interface ApiSupermarketNullingListRequest {
 
 export interface ApiSupermarketPartialUpdateRequest {
     id: number;
-    patchedSupermarket?: Omit<PatchedSupermarket, 'categoryToSupermarket'>;
+    patchedSupermarket?: PatchedSupermarketRequest;
 }
 
 export interface ApiSupermarketProtectingListRequest {
@@ -2674,7 +2277,7 @@ export interface ApiSupermarketRetrieveRequest {
 
 export interface ApiSupermarketUpdateRequest {
     id: number;
-    supermarket: Omit<Supermarket, 'categoryToSupermarket'>;
+    supermarket: SupermarketRequest;
 }
 
 export interface ApiSwitchActiveSpaceRetrieveRequest {
@@ -2689,7 +2292,7 @@ export interface ApiSyncCascadingListRequest {
 }
 
 export interface ApiSyncCreateRequest {
-    sync: Omit<Sync, 'createdAt'|'updatedAt'>;
+    sync: SyncRequest;
 }
 
 export interface ApiSyncDestroyRequest {
@@ -2719,7 +2322,7 @@ export interface ApiSyncNullingListRequest {
 
 export interface ApiSyncPartialUpdateRequest {
     id: number;
-    patchedSync?: Omit<PatchedSync, 'createdAt'|'updatedAt'>;
+    patchedSync?: PatchedSyncRequest;
 }
 
 export interface ApiSyncProtectingListRequest {
@@ -2731,7 +2334,7 @@ export interface ApiSyncProtectingListRequest {
 
 export interface ApiSyncQuerySyncedFolderCreateRequest {
     id: number;
-    sync: Omit<Sync, 'createdAt'|'updatedAt'>;
+    sync: SyncRequest;
 }
 
 export interface ApiSyncRetrieveRequest {
@@ -2740,7 +2343,7 @@ export interface ApiSyncRetrieveRequest {
 
 export interface ApiSyncUpdateRequest {
     id: number;
-    sync: Omit<Sync, 'createdAt'|'updatedAt'>;
+    sync: SyncRequest;
 }
 
 export interface ApiUnitCascadingListRequest {
@@ -2751,7 +2354,7 @@ export interface ApiUnitCascadingListRequest {
 }
 
 export interface ApiUnitConversionCreateRequest {
-    unitConversion: Omit<UnitConversion, 'name'>;
+    unitConversion: UnitConversionRequest;
 }
 
 export interface ApiUnitConversionDestroyRequest {
@@ -2767,7 +2370,7 @@ export interface ApiUnitConversionListRequest {
 
 export interface ApiUnitConversionPartialUpdateRequest {
     id: number;
-    patchedUnitConversion?: Omit<PatchedUnitConversion, 'name'>;
+    patchedUnitConversion?: PatchedUnitConversionRequest;
 }
 
 export interface ApiUnitConversionRetrieveRequest {
@@ -2776,11 +2379,11 @@ export interface ApiUnitConversionRetrieveRequest {
 
 export interface ApiUnitConversionUpdateRequest {
     id: number;
-    unitConversion: Omit<UnitConversion, 'name'>;
+    unitConversion: UnitConversionRequest;
 }
 
 export interface ApiUnitCreateRequest {
-    unit: Unit;
+    unit: UnitRequest;
 }
 
 export interface ApiUnitDestroyRequest {
@@ -2799,7 +2402,7 @@ export interface ApiUnitListRequest {
 export interface ApiUnitMergeUpdateRequest {
     id: number;
     target: number;
-    unit: Unit;
+    unit: UnitRequest;
 }
 
 export interface ApiUnitNullingListRequest {
@@ -2811,7 +2414,7 @@ export interface ApiUnitNullingListRequest {
 
 export interface ApiUnitPartialUpdateRequest {
     id: number;
-    patchedUnit?: PatchedUnit;
+    patchedUnit?: PatchedUnitRequest;
 }
 
 export interface ApiUnitProtectingListRequest {
@@ -2827,7 +2430,7 @@ export interface ApiUnitRetrieveRequest {
 
 export interface ApiUnitUpdateRequest {
     id: number;
-    unit: Unit;
+    unit: UnitRequest;
 }
 
 export interface ApiUserFileCascadingListRequest {
@@ -2839,13 +2442,8 @@ export interface ApiUserFileCascadingListRequest {
 
 export interface ApiUserFileCreateRequest {
     name: string;
-    fileDownload: string;
-    preview: string;
-    fileSizeKb: number;
-    createdBy: User;
-    createdAt: Date;
+    file?: Blob;
     id?: number;
-    file?: string;
 }
 
 export interface ApiUserFileDestroyRequest {
@@ -2870,14 +2468,9 @@ export interface ApiUserFileNullingListRequest {
 
 export interface ApiUserFilePartialUpdateRequest {
     id: number;
-    id2?: number;
     name?: string;
-    file?: string;
-    fileDownload?: string;
-    preview?: string;
-    fileSizeKb?: number;
-    createdBy?: User;
-    createdAt?: Date;
+    file?: Blob;
+    id2?: number;
 }
 
 export interface ApiUserFileProtectingListRequest {
@@ -2894,13 +2487,8 @@ export interface ApiUserFileRetrieveRequest {
 export interface ApiUserFileUpdateRequest {
     id: number;
     name: string;
-    fileDownload: string;
-    preview: string;
-    fileSizeKb: number;
-    createdBy: User;
-    createdAt: Date;
+    file?: Blob;
     id2?: number;
-    file?: string;
 }
 
 export interface ApiUserListRequest {
@@ -2909,12 +2497,12 @@ export interface ApiUserListRequest {
 
 export interface ApiUserPartialUpdateRequest {
     id: number;
-    patchedUser?: Omit<PatchedUser, 'username'|'displayName'|'isStaff'|'isSuperuser'|'isActive'>;
+    patchedUser?: PatchedUserRequest;
 }
 
 export interface ApiUserPreferencePartialUpdateRequest {
     user: number;
-    patchedUserPreference?: Omit<PatchedUserPreference, 'user'|'foodInheritDefault'|'foodChildrenExist'>;
+    patchedUserPreference?: PatchedUserPreferenceRequest;
 }
 
 export interface ApiUserPreferenceRetrieveRequest {
@@ -2926,7 +2514,7 @@ export interface ApiUserRetrieveRequest {
 }
 
 export interface ApiUserSpaceBatchUpdateUpdateRequest {
-    userSpaceBatchUpdate: UserSpaceBatchUpdate;
+    userSpaceBatchUpdate: UserSpaceBatchUpdateRequest;
 }
 
 export interface ApiUserSpaceDestroyRequest {
@@ -2941,7 +2529,7 @@ export interface ApiUserSpaceListRequest {
 
 export interface ApiUserSpacePartialUpdateRequest {
     id: number;
-    patchedUserSpace?: Omit<PatchedUserSpace, 'user'|'space'|'inviteLink'|'createdAt'|'updatedAt'>;
+    patchedUserSpace?: PatchedUserSpaceRequest;
 }
 
 export interface ApiUserSpaceRetrieveRequest {
@@ -2950,11 +2538,11 @@ export interface ApiUserSpaceRetrieveRequest {
 
 export interface ApiUserSpaceUpdateRequest {
     id: number;
-    userSpace: Omit<UserSpace, 'user'|'space'|'inviteLink'|'createdAt'|'updatedAt'>;
+    userSpace?: UserSpaceRequest;
 }
 
 export interface ApiViewLogCreateRequest {
-    viewLog: Omit<ViewLog, 'createdBy'|'createdAt'>;
+    viewLog: ViewLogRequest;
 }
 
 export interface ApiViewLogDestroyRequest {
@@ -2968,7 +2556,7 @@ export interface ApiViewLogListRequest {
 
 export interface ApiViewLogPartialUpdateRequest {
     id: number;
-    patchedViewLog?: Omit<PatchedViewLog, 'createdBy'|'createdAt'>;
+    patchedViewLog?: PatchedViewLogRequest;
 }
 
 export interface ApiViewLogRetrieveRequest {
@@ -2977,7 +2565,157 @@ export interface ApiViewLogRetrieveRequest {
 
 export interface ApiViewLogUpdateRequest {
     id: number;
-    viewLog: Omit<ViewLog, 'createdBy'|'createdAt'>;
+    viewLog: ViewLogRequest;
+}
+
+export interface CuadernoAllergensAssessRequest {
+    food?: number;
+    recipe?: number;
+}
+
+export interface CuadernoAllergensDeclareRequest {
+    allergenWriteSchema: AllergenWriteSchemaRequest;
+}
+
+export interface CuadernoEditionUpdateRequest {
+    editionWriteSchema?: EditionWriteSchemaRequest;
+}
+
+export interface CuadernoExchangeImportRequest {
+    exchangeImportDocumentSchema: ExchangeImportDocumentSchemaRequest;
+    preview?: CuadernoExchangeImportPreviewEnum;
+}
+
+export interface CuadernoLegacyOrderCreateRequest {
+    legacyOrderWriteSchema: LegacyOrderWriteSchemaRequest;
+}
+
+export interface CuadernoMovementsCreateRequest {
+    movementWriteSchema?: MovementWriteSchemaRequest;
+}
+
+export interface CuadernoPackagePricesCreateRequest {
+    id: number;
+    priceWrite: PriceWriteRequest;
+}
+
+export interface CuadernoPackagePricesListRequest {
+    id: number;
+    limit?: string;
+    offset?: string;
+}
+
+export interface CuadernoPackagesCreateRequest {
+    packageWrite: PackageWriteRequest;
+}
+
+export interface CuadernoProductionCalculateRequest {
+    productionWriteSchema?: ProductionWriteSchemaRequest;
+}
+
+export interface CuadernoPurchaseOffersCreateRequest {
+    offerWrite: OfferWriteRequest;
+}
+
+export interface CuadernoPurchaseOrderActionRequest {
+    orderId: number;
+    orderAction: OrderActionRequest;
+}
+
+export interface CuadernoPurchaseOrderRetrieveRequest {
+    orderId: number;
+}
+
+export interface CuadernoPurchaseOrdersCreateRequest {
+    orderWrite: OrderWriteRequest;
+}
+
+export interface CuadernoPurchaseReceiptReverseRequest {
+    receiptId: number;
+    receiptReverse: ReceiptReverseRequest;
+}
+
+export interface CuadernoPurchaseReceiptsCreateRequest {
+    orderId: number;
+    receiptWrite: ReceiptWriteRequest;
+}
+
+export interface CuadernoPurchaseReceiptsListRequest {
+    orderId: number;
+}
+
+export interface CuadernoRecipeCostRetrieveRequest {
+    recipeId: number;
+    servings?: string;
+}
+
+export interface CuadernoRecipeFinanceRetrieveRequest {
+    recipeId: number;
+    servings?: string;
+}
+
+export interface CuadernoRecipeFinanceUpdateRequest {
+    recipeId: number;
+    servings?: string;
+    cuadernoRecipeFinanceWrite?: CuadernoRecipeFinanceWriteRequest;
+}
+
+export interface CuadernoRecipeIngredientYieldsRetrieveRequest {
+    recipeId: number;
+}
+
+export interface CuadernoRecipeIngredientYieldsUpdateRequest {
+    recipeId: number;
+    ingredientYieldWrite: IngredientYieldWriteRequest;
+}
+
+export interface CuadernoRecipePriceImpactRetrieveRequest {
+    _package: string;
+    recipeId: number;
+    servings?: string;
+}
+
+export interface CuadernoRecipeYieldRetrieveRequest {
+    recipeId: number;
+}
+
+export interface CuadernoRecipeYieldUpdateRequest {
+    recipeId: number;
+    recipeYieldWriteSchema: RecipeYieldWriteSchemaRequest;
+}
+
+export interface CuadernoReplenishmentCalculateRequest {
+    replenishmentQuery?: ReplenishmentQueryRequest;
+}
+
+export interface CuadernoServiceActionRequest {
+    planId: number;
+    serviceActionWriteSchema: ServiceActionWriteSchemaRequest;
+}
+
+export interface CuadernoServicePreparationRetrieveRequest {
+    planId: number;
+}
+
+export interface CuadernoServicePreparationUpdateRequest {
+    planId: number;
+    preparationWrite: PreparationWriteRequest;
+}
+
+export interface CuadernoServiceRetrieveRequest {
+    planId: number;
+}
+
+export interface CuadernoServicesCreateRequest {
+    serviceCreateSchema: ServiceCreateSchemaRequest;
+}
+
+export interface CuadernoStockMinimumsRetrieveRequest {
+    household?: number;
+}
+
+export interface CuadernoStockMinimumsUpdateRequest {
+    minimumWrite: MinimumWriteRequest;
 }
 
 /**
@@ -3014,7 +2752,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: AccessTokenToJSON(requestParameters['accessToken']),
+            body: AccessTokenRequestToJSON(requestParameters['accessToken']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AccessTokenFromJSON(jsonValue));
@@ -3131,7 +2869,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedAccessTokenToJSON(requestParameters['patchedAccessToken']),
+            body: PatchedAccessTokenRequestToJSON(requestParameters['patchedAccessToken']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AccessTokenFromJSON(jsonValue));
@@ -3223,7 +2961,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: AccessTokenToJSON(requestParameters['accessToken']),
+            body: AccessTokenRequestToJSON(requestParameters['accessToken']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AccessTokenFromJSON(jsonValue));
@@ -3285,6 +3023,8 @@ export class ApiApi extends runtime.BaseAPI {
 
         let formParams: { append(param: string, value: any): any };
         let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
         if (useForm) {
             formParams = new FormData();
         } else {
@@ -3493,7 +3233,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: AiProviderToJSON(requestParameters['aiProvider']),
+            body: AiProviderRequestToJSON(requestParameters['aiProvider']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AiProviderFromJSON(jsonValue));
@@ -3671,7 +3411,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedAiProviderToJSON(requestParameters['patchedAiProvider']),
+            body: PatchedAiProviderRequestToJSON(requestParameters['patchedAiProvider']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AiProviderFromJSON(jsonValue));
@@ -3816,7 +3556,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: AiProviderToJSON(requestParameters['aiProvider']),
+            body: AiProviderRequestToJSON(requestParameters['aiProvider']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AiProviderFromJSON(jsonValue));
@@ -3863,7 +3603,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
+            body: RecipeRequestToJSON(requestParameters['recipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -3906,7 +3646,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: AutoMealPlanToJSON(requestParameters['autoMealPlan']),
+            body: AutoMealPlanRequestToJSON(requestParameters['autoMealPlan']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AutoMealPlanFromJSON(jsonValue));
@@ -3949,7 +3689,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: AutomationToJSON(requestParameters['automation']),
+            body: AutomationRequestToJSON(requestParameters['automation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AutomationFromJSON(jsonValue));
@@ -4078,7 +3818,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedAutomationToJSON(requestParameters['patchedAutomation']),
+            body: PatchedAutomationRequestToJSON(requestParameters['patchedAutomation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AutomationFromJSON(jsonValue));
@@ -4170,7 +3910,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: AutomationToJSON(requestParameters['automation']),
+            body: AutomationRequestToJSON(requestParameters['automation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AutomationFromJSON(jsonValue));
@@ -4213,7 +3953,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: BookmarkletImportToJSON(requestParameters['bookmarkletImport']),
+            body: BookmarkletImportRequestToJSON(requestParameters['bookmarkletImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkletImportFromJSON(jsonValue));
@@ -4338,7 +4078,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedBookmarkletImportToJSON(requestParameters['patchedBookmarkletImport']),
+            body: PatchedBookmarkletImportRequestToJSON(requestParameters['patchedBookmarkletImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkletImportFromJSON(jsonValue));
@@ -4430,7 +4170,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: BookmarkletImportToJSON(requestParameters['bookmarkletImport']),
+            body: BookmarkletImportRequestToJSON(requestParameters['bookmarkletImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BookmarkletImportFromJSON(jsonValue));
@@ -4526,7 +4266,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ConnectorConfigToJSON(requestParameters['connectorConfig']),
+            body: ConnectorConfigRequestToJSON(requestParameters['connectorConfig']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ConnectorConfigFromJSON(jsonValue));
@@ -4704,7 +4444,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedConnectorConfigToJSON(requestParameters['patchedConnectorConfig']),
+            body: PatchedConnectorConfigRequestToJSON(requestParameters['patchedConnectorConfig']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ConnectorConfigFromJSON(jsonValue));
@@ -4849,7 +4589,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ConnectorConfigToJSON(requestParameters['connectorConfig']),
+            body: ConnectorConfigRequestToJSON(requestParameters['connectorConfig']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ConnectorConfigFromJSON(jsonValue));
@@ -4892,7 +4632,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: CookLogToJSON(requestParameters['cookLog']),
+            body: CookLogRequestToJSON(requestParameters['cookLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CookLogFromJSON(jsonValue));
@@ -5021,7 +4761,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedCookLogToJSON(requestParameters['patchedCookLog']),
+            body: PatchedCookLogRequestToJSON(requestParameters['patchedCookLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CookLogFromJSON(jsonValue));
@@ -5113,7 +4853,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: CookLogToJSON(requestParameters['cookLog']),
+            body: CookLogRequestToJSON(requestParameters['cookLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CookLogFromJSON(jsonValue));
@@ -5156,7 +4896,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: CustomFilterToJSON(requestParameters['customFilter']),
+            body: CustomFilterRequestToJSON(requestParameters['customFilter']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CustomFilterFromJSON(jsonValue));
@@ -5301,7 +5041,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedCustomFilterToJSON(requestParameters['patchedCustomFilter']),
+            body: PatchedCustomFilterRequestToJSON(requestParameters['patchedCustomFilter']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CustomFilterFromJSON(jsonValue));
@@ -5393,7 +5133,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: CustomFilterToJSON(requestParameters['customFilter']),
+            body: CustomFilterRequestToJSON(requestParameters['customFilter']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => CustomFilterFromJSON(jsonValue));
@@ -5410,7 +5150,7 @@ export class ApiApi extends runtime.BaseAPI {
     /**
      * function to download a user file securely (wrapping as zip to prevent any context based XSS problems) temporary solution until a real file manager is implemented
      */
-    async apiDownloadFileRetrieveRaw(requestParameters: ApiDownloadFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiDownloadFileRetrieveRaw(requestParameters: ApiDownloadFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['fileId'] == null) {
             throw new runtime.RequiredError(
                 'fileId',
@@ -5437,3156 +5177,14 @@ export class ApiApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.BlobApiResponse(response);
     }
 
     /**
      * function to download a user file securely (wrapping as zip to prevent any context based XSS problems) temporary solution until a real file manager is implemented
      */
-    async apiDownloadFileRetrieve(requestParameters: ApiDownloadFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiDownloadFileRetrieveRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceCreateRaw(requestParameters: ApiEnterpriseBillingInvoiceCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingInvoice>> {
-        if (requestParameters['enterpriseBillingInvoice'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingInvoice',
-                'Required parameter "enterpriseBillingInvoice" was null or undefined when calling apiEnterpriseBillingInvoiceCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingInvoiceToJSON(requestParameters['enterpriseBillingInvoice']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingInvoiceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceCreate(requestParameters: ApiEnterpriseBillingInvoiceCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingInvoice> {
-        const response = await this.apiEnterpriseBillingInvoiceCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceDestroyRaw(requestParameters: ApiEnterpriseBillingInvoiceDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingInvoiceDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceDestroy(requestParameters: ApiEnterpriseBillingInvoiceDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseBillingInvoiceDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceDownloadRetrieveRaw(requestParameters: ApiEnterpriseBillingInvoiceDownloadRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingInvoice>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingInvoiceDownloadRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/{id}/download/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingInvoiceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceDownloadRetrieve(requestParameters: ApiEnterpriseBillingInvoiceDownloadRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingInvoice> {
-        const response = await this.apiEnterpriseBillingInvoiceDownloadRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceListRaw(requestParameters: ApiEnterpriseBillingInvoiceListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseBillingInvoiceList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseBillingInvoiceListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceList(requestParameters: ApiEnterpriseBillingInvoiceListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseBillingInvoiceList> {
-        const response = await this.apiEnterpriseBillingInvoiceListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoicePartialUpdateRaw(requestParameters: ApiEnterpriseBillingInvoicePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingInvoice>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingInvoicePartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedEnterpriseBillingInvoiceToJSON(requestParameters['patchedEnterpriseBillingInvoice']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingInvoiceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoicePartialUpdate(requestParameters: ApiEnterpriseBillingInvoicePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingInvoice> {
-        const response = await this.apiEnterpriseBillingInvoicePartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceRetrieveRaw(requestParameters: ApiEnterpriseBillingInvoiceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingInvoice>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingInvoiceRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingInvoiceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceRetrieve(requestParameters: ApiEnterpriseBillingInvoiceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingInvoice> {
-        const response = await this.apiEnterpriseBillingInvoiceRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceUpdateRaw(requestParameters: ApiEnterpriseBillingInvoiceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingInvoice>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingInvoiceUpdate().'
-            );
-        }
-
-        if (requestParameters['enterpriseBillingInvoice'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingInvoice',
-                'Required parameter "enterpriseBillingInvoice" was null or undefined when calling apiEnterpriseBillingInvoiceUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-invoice/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingInvoiceToJSON(requestParameters['enterpriseBillingInvoice']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingInvoiceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingInvoiceUpdate(requestParameters: ApiEnterpriseBillingInvoiceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingInvoice> {
-        const response = await this.apiEnterpriseBillingInvoiceUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanCreateRaw(requestParameters: ApiEnterpriseBillingPlanCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingPlan>> {
-        if (requestParameters['enterpriseBillingPlan'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingPlan',
-                'Required parameter "enterpriseBillingPlan" was null or undefined when calling apiEnterpriseBillingPlanCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-plan/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingPlanToJSON(requestParameters['enterpriseBillingPlan']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingPlanFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanCreate(requestParameters: ApiEnterpriseBillingPlanCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingPlan> {
-        const response = await this.apiEnterpriseBillingPlanCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanDestroyRaw(requestParameters: ApiEnterpriseBillingPlanDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingPlanDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-plan/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanDestroy(requestParameters: ApiEnterpriseBillingPlanDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseBillingPlanDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanListRaw(requestParameters: ApiEnterpriseBillingPlanListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseBillingPlanList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-plan/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseBillingPlanListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanList(requestParameters: ApiEnterpriseBillingPlanListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseBillingPlanList> {
-        const response = await this.apiEnterpriseBillingPlanListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanPartialUpdateRaw(requestParameters: ApiEnterpriseBillingPlanPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingPlan>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingPlanPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-plan/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedEnterpriseBillingPlanToJSON(requestParameters['patchedEnterpriseBillingPlan']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingPlanFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanPartialUpdate(requestParameters: ApiEnterpriseBillingPlanPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingPlan> {
-        const response = await this.apiEnterpriseBillingPlanPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanRetrieveRaw(requestParameters: ApiEnterpriseBillingPlanRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingPlan>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingPlanRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-plan/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingPlanFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanRetrieve(requestParameters: ApiEnterpriseBillingPlanRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingPlan> {
-        const response = await this.apiEnterpriseBillingPlanRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanUpdateRaw(requestParameters: ApiEnterpriseBillingPlanUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingPlan>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingPlanUpdate().'
-            );
-        }
-
-        if (requestParameters['enterpriseBillingPlan'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingPlan',
-                'Required parameter "enterpriseBillingPlan" was null or undefined when calling apiEnterpriseBillingPlanUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-plan/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingPlanToJSON(requestParameters['enterpriseBillingPlan']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingPlanFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingPlanUpdate(requestParameters: ApiEnterpriseBillingPlanUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingPlan> {
-        const response = await this.apiEnterpriseBillingPlanUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductCreateRaw(requestParameters: ApiEnterpriseBillingProductCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingProduct>> {
-        if (requestParameters['enterpriseBillingProduct'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingProduct',
-                'Required parameter "enterpriseBillingProduct" was null or undefined when calling apiEnterpriseBillingProductCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-product/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingProductToJSON(requestParameters['enterpriseBillingProduct']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingProductFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductCreate(requestParameters: ApiEnterpriseBillingProductCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingProduct> {
-        const response = await this.apiEnterpriseBillingProductCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductDestroyRaw(requestParameters: ApiEnterpriseBillingProductDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingProductDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-product/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductDestroy(requestParameters: ApiEnterpriseBillingProductDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseBillingProductDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductListRaw(requestParameters: ApiEnterpriseBillingProductListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseBillingProductList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-product/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseBillingProductListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductList(requestParameters: ApiEnterpriseBillingProductListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseBillingProductList> {
-        const response = await this.apiEnterpriseBillingProductListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductPartialUpdateRaw(requestParameters: ApiEnterpriseBillingProductPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingProduct>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingProductPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-product/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedEnterpriseBillingProductToJSON(requestParameters['patchedEnterpriseBillingProduct']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingProductFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductPartialUpdate(requestParameters: ApiEnterpriseBillingProductPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingProduct> {
-        const response = await this.apiEnterpriseBillingProductPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductRetrieveRaw(requestParameters: ApiEnterpriseBillingProductRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingProduct>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingProductRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-product/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingProductFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductRetrieve(requestParameters: ApiEnterpriseBillingProductRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingProduct> {
-        const response = await this.apiEnterpriseBillingProductRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductUpdateRaw(requestParameters: ApiEnterpriseBillingProductUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingProduct>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingProductUpdate().'
-            );
-        }
-
-        if (requestParameters['enterpriseBillingProduct'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingProduct',
-                'Required parameter "enterpriseBillingProduct" was null or undefined when calling apiEnterpriseBillingProductUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-product/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingProductToJSON(requestParameters['enterpriseBillingProduct']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingProductFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingProductUpdate(requestParameters: ApiEnterpriseBillingProductUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingProduct> {
-        const response = await this.apiEnterpriseBillingProductUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkCreateRaw(requestParameters: ApiEnterpriseBillingReferralLinkCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingReferralLink>> {
-        if (requestParameters['enterpriseBillingReferralLink'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingReferralLink',
-                'Required parameter "enterpriseBillingReferralLink" was null or undefined when calling apiEnterpriseBillingReferralLinkCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingReferralLinkToJSON(requestParameters['enterpriseBillingReferralLink']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingReferralLinkFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkCreate(requestParameters: ApiEnterpriseBillingReferralLinkCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingReferralLink> {
-        const response = await this.apiEnterpriseBillingReferralLinkCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkDestroyRaw(requestParameters: ApiEnterpriseBillingReferralLinkDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingReferralLinkDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkDestroy(requestParameters: ApiEnterpriseBillingReferralLinkDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseBillingReferralLinkDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkGetLinkRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingReferralLink>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/get_link/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingReferralLinkFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkGetLinkRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingReferralLink> {
-        const response = await this.apiEnterpriseBillingReferralLinkGetLinkRetrieveRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkListRaw(requestParameters: ApiEnterpriseBillingReferralLinkListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseBillingReferralLinkList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseBillingReferralLinkListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkList(requestParameters: ApiEnterpriseBillingReferralLinkListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseBillingReferralLinkList> {
-        const response = await this.apiEnterpriseBillingReferralLinkListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkPartialUpdateRaw(requestParameters: ApiEnterpriseBillingReferralLinkPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingReferralLink>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingReferralLinkPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedEnterpriseBillingReferralLinkToJSON(requestParameters['patchedEnterpriseBillingReferralLink']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingReferralLinkFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkPartialUpdate(requestParameters: ApiEnterpriseBillingReferralLinkPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingReferralLink> {
-        const response = await this.apiEnterpriseBillingReferralLinkPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkRetrieveRaw(requestParameters: ApiEnterpriseBillingReferralLinkRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingReferralLink>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingReferralLinkRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingReferralLinkFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkRetrieve(requestParameters: ApiEnterpriseBillingReferralLinkRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingReferralLink> {
-        const response = await this.apiEnterpriseBillingReferralLinkRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkUpdateRaw(requestParameters: ApiEnterpriseBillingReferralLinkUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseBillingReferralLink>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseBillingReferralLinkUpdate().'
-            );
-        }
-
-        if (requestParameters['enterpriseBillingReferralLink'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseBillingReferralLink',
-                'Required parameter "enterpriseBillingReferralLink" was null or undefined when calling apiEnterpriseBillingReferralLinkUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-referral-link/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseBillingReferralLinkToJSON(requestParameters['enterpriseBillingReferralLink']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseBillingReferralLinkFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingReferralLinkUpdate(requestParameters: ApiEnterpriseBillingReferralLinkUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseBillingReferralLink> {
-        const response = await this.apiEnterpriseBillingReferralLinkUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingStripeCheckoutSessionCreateRaw(requestParameters: ApiEnterpriseBillingStripeCheckoutSessionCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StripeCheckoutSessionResponse>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-stripe/checkout_session/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: StripeCheckoutSessionRequestToJSON(requestParameters['stripeCheckoutSessionRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => StripeCheckoutSessionResponseFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingStripeCheckoutSessionCreate(requestParameters: ApiEnterpriseBillingStripeCheckoutSessionCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StripeCheckoutSessionResponse> {
-        const response = await this.apiEnterpriseBillingStripeCheckoutSessionCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingStripePortalRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StripePortal>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-billing-stripe/portal/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => StripePortalFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseBillingStripePortalRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StripePortal> {
-        const response = await this.apiEnterpriseBillingStripePortalRetrieveRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedCreateRaw(requestParameters: ApiEnterpriseSocialEmbedCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSocialEmbed>> {
-        if (requestParameters['enterpriseSocialEmbed'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseSocialEmbed',
-                'Required parameter "enterpriseSocialEmbed" was null or undefined when calling apiEnterpriseSocialEmbedCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-embed/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseSocialEmbedToJSON(requestParameters['enterpriseSocialEmbed']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSocialEmbedFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedCreate(requestParameters: ApiEnterpriseSocialEmbedCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSocialEmbed> {
-        const response = await this.apiEnterpriseSocialEmbedCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedDestroyRaw(requestParameters: ApiEnterpriseSocialEmbedDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialEmbedDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-embed/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedDestroy(requestParameters: ApiEnterpriseSocialEmbedDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseSocialEmbedDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedListRaw(requestParameters: ApiEnterpriseSocialEmbedListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseSocialEmbedList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-embed/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseSocialEmbedListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedList(requestParameters: ApiEnterpriseSocialEmbedListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseSocialEmbedList> {
-        const response = await this.apiEnterpriseSocialEmbedListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedPartialUpdateRaw(requestParameters: ApiEnterpriseSocialEmbedPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSocialEmbed>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialEmbedPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-embed/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedEnterpriseSocialEmbedToJSON(requestParameters['patchedEnterpriseSocialEmbed']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSocialEmbedFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedPartialUpdate(requestParameters: ApiEnterpriseSocialEmbedPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSocialEmbed> {
-        const response = await this.apiEnterpriseSocialEmbedPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedRetrieveRaw(requestParameters: ApiEnterpriseSocialEmbedRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSocialEmbed>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialEmbedRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-embed/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSocialEmbedFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedRetrieve(requestParameters: ApiEnterpriseSocialEmbedRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSocialEmbed> {
-        const response = await this.apiEnterpriseSocialEmbedRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedUpdateRaw(requestParameters: ApiEnterpriseSocialEmbedUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSocialEmbed>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialEmbedUpdate().'
-            );
-        }
-
-        if (requestParameters['enterpriseSocialEmbed'] == null) {
-            throw new runtime.RequiredError(
-                'enterpriseSocialEmbed',
-                'Required parameter "enterpriseSocialEmbed" was null or undefined when calling apiEnterpriseSocialEmbedUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-embed/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseSocialEmbedToJSON(requestParameters['enterpriseSocialEmbed']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSocialEmbedFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSocialEmbedUpdate(requestParameters: ApiEnterpriseSocialEmbedUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSocialEmbed> {
-        const response = await this.apiEnterpriseSocialEmbedUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * get a paginated list of objects that will be cascaded (deleted) when deleting the selected object
-     */
-    async apiEnterpriseSocialKeywordCascadingListRaw(requestParameters: ApiEnterpriseSocialKeywordCascadingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedGenericModelReferenceList>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordCascadingList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['cache'] != null) {
-            queryParameters['cache'] = requestParameters['cache'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/cascading/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedGenericModelReferenceListFromJSON(jsonValue));
-    }
-
-    /**
-     * get a paginated list of objects that will be cascaded (deleted) when deleting the selected object
-     */
-    async apiEnterpriseSocialKeywordCascadingList(requestParameters: ApiEnterpriseSocialKeywordCascadingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
-        const response = await this.apiEnterpriseSocialKeywordCascadingListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordCreateRaw(requestParameters: ApiEnterpriseSocialKeywordCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
-        if (requestParameters['keyword'] == null) {
-            throw new runtime.RequiredError(
-                'keyword',
-                'Required parameter "keyword" was null or undefined when calling apiEnterpriseSocialKeywordCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordCreate(requestParameters: ApiEnterpriseSocialKeywordCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
-        const response = await this.apiEnterpriseSocialKeywordCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordDestroyRaw(requestParameters: ApiEnterpriseSocialKeywordDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordDestroy(requestParameters: ApiEnterpriseSocialKeywordDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseSocialKeywordDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordListRaw(requestParameters: ApiEnterpriseSocialKeywordListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedKeywordList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        if (requestParameters['query'] != null) {
-            queryParameters['query'] = requestParameters['query'];
-        }
-
-        if (requestParameters['random'] != null) {
-            queryParameters['random'] = requestParameters['random'];
-        }
-
-        if (requestParameters['root'] != null) {
-            queryParameters['root'] = requestParameters['root'];
-        }
-
-        if (requestParameters['rootTree'] != null) {
-            queryParameters['root_tree'] = requestParameters['rootTree'];
-        }
-
-        if (requestParameters['tree'] != null) {
-            queryParameters['tree'] = requestParameters['tree'];
-        }
-
-        if (requestParameters['updatedAt'] != null) {
-            queryParameters['updated_at'] = requestParameters['updatedAt'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedKeywordListFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordList(requestParameters: ApiEnterpriseSocialKeywordListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedKeywordList> {
-        const response = await this.apiEnterpriseSocialKeywordListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordMergeUpdateRaw(requestParameters: ApiEnterpriseSocialKeywordMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordMergeUpdate().'
-            );
-        }
-
-        if (requestParameters['target'] == null) {
-            throw new runtime.RequiredError(
-                'target',
-                'Required parameter "target" was null or undefined when calling apiEnterpriseSocialKeywordMergeUpdate().'
-            );
-        }
-
-        if (requestParameters['keyword'] == null) {
-            throw new runtime.RequiredError(
-                'keyword',
-                'Required parameter "keyword" was null or undefined when calling apiEnterpriseSocialKeywordMergeUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/merge/{target}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-        urlPath = urlPath.replace(`{${"target"}}`, encodeURIComponent(String(requestParameters['target'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordMergeUpdate(requestParameters: ApiEnterpriseSocialKeywordMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
-        const response = await this.apiEnterpriseSocialKeywordMergeUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordMoveUpdateRaw(requestParameters: ApiEnterpriseSocialKeywordMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordMoveUpdate().'
-            );
-        }
-
-        if (requestParameters['parent'] == null) {
-            throw new runtime.RequiredError(
-                'parent',
-                'Required parameter "parent" was null or undefined when calling apiEnterpriseSocialKeywordMoveUpdate().'
-            );
-        }
-
-        if (requestParameters['keyword'] == null) {
-            throw new runtime.RequiredError(
-                'keyword',
-                'Required parameter "keyword" was null or undefined when calling apiEnterpriseSocialKeywordMoveUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/move/{parent}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-        urlPath = urlPath.replace(`{${"parent"}}`, encodeURIComponent(String(requestParameters['parent'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordMoveUpdate(requestParameters: ApiEnterpriseSocialKeywordMoveUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
-        const response = await this.apiEnterpriseSocialKeywordMoveUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * get a paginated list of objects where the selected object will be removed whe its deleted
-     */
-    async apiEnterpriseSocialKeywordNullingListRaw(requestParameters: ApiEnterpriseSocialKeywordNullingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedGenericModelReferenceList>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordNullingList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['cache'] != null) {
-            queryParameters['cache'] = requestParameters['cache'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/nulling/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedGenericModelReferenceListFromJSON(jsonValue));
-    }
-
-    /**
-     * get a paginated list of objects where the selected object will be removed whe its deleted
-     */
-    async apiEnterpriseSocialKeywordNullingList(requestParameters: ApiEnterpriseSocialKeywordNullingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
-        const response = await this.apiEnterpriseSocialKeywordNullingListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordPartialUpdateRaw(requestParameters: ApiEnterpriseSocialKeywordPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedKeywordToJSON(requestParameters['patchedKeyword']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordPartialUpdate(requestParameters: ApiEnterpriseSocialKeywordPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
-        const response = await this.apiEnterpriseSocialKeywordPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * get a paginated list of objects that are protecting the selected object form being deleted
-     */
-    async apiEnterpriseSocialKeywordProtectingListRaw(requestParameters: ApiEnterpriseSocialKeywordProtectingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedGenericModelReferenceList>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordProtectingList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['cache'] != null) {
-            queryParameters['cache'] = requestParameters['cache'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/protecting/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedGenericModelReferenceListFromJSON(jsonValue));
-    }
-
-    /**
-     * get a paginated list of objects that are protecting the selected object form being deleted
-     */
-    async apiEnterpriseSocialKeywordProtectingList(requestParameters: ApiEnterpriseSocialKeywordProtectingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
-        const response = await this.apiEnterpriseSocialKeywordProtectingListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordRetrieveRaw(requestParameters: ApiEnterpriseSocialKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordRetrieve(requestParameters: ApiEnterpriseSocialKeywordRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
-        const response = await this.apiEnterpriseSocialKeywordRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordUpdateRaw(requestParameters: ApiEnterpriseSocialKeywordUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Keyword>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialKeywordUpdate().'
-            );
-        }
-
-        if (requestParameters['keyword'] == null) {
-            throw new runtime.RequiredError(
-                'keyword',
-                'Required parameter "keyword" was null or undefined when calling apiEnterpriseSocialKeywordUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-keyword/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialKeywordUpdate(requestParameters: ApiEnterpriseSocialKeywordUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Keyword> {
-        const response = await this.apiEnterpriseSocialKeywordUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeAipropertiesCreateRaw(requestParameters: ApiEnterpriseSocialRecipeAipropertiesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Recipe>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeAipropertiesCreate().'
-            );
-        }
-
-        if (requestParameters['recipe'] == null) {
-            throw new runtime.RequiredError(
-                'recipe',
-                'Required parameter "recipe" was null or undefined when calling apiEnterpriseSocialRecipeAipropertiesCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['provider'] != null) {
-            queryParameters['provider'] = requestParameters['provider'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/aiproperties/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeAipropertiesCreate(requestParameters: ApiEnterpriseSocialRecipeAipropertiesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Recipe> {
-        const response = await this.apiEnterpriseSocialRecipeAipropertiesCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeBatchUpdateUpdateRaw(requestParameters: ApiEnterpriseSocialRecipeBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeBatchUpdate>> {
-        if (requestParameters['recipeBatchUpdate'] == null) {
-            throw new runtime.RequiredError(
-                'recipeBatchUpdate',
-                'Required parameter "recipeBatchUpdate" was null or undefined when calling apiEnterpriseSocialRecipeBatchUpdateUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/batch_update/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RecipeBatchUpdateToJSON(requestParameters['recipeBatchUpdate']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBatchUpdateFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeBatchUpdateUpdate(requestParameters: ApiEnterpriseSocialRecipeBatchUpdateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeBatchUpdate> {
-        const response = await this.apiEnterpriseSocialRecipeBatchUpdateUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * get a paginated list of objects that will be cascaded (deleted) when deleting the selected object
-     */
-    async apiEnterpriseSocialRecipeCascadingListRaw(requestParameters: ApiEnterpriseSocialRecipeCascadingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedGenericModelReferenceList>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeCascadingList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['cache'] != null) {
-            queryParameters['cache'] = requestParameters['cache'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/cascading/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedGenericModelReferenceListFromJSON(jsonValue));
-    }
-
-    /**
-     * get a paginated list of objects that will be cascaded (deleted) when deleting the selected object
-     */
-    async apiEnterpriseSocialRecipeCascadingList(requestParameters: ApiEnterpriseSocialRecipeCascadingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
-        const response = await this.apiEnterpriseSocialRecipeCascadingListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeCreateRaw(requestParameters: ApiEnterpriseSocialRecipeCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Recipe>> {
-        if (requestParameters['recipe'] == null) {
-            throw new runtime.RequiredError(
-                'recipe',
-                'Required parameter "recipe" was null or undefined when calling apiEnterpriseSocialRecipeCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeCreate(requestParameters: ApiEnterpriseSocialRecipeCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Recipe> {
-        const response = await this.apiEnterpriseSocialRecipeCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeDeleteExternalPartialUpdateRaw(requestParameters: ApiEnterpriseSocialRecipeDeleteExternalPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Recipe>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeDeleteExternalPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/delete_external/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedRecipeToJSON(requestParameters['patchedRecipe']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeDeleteExternalPartialUpdate(requestParameters: ApiEnterpriseSocialRecipeDeleteExternalPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Recipe> {
-        const response = await this.apiEnterpriseSocialRecipeDeleteExternalPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeDestroyRaw(requestParameters: ApiEnterpriseSocialRecipeDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeDestroy(requestParameters: ApiEnterpriseSocialRecipeDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseSocialRecipeDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeFlatListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RecipeFlat>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/flat/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RecipeFlatFromJSON));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeFlatList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RecipeFlat>> {
-        const response = await this.apiEnterpriseSocialRecipeFlatListRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeImageUpdateRaw(requestParameters: ApiEnterpriseSocialRecipeImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeImage>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeImageUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-        const consumes: runtime.Consume[] = [
-            { contentType: 'multipart/form-data' },
-        ];
-        // @ts-ignore: canConsumeForm may be unused
-        const canConsumeForm = runtime.canConsumeForm(consumes);
-
-        let formParams: { append(param: string, value: any): any };
-        let useForm = false;
-        if (useForm) {
-            formParams = new FormData();
-        } else {
-            formParams = new URLSearchParams();
-        }
-
-        if (requestParameters['image'] != null) {
-            formParams.append('image', requestParameters['image'] as any);
-        }
-
-        if (requestParameters['imageUrl'] != null) {
-            formParams.append('image_url', requestParameters['imageUrl'] as any);
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/image/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: formParams,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImageFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeImageUpdate(requestParameters: ApiEnterpriseSocialRecipeImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeImage> {
-        const response = await this.apiEnterpriseSocialRecipeImageUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeListRaw(requestParameters: ApiEnterpriseSocialRecipeListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseSocialRecipeSearchList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['books'] != null) {
-            queryParameters['books'] = requestParameters['books'];
-        }
-
-        if (requestParameters['booksAnd'] != null) {
-            queryParameters['books_and'] = requestParameters['booksAnd'];
-        }
-
-        if (requestParameters['booksAndNot'] != null) {
-            queryParameters['books_and_not'] = requestParameters['booksAndNot'];
-        }
-
-        if (requestParameters['booksOr'] != null) {
-            queryParameters['books_or'] = requestParameters['booksOr'];
-        }
-
-        if (requestParameters['booksOrNot'] != null) {
-            queryParameters['books_or_not'] = requestParameters['booksOrNot'];
-        }
-
-        if (requestParameters['cookedonGte'] != null) {
-            queryParameters['cookedon_gte'] = (requestParameters['cookedonGte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['cookedonLte'] != null) {
-            queryParameters['cookedon_lte'] = (requestParameters['cookedonLte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['createdby'] != null) {
-            queryParameters['createdby'] = requestParameters['createdby'];
-        }
-
-        if (requestParameters['createdon'] != null) {
-            queryParameters['createdon'] = (requestParameters['createdon'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['createdonGte'] != null) {
-            queryParameters['createdon_gte'] = (requestParameters['createdonGte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['createdonLte'] != null) {
-            queryParameters['createdon_lte'] = (requestParameters['createdonLte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['filter'] != null) {
-            queryParameters['filter'] = requestParameters['filter'];
-        }
-
-        if (requestParameters['foods'] != null) {
-            queryParameters['foods'] = requestParameters['foods'];
-        }
-
-        if (requestParameters['foodsAnd'] != null) {
-            queryParameters['foods_and'] = requestParameters['foodsAnd'];
-        }
-
-        if (requestParameters['foodsAndNot'] != null) {
-            queryParameters['foods_and_not'] = requestParameters['foodsAndNot'];
-        }
-
-        if (requestParameters['foodsOr'] != null) {
-            queryParameters['foods_or'] = requestParameters['foodsOr'];
-        }
-
-        if (requestParameters['foodsOrNot'] != null) {
-            queryParameters['foods_or_not'] = requestParameters['foodsOrNot'];
-        }
-
-        if (requestParameters['includeChildren'] != null) {
-            queryParameters['include_children'] = requestParameters['includeChildren'];
-        }
-
-        if (requestParameters['internal'] != null) {
-            queryParameters['internal'] = requestParameters['internal'];
-        }
-
-        if (requestParameters['keyword'] != null) {
-            queryParameters['keyword'] = requestParameters['keyword'];
-        }
-
-        if (requestParameters['keywords'] != null) {
-            queryParameters['keywords'] = requestParameters['keywords'];
-        }
-
-        if (requestParameters['keywordsAnd'] != null) {
-            queryParameters['keywords_and'] = requestParameters['keywordsAnd'];
-        }
-
-        if (requestParameters['keywordsAndNot'] != null) {
-            queryParameters['keywords_and_not'] = requestParameters['keywordsAndNot'];
-        }
-
-        if (requestParameters['keywordsOr'] != null) {
-            queryParameters['keywords_or'] = requestParameters['keywordsOr'];
-        }
-
-        if (requestParameters['keywordsOrNot'] != null) {
-            queryParameters['keywords_or_not'] = requestParameters['keywordsOrNot'];
-        }
-
-        if (requestParameters['makenow'] != null) {
-            queryParameters['makenow'] = requestParameters['makenow'];
-        }
-
-        if (requestParameters['_new'] != null) {
-            queryParameters['new'] = requestParameters['_new'];
-        }
-
-        if (requestParameters['numRecent'] != null) {
-            queryParameters['num_recent'] = requestParameters['numRecent'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        if (requestParameters['query'] != null) {
-            queryParameters['query'] = requestParameters['query'];
-        }
-
-        if (requestParameters['random'] != null) {
-            queryParameters['random'] = requestParameters['random'];
-        }
-
-        if (requestParameters['rating'] != null) {
-            queryParameters['rating'] = requestParameters['rating'];
-        }
-
-        if (requestParameters['ratingGte'] != null) {
-            queryParameters['rating_gte'] = requestParameters['ratingGte'];
-        }
-
-        if (requestParameters['ratingLte'] != null) {
-            queryParameters['rating_lte'] = requestParameters['ratingLte'];
-        }
-
-        if (requestParameters['sortOrder'] != null) {
-            queryParameters['sort_order'] = requestParameters['sortOrder'];
-        }
-
-        if (requestParameters['timescooked'] != null) {
-            queryParameters['timescooked'] = requestParameters['timescooked'];
-        }
-
-        if (requestParameters['timescookedGte'] != null) {
-            queryParameters['timescooked_gte'] = requestParameters['timescookedGte'];
-        }
-
-        if (requestParameters['timescookedLte'] != null) {
-            queryParameters['timescooked_lte'] = requestParameters['timescookedLte'];
-        }
-
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-
-        if (requestParameters['units'] != null) {
-            queryParameters['units'] = requestParameters['units'];
-        }
-
-        if (requestParameters['updatedon'] != null) {
-            queryParameters['updatedon'] = (requestParameters['updatedon'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['updatedonGte'] != null) {
-            queryParameters['updatedon_gte'] = (requestParameters['updatedonGte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['updatedonLte'] != null) {
-            queryParameters['updatedon_lte'] = (requestParameters['updatedonLte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['viewedonGte'] != null) {
-            queryParameters['viewedon_gte'] = (requestParameters['viewedonGte'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['viewedonLte'] != null) {
-            queryParameters['viewedon_lte'] = (requestParameters['viewedonLte'] as any).toISOString().substring(0,10);
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseSocialRecipeSearchListFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeList(requestParameters: ApiEnterpriseSocialRecipeListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseSocialRecipeSearchList> {
-        const response = await this.apiEnterpriseSocialRecipeListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * get a paginated list of objects where the selected object will be removed whe its deleted
-     */
-    async apiEnterpriseSocialRecipeNullingListRaw(requestParameters: ApiEnterpriseSocialRecipeNullingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedGenericModelReferenceList>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeNullingList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['cache'] != null) {
-            queryParameters['cache'] = requestParameters['cache'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/nulling/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedGenericModelReferenceListFromJSON(jsonValue));
-    }
-
-    /**
-     * get a paginated list of objects where the selected object will be removed whe its deleted
-     */
-    async apiEnterpriseSocialRecipeNullingList(requestParameters: ApiEnterpriseSocialRecipeNullingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
-        const response = await this.apiEnterpriseSocialRecipeNullingListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipePartialUpdateRaw(requestParameters: ApiEnterpriseSocialRecipePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Recipe>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipePartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedRecipeToJSON(requestParameters['patchedRecipe']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipePartialUpdate(requestParameters: ApiEnterpriseSocialRecipePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Recipe> {
-        const response = await this.apiEnterpriseSocialRecipePartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * get a paginated list of objects that are protecting the selected object form being deleted
-     */
-    async apiEnterpriseSocialRecipeProtectingListRaw(requestParameters: ApiEnterpriseSocialRecipeProtectingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedGenericModelReferenceList>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeProtectingList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['cache'] != null) {
-            queryParameters['cache'] = requestParameters['cache'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/protecting/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedGenericModelReferenceListFromJSON(jsonValue));
-    }
-
-    /**
-     * get a paginated list of objects that are protecting the selected object form being deleted
-     */
-    async apiEnterpriseSocialRecipeProtectingList(requestParameters: ApiEnterpriseSocialRecipeProtectingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedGenericModelReferenceList> {
-        const response = await this.apiEnterpriseSocialRecipeProtectingListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeRelatedListRaw(requestParameters: ApiEnterpriseSocialRecipeRelatedListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RecipeSimple>>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeRelatedList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/related/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RecipeSimpleFromJSON));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeRelatedList(requestParameters: ApiEnterpriseSocialRecipeRelatedListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RecipeSimple>> {
-        const response = await this.apiEnterpriseSocialRecipeRelatedListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeRetrieveRaw(requestParameters: ApiEnterpriseSocialRecipeRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Recipe>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['share'] != null) {
-            queryParameters['share'] = requestParameters['share'];
-        }
-
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeRetrieve(requestParameters: ApiEnterpriseSocialRecipeRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Recipe> {
-        const response = await this.apiEnterpriseSocialRecipeRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeShoppingUpdateRaw(requestParameters: ApiEnterpriseSocialRecipeShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeShoppingUpdate>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeShoppingUpdate().'
-            );
-        }
-
-        if (requestParameters['recipeShoppingUpdate'] == null) {
-            throw new runtime.RequiredError(
-                'recipeShoppingUpdate',
-                'Required parameter "recipeShoppingUpdate" was null or undefined when calling apiEnterpriseSocialRecipeShoppingUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/shopping/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RecipeShoppingUpdateToJSON(requestParameters['recipeShoppingUpdate']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeShoppingUpdateFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeShoppingUpdate(requestParameters: ApiEnterpriseSocialRecipeShoppingUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeShoppingUpdate> {
-        const response = await this.apiEnterpriseSocialRecipeShoppingUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeUpdateRaw(requestParameters: ApiEnterpriseSocialRecipeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Recipe>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiEnterpriseSocialRecipeUpdate().'
-            );
-        }
-
-        if (requestParameters['recipe'] == null) {
-            throw new runtime.RequiredError(
-                'recipe',
-                'Required parameter "recipe" was null or undefined when calling apiEnterpriseSocialRecipeUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-social-recipe/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
-    }
-
-    /**
-     * logs request counts to redis cache total/per user/
-     */
-    async apiEnterpriseSocialRecipeUpdate(requestParameters: ApiEnterpriseSocialRecipeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Recipe> {
-        const response = await this.apiEnterpriseSocialRecipeUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceCreateRaw(requestParameters: ApiEnterpriseSpaceCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSpace>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseSpaceToJSON(requestParameters['enterpriseSpace']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSpaceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceCreate(requestParameters: ApiEnterpriseSpaceCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSpace> {
-        const response = await this.apiEnterpriseSpaceCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceCurrentRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSpace>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/current/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSpaceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceCurrentRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSpace> {
-        const response = await this.apiEnterpriseSpaceCurrentRetrieveRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceDestroyRaw(requestParameters: ApiEnterpriseSpaceDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['space'] == null) {
-            throw new runtime.RequiredError(
-                'space',
-                'Required parameter "space" was null or undefined when calling apiEnterpriseSpaceDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/{space}/`;
-        urlPath = urlPath.replace(`{${"space"}}`, encodeURIComponent(String(requestParameters['space'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceDestroy(requestParameters: ApiEnterpriseSpaceDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiEnterpriseSpaceDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceListRaw(requestParameters: ApiEnterpriseSpaceListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedEnterpriseSpaceList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedEnterpriseSpaceListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceList(requestParameters: ApiEnterpriseSpaceListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedEnterpriseSpaceList> {
-        const response = await this.apiEnterpriseSpaceListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSpacePartialUpdateRaw(requestParameters: ApiEnterpriseSpacePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSpace>> {
-        if (requestParameters['space'] == null) {
-            throw new runtime.RequiredError(
-                'space',
-                'Required parameter "space" was null or undefined when calling apiEnterpriseSpacePartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/{space}/`;
-        urlPath = urlPath.replace(`{${"space"}}`, encodeURIComponent(String(requestParameters['space'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedEnterpriseSpaceToJSON(requestParameters['patchedEnterpriseSpace']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSpaceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSpacePartialUpdate(requestParameters: ApiEnterpriseSpacePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSpace> {
-        const response = await this.apiEnterpriseSpacePartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceRetrieveRaw(requestParameters: ApiEnterpriseSpaceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSpace>> {
-        if (requestParameters['space'] == null) {
-            throw new runtime.RequiredError(
-                'space',
-                'Required parameter "space" was null or undefined when calling apiEnterpriseSpaceRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/{space}/`;
-        urlPath = urlPath.replace(`{${"space"}}`, encodeURIComponent(String(requestParameters['space'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSpaceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceRetrieve(requestParameters: ApiEnterpriseSpaceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSpace> {
-        const response = await this.apiEnterpriseSpaceRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceUpdateRaw(requestParameters: ApiEnterpriseSpaceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EnterpriseSpace>> {
-        if (requestParameters['space'] == null) {
-            throw new runtime.RequiredError(
-                'space',
-                'Required parameter "space" was null or undefined when calling apiEnterpriseSpaceUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/enterprise-space/{space}/`;
-        urlPath = urlPath.replace(`{${"space"}}`, encodeURIComponent(String(requestParameters['space'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EnterpriseSpaceToJSON(requestParameters['enterpriseSpace']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EnterpriseSpaceFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiEnterpriseSpaceUpdate(requestParameters: ApiEnterpriseSpaceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EnterpriseSpace> {
-        const response = await this.apiEnterpriseSpaceUpdateRaw(requestParameters, initOverrides);
+    async apiDownloadFileRetrieve(requestParameters: ApiDownloadFileRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.apiDownloadFileRetrieveRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -8618,7 +5216,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ExportRequestToJSON(requestParameters['exportRequest']),
+            body: ExportRequestRequestToJSON(requestParameters['exportRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ExportLogFromJSON(jsonValue));
@@ -8660,7 +5258,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ExportLogToJSON(requestParameters['exportLog']),
+            body: ExportLogRequestToJSON(requestParameters['exportLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ExportLogFromJSON(jsonValue));
@@ -8785,7 +5383,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedExportLogToJSON(requestParameters['patchedExportLog']),
+            body: PatchedExportLogRequestToJSON(requestParameters['patchedExportLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ExportLogFromJSON(jsonValue));
@@ -8877,7 +5475,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ExportLogToJSON(requestParameters['exportLog']),
+            body: ExportLogRequestToJSON(requestParameters['exportLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ExportLogFromJSON(jsonValue));
@@ -8971,7 +5569,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodToJSON(requestParameters['food']),
+            body: FoodRequestToJSON(requestParameters['food']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9014,7 +5612,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodBatchUpdateToJSON(requestParameters['foodBatchUpdate']),
+            body: FoodBatchUpdateRequestToJSON(requestParameters['foodBatchUpdate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodBatchUpdateFromJSON(jsonValue));
@@ -9110,7 +5708,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodToJSON(requestParameters['food']),
+            body: FoodRequestToJSON(requestParameters['food']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9201,7 +5799,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodToJSON(requestParameters['food']),
+            body: FoodRequestToJSON(requestParameters['food']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9403,7 +6001,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodToJSON(requestParameters['food']),
+            body: FoodRequestToJSON(requestParameters['food']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9462,7 +6060,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodToJSON(requestParameters['food']),
+            body: FoodRequestToJSON(requestParameters['food']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9559,7 +6157,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedFoodToJSON(requestParameters['patchedFood']),
+            body: PatchedFoodRequestToJSON(requestParameters['patchedFood']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9704,7 +6302,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodShoppingUpdateToJSON(requestParameters['foodShoppingUpdate']),
+            body: FoodShoppingUpdateRequestToJSON(requestParameters['foodShoppingUpdate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodShoppingUpdateFromJSON(jsonValue));
@@ -9755,7 +6353,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: FoodToJSON(requestParameters['food']),
+            body: FoodRequestToJSON(requestParameters['food']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FoodFromJSON(jsonValue));
@@ -9948,7 +6546,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: HouseholdToJSON(requestParameters['household']),
+            body: HouseholdRequestToJSON(requestParameters['household']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => HouseholdFromJSON(jsonValue));
@@ -10073,7 +6671,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedHouseholdToJSON(requestParameters['patchedHousehold']),
+            body: PatchedHouseholdRequestToJSON(requestParameters['patchedHousehold']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => HouseholdFromJSON(jsonValue));
@@ -10165,7 +6763,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: HouseholdToJSON(requestParameters['household']),
+            body: HouseholdRequestToJSON(requestParameters['household']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => HouseholdFromJSON(jsonValue));
@@ -10226,6 +6824,8 @@ export class ApiApi extends runtime.BaseAPI {
 
         let formParams: { append(param: string, value: any): any };
         let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
         if (useForm) {
             formParams = new FormData();
         } else {
@@ -10298,7 +6898,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ImportLogToJSON(requestParameters['importLog']),
+            body: ImportLogRequestToJSON(requestParameters['importLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ImportLogFromJSON(jsonValue));
@@ -10423,7 +7023,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedImportLogToJSON(requestParameters['patchedImportLog']),
+            body: PatchedImportLogRequestToJSON(requestParameters['patchedImportLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ImportLogFromJSON(jsonValue));
@@ -10515,7 +7115,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ImportLogToJSON(requestParameters['importLog']),
+            body: ImportLogRequestToJSON(requestParameters['importLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ImportLogFromJSON(jsonValue));
@@ -10557,7 +7157,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ImportOpenDataToJSON(requestParameters['importOpenData']),
+            body: ImportOpenDataRequestToJSON(requestParameters['importOpenData']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ImportOpenDataResponseFromJSON(jsonValue));
@@ -10630,7 +7230,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: IngredientToJSON(requestParameters['ingredient']),
+            body: IngredientRequestToJSON(requestParameters['ingredient']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => IngredientFromJSON(jsonValue));
@@ -10754,7 +7354,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: IngredientParserRequestToJSON(requestParameters['ingredientParserRequest']),
+            body: IngredientParserRequestRequestToJSON(requestParameters['ingredientParserRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => IngredientParserResponseFromJSON(jsonValue));
@@ -10797,7 +7397,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedIngredientToJSON(requestParameters['patchedIngredient']),
+            body: PatchedIngredientRequestToJSON(requestParameters['patchedIngredient']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => IngredientFromJSON(jsonValue));
@@ -10889,7 +7489,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: IngredientToJSON(requestParameters['ingredient']),
+            body: IngredientRequestToJSON(requestParameters['ingredient']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => IngredientFromJSON(jsonValue));
@@ -10957,7 +7557,58 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
+     */
+    async apiInventoryEntryConsumeCreateRaw(requestParameters: ApiInventoryEntryConsumeCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling apiInventoryEntryConsumeCreate().'
+            );
+        }
+
+        if (requestParameters['inventoryEntry'] == null) {
+            throw new runtime.RequiredError(
+                'inventoryEntry',
+                'Required parameter "inventoryEntry" was null or undefined when calling apiInventoryEntryConsumeCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/inventory-entry/{id}/consume/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: InventoryEntryRequestToJSON(requestParameters['inventoryEntry']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
+    }
+
+    /**
+     * Expose scoped reference data without exposing deletion dependencies.
+     */
+    async apiInventoryEntryConsumeCreate(requestParameters: ApiInventoryEntryConsumeCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
+        const response = await this.apiInventoryEntryConsumeCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryCreateRaw(requestParameters: ApiInventoryEntryCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
         if (requestParameters['inventoryEntry'] == null) {
@@ -10985,14 +7636,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: InventoryEntryToJSON(requestParameters['inventoryEntry']),
+            body: InventoryEntryRequestToJSON(requestParameters['inventoryEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryCreate(requestParameters: ApiInventoryEntryCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryCreateRaw(requestParameters, initOverrides);
@@ -11000,7 +7651,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryDestroyRaw(requestParameters: ApiInventoryEntryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -11033,14 +7684,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryDestroy(requestParameters: ApiInventoryEntryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiInventoryEntryDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryListRaw(requestParameters: ApiInventoryEntryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedInventoryEntryList>> {
         const queryParameters: any = {};
@@ -11089,7 +7740,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryList(requestParameters: ApiInventoryEntryListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedInventoryEntryList> {
         const response = await this.apiInventoryEntryListRaw(requestParameters, initOverrides);
@@ -11150,7 +7801,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryPartialUpdateRaw(requestParameters: ApiInventoryEntryPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
         if (requestParameters['id'] == null) {
@@ -11179,14 +7830,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedInventoryEntryToJSON(requestParameters['patchedInventoryEntry']),
+            body: PatchedInventoryEntryRequestToJSON(requestParameters['patchedInventoryEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryPartialUpdate(requestParameters: ApiInventoryEntryPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryPartialUpdateRaw(requestParameters, initOverrides);
@@ -11247,7 +7898,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryRetrieveRaw(requestParameters: ApiInventoryEntryRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
         if (requestParameters['id'] == null) {
@@ -11280,7 +7931,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryRetrieve(requestParameters: ApiInventoryEntryRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryRetrieveRaw(requestParameters, initOverrides);
@@ -11288,7 +7939,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryUpdateRaw(requestParameters: ApiInventoryEntryUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryEntry>> {
         if (requestParameters['id'] == null) {
@@ -11324,14 +7975,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: InventoryEntryToJSON(requestParameters['inventoryEntry']),
+            body: InventoryEntryRequestToJSON(requestParameters['inventoryEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InventoryEntryFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryEntryUpdate(requestParameters: ApiInventoryEntryUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryEntry> {
         const response = await this.apiInventoryEntryUpdateRaw(requestParameters, initOverrides);
@@ -11392,7 +8043,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationCreateRaw(requestParameters: ApiInventoryLocationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryLocation>> {
         if (requestParameters['inventoryLocation'] == null) {
@@ -11420,14 +8071,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: InventoryLocationToJSON(requestParameters['inventoryLocation']),
+            body: InventoryLocationRequestToJSON(requestParameters['inventoryLocation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InventoryLocationFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationCreate(requestParameters: ApiInventoryLocationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryLocation> {
         const response = await this.apiInventoryLocationCreateRaw(requestParameters, initOverrides);
@@ -11435,7 +8086,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationDestroyRaw(requestParameters: ApiInventoryLocationDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -11468,14 +8119,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationDestroy(requestParameters: ApiInventoryLocationDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiInventoryLocationDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationListRaw(requestParameters: ApiInventoryLocationListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedInventoryLocationList>> {
         const queryParameters: any = {};
@@ -11508,7 +8159,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationList(requestParameters: ApiInventoryLocationListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedInventoryLocationList> {
         const response = await this.apiInventoryLocationListRaw(requestParameters, initOverrides);
@@ -11569,7 +8220,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationPartialUpdateRaw(requestParameters: ApiInventoryLocationPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryLocation>> {
         if (requestParameters['id'] == null) {
@@ -11598,14 +8249,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedInventoryLocationToJSON(requestParameters['patchedInventoryLocation']),
+            body: PatchedInventoryLocationRequestToJSON(requestParameters['patchedInventoryLocation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InventoryLocationFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationPartialUpdate(requestParameters: ApiInventoryLocationPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryLocation> {
         const response = await this.apiInventoryLocationPartialUpdateRaw(requestParameters, initOverrides);
@@ -11666,7 +8317,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationRetrieveRaw(requestParameters: ApiInventoryLocationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryLocation>> {
         if (requestParameters['id'] == null) {
@@ -11699,7 +8350,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationRetrieve(requestParameters: ApiInventoryLocationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryLocation> {
         const response = await this.apiInventoryLocationRetrieveRaw(requestParameters, initOverrides);
@@ -11707,7 +8358,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationUpdateRaw(requestParameters: ApiInventoryLocationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InventoryLocation>> {
         if (requestParameters['id'] == null) {
@@ -11743,14 +8394,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: InventoryLocationToJSON(requestParameters['inventoryLocation']),
+            body: InventoryLocationRequestToJSON(requestParameters['inventoryLocation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InventoryLocationFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiInventoryLocationUpdate(requestParameters: ApiInventoryLocationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InventoryLocation> {
         const response = await this.apiInventoryLocationUpdateRaw(requestParameters, initOverrides);
@@ -11904,13 +8555,6 @@ export class ApiApi extends runtime.BaseAPI {
      * logs request counts to redis cache total/per user/
      */
     async apiInviteLinkCreateRaw(requestParameters: ApiInviteLinkCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InviteLink>> {
-        if (requestParameters['inviteLink'] == null) {
-            throw new runtime.RequiredError(
-                'inviteLink',
-                'Required parameter "inviteLink" was null or undefined when calling apiInviteLinkCreate().'
-            );
-        }
-
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -11929,7 +8573,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: InviteLinkToJSON(requestParameters['inviteLink']),
+            body: InviteLinkRequestToJSON(requestParameters['inviteLink']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InviteLinkFromJSON(jsonValue));
@@ -11938,7 +8582,7 @@ export class ApiApi extends runtime.BaseAPI {
     /**
      * logs request counts to redis cache total/per user/
      */
-    async apiInviteLinkCreate(requestParameters: ApiInviteLinkCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InviteLink> {
+    async apiInviteLinkCreate(requestParameters: ApiInviteLinkCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InviteLink> {
         const response = await this.apiInviteLinkCreateRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -12131,7 +8775,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedInviteLinkToJSON(requestParameters['patchedInviteLink']),
+            body: PatchedInviteLinkRequestToJSON(requestParameters['patchedInviteLink']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InviteLinkFromJSON(jsonValue));
@@ -12250,13 +8894,6 @@ export class ApiApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['inviteLink'] == null) {
-            throw new runtime.RequiredError(
-                'inviteLink',
-                'Required parameter "inviteLink" was null or undefined when calling apiInviteLinkUpdate().'
-            );
-        }
-
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -12276,7 +8913,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: InviteLinkToJSON(requestParameters['inviteLink']),
+            body: InviteLinkRequestToJSON(requestParameters['inviteLink']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => InviteLinkFromJSON(jsonValue));
@@ -12372,7 +9009,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
+            body: KeywordRequestToJSON(requestParameters['keyword']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
@@ -12540,7 +9177,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
+            body: KeywordRequestToJSON(requestParameters['keyword']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
@@ -12599,7 +9236,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
+            body: KeywordRequestToJSON(requestParameters['keyword']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
@@ -12696,7 +9333,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedKeywordToJSON(requestParameters['patchedKeyword']),
+            body: PatchedKeywordRequestToJSON(requestParameters['patchedKeyword']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
@@ -12841,7 +9478,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: KeywordToJSON(requestParameters['keyword']),
+            body: KeywordRequestToJSON(requestParameters['keyword']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => KeywordFromJSON(jsonValue));
@@ -12915,7 +9552,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: MealPlanToJSON(requestParameters['mealPlan']),
+            body: MealPlanRequestToJSON(requestParameters['mealPlan']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MealPlanFromJSON(jsonValue));
@@ -13101,7 +9738,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedMealPlanToJSON(requestParameters['patchedMealPlan']),
+            body: PatchedMealPlanRequestToJSON(requestParameters['patchedMealPlan']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MealPlanFromJSON(jsonValue));
@@ -13193,7 +9830,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: MealPlanToJSON(requestParameters['mealPlan']),
+            body: MealPlanRequestToJSON(requestParameters['mealPlan']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MealPlanFromJSON(jsonValue));
@@ -13289,7 +9926,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: MealTypeToJSON(requestParameters['mealType']),
+            body: MealTypeRequestToJSON(requestParameters['mealType']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MealTypeFromJSON(jsonValue));
@@ -13467,7 +10104,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedMealTypeToJSON(requestParameters['patchedMealType']),
+            body: PatchedMealTypeRequestToJSON(requestParameters['patchedMealType']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MealTypeFromJSON(jsonValue));
@@ -13612,7 +10249,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: MealTypeToJSON(requestParameters['mealType']),
+            body: MealTypeRequestToJSON(requestParameters['mealType']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MealTypeFromJSON(jsonValue));
@@ -13623,1861 +10260,6 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiMealTypeUpdate(requestParameters: ApiMealTypeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MealType> {
         const response = await this.apiMealTypeUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryCreateRaw(requestParameters: ApiOpenDataCategoryCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataCategory>> {
-        if (requestParameters['openDataCategory'] == null) {
-            throw new runtime.RequiredError(
-                'openDataCategory',
-                'Required parameter "openDataCategory" was null or undefined when calling apiOpenDataCategoryCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-category/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataCategoryToJSON(requestParameters['openDataCategory']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataCategoryFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryCreate(requestParameters: ApiOpenDataCategoryCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataCategory> {
-        const response = await this.apiOpenDataCategoryCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryDestroyRaw(requestParameters: ApiOpenDataCategoryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataCategoryDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-category/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryDestroy(requestParameters: ApiOpenDataCategoryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataCategoryDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryListRaw(requestParameters: ApiOpenDataCategoryListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataCategoryList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-category/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataCategoryListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryList(requestParameters: ApiOpenDataCategoryListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataCategoryList> {
-        const response = await this.apiOpenDataCategoryListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryPartialUpdateRaw(requestParameters: ApiOpenDataCategoryPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataCategory>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataCategoryPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-category/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataCategoryToJSON(requestParameters['patchedOpenDataCategory']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataCategoryFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryPartialUpdate(requestParameters: ApiOpenDataCategoryPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataCategory> {
-        const response = await this.apiOpenDataCategoryPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryRetrieveRaw(requestParameters: ApiOpenDataCategoryRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataCategory>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataCategoryRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-category/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataCategoryFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryRetrieve(requestParameters: ApiOpenDataCategoryRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataCategory> {
-        const response = await this.apiOpenDataCategoryRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryUpdateRaw(requestParameters: ApiOpenDataCategoryUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataCategory>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataCategoryUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataCategory'] == null) {
-            throw new runtime.RequiredError(
-                'openDataCategory',
-                'Required parameter "openDataCategory" was null or undefined when calling apiOpenDataCategoryUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-category/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataCategoryToJSON(requestParameters['openDataCategory']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataCategoryFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataCategoryUpdate(requestParameters: ApiOpenDataCategoryUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataCategory> {
-        const response = await this.apiOpenDataCategoryUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataConversionCreateRaw(requestParameters: ApiOpenDataConversionCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataConversion>> {
-        if (requestParameters['openDataConversion'] == null) {
-            throw new runtime.RequiredError(
-                'openDataConversion',
-                'Required parameter "openDataConversion" was null or undefined when calling apiOpenDataConversionCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-conversion/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataConversionToJSON(requestParameters['openDataConversion']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataConversionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataConversionCreate(requestParameters: ApiOpenDataConversionCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataConversion> {
-        const response = await this.apiOpenDataConversionCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataConversionDestroyRaw(requestParameters: ApiOpenDataConversionDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataConversionDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-conversion/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataConversionDestroy(requestParameters: ApiOpenDataConversionDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataConversionDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataConversionListRaw(requestParameters: ApiOpenDataConversionListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataConversionList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-conversion/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataConversionListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataConversionList(requestParameters: ApiOpenDataConversionListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataConversionList> {
-        const response = await this.apiOpenDataConversionListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataConversionPartialUpdateRaw(requestParameters: ApiOpenDataConversionPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataConversion>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataConversionPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-conversion/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataConversionToJSON(requestParameters['patchedOpenDataConversion']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataConversionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataConversionPartialUpdate(requestParameters: ApiOpenDataConversionPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataConversion> {
-        const response = await this.apiOpenDataConversionPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataConversionRetrieveRaw(requestParameters: ApiOpenDataConversionRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataConversion>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataConversionRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-conversion/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataConversionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataConversionRetrieve(requestParameters: ApiOpenDataConversionRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataConversion> {
-        const response = await this.apiOpenDataConversionRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataConversionUpdateRaw(requestParameters: ApiOpenDataConversionUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataConversion>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataConversionUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataConversion'] == null) {
-            throw new runtime.RequiredError(
-                'openDataConversion',
-                'Required parameter "openDataConversion" was null or undefined when calling apiOpenDataConversionUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-conversion/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataConversionToJSON(requestParameters['openDataConversion']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataConversionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataConversionUpdate(requestParameters: ApiOpenDataConversionUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataConversion> {
-        const response = await this.apiOpenDataConversionUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataFDCRetrieveRaw(requestParameters: ApiOpenDataFDCRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataFDCRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-FDC/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataFDCRetrieve(requestParameters: ApiOpenDataFDCRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataFDCRetrieveRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataFoodCreateRaw(requestParameters: ApiOpenDataFoodCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataFood>> {
-        if (requestParameters['openDataFood'] == null) {
-            throw new runtime.RequiredError(
-                'openDataFood',
-                'Required parameter "openDataFood" was null or undefined when calling apiOpenDataFoodCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataFoodToJSON(requestParameters['openDataFood']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataFoodFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataFoodCreate(requestParameters: ApiOpenDataFoodCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataFood> {
-        const response = await this.apiOpenDataFoodCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataFoodDestroyRaw(requestParameters: ApiOpenDataFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataFoodDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataFoodDestroy(requestParameters: ApiOpenDataFoodDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataFoodDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * updates the food with all possible data from the FDC Api if properties with a fdc_id already exist they will be overridden, if existing properties don\'t have a fdc_id they won\'t be changed
-     */
-    async apiOpenDataFoodFdcCreateRaw(requestParameters: ApiOpenDataFoodFdcCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataFood>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataFoodFdcCreate().'
-            );
-        }
-
-        if (requestParameters['openDataFood'] == null) {
-            throw new runtime.RequiredError(
-                'openDataFood',
-                'Required parameter "openDataFood" was null or undefined when calling apiOpenDataFoodFdcCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/{id}/fdc/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataFoodToJSON(requestParameters['openDataFood']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataFoodFromJSON(jsonValue));
-    }
-
-    /**
-     * updates the food with all possible data from the FDC Api if properties with a fdc_id already exist they will be overridden, if existing properties don\'t have a fdc_id they won\'t be changed
-     */
-    async apiOpenDataFoodFdcCreate(requestParameters: ApiOpenDataFoodFdcCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataFood> {
-        const response = await this.apiOpenDataFoodFdcCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataFoodListRaw(requestParameters: ApiOpenDataFoodListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataFoodList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataFoodListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataFoodList(requestParameters: ApiOpenDataFoodListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataFoodList> {
-        const response = await this.apiOpenDataFoodListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataFoodPartialUpdateRaw(requestParameters: ApiOpenDataFoodPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataFood>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataFoodPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataFoodToJSON(requestParameters['patchedOpenDataFood']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataFoodFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataFoodPartialUpdate(requestParameters: ApiOpenDataFoodPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataFood> {
-        const response = await this.apiOpenDataFoodPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataFoodRetrieveRaw(requestParameters: ApiOpenDataFoodRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataFood>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataFoodRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataFoodFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataFoodRetrieve(requestParameters: ApiOpenDataFoodRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataFood> {
-        const response = await this.apiOpenDataFoodRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataFoodUpdateRaw(requestParameters: ApiOpenDataFoodUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataFood>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataFoodUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataFood'] == null) {
-            throw new runtime.RequiredError(
-                'openDataFood',
-                'Required parameter "openDataFood" was null or undefined when calling apiOpenDataFoodUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-food/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataFoodToJSON(requestParameters['openDataFood']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataFoodFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataFoodUpdate(requestParameters: ApiOpenDataFoodUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataFood> {
-        const response = await this.apiOpenDataFoodUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyCreateRaw(requestParameters: ApiOpenDataPropertyCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataProperty>> {
-        if (requestParameters['openDataProperty'] == null) {
-            throw new runtime.RequiredError(
-                'openDataProperty',
-                'Required parameter "openDataProperty" was null or undefined when calling apiOpenDataPropertyCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-property/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataPropertyToJSON(requestParameters['openDataProperty']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataPropertyFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyCreate(requestParameters: ApiOpenDataPropertyCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataProperty> {
-        const response = await this.apiOpenDataPropertyCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyDestroyRaw(requestParameters: ApiOpenDataPropertyDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataPropertyDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-property/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyDestroy(requestParameters: ApiOpenDataPropertyDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataPropertyDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyListRaw(requestParameters: ApiOpenDataPropertyListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataPropertyList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-property/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataPropertyListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyList(requestParameters: ApiOpenDataPropertyListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataPropertyList> {
-        const response = await this.apiOpenDataPropertyListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyPartialUpdateRaw(requestParameters: ApiOpenDataPropertyPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataProperty>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataPropertyPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-property/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataPropertyToJSON(requestParameters['patchedOpenDataProperty']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataPropertyFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyPartialUpdate(requestParameters: ApiOpenDataPropertyPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataProperty> {
-        const response = await this.apiOpenDataPropertyPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyRetrieveRaw(requestParameters: ApiOpenDataPropertyRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataProperty>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataPropertyRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-property/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataPropertyFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyRetrieve(requestParameters: ApiOpenDataPropertyRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataProperty> {
-        const response = await this.apiOpenDataPropertyRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyUpdateRaw(requestParameters: ApiOpenDataPropertyUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataProperty>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataPropertyUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataProperty'] == null) {
-            throw new runtime.RequiredError(
-                'openDataProperty',
-                'Required parameter "openDataProperty" was null or undefined when calling apiOpenDataPropertyUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-property/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataPropertyToJSON(requestParameters['openDataProperty']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataPropertyFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataPropertyUpdate(requestParameters: ApiOpenDataPropertyUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataProperty> {
-        const response = await this.apiOpenDataPropertyUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataStatsRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-stats/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataStatsRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataStatsRetrieveRaw(initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataStoreCreateRaw(requestParameters: ApiOpenDataStoreCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataStore>> {
-        if (requestParameters['openDataStore'] == null) {
-            throw new runtime.RequiredError(
-                'openDataStore',
-                'Required parameter "openDataStore" was null or undefined when calling apiOpenDataStoreCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-store/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataStoreToJSON(requestParameters['openDataStore']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataStoreFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataStoreCreate(requestParameters: ApiOpenDataStoreCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataStore> {
-        const response = await this.apiOpenDataStoreCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataStoreDestroyRaw(requestParameters: ApiOpenDataStoreDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataStoreDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-store/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataStoreDestroy(requestParameters: ApiOpenDataStoreDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataStoreDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataStoreListRaw(requestParameters: ApiOpenDataStoreListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataStoreList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-store/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataStoreListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataStoreList(requestParameters: ApiOpenDataStoreListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataStoreList> {
-        const response = await this.apiOpenDataStoreListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataStorePartialUpdateRaw(requestParameters: ApiOpenDataStorePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataStore>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataStorePartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-store/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataStoreToJSON(requestParameters['patchedOpenDataStore']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataStoreFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataStorePartialUpdate(requestParameters: ApiOpenDataStorePartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataStore> {
-        const response = await this.apiOpenDataStorePartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataStoreRetrieveRaw(requestParameters: ApiOpenDataStoreRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataStore>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataStoreRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-store/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataStoreFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataStoreRetrieve(requestParameters: ApiOpenDataStoreRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataStore> {
-        const response = await this.apiOpenDataStoreRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataStoreUpdateRaw(requestParameters: ApiOpenDataStoreUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataStore>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataStoreUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataStore'] == null) {
-            throw new runtime.RequiredError(
-                'openDataStore',
-                'Required parameter "openDataStore" was null or undefined when calling apiOpenDataStoreUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-store/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataStoreToJSON(requestParameters['openDataStore']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataStoreFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataStoreUpdate(requestParameters: ApiOpenDataStoreUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataStore> {
-        const response = await this.apiOpenDataStoreUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataUnitCreateRaw(requestParameters: ApiOpenDataUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataUnit>> {
-        if (requestParameters['openDataUnit'] == null) {
-            throw new runtime.RequiredError(
-                'openDataUnit',
-                'Required parameter "openDataUnit" was null or undefined when calling apiOpenDataUnitCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-unit/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataUnitToJSON(requestParameters['openDataUnit']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataUnitFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataUnitCreate(requestParameters: ApiOpenDataUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataUnit> {
-        const response = await this.apiOpenDataUnitCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataUnitDestroyRaw(requestParameters: ApiOpenDataUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataUnitDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-unit/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataUnitDestroy(requestParameters: ApiOpenDataUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataUnitDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataUnitListRaw(requestParameters: ApiOpenDataUnitListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataUnitList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-unit/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataUnitListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataUnitList(requestParameters: ApiOpenDataUnitListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataUnitList> {
-        const response = await this.apiOpenDataUnitListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataUnitPartialUpdateRaw(requestParameters: ApiOpenDataUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataUnit>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataUnitPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-unit/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataUnitToJSON(requestParameters['patchedOpenDataUnit']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataUnitFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataUnitPartialUpdate(requestParameters: ApiOpenDataUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataUnit> {
-        const response = await this.apiOpenDataUnitPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataUnitRetrieveRaw(requestParameters: ApiOpenDataUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataUnit>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataUnitRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-unit/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataUnitFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataUnitRetrieve(requestParameters: ApiOpenDataUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataUnit> {
-        const response = await this.apiOpenDataUnitRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataUnitUpdateRaw(requestParameters: ApiOpenDataUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataUnit>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataUnitUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataUnit'] == null) {
-            throw new runtime.RequiredError(
-                'openDataUnit',
-                'Required parameter "openDataUnit" was null or undefined when calling apiOpenDataUnitUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-unit/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataUnitToJSON(requestParameters['openDataUnit']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataUnitFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataUnitUpdate(requestParameters: ApiOpenDataUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataUnit> {
-        const response = await this.apiOpenDataUnitUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataVersionCreateRaw(requestParameters: ApiOpenDataVersionCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataVersion>> {
-        if (requestParameters['openDataVersion'] == null) {
-            throw new runtime.RequiredError(
-                'openDataVersion',
-                'Required parameter "openDataVersion" was null or undefined when calling apiOpenDataVersionCreate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-version/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataVersionToJSON(requestParameters['openDataVersion']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataVersionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataVersionCreate(requestParameters: ApiOpenDataVersionCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataVersion> {
-        const response = await this.apiOpenDataVersionCreateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataVersionDestroyRaw(requestParameters: ApiOpenDataVersionDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataVersionDestroy().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-version/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     */
-    async apiOpenDataVersionDestroy(requestParameters: ApiOpenDataVersionDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiOpenDataVersionDestroyRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     */
-    async apiOpenDataVersionListRaw(requestParameters: ApiOpenDataVersionListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedOpenDataVersionList>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['page_size'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-version/`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PaginatedOpenDataVersionListFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataVersionList(requestParameters: ApiOpenDataVersionListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedOpenDataVersionList> {
-        const response = await this.apiOpenDataVersionListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataVersionPartialUpdateRaw(requestParameters: ApiOpenDataVersionPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataVersion>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataVersionPartialUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-version/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PatchedOpenDataVersionToJSON(requestParameters['patchedOpenDataVersion']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataVersionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataVersionPartialUpdate(requestParameters: ApiOpenDataVersionPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataVersion> {
-        const response = await this.apiOpenDataVersionPartialUpdateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataVersionRetrieveRaw(requestParameters: ApiOpenDataVersionRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataVersion>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataVersionRetrieve().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-version/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataVersionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataVersionRetrieve(requestParameters: ApiOpenDataVersionRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataVersion> {
-        const response = await this.apiOpenDataVersionRetrieveRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     */
-    async apiOpenDataVersionUpdateRaw(requestParameters: ApiOpenDataVersionUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenDataVersion>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling apiOpenDataVersionUpdate().'
-            );
-        }
-
-        if (requestParameters['openDataVersion'] == null) {
-            throw new runtime.RequiredError(
-                'openDataVersion',
-                'Required parameter "openDataVersion" was null or undefined when calling apiOpenDataVersionUpdate().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
-        }
-
-
-        let urlPath = `/api/open-data-version/{id}/`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OpenDataVersionToJSON(requestParameters['openDataVersion']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OpenDataVersionFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async apiOpenDataVersionUpdate(requestParameters: ApiOpenDataVersionUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenDataVersion> {
-        const response = await this.apiOpenDataVersionUpdateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -15510,7 +10292,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: PropertyToJSON(requestParameters['property']),
+            body: PropertyRequestToJSON(requestParameters['property']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PropertyFromJSON(jsonValue));
@@ -15635,7 +10417,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedPropertyToJSON(requestParameters['patchedProperty']),
+            body: PatchedPropertyRequestToJSON(requestParameters['patchedProperty']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PropertyFromJSON(jsonValue));
@@ -15772,7 +10554,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: PropertyTypeToJSON(requestParameters['propertyType']),
+            body: PropertyTypeRequestToJSON(requestParameters['propertyType']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PropertyTypeFromJSON(jsonValue));
@@ -15954,7 +10736,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedPropertyTypeToJSON(requestParameters['patchedPropertyType']),
+            body: PatchedPropertyTypeRequestToJSON(requestParameters['patchedPropertyType']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PropertyTypeFromJSON(jsonValue));
@@ -16099,7 +10881,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: PropertyTypeToJSON(requestParameters['propertyType']),
+            body: PropertyTypeRequestToJSON(requestParameters['propertyType']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PropertyTypeFromJSON(jsonValue));
@@ -16150,7 +10932,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: PropertyToJSON(requestParameters['property']),
+            body: PropertyRequestToJSON(requestParameters['property']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => PropertyFromJSON(jsonValue));
@@ -16205,7 +10987,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
+            body: RecipeRequestToJSON(requestParameters['recipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -16248,7 +11030,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeBatchUpdateToJSON(requestParameters['recipeBatchUpdate']),
+            body: RecipeBatchUpdateRequestToJSON(requestParameters['recipeBatchUpdate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBatchUpdateFromJSON(jsonValue));
@@ -16344,7 +11126,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeBookToJSON(requestParameters['recipeBook']),
+            body: RecipeBookRequestToJSON(requestParameters['recipeBook']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBookFromJSON(jsonValue));
@@ -16427,7 +11209,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeBookEntryToJSON(requestParameters['recipeBookEntry']),
+            body: RecipeBookEntryRequestToJSON(requestParameters['recipeBookEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBookEntryFromJSON(jsonValue));
@@ -16560,7 +11342,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedRecipeBookEntryToJSON(requestParameters['patchedRecipeBookEntry']),
+            body: PatchedRecipeBookEntryRequestToJSON(requestParameters['patchedRecipeBookEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBookEntryFromJSON(jsonValue));
@@ -16652,7 +11434,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeBookEntryToJSON(requestParameters['recipeBookEntry']),
+            body: RecipeBookEntryRequestToJSON(requestParameters['recipeBookEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBookEntryFromJSON(jsonValue));
@@ -16814,7 +11596,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedRecipeBookToJSON(requestParameters['patchedRecipeBook']),
+            body: PatchedRecipeBookRequestToJSON(requestParameters['patchedRecipeBook']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBookFromJSON(jsonValue));
@@ -16959,7 +11741,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeBookToJSON(requestParameters['recipeBook']),
+            body: RecipeBookRequestToJSON(requestParameters['recipeBook']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeBookFromJSON(jsonValue));
@@ -17055,7 +11837,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
+            body: RecipeRequestToJSON(requestParameters['recipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -17099,7 +11881,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedRecipeToJSON(requestParameters['patchedRecipe']),
+            body: PatchedRecipeRequestToJSON(requestParameters['patchedRecipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -17208,7 +11990,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeFromSourceToJSON(requestParameters['recipeFromSource']),
+            body: RecipeFromSourceRequestToJSON(requestParameters['recipeFromSource']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromSourceResponseFromJSON(jsonValue));
@@ -17249,6 +12031,8 @@ export class ApiApi extends runtime.BaseAPI {
 
         let formParams: { append(param: string, value: any): any };
         let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
         if (useForm) {
             formParams = new FormData();
         } else {
@@ -17315,7 +12099,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeImportToJSON(requestParameters['recipeImport']),
+            body: RecipeImportRequestToJSON(requestParameters['recipeImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImportFromJSON(jsonValue));
@@ -17398,7 +12182,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeImportToJSON(requestParameters['recipeImport']),
+            body: RecipeImportRequestToJSON(requestParameters['recipeImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImportFromJSON(jsonValue));
@@ -17449,7 +12233,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeImportToJSON(requestParameters['recipeImport']),
+            body: RecipeImportRequestToJSON(requestParameters['recipeImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -17534,7 +12318,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedRecipeImportToJSON(requestParameters['patchedRecipeImport']),
+            body: PatchedRecipeImportRequestToJSON(requestParameters['patchedRecipeImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImportFromJSON(jsonValue));
@@ -17626,7 +12410,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeImportToJSON(requestParameters['recipeImport']),
+            body: RecipeImportRequestToJSON(requestParameters['recipeImport']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeImportFromJSON(jsonValue));
@@ -17932,7 +12716,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedRecipeToJSON(requestParameters['patchedRecipe']),
+            body: PatchedRecipeRequestToJSON(requestParameters['patchedRecipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -18122,7 +12906,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeShoppingUpdateToJSON(requestParameters['recipeShoppingUpdate']),
+            body: RecipeShoppingUpdateRequestToJSON(requestParameters['recipeShoppingUpdate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeShoppingUpdateFromJSON(jsonValue));
@@ -18173,7 +12957,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: RecipeToJSON(requestParameters['recipe']),
+            body: RecipeRequestToJSON(requestParameters['recipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => RecipeFromJSON(jsonValue));
@@ -18356,7 +13140,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedSearchPreferenceToJSON(requestParameters['patchedSearchPreference']),
+            body: PatchedSearchPreferenceRequestToJSON(requestParameters['patchedSearchPreference']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SearchPreferenceFromJSON(jsonValue));
@@ -18556,7 +13340,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListToJSON(requestParameters['shoppingList']),
+            body: ShoppingListRequestToJSON(requestParameters['shoppingList']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListFromJSON(jsonValue));
@@ -18639,7 +13423,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListEntryBulkToJSON(requestParameters['shoppingListEntryBulk']),
+            body: ShoppingListEntryBulkRequestToJSON(requestParameters['shoppingListEntryBulk']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListEntryBulkFromJSON(jsonValue));
@@ -18682,7 +13466,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListEntryToJSON(requestParameters['shoppingListEntry']),
+            body: ShoppingListEntryRequestToJSON(requestParameters['shoppingListEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListEntryFromJSON(jsonValue));
@@ -18802,6 +13586,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['ifMatch'] != null) {
+            headerParameters['If-Match'] = String(requestParameters['ifMatch']);
+        }
+
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
         }
@@ -18815,7 +13603,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedShoppingListEntryToJSON(requestParameters['patchedShoppingListEntry']),
+            body: PatchedShoppingListEntryRequestToJSON(requestParameters['patchedShoppingListEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListEntryFromJSON(jsonValue));
@@ -18894,6 +13682,10 @@ export class ApiApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (requestParameters['ifMatch'] != null) {
+            headerParameters['If-Match'] = String(requestParameters['ifMatch']);
+        }
+
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
         }
@@ -18907,7 +13699,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListEntryToJSON(requestParameters['shoppingListEntry']),
+            body: ShoppingListEntryRequestToJSON(requestParameters['shoppingListEntry']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListEntryFromJSON(jsonValue));
@@ -19045,7 +13837,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedShoppingListToJSON(requestParameters['patchedShoppingList']),
+            body: PatchedShoppingListRequestToJSON(requestParameters['patchedShoppingList']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListFromJSON(jsonValue));
@@ -19149,7 +13941,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListEntryBulkCreateToJSON(requestParameters['shoppingListEntryBulkCreate']),
+            body: ShoppingListEntryBulkCreateRequestToJSON(requestParameters['shoppingListEntryBulkCreate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListEntryBulkCreateFromJSON(jsonValue));
@@ -19192,7 +13984,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListRecipeToJSON(requestParameters['shoppingListRecipe']),
+            body: ShoppingListRecipeRequestToJSON(requestParameters['shoppingListRecipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListRecipeFromJSON(jsonValue));
@@ -19321,7 +14113,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedShoppingListRecipeToJSON(requestParameters['patchedShoppingListRecipe']),
+            body: PatchedShoppingListRecipeRequestToJSON(requestParameters['patchedShoppingListRecipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListRecipeFromJSON(jsonValue));
@@ -19413,7 +14205,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListRecipeToJSON(requestParameters['shoppingListRecipe']),
+            body: ShoppingListRecipeRequestToJSON(requestParameters['shoppingListRecipe']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListRecipeFromJSON(jsonValue));
@@ -19498,7 +14290,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ShoppingListToJSON(requestParameters['shoppingList']),
+            body: ShoppingListRequestToJSON(requestParameters['shoppingList']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ShoppingListFromJSON(jsonValue));
@@ -19534,7 +14326,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SpaceToJSON(requestParameters['space']),
+            body: SpaceRequestToJSON(requestParameters['space']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SpaceFromJSON(jsonValue));
@@ -19652,7 +14444,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedSpaceToJSON(requestParameters['patchedSpace']),
+            body: PatchedSpaceRequestToJSON(requestParameters['patchedSpace']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SpaceFromJSON(jsonValue));
@@ -19737,7 +14529,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SpaceToJSON(requestParameters['space']),
+            body: SpaceRequestToJSON(requestParameters['space']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SpaceFromJSON(jsonValue));
@@ -19780,7 +14572,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: StepToJSON(requestParameters['step']),
+            body: StepRequestToJSON(requestParameters['step']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StepFromJSON(jsonValue));
@@ -19913,7 +14705,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedStepToJSON(requestParameters['patchedStep']),
+            body: PatchedStepRequestToJSON(requestParameters['patchedStep']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StepFromJSON(jsonValue));
@@ -20005,7 +14797,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: StepToJSON(requestParameters['step']),
+            body: StepRequestToJSON(requestParameters['step']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StepFromJSON(jsonValue));
@@ -20101,7 +14893,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: StorageToJSON(requestParameters['storage']),
+            body: StorageRequestToJSON(requestParameters['storage']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StorageFromJSON(jsonValue));
@@ -20279,7 +15071,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedStorageToJSON(requestParameters['patchedStorage']),
+            body: PatchedStorageRequestToJSON(requestParameters['patchedStorage']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StorageFromJSON(jsonValue));
@@ -20424,7 +15216,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: StorageToJSON(requestParameters['storage']),
+            body: StorageRequestToJSON(requestParameters['storage']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => StorageFromJSON(jsonValue));
@@ -20573,7 +15365,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketCategoryToJSON(requestParameters['supermarketCategory']),
+            body: SupermarketCategoryRequestToJSON(requestParameters['supermarketCategory']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryFromJSON(jsonValue));
@@ -20729,7 +15521,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketCategoryToJSON(requestParameters['supermarketCategory']),
+            body: SupermarketCategoryRequestToJSON(requestParameters['supermarketCategory']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryFromJSON(jsonValue));
@@ -20826,7 +15618,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedSupermarketCategoryToJSON(requestParameters['patchedSupermarketCategory']),
+            body: PatchedSupermarketCategoryRequestToJSON(requestParameters['patchedSupermarketCategory']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryFromJSON(jsonValue));
@@ -20922,7 +15714,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketCategoryRelationToJSON(requestParameters['supermarketCategoryRelation']),
+            body: SupermarketCategoryRelationRequestToJSON(requestParameters['supermarketCategoryRelation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryRelationFromJSON(jsonValue));
@@ -21063,7 +15855,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedSupermarketCategoryRelationToJSON(requestParameters['patchedSupermarketCategoryRelation']),
+            body: PatchedSupermarketCategoryRelationRequestToJSON(requestParameters['patchedSupermarketCategoryRelation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryRelationFromJSON(jsonValue));
@@ -21155,7 +15947,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketCategoryRelationToJSON(requestParameters['supermarketCategoryRelation']),
+            body: SupermarketCategoryRelationRequestToJSON(requestParameters['supermarketCategoryRelation']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryRelationFromJSON(jsonValue));
@@ -21247,7 +16039,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketCategoryToJSON(requestParameters['supermarketCategory']),
+            body: SupermarketCategoryRequestToJSON(requestParameters['supermarketCategory']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketCategoryFromJSON(jsonValue));
@@ -21290,7 +16082,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketToJSON(requestParameters['supermarket']),
+            body: SupermarketRequestToJSON(requestParameters['supermarket']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketFromJSON(jsonValue));
@@ -21484,7 +16276,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedSupermarketToJSON(requestParameters['patchedSupermarket']),
+            body: PatchedSupermarketRequestToJSON(requestParameters['patchedSupermarket']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketFromJSON(jsonValue));
@@ -21629,7 +16421,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SupermarketToJSON(requestParameters['supermarket']),
+            body: SupermarketRequestToJSON(requestParameters['supermarket']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SupermarketFromJSON(jsonValue));
@@ -21646,7 +16438,7 @@ export class ApiApi extends runtime.BaseAPI {
     /**
      * api endpoint to switch space function
      */
-    async apiSwitchActiveSpaceRetrieveRaw(requestParameters: ApiSwitchActiveSpaceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async apiSwitchActiveSpaceRetrieveRaw(requestParameters: ApiSwitchActiveSpaceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserSpace>> {
         if (requestParameters['spaceId'] == null) {
             throw new runtime.RequiredError(
                 'spaceId',
@@ -21673,14 +16465,15 @@ export class ApiApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => UserSpaceFromJSON(jsonValue));
     }
 
     /**
      * api endpoint to switch space function
      */
-    async apiSwitchActiveSpaceRetrieve(requestParameters: ApiSwitchActiveSpaceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.apiSwitchActiveSpaceRetrieveRaw(requestParameters, initOverrides);
+    async apiSwitchActiveSpaceRetrieve(requestParameters: ApiSwitchActiveSpaceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserSpace> {
+        const response = await this.apiSwitchActiveSpaceRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
@@ -21765,7 +16558,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SyncToJSON(requestParameters['sync']),
+            body: SyncRequestToJSON(requestParameters['sync']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SyncFromJSON(jsonValue));
@@ -22025,7 +16818,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedSyncToJSON(requestParameters['patchedSync']),
+            body: PatchedSyncRequestToJSON(requestParameters['patchedSync']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SyncFromJSON(jsonValue));
@@ -22129,7 +16922,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SyncToJSON(requestParameters['sync']),
+            body: SyncRequestToJSON(requestParameters['sync']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SyncLogFromJSON(jsonValue));
@@ -22221,7 +17014,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: SyncToJSON(requestParameters['sync']),
+            body: SyncRequestToJSON(requestParameters['sync']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => SyncFromJSON(jsonValue));
@@ -22317,7 +17110,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: UnitConversionToJSON(requestParameters['unitConversion']),
+            body: UnitConversionRequestToJSON(requestParameters['unitConversion']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitConversionFromJSON(jsonValue));
@@ -22450,7 +17243,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedUnitConversionToJSON(requestParameters['patchedUnitConversion']),
+            body: PatchedUnitConversionRequestToJSON(requestParameters['patchedUnitConversion']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitConversionFromJSON(jsonValue));
@@ -22542,7 +17335,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UnitConversionToJSON(requestParameters['unitConversion']),
+            body: UnitConversionRequestToJSON(requestParameters['unitConversion']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitConversionFromJSON(jsonValue));
@@ -22557,7 +17350,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitCreateRaw(requestParameters: ApiUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['unit'] == null) {
@@ -22585,14 +17378,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: UnitToJSON(requestParameters['unit']),
+            body: UnitRequestToJSON(requestParameters['unit']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitCreate(requestParameters: ApiUnitCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitCreateRaw(requestParameters, initOverrides);
@@ -22600,7 +17393,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitDestroyRaw(requestParameters: ApiUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -22633,14 +17426,14 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitDestroy(requestParameters: ApiUnitDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.apiUnitDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitListRaw(requestParameters: ApiUnitListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaginatedUnitList>> {
         const queryParameters: any = {};
@@ -22689,7 +17482,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitList(requestParameters: ApiUnitListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaginatedUnitList> {
         const response = await this.apiUnitListRaw(requestParameters, initOverrides);
@@ -22697,7 +17490,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitMergeUpdateRaw(requestParameters: ApiUnitMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -22741,14 +17534,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UnitToJSON(requestParameters['unit']),
+            body: UnitRequestToJSON(requestParameters['unit']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitMergeUpdate(requestParameters: ApiUnitMergeUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitMergeUpdateRaw(requestParameters, initOverrides);
@@ -22809,7 +17602,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitPartialUpdateRaw(requestParameters: ApiUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -22838,14 +17631,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedUnitToJSON(requestParameters['patchedUnit']),
+            body: PatchedUnitRequestToJSON(requestParameters['patchedUnit']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitPartialUpdate(requestParameters: ApiUnitPartialUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitPartialUpdateRaw(requestParameters, initOverrides);
@@ -22906,7 +17699,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitRetrieveRaw(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -22939,7 +17732,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitRetrieve(requestParameters: ApiUnitRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitRetrieveRaw(requestParameters, initOverrides);
@@ -22947,7 +17740,7 @@ export class ApiApi extends runtime.BaseAPI {
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitUpdateRaw(requestParameters: ApiUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Unit>> {
         if (requestParameters['id'] == null) {
@@ -22983,14 +17776,14 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UnitToJSON(requestParameters['unit']),
+            body: UnitRequestToJSON(requestParameters['unit']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UnitFromJSON(jsonValue));
     }
 
     /**
-     * logs request counts to redis cache total/per user/
+     * Expose scoped reference data without exposing deletion dependencies.
      */
     async apiUnitUpdate(requestParameters: ApiUnitUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Unit> {
         const response = await this.apiUnitUpdateRaw(requestParameters, initOverrides);
@@ -23061,41 +17854,6 @@ export class ApiApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['fileDownload'] == null) {
-            throw new runtime.RequiredError(
-                'fileDownload',
-                'Required parameter "fileDownload" was null or undefined when calling apiUserFileCreate().'
-            );
-        }
-
-        if (requestParameters['preview'] == null) {
-            throw new runtime.RequiredError(
-                'preview',
-                'Required parameter "preview" was null or undefined when calling apiUserFileCreate().'
-            );
-        }
-
-        if (requestParameters['fileSizeKb'] == null) {
-            throw new runtime.RequiredError(
-                'fileSizeKb',
-                'Required parameter "fileSizeKb" was null or undefined when calling apiUserFileCreate().'
-            );
-        }
-
-        if (requestParameters['createdBy'] == null) {
-            throw new runtime.RequiredError(
-                'createdBy',
-                'Required parameter "createdBy" was null or undefined when calling apiUserFileCreate().'
-            );
-        }
-
-        if (requestParameters['createdAt'] == null) {
-            throw new runtime.RequiredError(
-                'createdAt',
-                'Required parameter "createdAt" was null or undefined when calling apiUserFileCreate().'
-            );
-        }
-
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -23112,14 +17870,12 @@ export class ApiApi extends runtime.BaseAPI {
 
         let formParams: { append(param: string, value: any): any };
         let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
         if (useForm) {
             formParams = new FormData();
         } else {
             formParams = new URLSearchParams();
-        }
-
-        if (requestParameters['id'] != null) {
-            formParams.append('id', requestParameters['id'] as any);
         }
 
         if (requestParameters['name'] != null) {
@@ -23130,24 +17886,8 @@ export class ApiApi extends runtime.BaseAPI {
             formParams.append('file', requestParameters['file'] as any);
         }
 
-        if (requestParameters['fileDownload'] != null) {
-            formParams.append('file_download', requestParameters['fileDownload'] as any);
-        }
-
-        if (requestParameters['preview'] != null) {
-            formParams.append('preview', requestParameters['preview'] as any);
-        }
-
-        if (requestParameters['fileSizeKb'] != null) {
-            formParams.append('file_size_kb', requestParameters['fileSizeKb'] as any);
-        }
-
-        if (requestParameters['createdBy'] != null) {
-            formParams.append('created_by', new Blob([JSON.stringify(UserToJSON(requestParameters['createdBy']))], { type: "application/json", }));
-                    }
-
-        if (requestParameters['createdAt'] != null) {
-            formParams.append('created_at', (requestParameters['createdAt'] as any).toISOString());
+        if (requestParameters['id'] != null) {
+            formParams.append('id', requestParameters['id'] as any);
         }
 
 
@@ -23349,14 +18089,12 @@ export class ApiApi extends runtime.BaseAPI {
 
         let formParams: { append(param: string, value: any): any };
         let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
         if (useForm) {
             formParams = new FormData();
         } else {
             formParams = new URLSearchParams();
-        }
-
-        if (requestParameters['id2'] != null) {
-            formParams.append('id', requestParameters['id2'] as any);
         }
 
         if (requestParameters['name'] != null) {
@@ -23367,24 +18105,8 @@ export class ApiApi extends runtime.BaseAPI {
             formParams.append('file', requestParameters['file'] as any);
         }
 
-        if (requestParameters['fileDownload'] != null) {
-            formParams.append('file_download', requestParameters['fileDownload'] as any);
-        }
-
-        if (requestParameters['preview'] != null) {
-            formParams.append('preview', requestParameters['preview'] as any);
-        }
-
-        if (requestParameters['fileSizeKb'] != null) {
-            formParams.append('file_size_kb', requestParameters['fileSizeKb'] as any);
-        }
-
-        if (requestParameters['createdBy'] != null) {
-            formParams.append('created_by', new Blob([JSON.stringify(UserToJSON(requestParameters['createdBy']))], { type: "application/json", }));
-                    }
-
-        if (requestParameters['createdAt'] != null) {
-            formParams.append('created_at', (requestParameters['createdAt'] as any).toISOString());
+        if (requestParameters['id2'] != null) {
+            formParams.append('id', requestParameters['id2'] as any);
         }
 
 
@@ -23522,41 +18244,6 @@ export class ApiApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['fileDownload'] == null) {
-            throw new runtime.RequiredError(
-                'fileDownload',
-                'Required parameter "fileDownload" was null or undefined when calling apiUserFileUpdate().'
-            );
-        }
-
-        if (requestParameters['preview'] == null) {
-            throw new runtime.RequiredError(
-                'preview',
-                'Required parameter "preview" was null or undefined when calling apiUserFileUpdate().'
-            );
-        }
-
-        if (requestParameters['fileSizeKb'] == null) {
-            throw new runtime.RequiredError(
-                'fileSizeKb',
-                'Required parameter "fileSizeKb" was null or undefined when calling apiUserFileUpdate().'
-            );
-        }
-
-        if (requestParameters['createdBy'] == null) {
-            throw new runtime.RequiredError(
-                'createdBy',
-                'Required parameter "createdBy" was null or undefined when calling apiUserFileUpdate().'
-            );
-        }
-
-        if (requestParameters['createdAt'] == null) {
-            throw new runtime.RequiredError(
-                'createdAt',
-                'Required parameter "createdAt" was null or undefined when calling apiUserFileUpdate().'
-            );
-        }
-
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -23573,14 +18260,12 @@ export class ApiApi extends runtime.BaseAPI {
 
         let formParams: { append(param: string, value: any): any };
         let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
         if (useForm) {
             formParams = new FormData();
         } else {
             formParams = new URLSearchParams();
-        }
-
-        if (requestParameters['id2'] != null) {
-            formParams.append('id', requestParameters['id2'] as any);
         }
 
         if (requestParameters['name'] != null) {
@@ -23591,24 +18276,8 @@ export class ApiApi extends runtime.BaseAPI {
             formParams.append('file', requestParameters['file'] as any);
         }
 
-        if (requestParameters['fileDownload'] != null) {
-            formParams.append('file_download', requestParameters['fileDownload'] as any);
-        }
-
-        if (requestParameters['preview'] != null) {
-            formParams.append('preview', requestParameters['preview'] as any);
-        }
-
-        if (requestParameters['fileSizeKb'] != null) {
-            formParams.append('file_size_kb', requestParameters['fileSizeKb'] as any);
-        }
-
-        if (requestParameters['createdBy'] != null) {
-            formParams.append('created_by', new Blob([JSON.stringify(UserToJSON(requestParameters['createdBy']))], { type: "application/json", }));
-                    }
-
-        if (requestParameters['createdAt'] != null) {
-            formParams.append('created_at', (requestParameters['createdAt'] as any).toISOString());
+        if (requestParameters['id2'] != null) {
+            formParams.append('id', requestParameters['id2'] as any);
         }
 
 
@@ -23701,7 +18370,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedUserToJSON(requestParameters['patchedUser']),
+            body: PatchedUserRequestToJSON(requestParameters['patchedUser']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
@@ -23778,7 +18447,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedUserPreferenceToJSON(requestParameters['patchedUserPreference']),
+            body: PatchedUserPreferenceRequestToJSON(requestParameters['patchedUserPreference']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserPreferenceFromJSON(jsonValue));
@@ -23936,7 +18605,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UserSpaceBatchUpdateToJSON(requestParameters['userSpaceBatchUpdate']),
+            body: UserSpaceBatchUpdateRequestToJSON(requestParameters['userSpaceBatchUpdate']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserSpaceBatchUpdateFromJSON(jsonValue));
@@ -24065,7 +18734,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedUserSpaceToJSON(requestParameters['patchedUserSpace']),
+            body: PatchedUserSpaceRequestToJSON(requestParameters['patchedUserSpace']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserSpaceFromJSON(jsonValue));
@@ -24131,13 +18800,6 @@ export class ApiApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['userSpace'] == null) {
-            throw new runtime.RequiredError(
-                'userSpace',
-                'Required parameter "userSpace" was null or undefined when calling apiUserSpaceUpdate().'
-            );
-        }
-
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -24157,7 +18819,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UserSpaceToJSON(requestParameters['userSpace']),
+            body: UserSpaceRequestToJSON(requestParameters['userSpace']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserSpaceFromJSON(jsonValue));
@@ -24200,7 +18862,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ViewLogToJSON(requestParameters['viewLog']),
+            body: ViewLogRequestToJSON(requestParameters['viewLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ViewLogFromJSON(jsonValue));
@@ -24325,7 +18987,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: PatchedViewLogToJSON(requestParameters['patchedViewLog']),
+            body: PatchedViewLogRequestToJSON(requestParameters['patchedViewLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ViewLogFromJSON(jsonValue));
@@ -24417,7 +19079,7 @@ export class ApiApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: ViewLogToJSON(requestParameters['viewLog']),
+            body: ViewLogRequestToJSON(requestParameters['viewLog']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ViewLogFromJSON(jsonValue));
@@ -24428,6 +19090,1634 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async apiViewLogUpdate(requestParameters: ApiViewLogUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ViewLog> {
         const response = await this.apiViewLogUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoAllergensAssessRaw(requestParameters: CuadernoAllergensAssessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AllergenAssessmentSchema>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['food'] != null) {
+            queryParameters['food'] = requestParameters['food'];
+        }
+
+        if (requestParameters['recipe'] != null) {
+            queryParameters['recipe'] = requestParameters['recipe'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/allergens/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AllergenAssessmentSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoAllergensAssess(requestParameters: CuadernoAllergensAssessRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AllergenAssessmentSchema> {
+        const response = await this.cuadernoAllergensAssessRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoAllergensDeclareRaw(requestParameters: CuadernoAllergensDeclareRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AllergenWriteResultSchema>> {
+        if (requestParameters['allergenWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'allergenWriteSchema',
+                'Required parameter "allergenWriteSchema" was null or undefined when calling cuadernoAllergensDeclare().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/allergens/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AllergenWriteSchemaRequestToJSON(requestParameters['allergenWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AllergenWriteResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoAllergensDeclare(requestParameters: CuadernoAllergensDeclareRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AllergenWriteResultSchema> {
+        const response = await this.cuadernoAllergensDeclareRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoEditionRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EditionSchema>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/edition/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EditionSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoEditionRetrieve(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EditionSchema> {
+        const response = await this.cuadernoEditionRetrieveRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoEditionUpdateRaw(requestParameters: CuadernoEditionUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EditionSchema>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/edition/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: EditionWriteSchemaRequestToJSON(requestParameters['editionWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EditionSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoEditionUpdate(requestParameters: CuadernoEditionUpdateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EditionSchema> {
+        const response = await this.cuadernoEditionUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoExchangeExportRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExchangeDocumentSchema>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/exchange/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ExchangeDocumentSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoExchangeExport(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExchangeDocumentSchema> {
+        const response = await this.cuadernoExchangeExportRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoExchangeImportRaw(requestParameters: CuadernoExchangeImportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExchangePreviewSchema>> {
+        if (requestParameters['exchangeImportDocumentSchema'] == null) {
+            throw new runtime.RequiredError(
+                'exchangeImportDocumentSchema',
+                'Required parameter "exchangeImportDocumentSchema" was null or undefined when calling cuadernoExchangeImport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['preview'] != null) {
+            queryParameters['preview'] = requestParameters['preview'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/exchange/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ExchangeImportDocumentSchemaRequestToJSON(requestParameters['exchangeImportDocumentSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ExchangePreviewSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoExchangeImport(requestParameters: CuadernoExchangeImportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExchangePreviewSchema> {
+        const response = await this.cuadernoExchangeImportRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoLegacyOrderCreateRaw(requestParameters: CuadernoLegacyOrderCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LegacyOrderResultSchema>> {
+        if (requestParameters['legacyOrderWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'legacyOrderWriteSchema',
+                'Required parameter "legacyOrderWriteSchema" was null or undefined when calling cuadernoLegacyOrderCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/orders/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: LegacyOrderWriteSchemaRequestToJSON(requestParameters['legacyOrderWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => LegacyOrderResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoLegacyOrderCreate(requestParameters: CuadernoLegacyOrderCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LegacyOrderResultSchema> {
+        const response = await this.cuadernoLegacyOrderCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMovementsCreateRaw(requestParameters: CuadernoMovementsCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MovementResultSchema>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/movements/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: MovementWriteSchemaRequestToJSON(requestParameters['movementWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MovementResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMovementsCreate(requestParameters: CuadernoMovementsCreateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MovementResultSchema> {
+        const response = await this.cuadernoMovementsCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMovementsListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<MovementSchema>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/movements/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(MovementSchemaFromJSON));
+    }
+
+    /**
+     */
+    async cuadernoMovementsList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<MovementSchema>> {
+        const response = await this.cuadernoMovementsListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPackagePricesCreateRaw(requestParameters: CuadernoPackagePricesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceSummarySchema>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling cuadernoPackagePricesCreate().'
+            );
+        }
+
+        if (requestParameters['priceWrite'] == null) {
+            throw new runtime.RequiredError(
+                'priceWrite',
+                'Required parameter "priceWrite" was null or undefined when calling cuadernoPackagePricesCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/packages/{id}/prices/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PriceWriteRequestToJSON(requestParameters['priceWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceSummarySchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPackagePricesCreate(requestParameters: CuadernoPackagePricesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceSummarySchema> {
+        const response = await this.cuadernoPackagePricesCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPackagePricesListRaw(requestParameters: CuadernoPackagePricesListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceHistorySchema>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling cuadernoPackagePricesList().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['offset'] != null) {
+            queryParameters['offset'] = requestParameters['offset'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/packages/{id}/prices/`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceHistorySchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPackagePricesList(requestParameters: CuadernoPackagePricesListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceHistorySchema> {
+        const response = await this.cuadernoPackagePricesListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPackagesCreateRaw(requestParameters: CuadernoPackagesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PackageSchema>> {
+        if (requestParameters['packageWrite'] == null) {
+            throw new runtime.RequiredError(
+                'packageWrite',
+                'Required parameter "packageWrite" was null or undefined when calling cuadernoPackagesCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/packages/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PackageWriteRequestToJSON(requestParameters['packageWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PackageSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPackagesCreate(requestParameters: CuadernoPackagesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PackageSchema> {
+        const response = await this.cuadernoPackagesCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Encode visible formats and current prices in one ordered statement.
+     */
+    async cuadernoPackagesListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PackageSchema>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/packages/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PackageSchemaFromJSON));
+    }
+
+    /**
+     * Encode visible formats and current prices in one ordered statement.
+     */
+    async cuadernoPackagesList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PackageSchema>> {
+        const response = await this.cuadernoPackagesListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoProductionCalculateRaw(requestParameters: CuadernoProductionCalculateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CuadernoProductionResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/production/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ProductionWriteSchemaRequestToJSON(requestParameters['productionWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CuadernoProductionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoProductionCalculate(requestParameters: CuadernoProductionCalculateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CuadernoProductionResponse> {
+        const response = await this.cuadernoProductionCalculateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOffersCreateRaw(requestParameters: CuadernoPurchaseOffersCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OfferSchema>> {
+        if (requestParameters['offerWrite'] == null) {
+            throw new runtime.RequiredError(
+                'offerWrite',
+                'Required parameter "offerWrite" was null or undefined when calling cuadernoPurchaseOffersCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-offers/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OfferWriteRequestToJSON(requestParameters['offerWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OfferSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOffersCreate(requestParameters: CuadernoPurchaseOffersCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OfferSchema> {
+        const response = await this.cuadernoPurchaseOffersCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOffersListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OfferSchema>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-offers/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(OfferSchemaFromJSON));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOffersList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OfferSchema>> {
+        const response = await this.cuadernoPurchaseOffersListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Use only for /purchase-orders/<order_id>/ to avoid list/detail unions.
+     */
+    async cuadernoPurchaseOrderActionRaw(requestParameters: CuadernoPurchaseOrderActionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderSchema>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling cuadernoPurchaseOrderAction().'
+            );
+        }
+
+        if (requestParameters['orderAction'] == null) {
+            throw new runtime.RequiredError(
+                'orderAction',
+                'Required parameter "orderAction" was null or undefined when calling cuadernoPurchaseOrderAction().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-orders/{orderId}/`;
+        urlPath = urlPath.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OrderActionRequestToJSON(requestParameters['orderAction']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrderSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     * Use only for /purchase-orders/<order_id>/ to avoid list/detail unions.
+     */
+    async cuadernoPurchaseOrderAction(requestParameters: CuadernoPurchaseOrderActionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderSchema> {
+        const response = await this.cuadernoPurchaseOrderActionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Use only for /purchase-orders/<order_id>/ to avoid list/detail unions.
+     */
+    async cuadernoPurchaseOrderRetrieveRaw(requestParameters: CuadernoPurchaseOrderRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderSchema>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling cuadernoPurchaseOrderRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-orders/{orderId}/`;
+        urlPath = urlPath.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrderSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     * Use only for /purchase-orders/<order_id>/ to avoid list/detail unions.
+     */
+    async cuadernoPurchaseOrderRetrieve(requestParameters: CuadernoPurchaseOrderRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderSchema> {
+        const response = await this.cuadernoPurchaseOrderRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOrdersCreateRaw(requestParameters: CuadernoPurchaseOrdersCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderSchema>> {
+        if (requestParameters['orderWrite'] == null) {
+            throw new runtime.RequiredError(
+                'orderWrite',
+                'Required parameter "orderWrite" was null or undefined when calling cuadernoPurchaseOrdersCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-orders/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OrderWriteRequestToJSON(requestParameters['orderWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrderSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOrdersCreate(requestParameters: CuadernoPurchaseOrdersCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderSchema> {
+        const response = await this.cuadernoPurchaseOrdersCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOrdersListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrderSchema>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-orders/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(OrderSchemaFromJSON));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseOrdersList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OrderSchema>> {
+        const response = await this.cuadernoPurchaseOrdersListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseReceiptReverseRaw(requestParameters: CuadernoPurchaseReceiptReverseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptSchema>> {
+        if (requestParameters['receiptId'] == null) {
+            throw new runtime.RequiredError(
+                'receiptId',
+                'Required parameter "receiptId" was null or undefined when calling cuadernoPurchaseReceiptReverse().'
+            );
+        }
+
+        if (requestParameters['receiptReverse'] == null) {
+            throw new runtime.RequiredError(
+                'receiptReverse',
+                'Required parameter "receiptReverse" was null or undefined when calling cuadernoPurchaseReceiptReverse().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-receipts/{receiptId}/reverse/`;
+        urlPath = urlPath.replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReceiptReverseRequestToJSON(requestParameters['receiptReverse']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReceiptSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseReceiptReverse(requestParameters: CuadernoPurchaseReceiptReverseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptSchema> {
+        const response = await this.cuadernoPurchaseReceiptReverseRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseReceiptsCreateRaw(requestParameters: CuadernoPurchaseReceiptsCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptSchema>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling cuadernoPurchaseReceiptsCreate().'
+            );
+        }
+
+        if (requestParameters['receiptWrite'] == null) {
+            throw new runtime.RequiredError(
+                'receiptWrite',
+                'Required parameter "receiptWrite" was null or undefined when calling cuadernoPurchaseReceiptsCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-orders/{orderId}/receipts/`;
+        urlPath = urlPath.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReceiptWriteRequestToJSON(requestParameters['receiptWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReceiptSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseReceiptsCreate(requestParameters: CuadernoPurchaseReceiptsCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptSchema> {
+        const response = await this.cuadernoPurchaseReceiptsCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPurchaseReceiptsListRaw(requestParameters: CuadernoPurchaseReceiptsListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReceiptSchema>>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling cuadernoPurchaseReceiptsList().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/purchase-orders/{orderId}/receipts/`;
+        urlPath = urlPath.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReceiptSchemaFromJSON));
+    }
+
+    /**
+     */
+    async cuadernoPurchaseReceiptsList(requestParameters: CuadernoPurchaseReceiptsListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReceiptSchema>> {
+        const response = await this.cuadernoPurchaseReceiptsListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeCostRetrieveRaw(requestParameters: CuadernoRecipeCostRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeCostSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeCostRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['servings'] != null) {
+            queryParameters['servings'] = requestParameters['servings'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/cost/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeCostSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeCostRetrieve(requestParameters: CuadernoRecipeCostRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeCostSchema> {
+        const response = await this.cuadernoRecipeCostRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeFinanceRetrieveRaw(requestParameters: CuadernoRecipeFinanceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CuadernoRecipeFinanceResponse>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeFinanceRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['servings'] != null) {
+            queryParameters['servings'] = requestParameters['servings'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/finance/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CuadernoRecipeFinanceResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeFinanceRetrieve(requestParameters: CuadernoRecipeFinanceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CuadernoRecipeFinanceResponse> {
+        const response = await this.cuadernoRecipeFinanceRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeFinanceUpdateRaw(requestParameters: CuadernoRecipeFinanceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CuadernoRecipeFinanceResponse>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeFinanceUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['servings'] != null) {
+            queryParameters['servings'] = requestParameters['servings'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/finance/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CuadernoRecipeFinanceWriteRequestToJSON(requestParameters['cuadernoRecipeFinanceWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CuadernoRecipeFinanceResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeFinanceUpdate(requestParameters: CuadernoRecipeFinanceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CuadernoRecipeFinanceResponse> {
+        const response = await this.cuadernoRecipeFinanceUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeIngredientYieldsRetrieveRaw(requestParameters: CuadernoRecipeIngredientYieldsRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<IngredientYieldSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeIngredientYieldsRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/ingredient-yields/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => IngredientYieldSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeIngredientYieldsRetrieve(requestParameters: CuadernoRecipeIngredientYieldsRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IngredientYieldSchema> {
+        const response = await this.cuadernoRecipeIngredientYieldsRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeIngredientYieldsUpdateRaw(requestParameters: CuadernoRecipeIngredientYieldsUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<IngredientYieldSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeIngredientYieldsUpdate().'
+            );
+        }
+
+        if (requestParameters['ingredientYieldWrite'] == null) {
+            throw new runtime.RequiredError(
+                'ingredientYieldWrite',
+                'Required parameter "ingredientYieldWrite" was null or undefined when calling cuadernoRecipeIngredientYieldsUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/ingredient-yields/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: IngredientYieldWriteRequestToJSON(requestParameters['ingredientYieldWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => IngredientYieldSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeIngredientYieldsUpdate(requestParameters: CuadernoRecipeIngredientYieldsUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IngredientYieldSchema> {
+        const response = await this.cuadernoRecipeIngredientYieldsUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipePriceImpactRetrieveRaw(requestParameters: CuadernoRecipePriceImpactRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceImpactSchema>> {
+        if (requestParameters['_package'] == null) {
+            throw new runtime.RequiredError(
+                '_package',
+                'Required parameter "_package" was null or undefined when calling cuadernoRecipePriceImpactRetrieve().'
+            );
+        }
+
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipePriceImpactRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['_package'] != null) {
+            queryParameters['package'] = requestParameters['_package'];
+        }
+
+        if (requestParameters['servings'] != null) {
+            queryParameters['servings'] = requestParameters['servings'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/price-impact/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceImpactSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipePriceImpactRetrieve(requestParameters: CuadernoRecipePriceImpactRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceImpactSchema> {
+        const response = await this.cuadernoRecipePriceImpactRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeYieldRetrieveRaw(requestParameters: CuadernoRecipeYieldRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeYieldSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeYieldRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/yield/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeYieldSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeYieldRetrieve(requestParameters: CuadernoRecipeYieldRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeYieldSchema> {
+        const response = await this.cuadernoRecipeYieldRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeYieldUpdateRaw(requestParameters: CuadernoRecipeYieldUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeYieldSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeYieldUpdate().'
+            );
+        }
+
+        if (requestParameters['recipeYieldWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'recipeYieldWriteSchema',
+                'Required parameter "recipeYieldWriteSchema" was null or undefined when calling cuadernoRecipeYieldUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/yield/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecipeYieldWriteSchemaRequestToJSON(requestParameters['recipeYieldWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeYieldSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeYieldUpdate(requestParameters: CuadernoRecipeYieldUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeYieldSchema> {
+        const response = await this.cuadernoRecipeYieldUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReplenishmentCalculateRaw(requestParameters: CuadernoReplenishmentCalculateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentSchema>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/replenishment/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReplenishmentQueryRequestToJSON(requestParameters['replenishmentQuery']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReplenishmentSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReplenishmentCalculate(requestParameters: CuadernoReplenishmentCalculateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentSchema> {
+        const response = await this.cuadernoReplenishmentCalculateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Use only for /services/<plan_id>/ to avoid list/detail unions.
+     */
+    async cuadernoServiceActionRaw(requestParameters: CuadernoServiceActionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceActionResultSchema>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling cuadernoServiceAction().'
+            );
+        }
+
+        if (requestParameters['serviceActionWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'serviceActionWriteSchema',
+                'Required parameter "serviceActionWriteSchema" was null or undefined when calling cuadernoServiceAction().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/services/{planId}/`;
+        urlPath = urlPath.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ServiceActionWriteSchemaRequestToJSON(requestParameters['serviceActionWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceActionResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     * Use only for /services/<plan_id>/ to avoid list/detail unions.
+     */
+    async cuadernoServiceAction(requestParameters: CuadernoServiceActionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceActionResultSchema> {
+        const response = await this.cuadernoServiceActionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoServicePreparationRetrieveRaw(requestParameters: CuadernoServicePreparationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PreparationSchema>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling cuadernoServicePreparationRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/services/{planId}/preparation/`;
+        urlPath = urlPath.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PreparationSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoServicePreparationRetrieve(requestParameters: CuadernoServicePreparationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PreparationSchema> {
+        const response = await this.cuadernoServicePreparationRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoServicePreparationUpdateRaw(requestParameters: CuadernoServicePreparationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PreparationSchema>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling cuadernoServicePreparationUpdate().'
+            );
+        }
+
+        if (requestParameters['preparationWrite'] == null) {
+            throw new runtime.RequiredError(
+                'preparationWrite',
+                'Required parameter "preparationWrite" was null or undefined when calling cuadernoServicePreparationUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/services/{planId}/preparation/`;
+        urlPath = urlPath.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PreparationWriteRequestToJSON(requestParameters['preparationWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PreparationSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoServicePreparationUpdate(requestParameters: CuadernoServicePreparationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PreparationSchema> {
+        const response = await this.cuadernoServicePreparationUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Use only for /services/<plan_id>/ to avoid list/detail unions.
+     */
+    async cuadernoServiceRetrieveRaw(requestParameters: CuadernoServiceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServicePlanSchema>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling cuadernoServiceRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/services/{planId}/`;
+        urlPath = urlPath.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServicePlanSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     * Use only for /services/<plan_id>/ to avoid list/detail unions.
+     */
+    async cuadernoServiceRetrieve(requestParameters: CuadernoServiceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServicePlanSchema> {
+        const response = await this.cuadernoServiceRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoServicesCreateRaw(requestParameters: CuadernoServicesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceCreateResultSchema>> {
+        if (requestParameters['serviceCreateSchema'] == null) {
+            throw new runtime.RequiredError(
+                'serviceCreateSchema',
+                'Required parameter "serviceCreateSchema" was null or undefined when calling cuadernoServicesCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/services/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ServiceCreateSchemaRequestToJSON(requestParameters['serviceCreateSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceCreateResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoServicesCreate(requestParameters: CuadernoServicesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceCreateResultSchema> {
+        const response = await this.cuadernoServicesCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoServicesListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServicePlanSchema>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/services/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServicePlanSchemaFromJSON));
+    }
+
+    /**
+     */
+    async cuadernoServicesList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServicePlanSchema>> {
+        const response = await this.cuadernoServicesListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoStockMinimumsRetrieveRaw(requestParameters: CuadernoStockMinimumsRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StockMinimumSchema>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['household'] != null) {
+            queryParameters['household'] = requestParameters['household'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/stock-minimums/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => StockMinimumSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoStockMinimumsRetrieve(requestParameters: CuadernoStockMinimumsRetrieveRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StockMinimumSchema> {
+        const response = await this.cuadernoStockMinimumsRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoStockMinimumsUpdateRaw(requestParameters: CuadernoStockMinimumsUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StockMinimumSchema>> {
+        if (requestParameters['minimumWrite'] == null) {
+            throw new runtime.RequiredError(
+                'minimumWrite',
+                'Required parameter "minimumWrite" was null or undefined when calling cuadernoStockMinimumsUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/stock-minimums/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: MinimumWriteRequestToJSON(requestParameters['minimumWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => StockMinimumSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoStockMinimumsUpdate(requestParameters: CuadernoStockMinimumsUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StockMinimumSchema> {
+        const response = await this.cuadernoStockMinimumsUpdateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -24486,3 +20776,10 @@ export const ApiRecipeBookListOrderFieldEnum = {
     Order: 'order'
 } as const;
 export type ApiRecipeBookListOrderFieldEnum = typeof ApiRecipeBookListOrderFieldEnum[keyof typeof ApiRecipeBookListOrderFieldEnum];
+/**
+ * @export
+ */
+export const CuadernoExchangeImportPreviewEnum = {
+    _1: '1'
+} as const;
+export type CuadernoExchangeImportPreviewEnum = typeof CuadernoExchangeImportPreviewEnum[keyof typeof CuadernoExchangeImportPreviewEnum];

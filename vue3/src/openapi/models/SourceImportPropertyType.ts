@@ -24,7 +24,7 @@ export interface SourceImportPropertyType {
      * @type {number}
      * @memberof SourceImportPropertyType
      */
-    id?: number;
+    id: number;
     /**
      * 
      * @type {string}
@@ -37,6 +37,7 @@ export interface SourceImportPropertyType {
  * Check if a given object implements the SourceImportPropertyType interface.
  */
 export function instanceOfSourceImportPropertyType(value: object): value is SourceImportPropertyType {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
@@ -51,7 +52,7 @@ export function SourceImportPropertyTypeFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
     };
 }

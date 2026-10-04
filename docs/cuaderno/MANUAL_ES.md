@@ -1,6 +1,6 @@
 # Cuaderno Cocina — uso local
 
-**Estado actual, 1 de octubre:** el propietario pidió detener todos los servicios de Cuaderno para liberar recursos. El preview no está disponible hasta reanudarlo. Se conservan imagen, base y media; la caché de compilación Docker se eliminó.
+**Estado actual, 4 de octubre:** el preview local se ha reanudado para completar la aceptación. Abre http://127.0.0.1:18081 después de comprobar `ready=true`. El resultado y las limitaciones del candidato están en `.cuaderno-runs/RELEASE_REPORT.md`. Los comandos siguientes permiten reanudarlo después de una parada; conservan imagen, base y media.
 
 ## Reanudar solo el preview existente
 

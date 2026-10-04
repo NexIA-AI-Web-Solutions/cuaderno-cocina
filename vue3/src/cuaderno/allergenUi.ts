@@ -6,6 +6,8 @@ export type AllergenDeclaration = {
     id: number
     name: string
     state: AllergenState
+    created_by?: number | null
+    created_at?: string | null
 }
 
 export type AllergenFood = {
@@ -55,6 +57,12 @@ function isState(value: unknown): value is AllergenState {
     return value === 'declared' || value === 'unknown'
 }
 
+function isAuditDate(value: unknown): value is string | null {
+    return value === null || (typeof value === 'string'
+        && /^\d{4}-\d{2}-\d{2}T/.test(value)
+        && !Number.isNaN(Date.parse(value)))
+}
+
 export function allergenAssessmentEnvelope(
     value: unknown,
     expectedType?: 'food' | 'recipe',
@@ -80,13 +88,23 @@ export function allergenAssessmentEnvelope(
         for (const declaration of candidate.declarations) {
             if (!isRecord(declaration) || !isSafeAllergenId(declaration.id) || !isName(declaration.name)
                 || !isState(declaration.state) || declarationIds.has(declaration.id)) return null
+            const hasCreatedBy = Object.prototype.hasOwnProperty.call(declaration, 'created_by')
+            const hasCreatedAt = Object.prototype.hasOwnProperty.call(declaration, 'created_at')
+            if ((hasCreatedBy && declaration.created_by !== null && !isSafeAllergenId(declaration.created_by))
+                || (hasCreatedAt && !isAuditDate(declaration.created_at))) return null
             declarationIds.add(declaration.id)
             if (declaration.state === 'declared') hasDeclared = true
-            declarations.push({id: declaration.id, name: declaration.name, state: declaration.state})
+            declarations.push({
+                id: declaration.id,
+                name: declaration.name,
+                state: declaration.state,
+                ...(hasCreatedBy ? {created_by: declaration.created_by as number | null} : {}),
+                ...(hasCreatedAt ? {created_at: declaration.created_at as string | null} : {}),
+            })
         }
         foods.push({id: candidate.id, name: candidate.name, declarations})
     }
-    if (scope.type === 'food' && (foods.length !== 1 || foods[0].id !== scope.id)) return null
+    if (scope.type === 'food' && (foods.length !== 1 || foods[0]?.id !== scope.id)) return null
     if ((value.assessment === 'declared') !== hasDeclared) return null
     return {
         scope: {type: scope.type, id: scope.id, name: scope.name},
@@ -95,6 +113,15 @@ export function allergenAssessmentEnvelope(
         unknown_ingredients: value.unknown_ingredients,
         foods,
     }
+}
+
+export function allergenDeclarationAuditLabel(declaration: AllergenDeclaration): string {
+    const parts: string[] = []
+    if (declaration.created_at) {
+        parts.push(`registrado el ${new Intl.DateTimeFormat('es-ES', {dateStyle: 'medium'}).format(new Date(declaration.created_at))}`)
+    }
+    if (declaration.created_by) parts.push(`usuario ${declaration.created_by}`)
+    return parts.join(' · ')
 }
 
 export function unknownAllergenAssessment(): UnknownAllergenAssessment {

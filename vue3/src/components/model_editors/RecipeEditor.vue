@@ -104,19 +104,19 @@
                     <v-form :disabled="loading || fileApiLoading">
                         <v-row v-if="editingObj.steps.length == 0">
                             <v-col class="text-center">
-                                <v-btn icon="$create" variant="outlined" size="x-small" @click="addStep(i+1)"></v-btn>
+                                <v-btn icon="$create" variant="outlined" size="x-small" @click="addStep(0)"></v-btn>
                             </v-col>
                         </v-row>
 
                         <v-row v-for="(s,i ) in editingObj.steps" :key="s.id" dense>
                             <v-col>
-                                <step-editor v-model="editingObj.steps[i]" v-model:recipe="editingObj" :step-index="i" @delete="deleteStepAtIndex(i)"
+                                 <step-editor :model-value="s" @update:model-value="updateStep(i, $event)" v-model:recipe="editingObj" :step-index="i" @delete="deleteStepAtIndex(i)"
                                              @move="dialogStepManager = true"></step-editor>
 
                                 <div class="text-center mt-2">
                                     <v-btn icon="$create" variant="outlined" size="x-small" @click="addStep(i+1)"></v-btn>
                                     <v-btn icon="fa-solid fa-down-left-and-up-right-to-center" style="transform: rotate(135deg)" variant="outlined" size="x-small" class="ms-2"
-                                           @click="mergeStep(s, editingObj.steps[i+1]); editingObj.steps.splice(i+1,1)" v-if="editingObj.steps.length > i + 1"
+                                           @click="mergeFollowingStep(i, s)" v-if="editingObj.steps.length > i + 1"
                                     ></v-btn>
                                     <v-btn icon="fa-solid fa-arrow-down-1-9" variant="outlined" size="x-small" class="ms-2" @click="dialogStepManager = true"
                                            :disabled="editingObj.steps.length < 2"></v-btn>
@@ -238,7 +238,18 @@ const tab = ref("recipe")
 const dialogStepManager = ref(false)
 
 const {fileApiLoading, updateRecipeImage} = useFileApi()
-const file = shallowRef<File | null>(null)
+const file = shallowRef<File>()
+
+function updateStep(index: number, step: Step) {
+    editingObj.value.steps[index] = step
+}
+
+function mergeFollowingStep(index: number, step: Step) {
+    const following = editingObj.value.steps[index + 1]
+    if (!following) return
+    mergeStep(step, following)
+    editingObj.value.steps.splice(index + 1, 1)
+}
 
 const aiStepSortLoading = ref(false)
 
@@ -254,7 +265,9 @@ function initializeEditor() {
         newItemFunction: () => {
             editingObj.value.steps = [] as Step[]
             addStep()
-            editingObj.value.steps[0].ingredients.push({
+            const firstStep = editingObj.value.steps[0]
+            if (!firstStep) return
+            firstStep.ingredients.push({
                 food: null,
                 unit: useUserPreferenceStore().defaultUnitObj,
                 amount: 0,
@@ -284,7 +297,7 @@ function saveRecipeImage(){
     if (file.value != null && editingObj.value.id) {
             loading.value = true
             updateRecipeImage(editingObj.value.id, file.value).then(r => {
-                file.value = null
+                file.value = undefined
                 setupState(props.item, props.itemId)
             }).catch(err => {
                 useMessageStore().addMessage(MessageType.ERROR, {title: t('UPDATE_ERROR'), text: t('ErrorUpdatingImage')} as StructuredMessage, 8000)

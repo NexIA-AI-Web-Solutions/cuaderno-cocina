@@ -24,7 +24,7 @@ export interface MealType {
      * @type {number}
      * @memberof MealType
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -61,6 +61,7 @@ export interface MealType {
  * Check if a given object implements the MealType interface.
  */
 export function instanceOfMealType(value: object): value is MealType {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     return true;
@@ -76,7 +77,7 @@ export function MealTypeFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'order': json['order'] == null ? undefined : json['order'],
         'time': json['time'] == null ? undefined : json['time'],
@@ -89,14 +90,13 @@ export function MealTypeToJSON(json: any): MealType {
     return MealTypeToJSONTyped(json, false);
 }
 
-export function MealTypeToJSONTyped(value?: Omit<MealType, 'created_by'> | null, ignoreDiscriminator: boolean = false): any {
+export function MealTypeToJSONTyped(value?: Omit<MealType, 'id'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'order': value['order'],
         'time': value['time'],

@@ -118,6 +118,10 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
         if not database_name.lower().startswith("test_"):
             self.fail(f"El benchmark se niega a usar una BD no temporal: {database_name!r}")
 
+        with connection.cursor() as cursor:
+            cursor.execute("SHOW jit")
+            jit = cursor.fetchone()[0]
+        self.assertEqual(jit, "off", "El benchmark exige las opciones de producción TEST_DB_OPTIONS={'options': '-c jit=off'}.")
         started = perf_counter()
         cache.clear()
         with scopes_disabled():
@@ -478,7 +482,7 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
                 query["sql"] for query in profile_queries[endpoint]
                 if isinstance(query.get("sql"), str)
                 and marker in query["sql"].lower()
-                and query["sql"].lstrip().lower().startswith("select")
+                and query["sql"].lstrip().lower().startswith(("select", "with"))
             ]
             if not matches:
                 raise AssertionError(f"No se capturó SQL representativo para {label}.")
@@ -520,8 +524,8 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
 
     def _database_facts(self):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT version(), current_setting('server_version')")
-            version, short_version = cursor.fetchone()
+            cursor.execute("SELECT version(), current_setting('server_version'), current_setting('jit')")
+            version, short_version, jit = cursor.fetchone()
             cursor.execute("SELECT pg_database_size(current_database())")
             database_size = cursor.fetchone()[0]
             table_sizes = {}
@@ -535,6 +539,8 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
                 table_sizes[table] = cursor.fetchone()[0]
         return {
             "vendor": connection.vendor,
+            "jit": jit,
+            "connection_options": connection.settings_dict.get("OPTIONS", {}).get("options", ""),
             "server_version": short_version,
             "version": version,
             "database_size_bytes": database_size,
@@ -593,7 +599,6 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             name: self._measure_concurrent(endpoints[name])
             for name in ("services_100", "movements_100_of_100000", "packages_1500")
         }
-        diagnostic = self._diagnostic_report(endpoints) if os.environ.get("CUADERNO_PROFILE") == "1" else None
         report = {
             "schema_version": 1,
             "measured_at": timezone.now().isoformat(),
@@ -624,7 +629,8 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             "concurrent": concurrent,
             "claims_excluded": ["LCP", "INP", "iPad físico", "latencia de Internet", "hardware comercial"],
         }
-        print("CUADERNO_PERFORMANCE " + json.dumps(report, sort_keys=True, separators=(",", ":")))
+        print("CUADERNO_PERFORMANCE " + json.dumps(report, sort_keys=True, separators=(",", ":")), flush=True)
+        diagnostic = self._diagnostic_report(endpoints) if os.environ.get("CUADERNO_PROFILE") == "1" else None
         if diagnostic is not None:
             print("CUADERNO_DIAGNOSTIC " + json.dumps(diagnostic, sort_keys=True, separators=(",", ":")))
 

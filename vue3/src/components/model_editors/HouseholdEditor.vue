@@ -90,7 +90,9 @@ function onAfterSave() {
         loading.value = true
         userSpace.household = editingObj.value
         api.apiUserSpaceUpdate({id: userSpace.id!, userSpace: userSpace}).then(r => {
-             useUserPreferenceStore().activeUserSpace = r
+             const store = useUserPreferenceStore()
+             const index = store.userSpaces.findIndex(item => item.id === r.id)
+             if (index >= 0) store.userSpaces[index] = r
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         }).finally(() => {

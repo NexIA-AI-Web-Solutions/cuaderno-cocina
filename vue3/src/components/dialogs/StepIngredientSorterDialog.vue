@@ -25,7 +25,7 @@
 
                 {{ $t('MoveToStep') }}
                 <v-btn block v-for="(s,i) in recipe.steps" :disabled="i == props.stepIndex" class="mt-1"
-                       @click="moveIngredient(editingIngredientIndex, i, recipe.steps[i].ingredients.length)">{{ i + 1 }} <span v-if="'name' in s">{{ s.name }}</span>
+                       @click="moveIngredient(editingIngredientIndex, i, s.ingredients.length)">{{ i + 1 }} <span v-if="'name' in s">{{ s.name }}</span>
                 </v-btn>
             </v-card-text>
             <v-card-actions>
@@ -37,19 +37,25 @@
 
 <script setup lang="ts">
 
-import {Recipe, SourceImportRecipe, SourceImportStep, Step} from "@/openapi";
+import type {Ingredient, SourceImportIngredient} from "@/openapi";
 import {ingredientToString} from "@/utils/model_utils.ts";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
-import {ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {useDisplay} from "vuetify/framework";
 
-const dialog = defineModel<Boolean>({required: true, default: false})
-const step = defineModel<Step | SourceImportStep>('step', {required: true})
-const recipe = defineModel<Recipe | SourceImportRecipe>('recipe', {required: true})
-const props = defineProps({
-    stepIndex: {type: Number, required: true},
-    ingredientIndex: {type: Number, required: true},
-})
+type SortableIngredient = Ingredient | SourceImportIngredient
+type SortableStep = {name?: string, ingredients: SortableIngredient[]}
+type SortableRecipe = {steps: SortableStep[]}
+
+const dialog = defineModel<boolean>({required: true, default: false})
+const props = defineProps<{
+    step: SortableStep
+    recipe: SortableRecipe
+    stepIndex: number
+    ingredientIndex: number
+}>()
+const step = computed(() => props.step)
+const recipe = computed(() => props.recipe)
 
 const {mobile} = useDisplay()
 
@@ -67,11 +73,13 @@ const editingIngredientIndex = ref(0)
  * @param targetIngredientIndex place in the target steps ingredient list to insert into
  */
 function moveIngredient(sourceIngredientIndex: number, targetStepIndex: number, targetIngredientIndex: number,) {
-    let ingredient = step.value.ingredients[sourceIngredientIndex]
+    const ingredient = step.value.ingredients[sourceIngredientIndex]
+    const targetStep = recipe.value.steps[targetStepIndex]
+    if (!ingredient || !targetStep) return
     step.value.ingredients.splice(sourceIngredientIndex, 1)
-    recipe.value.steps[targetStepIndex].ingredients.splice(targetIngredientIndex, 0, ingredient)
+    targetStep.ingredients.splice(targetIngredientIndex, 0, ingredient)
 
-    recipe.value.steps[targetStepIndex].ingredients.forEach((ingredient, index) => {
+    targetStep.ingredients.forEach((ingredient, index) => {
         ingredient.order = index
     })
 

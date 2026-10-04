@@ -274,7 +274,9 @@ function householdAndNext(nextStep: string) {
  */
 function updateSpace() {
     let api = new ApiApi()
-    return api.apiSpacePartialUpdate({id: space.value.id, patchedSpace: space.value}).then(r => {
+    const currentSpace = space.value
+    if (!currentSpace) return Promise.resolve()
+    return api.apiSpacePartialUpdate({id: currentSpace.id, patchedSpace: currentSpace}).then(r => {
         space.value = r
         useUserPreferenceStore().activeSpace = Object.assign({}, space.value)
     }).catch(err => {

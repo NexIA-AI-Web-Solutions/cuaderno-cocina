@@ -36,19 +36,19 @@ export interface FoodBatchUpdate {
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    substituteAdd: Array<number>;
+    substituteAdd?: Array<number>;
     /**
      * 
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    substituteRemove: Array<number>;
+    substituteRemove?: Array<number>;
     /**
      * 
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    substituteSet: Array<number>;
+    substituteSet?: Array<number>;
     /**
      * 
      * @type {boolean}
@@ -60,19 +60,19 @@ export interface FoodBatchUpdate {
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    inheritFieldsAdd: Array<number>;
+    inheritFieldsAdd?: Array<number>;
     /**
      * 
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    inheritFieldsRemove: Array<number>;
+    inheritFieldsRemove?: Array<number>;
     /**
      * 
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    inheritFieldsSet: Array<number>;
+    inheritFieldsSet?: Array<number>;
     /**
      * 
      * @type {boolean}
@@ -84,19 +84,19 @@ export interface FoodBatchUpdate {
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    childInheritFieldsAdd: Array<number>;
+    childInheritFieldsAdd?: Array<number>;
     /**
      * 
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    childInheritFieldsRemove: Array<number>;
+    childInheritFieldsRemove?: Array<number>;
     /**
      * 
      * @type {Array<number>}
      * @memberof FoodBatchUpdate
      */
-    childInheritFieldsSet: Array<number>;
+    childInheritFieldsSet?: Array<number>;
     /**
      * 
      * @type {boolean}
@@ -170,15 +170,6 @@ export interface FoodBatchUpdate {
  */
 export function instanceOfFoodBatchUpdate(value: object): value is FoodBatchUpdate {
     if (!('foods' in value) || value['foods'] === undefined) return false;
-    if (!('substituteAdd' in value) || value['substituteAdd'] === undefined) return false;
-    if (!('substituteRemove' in value) || value['substituteRemove'] === undefined) return false;
-    if (!('substituteSet' in value) || value['substituteSet'] === undefined) return false;
-    if (!('inheritFieldsAdd' in value) || value['inheritFieldsAdd'] === undefined) return false;
-    if (!('inheritFieldsRemove' in value) || value['inheritFieldsRemove'] === undefined) return false;
-    if (!('inheritFieldsSet' in value) || value['inheritFieldsSet'] === undefined) return false;
-    if (!('childInheritFieldsAdd' in value) || value['childInheritFieldsAdd'] === undefined) return false;
-    if (!('childInheritFieldsRemove' in value) || value['childInheritFieldsRemove'] === undefined) return false;
-    if (!('childInheritFieldsSet' in value) || value['childInheritFieldsSet'] === undefined) return false;
     return true;
 }
 
@@ -194,17 +185,17 @@ export function FoodBatchUpdateFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'foods': json['foods'],
         'category': json['category'] == null ? undefined : json['category'],
-        'substituteAdd': json['substitute_add'],
-        'substituteRemove': json['substitute_remove'],
-        'substituteSet': json['substitute_set'],
+        'substituteAdd': json['substitute_add'] == null ? undefined : json['substitute_add'],
+        'substituteRemove': json['substitute_remove'] == null ? undefined : json['substitute_remove'],
+        'substituteSet': json['substitute_set'] == null ? undefined : json['substitute_set'],
         'substituteRemoveAll': json['substitute_remove_all'] == null ? undefined : json['substitute_remove_all'],
-        'inheritFieldsAdd': json['inherit_fields_add'],
-        'inheritFieldsRemove': json['inherit_fields_remove'],
-        'inheritFieldsSet': json['inherit_fields_set'],
+        'inheritFieldsAdd': json['inherit_fields_add'] == null ? undefined : json['inherit_fields_add'],
+        'inheritFieldsRemove': json['inherit_fields_remove'] == null ? undefined : json['inherit_fields_remove'],
+        'inheritFieldsSet': json['inherit_fields_set'] == null ? undefined : json['inherit_fields_set'],
         'inheritFieldsRemoveAll': json['inherit_fields_remove_all'] == null ? undefined : json['inherit_fields_remove_all'],
-        'childInheritFieldsAdd': json['child_inherit_fields_add'],
-        'childInheritFieldsRemove': json['child_inherit_fields_remove'],
-        'childInheritFieldsSet': json['child_inherit_fields_set'],
+        'childInheritFieldsAdd': json['child_inherit_fields_add'] == null ? undefined : json['child_inherit_fields_add'],
+        'childInheritFieldsRemove': json['child_inherit_fields_remove'] == null ? undefined : json['child_inherit_fields_remove'],
+        'childInheritFieldsSet': json['child_inherit_fields_set'] == null ? undefined : json['child_inherit_fields_set'],
         'childInheritFieldsRemoveAll': json['child_inherit_fields_remove_all'] == null ? undefined : json['child_inherit_fields_remove_all'],
         'shoppingListsAdd': json['shopping_lists_add'] == null ? undefined : json['shopping_lists_add'],
         'shoppingListsRemove': json['shopping_lists_remove'] == null ? undefined : json['shopping_lists_remove'],

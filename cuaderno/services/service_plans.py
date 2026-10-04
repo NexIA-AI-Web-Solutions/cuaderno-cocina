@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from copy import deepcopy
 from datetime import datetime
 from decimal import Decimal
@@ -24,6 +25,16 @@ from cuaderno.services.subrecipes import convert_native_quantity, sheet_from_rec
 
 def decimal_string(value) -> str:
     return canonical_decimal(value)
+
+
+def _snapshot_identifier(value):
+    # Graph object keys are decimal strings; recipe IDs and children are JSON
+    # integers. Never truncate floats or accept booleans as identifiers.
+    if isinstance(value, str) and re.fullmatch(r"[1-9][0-9]{0,18}", value, flags=re.ASCII):
+        value = int(value)
+    if type(value) is not int or not 0 < value <= 9223372036854775807:
+        raise ValueError
+    return value
 
 
 def accessible_service_plans(request, plan_id=None, *, as_list=False):
@@ -60,25 +71,19 @@ def accessible_service_plans(request, plan_id=None, *, as_list=False):
     required_by_plan: dict[int, set[int] | None] = {}
     all_recipe_ids: set[int] = set()
 
-    def recipe_id(value):
-        if isinstance(value, bool):
-            raise ValueError
-        parsed = int(value)
-        if parsed <= 0:
-            raise ValueError
-        return parsed
+    recipe_id = _snapshot_identifier
 
     for row in candidates:
         required = set()
         try:
             if row["meal_plan__recipe_id"]:
                 required.add(recipe_id(row["meal_plan__recipe_id"]))
-            snapshot = row["snapshot"] or {}
+            snapshot = row["snapshot"] if row["snapshot"] is not None else {}
             if not isinstance(snapshot, dict):
                 raise ValueError
-            if snapshot.get("recipe_id"):
+            if "recipe_id" in snapshot and snapshot["recipe_id"] is not None:
                 required.add(recipe_id(snapshot["recipe_id"]))
-            graph = snapshot.get("recipe_graph") or {}
+            graph = snapshot.get("recipe_graph", {})
             if not isinstance(graph, dict):
                 raise ValueError
             for parent, children in graph.items():
@@ -573,3 +578,95 @@ def produce_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan,
     plan.produced_key = produced_key
     plan.save(update_fields=["snapshot", "state", "produced_at", "produced_key"])
     return plan, movement_ids, stock_changed
+
+
+SERVICE_LIST_VALUE_FIELDS = (
+    "pk", "title", "covers", "service_date", "state", "meal_plan_id",
+    "household_id", "snapshot", "confirmed_at", "produced_at",
+    "created_by_id", "meal_plan__recipe_id",
+)
+
+def _service_list_base(request):
+    rows = ServicePlan.objects.filter(space=request.space)
+    if not has_group_permission(request, ["admin"]):
+        membership = getattr(request, "user_space", None)
+        if membership is None:
+            return rows.none()
+        if membership.household_id:
+            rows = rows.filter(
+                Q(household_id=membership.household_id)
+                | Q(household__isnull=True, created_by=request.user),
+            )
+        else:
+            rows = rows.filter(household__isnull=True, created_by=request.user)
+    return rows
+
+def _snapshot_recipe_ids(row):
+    """Return None for any malformed historical ACL document (fail closed)."""
+    identifier = _snapshot_identifier
+
+    required = set()
+    try:
+        if row["meal_plan__recipe_id"]:
+            required.add(identifier(row["meal_plan__recipe_id"]))
+        snapshot = row["snapshot"] if row["snapshot"] is not None else {}
+        if not isinstance(snapshot, dict):
+            raise ValueError
+        if "recipe_id" in snapshot and snapshot["recipe_id"] is not None:
+            required.add(identifier(snapshot["recipe_id"]))
+        graph = snapshot.get("recipe_graph", {})
+        if not isinstance(graph, dict):
+            raise ValueError
+        for parent, children in graph.items():
+            if not isinstance(children, list):
+                raise ValueError
+            required.add(identifier(parent))
+            required.update(identifier(child) for child in children)
+    except (TypeError, ValueError):
+        return None
+    return required
+
+def accessible_service_plan_rows(request):
+    """Bounded list-only ACL using dictionaries; never used for writes."""
+    candidates = list(
+        _service_list_base(request)
+        .order_by("-pk")
+        .values(*SERVICE_LIST_VALUE_FIELDS)[:100]
+    )
+    required_by_pk = {row["pk"]: _snapshot_recipe_ids(row) for row in candidates}
+    all_recipe_ids = set().union(*(
+        required for required in required_by_pk.values() if required is not None
+    )) if required_by_pk else set()
+    from cuaderno.services.costing import visible_recipes
+    visible_ids = set(
+        visible_recipes(request.user, request.space)
+        .filter(pk__in=all_recipe_ids)
+        .values_list("pk", flat=True)
+    ) if all_recipe_ids else set()
+    allowed = [
+        row for row in candidates
+        if required_by_pk[row["pk"]] is not None
+        and required_by_pk[row["pk"]].issubset(visible_ids)
+    ]
+    return sorted(
+        allowed,
+        key=lambda row: (
+            row["service_date"] is None, row["service_date"], row["pk"],
+        ),
+    )
+
+def serialize_service_plan_row(row):
+    return {
+        "id": row["pk"],
+        "title": row["title"],
+        "covers": decimal_string(row["covers"]),
+        "service_date": row["service_date"].isoformat() if row["service_date"] else None,
+        "state": row["state"],
+        "meal_plan": row["meal_plan_id"],
+        "household": row["household_id"],
+        "snapshot": row["snapshot"],
+        "confirmed_at": row["confirmed_at"].isoformat() if row["confirmed_at"] else None,
+        "produced_at": row["produced_at"].isoformat() if row["produced_at"] else None,
+        "created_by": row["created_by_id"],
+    }
+

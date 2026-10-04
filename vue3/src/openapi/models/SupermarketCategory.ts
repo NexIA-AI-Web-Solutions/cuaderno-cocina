@@ -58,7 +58,7 @@ export interface SupermarketCategory {
      * @type {number}
      * @memberof SupermarketCategory
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -83,6 +83,7 @@ export interface SupermarketCategory {
  * Check if a given object implements the SupermarketCategory interface.
  */
 export function instanceOfSupermarketCategory(value: object): value is SupermarketCategory {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
@@ -97,7 +98,7 @@ export function SupermarketCategoryFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'openDataSlug': json['open_data_slug'] == null ? undefined : json['open_data_slug'],
@@ -108,14 +109,13 @@ export function SupermarketCategoryToJSON(json: any): SupermarketCategory {
     return SupermarketCategoryToJSONTyped(json, false);
 }
 
-export function SupermarketCategoryToJSONTyped(value?: SupermarketCategory | null, ignoreDiscriminator: boolean = false): any {
+export function SupermarketCategoryToJSONTyped(value?: Omit<SupermarketCategory, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'description': value['description'],
         'open_data_slug': value['openDataSlug'],

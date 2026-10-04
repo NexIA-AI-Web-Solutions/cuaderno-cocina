@@ -24,7 +24,7 @@ export interface FoodSimple {
      * @type {number}
      * @memberof FoodSimple
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -43,6 +43,7 @@ export interface FoodSimple {
  * Check if a given object implements the FoodSimple interface.
  */
 export function instanceOfFoodSimple(value: object): value is FoodSimple {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     return true;
 }
@@ -57,7 +58,7 @@ export function FoodSimpleFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'pluralName': json['plural_name'] == null ? undefined : json['plural_name'],
     };
@@ -67,14 +68,13 @@ export function FoodSimpleToJSON(json: any): FoodSimple {
     return FoodSimpleToJSONTyped(json, false);
 }
 
-export function FoodSimpleToJSONTyped(value?: FoodSimple | null, ignoreDiscriminator: boolean = false): any {
+export function FoodSimpleToJSONTyped(value?: Omit<FoodSimple, 'id'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'plural_name': value['pluralName'],
     };

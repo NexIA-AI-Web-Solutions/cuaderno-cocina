@@ -144,7 +144,6 @@ import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
 import {exchangeBody, readExchangeFile} from '@/cuaderno/exchangeUi'
-import type {EditorSupportedTypes} from '@/types/Models'
 
 type CatalogItem = {ref: string; id?: number; name?: string; label?: string}
 type CatalogConversion = CatalogItem & {
@@ -155,7 +154,7 @@ type CatalogConversion = CatalogItem & {
     converted_amount: string
 }
 type ChoiceKind = 'foods' | 'units' | 'packages' | 'conversions'
-type ChoiceTarget = EditorSupportedTypes | number | null | undefined
+type ChoiceTarget = {id: number} | number | null | undefined
 type Choice = {mode: 'create' | 'reuse'; target: ChoiceTarget}
 type Preview = {count: number; preview: Array<Record<string, any>>; writes: number; preview_sha256: string; warnings?: unknown[]}
 
@@ -206,8 +205,10 @@ function setChoiceMode(kind: ChoiceKind, ref: string, value: unknown) {
     ensureChoice(kind, ref).mode = value === 'reuse' ? 'reuse' : 'create'
 }
 
-function setChoiceTarget(kind: ChoiceKind, ref: string, value: ChoiceTarget) {
-    ensureChoice(kind, ref).target = value
+function setChoiceTarget(kind: ChoiceKind, ref: string, value: unknown) {
+    ensureChoice(kind, ref).target = typeof value === 'number'
+        ? value
+        : (typeof value === 'object' && value !== null && 'id' in value && typeof value.id === 'number' ? {id: value.id} : null)
 }
 
 function invalidatePreview() {

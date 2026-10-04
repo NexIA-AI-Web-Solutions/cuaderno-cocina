@@ -1,6 +1,8 @@
 ## Cuaderno Cocina
 
-Fork real de Tandoor. [Uso local en español](docs/cuaderno/MANUAL_ES.md), [preparación de producción](docs/cuaderno/PRODUCCION_ES.md), [estado comprobado](docs/cuaderno/STATUS.md) y [aceptación pendiente](docs/cuaderno/RELEASE_CHECKLIST.md). Rama del producto: `cuaderno/main`. El propietario pidió detener la aplicación el 1 de octubre: el preview de `http://127.0.0.1:18081` requiere reanudación manual. Se conservan imágenes y datos; no se declara despliegue de producción ni G7 completado.
+[Auditoría integral del 4 de octubre de 2026](docs/cuaderno/AUDITORIA_2026-10-04.md): estado del código, defectos confirmados, comprobaciones y trabajo pendiente con criterios de aceptación.
+
+Fork real de Tandoor. [Uso local en español](docs/cuaderno/MANUAL_ES.md), [preparación de producción](docs/cuaderno/PRODUCCION_ES.md), [estado comprobado](docs/cuaderno/STATUS.md) y [aceptación](docs/cuaderno/RELEASE_CHECKLIST.md). Rama del producto: `cuaderno/main`. Preview local: `http://127.0.0.1:18081`. El dictamen del candidato y sus evidencias se generan en `.cuaderno-runs/RELEASE_REPORT.md` y `.cuaderno-runs/release-manifest.json`, fuera de las fuentes congeladas. Se conservan imágenes y datos; el ensayo local no equivale a desplegar en producción.
 
 La documentación y los avisos de Tandoor se conservan a continuación.
 

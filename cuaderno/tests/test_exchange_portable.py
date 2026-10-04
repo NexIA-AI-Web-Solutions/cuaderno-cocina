@@ -181,3 +181,37 @@ class PortableExchangeTests(TestCase):
             self.assertEqual(response.status_code, 400, response.data)
         with scopes_disabled():
             self.assertFalse(Recipe.objects.filter(space=self.target).exists())
+
+
+    def test_guest_exchange_exports_public_graph_only_and_revocation_is_fresh(self):
+        with scopes_disabled():
+            guest = get_user_model().objects.create_user(
+                username="portable-exchange-guest", password="local-test",
+            )
+            membership = UserSpace.objects.create(user=guest, space=self.source, active=True)
+            membership.groups.add(Group.objects.get_or_create(name="guest")[0])
+            hidden = Recipe.objects.create(
+                name="Guest hidden recipe marker", servings=1, private=True,
+                created_by=self.users[0], space=self.source,
+            )
+        client = APIClient()
+        client.force_login(guest)
+
+        public = client.get("/api/cuaderno/exchange/")
+        self.assertEqual(public.status_code, 200, public.content)
+        names = {row["name"] for row in public.json()["recipes"]}
+        self.assertIn(self.parent.name, names)
+        self.assertNotIn(hidden.name, names)
+
+        with scopes_disabled():
+            hidden.shared.add(guest)
+        shared = client.get("/api/cuaderno/exchange/")
+        self.assertEqual(shared.status_code, 200, shared.content)
+        self.assertIn(hidden.name, {row["name"] for row in shared.json()["recipes"]})
+
+        with scopes_disabled():
+            hidden.shared.remove(guest)
+        revoked = client.get("/api/cuaderno/exchange/")
+        self.assertEqual(revoked.status_code, 200, revoked.content)
+        self.assertNotIn(hidden.name, {row["name"] for row in revoked.json()["recipes"]})
+        self.assertEqual(client.post("/api/cuaderno/exchange/", {}, format="json").status_code, 403)

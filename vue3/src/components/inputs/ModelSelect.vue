@@ -9,7 +9,7 @@
 
         <!-- TODO resolve-on-load false for now, race condition with model class, make prop once better solution is found -->
         <Multiselect
-            :ref="`ref_${props.id}`"
+            ref="multiselect"
             class="material-multiselect "
             :class="{'model-select--density-compact': props.density == 'compact', 'model-select--density-comfortable': props.density == 'comfortable', 'model-select--density-default': props.density == ''}"
             :resolve-on-load="props.searchOnLoad"
@@ -32,7 +32,7 @@
             :noOptionsText="$t('No_Results')"
             :noResultsText="$t('No_Results')"
             :loading="loading"
-            @open="multiselect.refreshOptions()"
+            @open="multiselect?.refreshOptions(() => {})"
             :append-to-body="props.appendToBody"
             :classes="{
                 dropdown: 'multiselect-dropdown z-3000',
@@ -130,7 +130,7 @@ const modelClass = ref({} as GenericModel)
 const loading = ref(false)
 const hasMoreItems = ref(false)
 
-const multiselect = useTemplateRef(`ref_${props.id}`)
+const multiselect = useTemplateRef('multiselect')
 
 /**
  * create instance of model class when mounted

@@ -1,11 +1,13 @@
 """Typed input for native Food/Unit purchase formats; never coerce truthy JSON."""
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 from cuaderno.api.purchasing import DecimalStringField
 from cuaderno.domain.errors import DomainError
 from cuaderno.domain.money import validate_explicit_price
 
 
+@extend_schema_field(serializers.CharField())
 class ExactDecimalField(DecimalStringField):
     def to_internal_value(self, data):
         # Preserve the existing exact integer contract, but never accept floats/bools.

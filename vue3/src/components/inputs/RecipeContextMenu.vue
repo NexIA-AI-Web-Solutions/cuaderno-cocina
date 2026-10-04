@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import {nextTick, PropType, ref} from 'vue'
-import {ApiApi, Recipe, RecipeFlat, RecipeOverview} from "@/openapi";
+import {ApiApi, Recipe, RecipeFlat, RecipeOverview, RecipeRequest} from "@/openapi";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
@@ -80,23 +80,15 @@ function duplicateRecipe() {
     duplicateLoading.value = true
     api.apiRecipeRetrieve({id: props.recipe.id!}).then(originalRecipe => {
 
-        let recipe = {...originalRecipe, ...{id: undefined, name: originalRecipe.name + `(${t('Copy')})`}}
-        recipe.steps = recipe.steps.map((step) => {
-            return {
+        const {id: _recipeId, ...recipeFields} = originalRecipe
+        const recipe: RecipeRequest = {
+            ...recipeFields,
+            name: `${originalRecipe.name}(${t('Copy')})`,
+            steps: originalRecipe.steps.map(({id: _stepId, ingredients, ...step}) => ({
                 ...step,
-                ...{
-                    id: undefined,
-                    ingredients: step.ingredients.map((ingredient) => {
-                        return {...ingredient, ...{id: undefined}}
-                    }),
-                },
-            }
-        })
-
-        if (recipe.properties != null) {
-            recipe.properties = recipe.properties.map((p) => {
-                return {...p, ...{id: undefined}}
-            })
+                ingredients: ingredients.map(({id: _ingredientId, ...ingredient}) => ingredient),
+            })),
+            properties: originalRecipe.properties?.map(({id: _propertyId, ...property}) => property),
         }
 
         api.apiRecipeCreate({recipe: recipe}).then(newRecipe => {

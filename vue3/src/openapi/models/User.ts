@@ -24,7 +24,7 @@ export interface User {
      * @type {number}
      * @memberof User
      */
-    id?: number;
+    readonly id: number;
     /**
      * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
      * @type {string}
@@ -73,6 +73,7 @@ export interface User {
  * Check if a given object implements the User interface.
  */
 export function instanceOfUser(value: object): value is User {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('username' in value) || value['username'] === undefined) return false;
     if (!('displayName' in value) || value['displayName'] === undefined) return false;
     if (!('isStaff' in value) || value['isStaff'] === undefined) return false;
@@ -91,7 +92,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'username': json['username'],
         'firstName': json['first_name'] == null ? undefined : json['first_name'],
         'lastName': json['last_name'] == null ? undefined : json['last_name'],
@@ -106,14 +107,13 @@ export function UserToJSON(json: any): User {
     return UserToJSONTyped(json, false);
 }
 
-export function UserToJSONTyped(value?: Omit<User, 'username'|'display_name'|'is_staff'|'is_superuser'|'is_active'> | null, ignoreDiscriminator: boolean = false): any {
+export function UserToJSONTyped(value?: Omit<User, 'id'|'username'|'display_name'|'is_staff'|'is_superuser'|'is_active'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'first_name': value['firstName'],
         'last_name': value['lastName'],
     };

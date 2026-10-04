@@ -48,6 +48,13 @@ import {
     NutritionInformationToJSON,
     NutritionInformationToJSONTyped,
 } from './NutritionInformation';
+import type { ComputedPropertySchema } from './ComputedPropertySchema';
+import {
+    ComputedPropertySchemaFromJSON,
+    ComputedPropertySchemaFromJSONTyped,
+    ComputedPropertySchemaToJSON,
+    ComputedPropertySchemaToJSONTyped,
+} from './ComputedPropertySchema';
 
 /**
  * Adds nested create feature
@@ -60,7 +67,7 @@ export interface Recipe {
      * @type {number}
      * @memberof Recipe
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -153,10 +160,10 @@ export interface Recipe {
     properties?: Array<Property>;
     /**
      * 
-     * @type {any}
+     * @type {{ [key: string]: ComputedPropertySchema; }}
      * @memberof Recipe
      */
-    readonly foodProperties: any | null;
+    readonly foodProperties: { [key: string]: ComputedPropertySchema; };
     /**
      * 
      * @type {number}
@@ -168,7 +175,7 @@ export interface Recipe {
      * @type {string}
      * @memberof Recipe
      */
-    filePath?: string;
+    readonly filePath: string;
     /**
      * 
      * @type {string}
@@ -217,6 +224,7 @@ export interface Recipe {
  * Check if a given object implements the Recipe interface.
  */
 export function instanceOfRecipe(value: object): value is Recipe {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('image' in value) || value['image'] === undefined) return false;
     if (!('steps' in value) || value['steps'] === undefined) return false;
@@ -224,6 +232,7 @@ export function instanceOfRecipe(value: object): value is Recipe {
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
     if (!('foodProperties' in value) || value['foodProperties'] === undefined) return false;
+    if (!('filePath' in value) || value['filePath'] === undefined) return false;
     if (!('rating' in value) || value['rating'] === undefined) return false;
     if (!('lastCooked' in value) || value['lastCooked'] === undefined) return false;
     return true;
@@ -239,7 +248,7 @@ export function RecipeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'image': json['image'],
@@ -255,9 +264,9 @@ export function RecipeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Re
         'showIngredientOverview': json['show_ingredient_overview'] == null ? undefined : json['show_ingredient_overview'],
         'nutrition': json['nutrition'] == null ? undefined : NutritionInformationFromJSON(json['nutrition']),
         'properties': json['properties'] == null ? undefined : ((json['properties'] as Array<any>).map(PropertyFromJSON)),
-        'foodProperties': json['food_properties'],
+        'foodProperties': (mapValues(json['food_properties'], ComputedPropertySchemaFromJSON)),
         'servings': json['servings'] == null ? undefined : json['servings'],
-        'filePath': json['file_path'] == null ? undefined : json['file_path'],
+        'filePath': json['file_path'],
         'servingsText': json['servings_text'] == null ? undefined : json['servings_text'],
         'diameter': json['diameter'] == null ? undefined : json['diameter'],
         'diameterText': json['diameter_text'] == null ? undefined : json['diameter_text'],
@@ -272,14 +281,13 @@ export function RecipeToJSON(json: any): Recipe {
     return RecipeToJSONTyped(json, false);
 }
 
-export function RecipeToJSONTyped(value?: Omit<Recipe, 'image'|'created_by'|'created_at'|'updated_at'|'food_properties'|'rating'|'last_cooked'> | null, ignoreDiscriminator: boolean = false): any {
+export function RecipeToJSONTyped(value?: Omit<Recipe, 'id'|'image'|'created_by'|'created_at'|'updated_at'|'food_properties'|'file_path'|'rating'|'last_cooked'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'description': value['description'],
         'keywords': value['keywords'] == null ? undefined : ((value['keywords'] as Array<any>).map(KeywordToJSON)),
@@ -292,7 +300,6 @@ export function RecipeToJSONTyped(value?: Omit<Recipe, 'image'|'created_by'|'cre
         'nutrition': NutritionInformationToJSON(value['nutrition']),
         'properties': value['properties'] == null ? undefined : ((value['properties'] as Array<any>).map(PropertyToJSON)),
         'servings': value['servings'],
-        'file_path': value['filePath'],
         'servings_text': value['servingsText'],
         'diameter': value['diameter'],
         'diameter_text': value['diameterText'],

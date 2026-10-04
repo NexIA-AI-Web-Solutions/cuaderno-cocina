@@ -97,28 +97,30 @@
 
 <script setup lang="ts">
 
-import {ApiApi, UserFile, UserFileFromJSON} from "@/openapi";
+import {ApiApi, type UserFile} from "@/openapi";
 import {onMounted, ref, watch} from "vue";
 import {DateTime} from "luxon";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
-import {getCookie} from "@/utils/cookie";
 import {useI18n} from "vue-i18n";
 
 const emit = defineEmits(['update:modelValue', 'create'])
 
-const props = defineProps({
-    model: {type: {} as UserFile, default: null},
-    label: {type: String, default: ''},
-    hint: {type: String, default: ''},
-    persistentHint: {type: Boolean, default: false},
+withDefaults(defineProps<{
+    label?: string
+    hint?: string
+    persistentHint?: boolean
+}>(), {
+    label: '',
+    hint: '',
+    persistentHint: false,
 })
 
-const model = defineModel()
+const model = defineModel<UserFile | null>({default: null})
 const {t} = useI18n()
 
 const dialog = ref(false)
 const tab = ref(0)
-const newUserFile = ref({} as UserFile)
+const newUserFile = ref<{name: string, file: File | null}>({name: '', file: null})
 const userFiles = ref([] as UserFile[])
 
 const tableSearch = ref('')
@@ -126,7 +128,7 @@ const tableHeaders = ref([
     {title: t('Quick actions'), key: 'actions'},
     {title: t('Preview'), key: 'preview'},
     {title: t('Name'), value: 'name'},
-    {title: t('created_on'), key: 'createdAt', value: item => DateTime.fromJSDate(item.createdAt).toLocaleString(DateTime.DATETIME_MED)},
+    {title: t('created_on'), key: 'createdAt', value: (item: UserFile) => DateTime.fromJSDate(item.createdAt).toLocaleString(DateTime.DATETIME_MED)},
     {title: t('created_by'), value: 'createdBy.displayName',},
 ])
 
@@ -151,20 +153,14 @@ function loadFiles() {
 }
 
 function uploadFile() {
+    const name = newUserFile.value.name.trim()
+    if (name === '' || newUserFile.value.file === null) {
+        return
+    }
 
-    let formData = new FormData()
-    formData.append('file', newUserFile.value.file)
-    formData.append('name', newUserFile.value.name)
-
-    //TODO proper URL finding (sub path setups)
-    fetch('/api/user-file/', {
-        method: 'POST',
-        headers: {'X-CSRFToken': getCookie('csrftoken')},
-        body: formData
-    }).then(r => { // TODO maybe better use existing URL clients response functions for parsing
-        r.json().then(r => {
-            model.value = UserFileFromJSON(r)
-        })
+    new ApiApi().apiUserFileCreate({name, file: newUserFile.value.file}).then(r => {
+        model.value = r
+        newUserFile.value = {name: '', file: null}
         useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)

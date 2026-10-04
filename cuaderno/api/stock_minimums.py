@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.exceptions import APIException, NotFound, ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView, CuadernoIsOperator
 
 from cookbook.helper.permission_helper import CustomIsUser, CustomTokenHasReadWriteScope, has_group_permission
 from cookbook.models import InventoryLocation, Unit
@@ -29,7 +29,7 @@ class MinimumWriteSerializer(serializers.Serializer):
 
 
 class StockMinimumView(APIView):
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [CuadernoIsOperator & CustomTokenHasReadWriteScope]
 
     @staticmethod
     def payload(request, household):

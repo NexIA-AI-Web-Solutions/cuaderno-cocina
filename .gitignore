@@ -98,3 +98,7 @@ docs/cuaderno/evidence/*.sql
 .idea/db-forest-config.xml
 .vue-tsc-cache/
 vue3/*.tsbuildinfo
+vue3/vite.config.js
+vue3/vite.config.d.ts
+vue3/src/types/Plugins.js
+vue3/src/types/Plugins.d.ts

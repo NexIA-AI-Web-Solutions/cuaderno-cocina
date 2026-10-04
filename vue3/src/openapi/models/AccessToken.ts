@@ -24,7 +24,7 @@ export interface AccessToken {
      * @type {number}
      * @memberof AccessToken
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -61,6 +61,7 @@ export interface AccessToken {
  * Check if a given object implements the AccessToken interface.
  */
 export function instanceOfAccessToken(value: object): value is AccessToken {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('token' in value) || value['token'] === undefined) return false;
     if (!('expires' in value) || value['expires'] === undefined) return false;
     if (!('created' in value) || value['created'] === undefined) return false;
@@ -78,7 +79,7 @@ export function AccessTokenFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'token': json['token'],
         'expires': (new Date(json['expires'])),
         'scope': json['scope'] == null ? undefined : json['scope'],
@@ -91,14 +92,13 @@ export function AccessTokenToJSON(json: any): AccessToken {
     return AccessTokenToJSONTyped(json, false);
 }
 
-export function AccessTokenToJSONTyped(value?: Omit<AccessToken, 'token'|'created'|'updated'> | null, ignoreDiscriminator: boolean = false): any {
+export function AccessTokenToJSONTyped(value?: Omit<AccessToken, 'id'|'token'|'created'|'updated'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'expires': value['expires'].toISOString(),
         'scope': value['scope'],
     };

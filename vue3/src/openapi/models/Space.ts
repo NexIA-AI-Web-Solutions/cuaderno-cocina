@@ -67,7 +67,7 @@ export interface Space {
      * @type {number}
      * @memberof Space
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -274,6 +274,7 @@ export interface Space {
  * Check if a given object implements the Space interface.
  */
 export function instanceOfSpace(value: object): value is Space {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
     if (!('maxRecipes' in value) || value['maxRecipes'] === undefined) return false;
@@ -298,7 +299,7 @@ export function SpaceFromJSONTyped(json: any, ignoreDiscriminator: boolean): Spa
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'createdBy': UserFromJSON(json['created_by']),
         'createdAt': (new Date(json['created_at'])),
@@ -339,14 +340,13 @@ export function SpaceToJSON(json: any): Space {
     return SpaceToJSONTyped(json, false);
 }
 
-export function SpaceToJSONTyped(value?: Omit<Space, 'created_by'|'created_at'|'max_recipes'|'max_file_storage_mb'|'max_users'|'allow_sharing'|'demo'|'user_count'|'recipe_count'|'file_size_mb'|'ai_monthly_credits_used'> | null, ignoreDiscriminator: boolean = false): any {
+export function SpaceToJSONTyped(value?: Omit<Space, 'id'|'created_by'|'created_at'|'max_recipes'|'max_file_storage_mb'|'max_users'|'allow_sharing'|'demo'|'user_count'|'recipe_count'|'file_size_mb'|'ai_monthly_credits_used'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'message': value['message'],
         'food_inherit': value['foodInherit'] == null ? undefined : ((value['foodInherit'] as Array<any>).map(FoodInheritFieldToJSON)),

@@ -32,7 +32,7 @@ export interface CustomFilter {
      * @type {number}
      * @memberof CustomFilter
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -63,6 +63,7 @@ export interface CustomFilter {
  * Check if a given object implements the CustomFilter interface.
  */
 export function instanceOfCustomFilter(value: object): value is CustomFilter {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('search' in value) || value['search'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
@@ -79,7 +80,7 @@ export function CustomFilterFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'search': json['search'],
         'shared': json['shared'] == null ? undefined : ((json['shared'] as Array<any>).map(UserFromJSON)),
@@ -91,14 +92,13 @@ export function CustomFilterToJSON(json: any): CustomFilter {
     return CustomFilterToJSONTyped(json, false);
 }
 
-export function CustomFilterToJSONTyped(value?: Omit<CustomFilter, 'created_by'> | null, ignoreDiscriminator: boolean = false): any {
+export function CustomFilterToJSONTyped(value?: Omit<CustomFilter, 'id'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'search': value['search'],
         'shared': value['shared'] == null ? undefined : ((value['shared'] as Array<any>).map(UserToJSON)),

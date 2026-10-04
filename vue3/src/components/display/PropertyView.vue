@@ -22,8 +22,8 @@
                 <tbody>
                 <tr v-for="p in propertyList" :key="p.id">
                     <td>{{ p.name }}</td>
-                    <td>{{ $n(roundDecimals(p.propertyAmountPerServing)) }} {{ p.unit }}</td>
-                    <td>{{ $n(roundDecimals(p.propertyAmountTotal)) }} {{ p.unit }}</td>
+                    <td><span v-if="p.propertyAmountPerServing != null">{{ $n(roundDecimals(p.propertyAmountPerServing)) }}</span><span v-else>?</span> {{ p.unit }}</td>
+                    <td><span v-if="p.propertyAmountPerServing != null">{{ $n(roundDecimals(p.propertyAmountTotal)) }}</span><span v-else>?</span> {{ p.unit }}</td>
                     <td v-if="sourceSelectedToShow == 'food'">
                         <v-btn @click="dialogProperty = p; dialog = true" variant="plain" color="warning" icon="fa-solid fa-triangle-exclamation" size="small" class="d-print-none"
                                v-if="p.missingValue"></v-btn>
@@ -53,14 +53,14 @@
                             {{ fv.food.name }}
                         </span>
                         <template #append>
-                            <v-chip color="create" v-if="fv.missing_conversion" class="cursor-pointer" prepend-icon="$create">
-                                {{ $t('Conversion') }}: {{ fv.missing_conversion.base_unit.name }} <i class="fa-solid fa-arrow-right me-1 ms-1"></i>
-                                {{ fv.missing_conversion.converted_unit.name }}
+                            <v-chip color="create" v-if="fv.missingConversion" class="cursor-pointer" prepend-icon="$create">
+                                {{ $t('Conversion') }}: {{ fv.missingConversion.baseUnit.name }} <i class="fa-solid fa-arrow-right me-1 ms-1"></i>
+                                {{ fv.missingConversion.convertedUnit.name }}
                                 <model-edit-dialog model="UnitConversion" @create="refreshRecipe()"
-                                                   :item-defaults="{baseAmount: 1, baseUnit: fv.missing_conversion.base_unit,  convertedUnit: fv.missing_conversion.converted_unit, food: fv.food}"></model-edit-dialog>
+                                                   :item-defaults="{baseAmount: 1, baseUnit: fv.missingConversion.baseUnit,  convertedUnit: fv.missingConversion.convertedUnit, food: fv.food}"></model-edit-dialog>
                             </v-chip>
-                            <v-chip v-else-if="fv.value != undefined">{{ $n(roundDecimals(fv.value * props.ingredientFactor)) }} {{ dialogProperty.unit }}</v-chip>
-                            <v-chip color="warning" prepend-icon="$edit" class="cursor-pointer" :to="{name: 'ModelEditPage', params: {model: 'Recipe', id: recipe.id}}" v-else-if="fv.missing_unit">
+                            <v-chip v-else-if="fv.value != null">{{ $n(roundDecimals(fv.value * props.ingredientFactor)) }} {{ dialogProperty.unit }}</v-chip>
+                            <v-chip color="warning" prepend-icon="$edit" class="cursor-pointer" :to="{name: 'ModelEditPage', params: {model: 'Recipe', id: recipe.id}}" v-else-if="fv.missingUnit">
                                 {{ $t('NoUnit') }}
                             </v-chip>
                             <v-chip color="error" prepend-icon="$edit" class="cursor-pointer" v-else>
@@ -82,7 +82,7 @@
 <script setup lang="ts">
 
 import {computed, nextTick, onMounted, ref} from "vue";
-import {ApiApi, PropertyType, Recipe} from "@/openapi";
+import {ApiApi, PropertyType, Recipe, PropertyFoodValueSchema} from "@/openapi";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
@@ -91,13 +91,13 @@ import {roundDecimals} from "@/utils/number_utils.ts";
 type PropertyWrapper = {
     id: number,
     name: string,
-    description?: string,
-    foodValues: [],
-    propertyAmountPerServing: number,
+    description?: string | null,
+    foodValues: Record<string, PropertyFoodValueSchema>,
+    propertyAmountPerServing: number | null,
     propertyAmountTotal: number,
     missingValue: boolean,
-    unit?: string,
-    type: PropertyType,
+    unit?: string | null,
+    type: { order?: number },
 }
 
 const props = defineProps({
@@ -122,8 +122,8 @@ const hasRecipeProperties = computed(() => {
 const hasFoodProperties = computed(() => {
     let propertiesFound = false
     for (const [key, fp] of Object.entries(recipe.value.foodProperties)) {
-        if (fp.total_value !== 0) {
-            console.log(fp, fp.total_value)
+        if (fp.totalValue !== 0) {
+            console.log(fp, fp.totalValue)
             propertiesFound = true
         }
     }
@@ -137,17 +137,17 @@ const propertyList = computed(() => {
     let ptList = [] as PropertyWrapper[]
     if (sourceSelectedToShow.value == 'recipe') {
         if (hasRecipeProperties.value) {
-            recipe.value.properties.forEach(rp => {
+            (recipe.value.properties ?? []).forEach(rp => {
 
                 ptList.push(
                     {
                         id: rp.propertyType.id!,
                         name: rp.propertyType.name,
                         description: rp.propertyType.description,
-                        foodValues: [],
+                        foodValues: {},
                         propertyAmountPerServing: rp.propertyAmount,
-                        propertyAmountTotal: rp.propertyAmount * recipe.value.servings * props.ingredientFactor,
-                        missingValue: false,
+                        propertyAmountTotal: (rp.propertyAmount ?? 0) * (recipe.value.servings ?? 1) * props.ingredientFactor,
+                        missingValue: rp.propertyAmount == null,
                         unit: rp.propertyType.unit,
                         type: rp.propertyType,
                     }
@@ -161,11 +161,10 @@ const propertyList = computed(() => {
                     id: fp.id,
                     name: fp.name,
                     description: fp.description,
-                    icon: fp.icon,
-                    foodValues: fp.food_values,
-                    propertyAmountPerServing: fp.total_value / recipe.value.servings,
-                    propertyAmountTotal: fp.total_value * props.ingredientFactor,
-                    missingValue: fp.missing_value,
+                    foodValues: fp.foodValues,
+                    propertyAmountPerServing: (recipe.value.servings ?? 1) > 0 ? fp.totalValue / (recipe.value.servings ?? 1) : null,
+                    propertyAmountTotal: fp.totalValue * props.ingredientFactor,
+                    missingValue: fp.missingValue,
                     unit: fp.unit,
                     type: fp,
                 }
@@ -173,11 +172,11 @@ const propertyList = computed(() => {
         }
     }
 
-    function compare(a, b) {
-        if (a.type.order > b.type.order) {
+    function compare(a: PropertyWrapper, b: PropertyWrapper) {
+        if ((a.type.order ?? 0) > (b.type.order ?? 0)) {
             return 1
         }
-        if (a.type.order < b.type.order) {
+        if ((a.type.order ?? 0) < (b.type.order ?? 0)) {
             return -1
         }
         return 0
@@ -211,7 +210,7 @@ function refreshRecipe() {
         nextTick(() => {
             if(dialogProperty.value != undefined && dialog.value){
                 propertyList.value.forEach(pLE => {
-                    if (dialogProperty.value.id == pLE.id) {
+                    if (dialogProperty.value?.id == pLE.id) {
                         dialogProperty.value = pLE
                     }
                 })

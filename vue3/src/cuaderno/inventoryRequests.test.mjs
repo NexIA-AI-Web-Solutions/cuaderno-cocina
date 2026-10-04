@@ -4,7 +4,16 @@ import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const source = readFileSync(new URL('./inventoryRequests.ts', import.meta.url), 'utf8')
 const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
-const {inventoryRequests} = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+const {inventoryRequests, sameReceiptDraft} = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+
+test('a receipt response may clear only the exact order, entry and unchanged quantity it submitted', () => {
+    const submitted = {order: 10, entry: 3, quantity: '2,50'}
+    assert.equal(sameReceiptDraft(10, 3, '2,50', submitted), true)
+    assert.equal(sameReceiptDraft(11, 3, '2,50', submitted), false)
+    assert.equal(sameReceiptDraft(10, 4, '2,50', submitted), false)
+    assert.equal(sameReceiptDraft(10, 3, '3', submitted), false)
+    assert.equal(sameReceiptDraft(null, null, '', submitted), false)
+})
 
 test('failed request keeps its key across retry and intervening edits; success starts a new operation', () => {
     const requests = inventoryRequests()

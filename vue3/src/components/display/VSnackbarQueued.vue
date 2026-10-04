@@ -16,7 +16,7 @@
 
             <template #actions v-if="showViewButton">
 
-                <v-btn ref="ref_btn_view">{{$t('View')}}</v-btn>
+                <v-btn @click="showMessageDialog = true">{{$t('View')}}</v-btn>
                 <v-btn variant="text" @click="removeItem()">
                     <span v-if="useMessageStore().snackbarQueue.length > 1">{{$t('Next')}} ({{ useMessageStore().snackbarQueue.length - 1 }})</span>
                     <span v-else>{{$t('Close')}}</span>
@@ -27,15 +27,14 @@
             </template>
         </v-snackbar>
 
-        <message-list-dialog :activator="viewMessageDialogBtn"></message-list-dialog>
+        <message-list-dialog v-model="showMessageDialog"></message-list-dialog>
     </div>
 
 </template>
 
 <script setup lang="ts">
-import {computed, ref, useTemplateRef} from 'vue'
+import {computed, type PropType, ref} from 'vue'
 import {Message, useMessageStore} from "@/stores/MessageStore";
-import {DateTime} from "luxon";
 import MessageListDialog from "@/components/dialogs/MessageListDialog.vue";
 
 const props = defineProps({
@@ -45,7 +44,7 @@ const props = defineProps({
      */
     location: {
         required: false,
-        type: String,
+        type: String as PropType<'top' | 'bottom' | 'start' | 'end' | 'center' | 'top start' | 'top end' | 'bottom start' | 'bottom end'>,
         default: 'bottom'
     },
     /**
@@ -69,8 +68,7 @@ const showViewButton = computed(() => {
     return false
 })
 
-// ref to open message list dialog
-const viewMessageDialogBtn = useTemplateRef('ref_btn_view')
+const showMessageDialog = ref(false)
 // ID of message timeout currently running
 const timeoutId = ref(-1)
 // currently visible message
@@ -93,9 +91,11 @@ useMessageStore().$subscribe((mutation, state) => {
  */
 function processQueue() {
     if (timeoutId.value == -1 && useMessageStore().snackbarQueue.length > 0) {
-        visibleMessage.value = useMessageStore().snackbarQueue[0]
+        const nextMessage = useMessageStore().snackbarQueue[0]
+        if (!nextMessage) return
+        visibleMessage.value = nextMessage
         showSnackbar.value = true
-        timeoutId.value = setTimeout(() => {
+        timeoutId.value = window.setTimeout(() => {
             useMessageStore().snackbarQueue.shift()
             timeoutId.value = -1
             processQueue()

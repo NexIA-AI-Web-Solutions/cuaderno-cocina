@@ -1,4 +1,6 @@
 <template>
+    <v-alert v-if="!props.canOperate" type="info" variant="tonal" class="mb-4">Modo Consulta: las compras están disponibles solo para lectura.</v-alert>
+    <div>
     <v-row>
         <v-col cols="12" lg="5">
             <v-card class="h-100">
@@ -12,18 +14,19 @@
                         return-object
                         label="Formato de compra"
                         :loading="loadingCatalog"
+                        :disabled="!props.canOperate"
                         no-data-text="Crea primero un formato en Ingredientes y precios"
                     />
-                    <v-model-select v-model="offer.supplier" model="Supermarket" label="Proveedor" search-on-load create />
+                    <v-model-select v-model="offer.supplier" model="Supermarket" label="Proveedor" search-on-load create :disabled="!props.canOperate" />
                     <v-text-field
                         v-model="offer.amount"
                         label="Precio por envase"
                         suffix="€"
                         inputmode="decimal"
-                        :disabled="offer.explicitFree"
+                        :disabled="offer.explicitFree || !props.canOperate"
                     />
-                    <v-checkbox v-model="offer.explicitFree" label="Oferta expresamente gratuita" hide-details />
-                    <v-btn color="primary" min-height="44" :loading="savingOffer" @click="saveOffer">Guardar oferta</v-btn>
+                    <v-checkbox v-model="offer.explicitFree" label="Oferta expresamente gratuita" hide-details :disabled="!props.canOperate" />
+                    <v-btn color="primary" min-height="44" :loading="savingOffer" :disabled="!props.canOperate" @click="saveOffer">Guardar oferta</v-btn>
                     <p class="mt-2" role="status" aria-live="polite">{{ offerMessage }}</p>
                 </v-card-text>
             </v-card>
@@ -41,8 +44,9 @@
                         return-object
                         label="Formato"
                         :loading="loadingCatalog"
+                        :disabled="!props.canOperate"
                     />
-                    <v-model-select v-model="draft.supplier" model="Supermarket" label="Proveedor" search-on-load />
+                    <v-model-select v-model="draft.supplier" model="Supermarket" label="Proveedor" search-on-load :disabled="!props.canOperate" />
                     <v-select
                         v-model="draft.offer"
                         :items="matchingOffers"
@@ -50,20 +54,21 @@
                         return-object
                         clearable
                         label="Oferta (opcional)"
+                        :disabled="!props.canOperate"
                         no-data-text="No hay ofertas para este formato y proveedor"
                     />
-                    <v-text-field v-model="draft.packageCount" label="Número de envases" inputmode="decimal" />
+                    <v-text-field v-model="draft.packageCount" label="Número de envases" inputmode="decimal" :disabled="!props.canOperate" />
                     <v-alert v-if="draft.package" type="info" variant="tonal" class="mb-3">
                         Cantidad del pedido: {{ draftQuantity || '—' }} {{ draft.package.unit_name }}.
                     </v-alert>
-                    <v-btn color="primary" min-height="44" :loading="savingOrder" @click="saveOrder">Crear borrador</v-btn>
+                    <v-btn color="primary" min-height="44" :loading="savingOrder" :disabled="!props.canOperate" @click="saveOrder">Crear borrador</v-btn>
                     <p class="mt-2" role="status" aria-live="polite">{{ orderMessage }}</p>
                 </v-card-text>
             </v-card>
         </v-col>
 
         <v-col cols="12">
-            <StockMinimumPanel @loaded="rememberFoods" />
+            <StockMinimumPanel :can-operate="props.canOperate" @loaded="rememberFoods" />
         </v-col>
 
         <v-col cols="12">
@@ -95,6 +100,7 @@
                                         variant="tonal"
                                         min-height="44"
                                         :loading="busyOrder === order.id"
+                                        :disabled="!props.canOperate"
                                         @click="changeOrder(order, 'order')"
                                     >Enviar pedido</v-btn>
                                     <v-btn
@@ -103,6 +109,7 @@
                                         variant="text"
                                         min-height="44"
                                         :loading="busyOrder === order.id"
+                                        :disabled="!props.canOperate"
                                         @click="changeOrder(order, 'cancel')"
                                     >Cancelar</v-btn>
                                     <v-btn
@@ -111,6 +118,7 @@
                                         color="primary"
                                         variant="tonal"
                                         min-height="44"
+                                        :disabled="receiving || !props.canOperate"
                                         @click="openReceipt(order)"
                                     >Recibir</v-btn>
                                     <v-btn size="small" variant="text" min-height="44" @click="toggleReceipts(order)">
@@ -128,15 +136,17 @@
                                     hint="Debe ser el mismo alimento y hogar del pedido"
                                     persistent-hint
                                     search-on-load
+                                    :disabled="receiving || !props.canOperate"
                                 />
                                 <v-text-field
                                     v-model="receipt.quantity"
                                     :label="`Cantidad recibida (${unitName(order)})`"
                                     inputmode="decimal"
+                                    :disabled="receiving || !props.canOperate"
                                 />
                                 <div class="d-flex flex-wrap ga-2">
-                                    <v-btn color="primary" min-height="44" :loading="receiving" @click="receive(order)">Confirmar recepción</v-btn>
-                                    <v-btn variant="text" min-height="44" @click="closeReceipt">Cerrar</v-btn>
+                                    <v-btn color="primary" min-height="44" :loading="receiving" :disabled="!props.canOperate" @click="receive(order)">Confirmar recepción</v-btn>
+                                    <v-btn variant="text" min-height="44" :disabled="receiving" @click="closeReceipt">Cerrar</v-btn>
                                 </div>
                                 <p class="mt-2" role="status" aria-live="polite">{{ receiptMessage }}</p>
                             </div>
@@ -156,6 +166,7 @@
                                                 variant="text"
                                                 min-height="44"
                                                 :loading="reversingReceipt === document.id"
+                                                :disabled="!props.canOperate"
                                                 @click="reverseReceipt(order, document)"
                                             >Revertir recepción</v-btn>
                                         </template>
@@ -235,6 +246,7 @@
             </v-card>
         </v-col>
     </v-row>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -243,14 +255,16 @@ import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import StockMinimumPanel from '@/cuaderno/components/StockMinimumPanel.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError, decimalInput} from '@/cuaderno/forms'
-import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {inventoryRequests, sameReceiptDraft} from '@/cuaderno/inventoryRequests'
 import {replenishmentEnvelope, replenishmentExcess} from '@/cuaderno/stockMinimumUi'
 import type {ReplenishmentRow} from '@/cuaderno/stockMinimumUi'
+import {packageSummaries} from '@/cuaderno/priceHistoryUi'
+import {purchaseOffers, purchaseOrders, purchaseReceipts} from '@/cuaderno/purchasingUi'
+import type {PurchaseOfferRow as Offer, PurchaseOrderRow as Order, PurchaseReceiptRow as ReceiptDocument} from '@/cuaderno/purchasingUi'
+
+const props = withDefaults(defineProps<{canOperate?: boolean}>(), {canOperate: true})
 
 type Package = {id: number; food: number; food_name: string; unit: number; unit_name: string; label: string; quantity: string}
-type Offer = {id: number; package: number; supplier: number; amount: string; currency: string; valid_from: string}
-type Order = {id: number; quantity: string; received_quantity: string; unit: number; supplier_name: string; package: number | null; price_snapshot: string | null; currency_snapshot: string; state: string}
-type ReceiptDocument = {id: number; quantity: string; movement: number; reversed_by: number | null}
 const packages = ref<Package[]>([])
 const offers = ref<Offer[]>([])
 const orders = ref<Order[]>([])
@@ -287,8 +301,6 @@ function rememberFoods(values: Record<number, string>) { Object.assign(foods, va
 function minimumLabel(value: string | null) { return value === null ? '—' : value }
 function excessLabel(item: ReplenishmentRow) { return replenishmentExcess(item.purchase_quantity, item.missing) ?? '—' }
 function stateLabel(state: string) { return ({draft: 'Borrador', ordered: 'Pedido', part_received: 'Recibido parcialmente', received: 'Recibido', cancelled: 'Cancelado'} as Record<string, string>)[state] || state }
-function responseItems(data: any) { return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [] }
-
 function decimalParts(value: string) {
     const normalized = decimalInput(value, true)
     if (normalized === null) return null
@@ -328,14 +340,23 @@ async function loadCatalog() {
     ])
     loadingCatalog.value = false
     if (packageResponse.ok) {
-        packages.value = responseItems(packageResponse.data)
-        packages.value.forEach(item => { foods[item.food] = item.food_name })
+        const parsed = packageSummaries(packageResponse.data)
+        if (parsed === null) offerMessage.value = 'El servidor devolvió formatos incompletos. Conservamos el catálogo anterior.'
+        else {
+            packages.value = parsed
+            packages.value.forEach(item => { foods[item.food] = item.food_name })
+        }
     } else offerMessage.value = apiError(packageResponse.status, packageResponse.data)
-    if (offerResponse.ok) offers.value = responseItems(offerResponse.data)
+    if (offerResponse.ok) {
+        const parsed = purchaseOffers(offerResponse.data)
+        if (parsed === null) offerMessage.value = 'El servidor devolvió ofertas incompletas. Conservamos las ofertas anteriores.'
+        else offers.value = parsed
+    }
     else offerMessage.value = apiError(offerResponse.status, offerResponse.data)
 }
 
 async function saveOffer() {
+    if (!props.canOperate) return
     if (savingOffer.value) return
     const amount = decimalInput(offer.amount, offer.explicitFree)
     if (!offer.package?.id || !offer.supplier?.id || amount === null) {
@@ -346,11 +367,15 @@ async function saveOffer() {
         package: offer.package.id, supplier: offer.supplier.id, amount, explicit_free: offer.explicitFree,
     })}))
     savingOffer.value = false
-    offerMessage.value = result.ok ? 'Oferta guardada en el historial.' : apiError(result.status, result.data)
-    if (result.ok) { offer.amount = ''; offer.explicitFree = false; offers.value.unshift(result.data) }
+    if (!result.ok) { offerMessage.value = apiError(result.status, result.data); return }
+    const saved = purchaseOffers([result.data])
+    if (saved === null) { offerMessage.value = 'El servidor no confirmó la oferta guardada. Conservamos el formulario.'; return }
+    offerMessage.value = 'Oferta guardada en el historial.'
+    offer.amount = ''; offer.explicitFree = false; offers.value.unshift(saved[0]!)
 }
 
 async function saveOrder() {
+    if (!props.canOperate) return
     if (savingOrder.value) return
     const count = decimalInput(draft.packageCount)
     const quantity = draftQuantity.value
@@ -363,42 +388,67 @@ async function saveOrder() {
         package_count: count, quantity,
     })}))
     savingOrder.value = false
-    orderMessage.value = result.ok ? `Borrador ${result.data.id} creado sin cambiar existencias.` : apiError(result.status, result.data)
-    if (result.ok) { draft.packageCount = ''; draft.offer = null; await loadOrders() }
+    if (!result.ok) { orderMessage.value = apiError(result.status, result.data); return }
+    const saved = purchaseOrders([result.data])
+    if (saved === null) { orderMessage.value = 'El servidor no confirmó el pedido creado. Conservamos el formulario.'; return }
+    orderMessage.value = `Borrador ${saved[0]!.id} creado sin cambiar existencias.`
+    draft.packageCount = ''; draft.offer = null; await loadOrders()
 }
 
 async function loadOrders() {
     loadingOrders.value = true; ordersMessage.value = ''
     const result = await readJson(await cuadernoFetch('/api/cuaderno/purchase-orders/'))
     loadingOrders.value = false
-    if (result.ok) orders.value = responseItems(result.data)
+    if (result.ok) {
+        const parsed = purchaseOrders(result.data)
+        if (parsed === null) ordersMessage.value = 'El servidor devolvió pedidos incompletos. Conservamos la lista anterior.'
+        else orders.value = parsed
+    }
     else ordersMessage.value = apiError(result.status, result.data)
 }
 async function changeOrder(order: Order, action: 'order' | 'cancel') {
+    if (!props.canOperate) return
     if (busyOrder.value !== null) return
     busyOrder.value = order.id
     const result = await readJson(await cuadernoFetch(`/api/cuaderno/purchase-orders/${order.id}/`, {method: 'POST', body: JSON.stringify({action})}))
     busyOrder.value = null
-    if (result.ok) { Object.assign(order, result.data); ordersMessage.value = '' }
+    if (result.ok) {
+        const saved = purchaseOrders([result.data])
+        if (saved === null || saved[0]?.id !== order.id) ordersMessage.value = 'El servidor no confirmó el estado del pedido. Actualiza la lista.'
+        else { Object.assign(order, saved[0]); ordersMessage.value = '' }
+    }
     else ordersMessage.value = apiError(result.status, result.data)
 }
 
-function openReceipt(order: Order) { receiptOrder.value = order; receiptMessage.value = ''; receipt.entry = null; receipt.quantity = '' }
-function closeReceipt() { receiptOrder.value = null; receiptMessage.value = ''; receipt.entry = null; receipt.quantity = '' }
+function openReceipt(order: Order) {
+    if (!props.canOperate) return
+    if (receiving.value) return
+    receiptOrder.value = order; receiptMessage.value = ''; receipt.entry = null; receipt.quantity = ''
+}
+function closeReceipt() {
+    if (receiving.value) return
+    receiptOrder.value = null; receiptMessage.value = ''; receipt.entry = null; receipt.quantity = ''
+}
 function receiptKey(orderId: number, payload: object) {
     return receiptRequests.key(`purchase-receipt:${orderId}`, payload)
 }
 async function receive(order: Order) {
+    if (!props.canOperate) return
     if (receiving.value) return
     const quantity = decimalInput(receipt.quantity)
     if (!receipt.entry?.id || !quantity) { receiptMessage.value = 'Selecciona la existencia de destino e indica la cantidad recibida.'; return }
     const payload = {entry: receipt.entry.id, quantity}
+    const submittedDraft = {order: order.id, entry: receipt.entry.id as number, quantity: receipt.quantity}
     receiving.value = true
     const result = await readJson(await cuadernoFetch(`/api/cuaderno/purchase-orders/${order.id}/receipts/`, {method: 'POST', body: JSON.stringify({...payload, idempotency_key: receiptKey(order.id, payload)})}))
     receiving.value = false
-    receiptMessage.value = result.ok ? 'Recepción confirmada. Las existencias se han actualizado una vez.' : apiError(result.status, result.data)
-    if (result.ok) {
-        receiptRequests.complete(`purchase-receipt:${order.id}`, payload); receipt.quantity = ''
+    const sameContext = receiptOrder.value?.id === order.id
+    const saved = result.ok ? purchaseReceipts([result.data]) : null
+    if (sameContext) receiptMessage.value = saved ? 'Recepción confirmada. Las existencias se han actualizado una vez.'
+        : result.ok ? 'El servidor no confirmó la recepción. Conservamos el formulario.' : apiError(result.status, result.data)
+    if (saved) {
+        receiptRequests.complete(`purchase-receipt:${order.id}`, payload)
+        if (sameReceiptDraft(receiptOrder.value?.id ?? null, receipt.entry?.id ?? null, receipt.quantity, submittedDraft)) receipt.quantity = ''
         await Promise.all([loadOrders(), loadReceipts(order.id)])
     }
 }
@@ -407,7 +457,11 @@ async function loadReceipts(orderId: number) {
     receiptsErrors[orderId] = ''
     const result = await readJson(await cuadernoFetch(`/api/cuaderno/purchase-orders/${orderId}/receipts/`))
     loadingReceipts.value = false
-    if (result.ok) receiptsByOrder[orderId] = responseItems(result.data)
+    if (result.ok) {
+        const parsed = purchaseReceipts(result.data)
+        if (parsed === null) receiptsErrors[orderId] = 'El servidor devolvió recepciones incompletas. Conservamos el historial anterior.'
+        else receiptsByOrder[orderId] = parsed
+    }
     else receiptsErrors[orderId] = apiError(result.status, result.data)
 }
 async function toggleReceipts(order: Order) {
@@ -415,6 +469,7 @@ async function toggleReceipts(order: Order) {
     if (expandedReceipts.value === order.id) await loadReceipts(order.id)
 }
 async function reverseReceipt(order: Order, document: ReceiptDocument) {
+    if (!props.canOperate) return
     if (reversingReceipt.value !== null) return
     reversingReceipt.value = document.id
     const result = await readJson(await cuadernoFetch(`/api/cuaderno/purchase-receipts/${document.id}/reverse/`, {method: 'POST', body: JSON.stringify({idempotency_key: `cuaderno-ui-purchase-reversal-${document.id}`})}))

@@ -13,10 +13,12 @@ def _assessment(scope, foods, space, *, unknown_ingredients=False):
     identifiers = {food.pk for food in foods}
     declarations = AllergenDeclaration.objects.filter(
         space=space, food_id__in=identifiers,
-    ).order_by("food_id", "name", "-pk").values("id", "food_id", "name", "state")
+    ).order_by("-pk").values("id", "food_id", "name", "state", "created_by_id", "created_at")
     for row in declarations:
-        latest.setdefault((row["food_id"], row["name"]), {
+        latest.setdefault((row["food_id"], row["name"].strip().casefold()), {
             "id": row["id"], "name": row["name"],
+            "created_by": row["created_by_id"],
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
             "state": (row["state"] if row["state"] in (
                 AllergenDeclaration.DECLARED, AllergenDeclaration.UNKNOWN,
             ) else AllergenDeclaration.UNKNOWN),

@@ -8,9 +8,16 @@ docs
 tests
 scripts
 !scripts/cuaderno/
-!scripts/cuaderno/patch_oauthlib.py
+!scripts/cuaderno/prune_node_build_tools.py
 !scripts/cuaderno/frontend_inventory.mjs
+!scripts/cuaderno/frontend_build_provenance.mjs
 !scripts/cuaderno/python_lock.py
+!scripts/cuaderno/python_sbom.py
+!scripts/cuaderno/release_runtime_check.py
+!scripts/cuaderno/release_manifest.py
+!scripts/cuaderno/process_supervisor.py
+!scripts/cuaderno/runtime_application.py
+!scripts/cuaderno/frontend_assets.py
 **/node_modules
 **/__pycache__
 **/*.pyc
@@ -19,6 +26,7 @@ scripts
 cookbook/tests
 cuaderno/tests
 cookbook/static/vue3
+http.d/Recipes.conf
 mediafiles
 staticfiles
 venv
@@ -26,3 +34,5 @@ venv
 *.sql
 *.dump
 *.tar
+!scripts/cuaderno/patch_runtime_security.py
+!scripts/cuaderno/bind_system_node.py

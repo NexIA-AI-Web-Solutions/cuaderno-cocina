@@ -32,7 +32,7 @@ export interface CookLog {
      * @type {number}
      * @memberof CookLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {number}
@@ -81,6 +81,7 @@ export interface CookLog {
  * Check if a given object implements the CookLog interface.
  */
 export function instanceOfCookLog(value: object): value is CookLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('recipe' in value) || value['recipe'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
@@ -97,7 +98,7 @@ export function CookLogFromJSONTyped(json: any, ignoreDiscriminator: boolean): C
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'recipe': json['recipe'],
         'servings': json['servings'] == null ? undefined : json['servings'],
         'rating': json['rating'] == null ? undefined : json['rating'],
@@ -112,14 +113,13 @@ export function CookLogToJSON(json: any): CookLog {
     return CookLogToJSONTyped(json, false);
 }
 
-export function CookLogToJSONTyped(value?: Omit<CookLog, 'created_by'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function CookLogToJSONTyped(value?: Omit<CookLog, 'id'|'created_by'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'recipe': value['recipe'],
         'servings': value['servings'],
         'rating': value['rating'],

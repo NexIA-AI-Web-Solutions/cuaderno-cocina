@@ -90,47 +90,56 @@ def native_recipe_graph(recipe_ids, space, user=None, *, strict_leaf_scope=True)
     cache = {}
     edges: dict[str, list[str]] = {}
 
-    def load(recipe_id, depth=0):
-        if depth > 32 or len(cache) >= MAX_NATIVE_GRAPH_RECIPES:
+    frontier = set(int(value) for value in recipe_ids)
+    depth = 0
+    space_id = getattr(space, "pk", space)
+    while frontier:
+        if depth > 32 or len(cache) + len(frontier) > MAX_NATIVE_GRAPH_RECIPES:
             raise DomainError("recipe_graph_limit", "La ficha supera el límite de subrecetas.")
-        if recipe_id in cache:
-            return cache[recipe_id]
-        recipe = allowed.filter(pk=recipe_id).prefetch_related(Prefetch(
+        batch = list(allowed.filter(pk__in=frontier).prefetch_related(Prefetch(
             "steps", queryset=Step._base_manager.prefetch_related(Prefetch(
                 "ingredients", queryset=Ingredient._base_manager.select_related("food", "unit"),
             )),
-        )).first()
-        if recipe is None:
+        )))
+        if {recipe.pk for recipe in batch} != frontier:
             raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
-        cache[recipe_id] = recipe
-        links = []
-        for step in recipe.steps.all():
-            space_id = getattr(space, "pk", space)
-            if step.space_id != space_id:
-                raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
-            if step.step_recipe_id:
-                links.append(step.step_recipe_id)
-            for ingredient in step.ingredients.all():
-                foreign_leaf = (
-                    ingredient.space_id != space_id
-                    or (ingredient.food_id and ingredient.food.space_id != space_id)
-                    or (ingredient.unit_id and ingredient.unit.space_id != space_id)
-                )
-                if strict_leaf_scope and foreign_leaf:
+        next_frontier = set()
+        cache.update((recipe.pk, recipe) for recipe in batch)
+        for recipe in batch:
+            links = []
+            for step in recipe.steps.all():
+                if step.space_id != space_id:
                     raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
-                # Costing degrades corrupt leaves to unknown, never follows a
-                # foreign Food's graph. Production must reject every FK.
-                if (ingredient.space_id == space_id and ingredient.food_id
-                        and ingredient.food.space_id == space_id and ingredient.food.recipe_id):
-                    links.append(ingredient.food.recipe_id)
-        edges[str(recipe.pk)] = [str(value) for value in links]
-        for link in links:
-            load(link, depth + 1)
-        return recipe
+                if step.step_recipe_id:
+                    links.append(step.step_recipe_id)
+                for ingredient in step.ingredients.all():
+                    foreign_leaf = (
+                        ingredient.space_id != space_id
+                        or (ingredient.food_id and ingredient.food.space_id != space_id)
+                        or (ingredient.unit_id and ingredient.unit.space_id != space_id)
+                    )
+                    if strict_leaf_scope and foreign_leaf:
+                        raise DomainError("recipe_missing", "Una receta no está disponible en este espacio.")
+                    if (ingredient.space_id == space_id and ingredient.food_id
+                            and ingredient.food.space_id == space_id and ingredient.food.recipe_id):
+                        links.append(ingredient.food.recipe_id)
+            edges[str(recipe.pk)] = [str(value) for value in links]
+            next_frontier.update(link for link in links if link not in cache)
+        frontier = next_frontier
+        depth += 1
 
-    roots = [load(int(value)) for value in recipe_ids]
+    roots = [cache[int(value)] for value in recipe_ids]
+    depths = {}
+
+    def longest_path(node):
+        if node not in depths:
+            depths[node] = 1 + max((longest_path(child) for child in edges.get(node, [])), default=0)
+        return depths[node]
+
     for recipe in roots:
         assert_no_cycle(str(recipe.pk), edges)
+        if longest_path(str(recipe.pk)) > 33:
+            raise DomainError("recipe_graph_limit", "La ficha supera el límite de subrecetas.")
     return roots, cache, edges
 
 

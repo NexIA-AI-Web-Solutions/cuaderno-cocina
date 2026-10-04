@@ -1,0 +1,12 @@
+[Unit]
+Description=Programación diaria del backup de Cuaderno Cocina
+
+[Timer]
+OnCalendar=*-*-* 03:17:00 Europe/Madrid
+RandomizedDelaySec=15m
+Persistent=true
+Unit=cuaderno-backup.service
+
+[Install]
+WantedBy=timers.target
+

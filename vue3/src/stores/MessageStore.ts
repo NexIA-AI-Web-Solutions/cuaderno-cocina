@@ -111,7 +111,7 @@ export const useMessageStore = defineStore('message_store', () => {
             let messageText = ""
             messageText += `URL: ${data.response.url} \n\nErrors:\n`
             try {
-                data.response.json().then(responseJson => {
+                data.response.json().then((responseJson: unknown) => {
                     let flatResponseJson = flattenObject(responseJson)
                     for (let key in flatResponseJson) {
                         messageText += `    - ${key}: ${flatResponseJson[key]}\n`
@@ -119,7 +119,7 @@ export const useMessageStore = defineStore('message_store', () => {
                     addMessage(MessageType.ERROR, {
                         title: `${t(errorType)} - ${data.response.statusText} (${data.response.status})`,
                         text: messageText
-                    } as StructuredMessage, 5000 + Object.keys(responseJson).length * 1500, responseJson)
+                    } as StructuredMessage, 5000 + Object.keys(asRecord(responseJson)).length * 1500, responseJson)
                 }).catch(() => {
                     // if response does not contain parsable JSON or parsing fails for some other reason show generic error
                     addMessage(MessageType.ERROR, {title: t(errorType), text: ''} as StructuredMessage, 7000, data)
@@ -158,8 +158,9 @@ export const useMessageStore = defineStore('message_store', () => {
         }
 
         if (preparedMessage == PreparedMessage.RATE_LIMIT) {
-            data.response.json().then(responseJson => {
-                addMessage(MessageType.WARNING, {title: t(''), text: t('RateLimitHelp') + '\n' + responseJson.detail} as StructuredMessage, 6000, data)
+            data.response.json().then((responseJson: unknown) => {
+                const detail = asRecord(responseJson).detail
+                addMessage(MessageType.WARNING, {title: t(''), text: t('RateLimitHelp') + (typeof detail === 'string' ? `\n${detail}` : '')} as StructuredMessage, 6000, data)
             }).catch(() => {
                 addMessage(MessageType.WARNING, {title: t(''), text: t('RateLimitHelp')} as StructuredMessage, 6000, data)
             })
@@ -171,12 +172,17 @@ export const useMessageStore = defineStore('message_store', () => {
      * @param obj object to flatten
      * @param keyPrefix key prefix for recursive calls to build structure
      */
-    function flattenObject(obj: any, keyPrefix = '') {
-        return Object.keys(obj).reduce((acc, key) => {
-            if (typeof obj[key] === 'object') {
-                Object.assign(acc, flattenObject(obj[key], (keyPrefix.length ? keyPrefix + '.' : '') + key))
+    function asRecord(value: unknown): Record<string, unknown> {
+        return typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
+    }
+
+    function flattenObject(obj: unknown, keyPrefix = ''): Record<string, unknown> {
+        const source = asRecord(obj)
+        return Object.keys(source).reduce<Record<string, unknown>>((acc, key) => {
+            if (typeof source[key] === 'object' && source[key] !== null) {
+                Object.assign(acc, flattenObject(source[key], (keyPrefix.length ? keyPrefix + '.' : '') + key))
             } else {
-                acc[keyPrefix] = obj[key]
+                acc[(keyPrefix.length ? `${keyPrefix}.` : '') + key] = source[key]
             }
             return acc;
         }, {});

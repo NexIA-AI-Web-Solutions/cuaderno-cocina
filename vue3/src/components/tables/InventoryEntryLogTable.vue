@@ -20,15 +20,15 @@
         </template>
 
         <template #item.createdAt="{item}">
-            {{ DateTime.fromJSDate(item.createdAt).toLocaleString(DateTime.DATETIME_MED) }}
+            {{ item.createdAt ? DateTime.fromJSDate(item.createdAt).toLocaleString(DateTime.DATETIME_MED) : '' }}
         </template>
 
         <template #item.amount="{item}">
             <template v-if="item.oldAmount != item.newAmount">
-                {{ $n(item.oldAmount) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount) }}
+                {{ $n(item.oldAmount ?? 0) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount ?? 0) }}
             </template>
             <template v-else>
-                {{ $n(item.newAmount) }}
+                {{ $n(item.newAmount ?? 0) }}
             </template>
         </template>
 

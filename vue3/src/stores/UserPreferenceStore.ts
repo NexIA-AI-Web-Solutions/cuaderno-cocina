@@ -6,8 +6,7 @@ import {ShoppingGroupingOptions} from "@/types/Shopping";
 import {computed, ComputedRef, ref} from "vue";
 import {DeviceSettings} from "@/types/settings";
 import {useTheme} from "vuetify";
-import {useRouter} from "vue-router";
-import {useRouteQuery} from "@vueuse/router";
+import {useRoute, useRouter} from "vue-router";
 
 const DEVICE_SETTINGS_KEY = 'TANDOOR_DEVICE_SETTINGS'
 const USER_PREFERENCE_KEY = 'TANDOOR_USER_PREFERENCE'
@@ -59,10 +58,10 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
     /**
      * detect if print mode is activated by checking for "print" query parameter
      */
-    const isPrintMode = useRouteQuery('print', false, {transform: Boolean})
-
     const theme = useTheme()
+    const route = useRoute()
     const router = useRouter()
+    const isPrintMode = computed(() => route.query.print != null)
 
     /**
      * holds the active user space if there is one or null if not

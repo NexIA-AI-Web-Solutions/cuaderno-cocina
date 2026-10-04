@@ -24,7 +24,7 @@ export interface ViewLog {
      * @type {number}
      * @memberof ViewLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {number}
@@ -49,6 +49,7 @@ export interface ViewLog {
  * Check if a given object implements the ViewLog interface.
  */
 export function instanceOfViewLog(value: object): value is ViewLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('recipe' in value) || value['recipe'] === undefined) return false;
     if (!('createdBy' in value) || value['createdBy'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
@@ -65,7 +66,7 @@ export function ViewLogFromJSONTyped(json: any, ignoreDiscriminator: boolean): V
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'recipe': json['recipe'],
         'createdBy': json['created_by'],
         'createdAt': (new Date(json['created_at'])),
@@ -76,14 +77,13 @@ export function ViewLogToJSON(json: any): ViewLog {
     return ViewLogToJSONTyped(json, false);
 }
 
-export function ViewLogToJSONTyped(value?: Omit<ViewLog, 'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function ViewLogToJSONTyped(value?: Omit<ViewLog, 'id'|'created_by'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'recipe': value['recipe'],
     };
 }

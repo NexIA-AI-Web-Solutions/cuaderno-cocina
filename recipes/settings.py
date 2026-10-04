@@ -412,8 +412,12 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'Tandoor',
     'DESCRIPTION': 'Tandoor API Docs',
     'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': False,
+    'COMPONENT_SPLIT_REQUEST': True,
     'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
+    'ENUM_NAME_OVERRIDES': {
+        'QuantityBasisEnum': [('gross', 'Bruta'), ('net_usable', 'Neta útil')],
+        'AllergenStateEnum': [('declared', 'declared'), ('unknown', 'unknown')],
+    },
     "AUTHENTICATION_WHITELIST": [],
     "APPEND_COMPONENTS": {
         "securitySchemes": {

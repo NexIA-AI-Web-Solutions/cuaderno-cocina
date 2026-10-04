@@ -12,7 +12,7 @@
             <router-link :to="{ name: 'StartPage', params: {} }">
                 <v-img src="../../assets/brand_logo.svg" width="140px" class="ms-2"
                        v-if="useUserPreferenceStore().userSettings.navShowLogo && !useUserPreferenceStore().activeSpace.navLogo"></v-img>
-                <v-img :src="useUserPreferenceStore().activeSpace.navLogo.preview" width="140px" class="ms-2"
+                <v-img :src="useUserPreferenceStore().activeSpace.navLogo?.preview" width="140px" class="ms-2"
                        v-if="useUserPreferenceStore().userSettings.navShowLogo && useUserPreferenceStore().activeSpace.navLogo != undefined"></v-img>
             </router-link>
 
@@ -89,15 +89,15 @@
         </v-navigation-drawer>
 
         <v-bottom-navigation grow v-if="useUserPreferenceStore().isAuthenticated && !lgAndUp && !useUserPreferenceStore().isPrintMode">
-            <v-btn value="recent" :to="{ name: 'StartPage', params: {} }">
+            <v-btn value="recent" :aria-label="$t('Recipes')" :to="{ name: 'StartPage', params: {} }">
                 <v-icon icon="fa-fw fas fa-book "/>
             </v-btn>
 
-            <v-btn value="favorites" to="/mealplan">
+            <v-btn value="favorites" :aria-label="$t('Meal_Plan')" to="/mealplan">
                 <v-icon icon="fa-fw fas fa-calendar-alt"></v-icon>
             </v-btn>
 
-            <v-btn value="nearby" to="/shopping">
+            <v-btn value="nearby" :aria-label="$t('Shopping_list')" to="/shopping">
                 <v-icon icon="fa-fw fas fa-shopping-cart"></v-icon>
             </v-btn>
 
@@ -114,7 +114,7 @@
 
         <v-snackbar-queued
             :vertical="true"
-            location="top center"
+            location="top"
         ></v-snackbar-queued>
 
     </v-app>
@@ -164,19 +164,19 @@ onMounted(() => {
  * global title update handler, might be overridden by page specific handlers
  */
 router.afterEach((to, from) => {
-    if (to.name == 'StartPage' && useUserPreferenceStore().initCompleted && !useUserPreferenceStore().activeSpace.spaceSetupCompleted != undefined && !useUserPreferenceStore().activeSpace.spaceSetupCompleted && useUserPreferenceStore().activeSpace.createdBy.id! == useUserPreferenceStore().userSettings.user.id!) {
+    if (to.name == 'StartPage' && useUserPreferenceStore().initCompleted && useUserPreferenceStore().activeSpace.spaceSetupCompleted !== undefined && !useUserPreferenceStore().activeSpace.spaceSetupCompleted && useUserPreferenceStore().activeSpace.createdBy.id! == useUserPreferenceStore().userSettings.user.id!) {
         router.push({name: 'WelcomePage'})
     } else if (to.name == 'StartPage' &&
         useUserPreferenceStore().initCompleted &&
         useUserPreferenceStore().activeSpace.spaceSetupCompleted &&
-        !useUserPreferenceStore().activeSpace.householdSetupCompleted != undefined &&
+        useUserPreferenceStore().activeSpace.householdSetupCompleted !== undefined &&
         !useUserPreferenceStore().activeSpace.householdSetupCompleted &&
         useUserPreferenceStore().activeSpace.createdBy.id! == useUserPreferenceStore().userSettings.user.id! &&
         useUserPreferenceStore().activeUserSpace?.household == undefined ) {
         router.push({name: 'HouseholdPage'})
     }
     nextTick(() => {
-        if (to.meta.title) {
+        if (typeof to.meta.title === 'string') {
             title.value = t(to.meta.title)
         } else {
             title.value = 'Tandoor'
@@ -461,6 +461,17 @@ router.afterEach((to, from) => {
 
 .multiselect-option.is-selected {
     background: #b55e4f !important;
+}
+
+/* Browser printing also works without the dedicated ?print route. Vuetify's
+   layout padding is inline, so reset it together with the hidden app shell. */
+@media print {
+    .v-app-bar, .v-navigation-drawer, .v-bottom-navigation, .v-bottom-sheet {
+        display: none !important;
+    }
+    .v-main {
+        padding: 0 !important;
+    }
 }
 
 </style>

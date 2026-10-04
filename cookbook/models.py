@@ -17,9 +17,9 @@ from django.db.models import Index, Q
 from django.db.models.fields.related import ManyToManyField
 from django.db.models.functions import Substr
 from django.utils import timezone
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django_prometheus.models import ExportModelOperationsMixin
-from django_scopes import ScopedManager, scopes_disabled
+from django_scopes import ScopedManager, get_scope, scopes_disabled
 from PIL import Image
 from treebeard.mp_tree import MP_Node, MP_NodeManager
 
@@ -69,18 +69,35 @@ class TreeManager(MP_NodeManager):
     # model.Manager get_or_create() is not compatible with MP_Tree
     def get_or_create(self, *args, **kwargs):
         kwargs['name'] = kwargs['name'].strip()
-        if hasattr(self, 'space'):
-            if obj := self.filter(name__iexact=kwargs['name'], space=kwargs['space']).first():
-                return obj, False
-        else:
-            if obj := self.filter(name__iexact=kwargs['name']).first():
-                return obj, False
+        defaults = kwargs.get('defaults') or {}
+        tenants = [
+            getattr(source[key], 'pk', source[key])
+            for source in (kwargs, defaults) for key in ('space', 'space_id') if key in source
+        ]
+        if not tenants:
+            current_scope = get_scope()
+            if current_scope.get('_enabled', True) and current_scope.get('space') is not None:
+                bound = current_scope['space']
+                tenants = [getattr(bound, 'pk', bound)]
+        if not tenants or any(type(value) is not int or value <= 0 for value in tenants):
+            raise ValueError('Tree creation requires one explicit or bound Space.')
+        if len(set(tenants)) != 1:
+            raise ValueError('Tree lookup and creation must use the same Space.')
+        tenant_id = tenants[0]
+        matches = self.filter(name__iexact=kwargs['name'])
+        # Explicit tenant input must still constrain lookups when callers
+        # disable django-scopes (imports, fixtures and background operations).
+        matches = matches.filter(space_id=tenant_id)
+        if obj := matches.first():
+            return obj, False
 
         with scopes_disabled():
             try:
                 defaults = kwargs.pop('defaults', None)
                 if defaults:
                     kwargs = {**kwargs, **defaults}
+                kwargs.pop('space', None)
+                kwargs['space_id'] = tenant_id
                 # ManyToMany fields can't be set this way, so pop them out to save for later
                 fields = [field.name for field in self.model._meta.get_fields() if issubclass(type(field), ManyToManyField)]
                 many_to_many = {field: kwargs.pop(field) for field in list(kwargs) if field in fields}
@@ -1769,7 +1786,7 @@ class CustomFilter(models.Model, PermissionModelMixin):
     )
 
     name = models.CharField(max_length=128, null=False, blank=False)
-    type = models.CharField(max_length=128, choices=(MODELS), default=MODELS[0])
+    type = models.CharField(max_length=128, choices=(MODELS), default=RECIPE)
     # could use JSONField, but requires installing extension on SQLite,  don't need to search the objects, so seems unecessary
     search = models.TextField(blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)

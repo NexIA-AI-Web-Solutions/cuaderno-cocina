@@ -1,0 +1,68 @@
+import {defineConfig, devices, type Project} from '@playwright/test'
+import {authFile, editions, projectName, roles, widths} from './contracts.js'
+
+const baseURL = process.env.BASE_URL || 'http://127.0.0.1:18081'
+const outputDir = process.env.CUADERNO_E2E_OUTPUT_DIR || 'test-results'
+const htmlReportDir = process.env.CUADERNO_E2E_HTML_REPORT || 'playwright-report'
+
+const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => widths.map(width => ({
+  name: projectName(edition, role, width),
+  testIgnore: /browser-acceptance\.spec\.ts/,
+  use: {
+    ...devices['Desktop Chrome'],
+    baseURL,
+    viewport: {width, height: width === 390 ? 844 : width === 768 ? 1024 : 900},
+    storageState: authFile(edition, role),
+  },
+}))))
+
+// Keep the full edition/role/viewport matrix on Chromium. These two focused
+// projects catch engine-specific layout, keyboard and print-CSS regressions
+// without tripling the state-mutating acceptance suite.
+projects.push(
+  {
+    name: projectName('esencial', 'responsable', 390, 'firefox'),
+    testMatch: /browser-acceptance\.spec\.ts/,
+    use: {
+      ...devices['Desktop Firefox'],
+      baseURL,
+      viewport: {width: 390, height: 844},
+      storageState: authFile('esencial', 'responsable'),
+    },
+  },
+  {
+    name: projectName('integral', 'responsable', 768, 'webkit'),
+    testMatch: /browser-acceptance\.spec\.ts/,
+    use: {
+      ...devices['Desktop Safari'],
+      baseURL,
+      viewport: {width: 768, height: 1024},
+      storageState: authFile('integral', 'responsable'),
+    },
+  },
+)
+
+export default defineConfig({
+  testDir: '.',
+  testMatch: /.*\.spec\.ts/,
+  globalSetup: './global-setup.ts',
+  fullyParallel: false,
+  workers: 1,
+  retries: process.env.CI ? 1 : 0,
+  forbidOnly: Boolean(process.env.CI),
+  timeout: 45_000,
+  expect: {timeout: 8_000},
+  outputDir,
+  reporter: process.env.CI ? [['line'], ['html', {open: 'never', outputFolder: htmlReportDir}]] : 'list',
+  use: {
+    baseURL,
+    locale: 'es-ES',
+    timezoneId: 'Europe/Madrid',
+    actionTimeout: 10_000,
+    navigationTimeout: 20_000,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+  },
+  projects,
+})

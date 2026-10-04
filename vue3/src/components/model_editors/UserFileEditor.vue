@@ -78,7 +78,7 @@ watch([() => props.item, () => props.itemId], () => {
 // object specific data (for selects/display)
 
 const {fileApiLoading, createOrUpdateUserFile} = useFileApi()
-const file = shallowRef<File | null>(null)
+const file = shallowRef<File>()
 
 onMounted(() => {
     initializeEditor()
@@ -99,7 +99,7 @@ function saveFile() {
 
     let event: ("create" | "save") = isUpdate() ? 'save' : 'create'
 
-    createOrUpdateUserFile(editingObj.value.name, file.value, editingObj.value.id).then(r => {
+    createOrUpdateUserFile(editingObj.value.name, file.value ?? null, editingObj.value.id).then(r => {
         editingObj.value = r
         editingObjChanged.value = false
         emit(event, r)

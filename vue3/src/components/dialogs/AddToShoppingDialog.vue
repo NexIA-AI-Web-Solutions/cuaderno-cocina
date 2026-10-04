@@ -5,22 +5,22 @@
             <v-card-text>
                 <v-model-select model="ShoppingList" chips :hint="$t('LeaveEmptyForDefaultList')" v-model="selectedShoppingLists"></v-model-select>
                 <v-expansion-panels variant="accordion" v-model="panel">
-                    <v-expansion-panel v-for="r in dialogRecipes" :key="r.recipe.id!" :value="r.recipe.id!">
+                    <v-expansion-panel v-for="(r, recipeIndex) in dialogRecipes" :key="r.recipe.id ?? recipeIndex" :value="r.recipe.id ?? recipeIndex">
                         <v-expansion-panel-title>{{ r.recipe.name }}</v-expansion-panel-title>
                         <v-expansion-panel-text>
                             <v-table density="compact">
                                 <tbody>
-                                <tr v-for="e in r.entries" :key="e.id" @click="e.checked = !e.checked" class="cursor-pointer">
+                                <tr v-for="(e, entryIndex) in r.entries" :key="e.ingredient?.id ?? entryIndex" @click="e.checked = !e.checked" class="cursor-pointer">
                                     <td style="width: 1%; text-wrap: nowrap" class="pa-0">
                                         <v-checkbox-btn v-model="e.checked" color="success"></v-checkbox-btn>
                                     </td>
                                     <td style="width: 1%; text-wrap: nowrap" class="pr-1"
                                         v-html="calculateFoodAmount(e.amount, ingredientFactor, useUserPreferenceStore().userSettings.useFractions)"></td>
                                     <td style="width: 1%; text-wrap: nowrap" class="pr-1">
-                                        <template v-if="e.unit"> {{ ingredientToUnitString(e.ingredient, ingredientFactor) }}</template>
+                                        <template v-if="e.unit && e.ingredient"> {{ ingredientToUnitString(e.ingredient, ingredientFactor) }}</template>
                                     </td>
                                     <td>
-                                        <template v-if="e.food"> {{ ingredientToFoodString(e.ingredient, ingredientFactor) }}</template>
+                                        <template v-if="e.food && e.ingredient"> {{ ingredientToFoodString(e.ingredient, ingredientFactor) }}</template>
                                     </td>
                                 </tr>
                                 </tbody>

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { QuantityBasisEnum } from './QuantityBasisEnum';
+import {
+    QuantityBasisEnumFromJSON,
+    QuantityBasisEnumFromJSONTyped,
+    QuantityBasisEnumToJSON,
+    QuantityBasisEnumToJSONTyped,
+} from './QuantityBasisEnum';
 import type { Unit } from './Unit';
 import {
     UnitFromJSON,
@@ -39,7 +46,7 @@ export interface Ingredient {
      * @type {number}
      * @memberof Ingredient
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {Food}
@@ -106,12 +113,27 @@ export interface Ingredient {
      * @memberof Ingredient
      */
     readonly checked: boolean;
+    /**
+     * 
+     * @type {QuantityBasisEnum}
+     * @memberof Ingredient
+     */
+    quantityBasis?: QuantityBasisEnum;
+    /**
+     * 
+     * @type {number}
+     * @memberof Ingredient
+     */
+    yieldRatio?: number | null;
 }
+
+
 
 /**
  * Check if a given object implements the Ingredient interface.
  */
 export function instanceOfIngredient(value: object): value is Ingredient {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('food' in value) || value['food'] === undefined) return false;
     if (!('unit' in value) || value['unit'] === undefined) return false;
     if (!('amount' in value) || value['amount'] === undefined) return false;
@@ -131,7 +153,7 @@ export function IngredientFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'food': FoodFromJSON(json['food']),
         'unit': UnitFromJSON(json['unit']),
         'amount': json['amount'],
@@ -143,6 +165,8 @@ export function IngredientFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'originalText': json['original_text'] == null ? undefined : json['original_text'],
         'usedInRecipes': json['used_in_recipes'],
         'checked': json['checked'],
+        'quantityBasis': json['quantity_basis'] == null ? undefined : QuantityBasisEnumFromJSON(json['quantity_basis']),
+        'yieldRatio': json['yield_ratio'] == null ? undefined : json['yield_ratio'],
     };
 }
 
@@ -150,14 +174,13 @@ export function IngredientToJSON(json: any): Ingredient {
     return IngredientToJSONTyped(json, false);
 }
 
-export function IngredientToJSONTyped(value?: Omit<Ingredient, 'conversions'|'used_in_recipes'|'checked'> | null, ignoreDiscriminator: boolean = false): any {
+export function IngredientToJSONTyped(value?: Omit<Ingredient, 'id'|'conversions'|'used_in_recipes'|'checked'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'food': FoodToJSON(value['food']),
         'unit': UnitToJSON(value['unit']),
         'amount': value['amount'],
@@ -166,6 +189,8 @@ export function IngredientToJSONTyped(value?: Omit<Ingredient, 'conversions'|'us
         'is_header': value['isHeader'],
         'no_amount': value['noAmount'],
         'original_text': value['originalText'],
+        'quantity_basis': QuantityBasisEnumToJSON(value['quantityBasis']),
+        'yield_ratio': value['yieldRatio'],
     };
 }
 

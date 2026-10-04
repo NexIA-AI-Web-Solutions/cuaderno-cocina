@@ -902,7 +902,17 @@ class StorageViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         return self.queryset.filter(space=self.request.space)
 
 
-class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class GuestListRetrieveMixin:
+    """Expose scoped reference data without exposing deletion dependencies."""
+
+    def get_permissions(self):
+        if self.action in {'list', 'retrieve'} and self.request.method in {'GET', 'HEAD'}:
+            permission = CustomIsGuest & CustomTokenHasReadWriteScope
+            return [permission()]
+        return super().get_permissions()
+
+
+class InventoryLocationViewSet(GuestListRetrieveMixin, LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     queryset = InventoryLocation.objects
     serializer_class = InventoryLocationSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
@@ -910,7 +920,7 @@ class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelati
 
     def get_queryset(self):
         from cuaderno.services.inventory_access import household_inventory
-        return household_inventory(self.request, self.queryset, 'household_id')
+        return household_inventory(self.request, self.queryset, 'household_id').order_by('pk')
 
 
 @extend_schema_view(list=extend_schema(parameters=[
@@ -919,7 +929,7 @@ class InventoryLocationViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelati
     OpenApiParameter(name='food_id', description=_('Returns all entries with the given food id'), type=int),
     OpenApiParameter(name='inventory_location_id', description=_('Returns all entries with the given inventory location id'), type=int),
 ]))
-class InventoryEntryViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
+class InventoryEntryViewSet(GuestListRetrieveMixin, LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     queryset = InventoryEntry.objects
     serializer_class = InventoryEntrySerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
@@ -1112,7 +1122,7 @@ class KeywordViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     pagination_class = DefaultPagination
 
 
-class UnitViewSet(LoggingMixin, MergeMixin, FuzzyFilterMixin, DeleteRelationMixing):
+class UnitViewSet(GuestListRetrieveMixin, LoggingMixin, MergeMixin, FuzzyFilterMixin, DeleteRelationMixing):
     queryset = Unit.objects
     model = Unit
     serializer_class = UnitSerializer
@@ -1508,7 +1518,7 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
                 remove_from_relation(Food.shopping_lists.through, 'food_id', safe_food_ids, 'shoppinglist_id',
                                      serializer.validated_data['shopping_lists_remove'])
 
-            if 'shopping_lists_set' in serializer.validated_data and len(serializer.validated_data['shopping_lists_set']) > 0:
+            if 'shopping_lists_set' in serializer.validated_data:
                 set_relation(Food.shopping_lists.through, 'food_id', safe_food_ids, 'shoppinglist_id', serializer.validated_data['shopping_lists_set'])
 
             if 'shopping_lists_remove_all' in serializer.validated_data and serializer.validated_data['shopping_lists_remove_all']:
@@ -2441,7 +2451,7 @@ class ShoppingListRecipeViewSet(LoggingMixin, viewsets.ModelViewSet):
 class ShoppingListViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     queryset = ShoppingList.objects
     serializer_class = ShoppingListSerializer
-    permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
+    permission_classes = [(CustomIsUser | (IsReadOnlyDRF & CustomIsGuest)) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
     def get_queryset(self):
@@ -2449,7 +2459,16 @@ class ShoppingListViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMix
         return queryset
 
 
-@extend_schema_view(list=extend_schema(parameters=[
+@extend_schema_view(
+    update=extend_schema(parameters=[OpenApiParameter(
+        name='If-Match', location=OpenApiParameter.HEADER, type=str,
+        description='Quoted revision returned by this entry. Required when checked is changed; missing revision returns 428 and a stale revision returns 409.',
+    )]),
+    partial_update=extend_schema(parameters=[OpenApiParameter(
+        name='If-Match', location=OpenApiParameter.HEADER, type=str,
+        description='Quoted revision returned by this entry. Required when checked is changed; missing revision returns 428 and a stale revision returns 409.',
+    )]),
+    list=extend_schema(parameters=[
     OpenApiParameter(name='updated_after',
                      description=_('Returns only elements updated after the given timestamp in ISO 8601 format.'),
                      type=datetime.datetime),
@@ -2464,6 +2483,30 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
     serializer_class = ShoppingListEntrySerializer
     permission_classes = [(CustomIsOwner | CustomIsHousehold) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    def update(self, request, *args, **kwargs):
+        revision = request.headers.get('If-Match')
+        if revision is None:
+            if 'checked' in request.data:
+                return Response({'detail': 'Indica If-Match para cambiar el estado de esta línea.'}, status=428)
+            return super().update(request, *args, **kwargs)
+        if len(revision) > 128 or not re.fullmatch(r'"[^"\r\n]+"', revision):
+            return Response({'detail': 'If-Match debe contener la revisión entre comillas.'}, status=400)
+        with transaction.atomic():
+            instance = self.get_object()
+            # Lock only the entry: nullable joined objects must not enter FOR UPDATE.
+            instance = ShoppingListEntry.objects.select_for_update().get(pk=instance.pk, space=request.space)
+            self.check_object_permissions(request, instance)
+            current = self.get_serializer(instance).data['updated_at']
+            from cookbook.helper.shopping_revision import shopping_revision
+            token = shopping_revision(instance)
+            if revision[1:-1] not in (current, token):
+                return Response({'detail': 'Otra sesión ha cambiado esta línea. Actualiza antes de reintentar.',
+                                 'updated_at': current, 'revision': token, 'checked': instance.checked}, status=409)
+            serializer = self.get_serializer(instance, data=request.data, partial=kwargs.pop('partial', False))
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
 
     def get_queryset(self):
         self.queryset = self.queryset.filter(space=self.request.space)
@@ -2510,7 +2553,8 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
             return self.queryset[:1000]
 
     @decorators.action(detail=False, methods=['POST'], serializer_class=ShoppingListEntryBulkSerializer,
-                       permission_classes=[CustomIsUser])
+                       permission_classes=[CustomIsUser & CustomTokenHasReadWriteScope])
+    @transaction.atomic
     def bulk(self, request):
         serializer = self.serializer_class(data=request.data)
 
@@ -2521,6 +2565,25 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
             ).filter(
                 space=request.space, id__in=serializer.validated_data['ids']
             )
+
+            from cookbook.helper.shopping_revision import shopping_revision
+            locked = list(bulk_entries.select_for_update().order_by('pk'))
+            requested_ids = set(serializer.validated_data['ids'])
+            if {row.pk for row in locked} != requested_ids:
+                return Response({'detail': 'Una línea no está disponible.'}, status=404)
+            targets = set()
+            for field in ('shopping_lists_add', 'shopping_lists_remove', 'shopping_lists_set'):
+                targets.update(serializer.validated_data.get(field, []))
+            if targets != set(ShoppingList.objects.filter(space=request.space, pk__in=targets).values_list('pk', flat=True)):
+                return Response({'detail': 'Una lista no está disponible.'}, status=404)
+            if serializer.validated_data.get('checked') is not None:
+                revisions = serializer.validated_data.get('revisions')
+                if revisions is None:
+                    return Response({'detail': 'Indica una revisión para cada línea.'}, status=428)
+                if set(revisions) != {str(pk) for pk in requested_ids}:
+                    return Response({'detail': 'Las revisiones deben corresponder a todas las líneas.'}, status=400)
+                if any(revisions[str(row.pk)] != shopping_revision(row) for row in locked):
+                    return Response({'detail': 'Otra sesión ha cambiado la lista. Actualiza antes de reintentar.'}, status=409)
 
             safe_entry_ids = ShoppingListEntry.objects.filter(
                 Q(created_by=self.request.user) | Q(created_by__in=household_user_ids)
@@ -2563,6 +2626,13 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
 
             if 'shopping_lists_remove_all' in serializer.validated_data and serializer.validated_data['shopping_lists_remove_all']:
                 remove_all_from_relation(ShoppingListEntry.shopping_lists.through, 'shoppinglistentry_id', safe_entry_ids)
+
+            # Relation-only writes also invalidate stale revisions.
+            bulk_entries.update(updated_at=update_timestamp)
+            serializer.validated_data['revisions'] = {
+                str(row.pk): shopping_revision(row) for row in bulk_entries.order_by('pk')
+            }
+            serializer.validated_data['timestamp'] = update_timestamp
 
             return Response(serializer.validated_data)
         else:
@@ -3326,8 +3396,8 @@ def reset_food_inheritance(request):
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(request=None, responses={200: UserSpaceSerializer, 400: OpenApiTypes.OBJECT, 404: OpenApiTypes.STR})
 @api_view(['GET'])
-# @schema(AutoSchema()) #TODO add proper schema
 @permission_classes([CustomIsGuest & CustomTokenHasReadWriteScope])
 # TODO add rate limiting
 def switch_active_space(request, space_id):
@@ -3346,8 +3416,8 @@ def switch_active_space(request, space_id):
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(request=None, responses={200: OpenApiTypes.BINARY, 400: OpenApiTypes.OBJECT, 404: OpenApiTypes.OBJECT})
 @api_view(['GET'])
-# @schema(AutoSchema()) #TODO add proper schema
 @permission_classes([CustomIsUser & CustomTokenHasReadWriteScope])
 def download_file(request, file_id):
     """

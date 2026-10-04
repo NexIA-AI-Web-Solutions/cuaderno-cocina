@@ -22,9 +22,9 @@
                         <v-btn class="float-right" icon="$create" color="create" v-if="!genericModel.model.disableCreate">
                             <i class="fa-solid fa-plus"></i>
                             <model-edit-dialog :close-after-create="false" :model="model"
-                                               @create="loadItems({page: page})"
-                                               @save="loadItems({page: page })"
-                                               @delete="loadItems({page: page})"></model-edit-dialog>
+                                               @create="reloadItems()"
+                                               @save="reloadItems()"
+                                               @delete="reloadItems()"></model-edit-dialog>
                         </v-btn>
                     </template>
 
@@ -150,10 +150,10 @@
         <model-merge-dialog :model="model" :source="selectedItems" v-model="batchMergeDialog" activator="model"
                             @change="loadItems({page: page, itemsPerPage: pageSize, search: debouncedQuery})"></model-merge-dialog>
 
-        <batch-edit-food-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
+        <batch-edit-food-dialog :items="selectedFoods" v-model="batchEditDialog" v-if="model == 'Food'" activator="model"
                                 @change="loadItems({page: page, itemsPerPage: pageSize, search: debouncedQuery})"></batch-edit-food-dialog>
 
-        <batch-edit-user-space-dialog :items="selectedItems" v-model="batchEditDialog" v-if="model == 'UserSpace'" activator="model"
+        <batch-edit-user-space-dialog :items="selectedUserSpaces" v-model="batchEditDialog" v-if="model == 'UserSpace'" activator="model"
                                 @change="loadItems({page: page, itemsPerPage: pageSize, search: debouncedQuery})"></batch-edit-user-space-dialog>
 
     </v-container>
@@ -162,7 +162,7 @@
 <script setup lang="ts">
 
 
-import {onBeforeMount, PropType, ref, watch} from "vue";
+import {computed, onBeforeMount, PropType, ref, watch} from "vue";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useI18n} from "vue-i18n";
 import {EditorSupportedModels, EditorSupportedTypes, GenericModel, getGenericModelFromString, Model, TInviteLink,} from "@/types/Models";
@@ -172,7 +172,7 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
 import {VDataTableUpdateOptions} from "@/vuetify";
 import SyncDialog from "@/components/dialogs/SyncDialog.vue";
-import {ApiApi, Group, RecipeImport, Space, UserSpace} from "@/openapi";
+import {ApiApi, type Food, Group, RecipeImport, Space, UserSpace} from "@/openapi";
 import {useTitle} from "@vueuse/core";
 
 import BatchDeleteDialog from "@/components/dialogs/BatchDeleteDialog.vue";
@@ -204,6 +204,8 @@ const page = useRouteQuery('page', 1, {transform: Number})
 const pageSize = useRouteQuery('pageSize', useUserPreferenceStore().deviceSettings.general_tableItemsPerPage, {transform: Number})
 
 const selectedItems = ref([] as EditorSupportedTypes[])
+const selectedFoods = computed(() => selectedItems.value.filter((item): item is Food => props.model === 'Food'))
+const selectedUserSpaces = computed(() => selectedItems.value.filter((item): item is UserSpace => props.model === 'UserSpace'))
 
 const batchDeleteDialog = ref(false)
 const batchMergeDialog = ref(false)
@@ -220,7 +222,7 @@ const genericModel = ref({} as GenericModel)
 watch(() => props.model, (newValue, oldValue) => {
     if (newValue != oldValue) {
         genericModel.value = getGenericModelFromString(props.model, t)
-        loadItems({page: 1})
+        reloadItems(1)
     }
 })
 
@@ -265,6 +267,10 @@ function loadItems(options: VDataTableUpdateOptions) {
     })
 }
 
+function reloadItems(targetPage = page.value) {
+    loadItems({page: targetPage, itemsPerPage: pageSize.value, search: debouncedQuery.value})
+}
+
 // model specific functions
 
 /**
@@ -274,7 +280,7 @@ function loadItems(options: VDataTableUpdateOptions) {
 function importRecipe(item: RecipeImport) {
     let api = new ApiApi()
     api.apiRecipeImportImportRecipeCreate({id: item.id!, recipeImport: item}).then(r => {
-        loadItems({page: 1})
+        reloadItems(1)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
     })
@@ -287,7 +293,7 @@ function importAllRecipes() {
     let api = new ApiApi()
 
     api.apiRecipeImportImportAllCreate({recipeImport: {} as RecipeImport}).then(r => {
-        loadItems({page: 1})
+        reloadItems(1)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
     })

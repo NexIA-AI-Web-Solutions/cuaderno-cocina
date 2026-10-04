@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView
 
 from cookbook.helper.permission_helper import CustomRecipePermission, CustomTokenHasReadWriteScope
 from cuaderno.api.prices import ExactDecimalField

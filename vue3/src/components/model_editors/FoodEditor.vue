@@ -240,7 +240,7 @@ async function saveObjectConversions() {
                 useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             })
         } else {
-            api.apiUnitConversionCreate({id: uc.id, unitConversion: uc}).catch(err => {
+            api.apiUnitConversionCreate({unitConversion: uc}).catch(err => {
                 useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
             })
         }

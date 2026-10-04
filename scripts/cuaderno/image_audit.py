@@ -85,8 +85,11 @@ def _contained(path: Path, root: Path) -> bool:
 def _reject_link_ancestors(path: Path, root: Path) -> None:
     current = path
     while True:
-        if current.exists() and _is_linklike(current):
-            raise ImageAuditFailure("Una ruta del audit atraviesa un enlace o junction.")
+        try:
+            if current.exists() and _is_linklike(current):
+                raise ImageAuditFailure("Una ruta del audit atraviesa un enlace o junction.")
+        except OSError as exc:
+            raise ImageAuditFailure("No se pudo inspeccionar de forma estable una ruta del audit.") from exc
         if current == root:
             return
         if current.parent == current:
@@ -264,10 +267,11 @@ def _offline_environment(paths, inherited):
     return environment
 
 
-def _verify_db_status(paths, runner, environment):
+def _verify_db_status(paths, runner, environment, *, expected_database_path=None,
+                      timeout=SHORT_TIMEOUT_SECONDS):
     completed = _completed(
         runner, [str(paths.tool), "db", "status", "-o", "json"],
-        timeout=SHORT_TIMEOUT_SECONDS, env=environment,
+        timeout=timeout, env=environment,
     )
     if completed.returncode != 0:
         raise ImageAuditFailure("Grype no pudo verificar su base offline fijada.")
@@ -279,7 +283,8 @@ def _verify_db_status(paths, runner, environment):
             or document.get("built") != DB_BUILT
             or document.get("valid") is not True
             or not isinstance(database_path, str)
-            or Path(database_path).resolve(strict=False) != paths.database.resolve(strict=True)):
+            or (database_path != expected_database_path if expected_database_path is not None
+                else Path(database_path).resolve(strict=False) != paths.database.resolve(strict=True))):
         raise ImageAuditFailure("grype db status no corresponde a la base local fijada.")
     return document
 

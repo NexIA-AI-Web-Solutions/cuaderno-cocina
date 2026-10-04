@@ -64,11 +64,34 @@ class OperationalRoleTests(ServiceFixtureMixin, TestCase):
             with self.subTest(write=url):
                 response = client.post(url, {}, format="json")
                 self.assertEqual(response.status_code, 403, response.data)
-        self.assertEqual(client.get("/api/cuaderno/packages/").status_code, 403)
+        self.assertEqual(client.get("/api/cuaderno/packages/").status_code, 200)
         with scopes_disabled():
             self.assertEqual(PackageFormat.objects.count(), 1)
             self.assertEqual(ServicePlan.objects.count(), 0)
             self.assertEqual(StockMovement.objects.count(), 0)
+
+    def test_reading_a_legacy_space_does_not_create_a_profile(self):
+        with scopes_disabled():
+            SpaceProfile.objects.filter(space=self.space).delete()
+        client = self.client_for(self.guest)
+        for url in (
+            self.edition_url,
+            f'/api/cuaderno/recipes/{self.recipe.pk}/finance/',
+            f'/api/cuaderno/recipes/{self.recipe.pk}/ingredient-yields/',
+            '/api/cuaderno/services/',
+            '/api/cuaderno/purchase-orders/',
+        ):
+            with self.subTest(url=url):
+                response = client.get(url)
+                self.assertIn(response.status_code, (200, 403), response.data)
+                with scopes_disabled():
+                    self.assertFalse(SpaceProfile.objects.filter(space=self.space).exists())
+        response = self.client_for(self.admin).put(
+            self.edition_url, {'edition': 'profesional', 'price_policy': 'net'}, format='json',
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        with scopes_disabled():
+            self.assertEqual(SpaceProfile.objects.get(space=self.space).edition, 'profesional')
 
     def test_consulta_keeps_native_ownership_writes_without_becoming_operational_user(self):
         client = self.client_for(self.guest)

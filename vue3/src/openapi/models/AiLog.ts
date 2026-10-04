@@ -32,7 +32,7 @@ export interface AiLog {
      * @type {number}
      * @memberof AiLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {AiProvider}
@@ -105,6 +105,7 @@ export interface AiLog {
  * Check if a given object implements the AiLog interface.
  */
 export function instanceOfAiLog(value: object): value is AiLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('aiProvider' in value) || value['aiProvider'] === undefined) return false;
     if (!('_function' in value) || value['_function'] === undefined) return false;
     if (!('creditCost' in value) || value['creditCost'] === undefined) return false;
@@ -123,7 +124,7 @@ export function AiLogFromJSONTyped(json: any, ignoreDiscriminator: boolean): AiL
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'aiProvider': AiProviderFromJSON(json['ai_provider']),
         '_function': json['function'],
         'creditCost': json['credit_cost'],
@@ -142,14 +143,13 @@ export function AiLogToJSON(json: any): AiLog {
     return AiLogToJSONTyped(json, false);
 }
 
-export function AiLogToJSONTyped(value?: Omit<AiLog, 'ai_provider'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function AiLogToJSONTyped(value?: Omit<AiLog, 'id'|'ai_provider'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'function': value['_function'],
         'credit_cost': value['creditCost'],
         'credits_from_balance': value['creditsFromBalance'],

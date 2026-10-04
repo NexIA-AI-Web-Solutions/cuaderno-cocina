@@ -100,7 +100,7 @@ const itemCount = ref(0)
 
 const tableHeaders = [
     {title: t('Name'), key: 'recipeContent.name',},
-    {key: 'action', width: '1%', noBreak: true, align: 'end'},
+    {key: 'action', width: '1%', noBreak: true, align: 'end' as const},
 ]
 
 onMounted(() => {

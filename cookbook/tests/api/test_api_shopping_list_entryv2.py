@@ -160,22 +160,29 @@ def test_sharing(request, shared, count, sle_2, sle, u1_s1, space_1):
     # confirm shared user sees their list and the list that's shared with them
     assert json.loads(r.content)['count'] == count
 
-    # test shared user can mark complete
+    # Native household owners retain their existing permissions. Revisions
+    # come from the exact current response, rather than fixture timestamps.
+    detail_url = reverse(DETAIL_URL, args={sle[0].id})
+    detail = shared_client.get(detail_url)
+    expected = 200 if shared.endswith('s1') else 404
+    revision = json.loads(detail.content)['revision'] if detail.status_code == 200 else '0' * 64
     x = shared_client.patch(reverse(DETAIL_URL, args={sle[0].id}),
                             {'checked': True},
-                            content_type='application/json')
+                            content_type='application/json', HTTP_IF_MATCH=f'"{revision}"')
+    assert x.status_code == expected
     r = json.loads(shared_client.get(reverse(LIST_URL)).content)
     assert r['count'] == count
     # count unchecked entries
-    if not x.status_code == 404:
+    if x.status_code == 200:
         count = count - 1
     assert [x['checked'] for x in r['results']].count(False) == count
     # test shared user can delete
     x = shared_client.delete(reverse(DETAIL_URL, args={sle[1].id}))
+    assert x.status_code == (204 if expected == 200 else expected)
     r = json.loads(shared_client.get(reverse(LIST_URL)).content)
     assert r['count'] == count
     # count unchecked entries
-    if not x.status_code == 404:
+    if x.status_code == 204:
         count = count - 1
     assert [x['checked'] for x in r['results']].count(False) == count
 

@@ -1,11 +1,12 @@
 """Finance metadata extends native recipe properties, never invents profit."""
 from django.db import transaction
+from cuaderno.services.profiles import profile_for_space
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from cuaderno.api.base import CuadernoAPIView as APIView
 
 from cookbook.helper.permission_helper import CustomRecipePermission, CustomTokenHasReadWriteScope
 from cuaderno.api.operations import _require
@@ -49,7 +50,7 @@ class RecipeFinanceView(APIView):
     def get(self, request, recipe_id):
         recipe = get_object_or_404(visible_recipes(request.user, request.space), pk=recipe_id)
         self.check_object_permissions(request, recipe)
-        profile, _ = SpaceProfile.objects.get_or_create(space=request.space)
+        profile = profile_for_space(request.space)
         return self.payload(request, recipe, profile)
 
     @extend_schema(parameters=[_SERVINGS_PARAMETER], request=FinanceWriteSchema, responses=FinanceResponseSchema)

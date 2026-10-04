@@ -46,7 +46,7 @@ export interface UserSpace {
      * @type {number}
      * @memberof UserSpace
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {User}
@@ -107,6 +107,7 @@ export interface UserSpace {
  * Check if a given object implements the UserSpace interface.
  */
 export function instanceOfUserSpace(value: object): value is UserSpace {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('user' in value) || value['user'] === undefined) return false;
     if (!('space' in value) || value['space'] === undefined) return false;
     if (!('groups' in value) || value['groups'] === undefined) return false;
@@ -126,7 +127,7 @@ export function UserSpaceFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'user': UserFromJSON(json['user']),
         'space': json['space'],
         'groups': ((json['groups'] as Array<any>).map(GroupFromJSON)),
@@ -143,14 +144,13 @@ export function UserSpaceToJSON(json: any): UserSpace {
     return UserSpaceToJSONTyped(json, false);
 }
 
-export function UserSpaceToJSONTyped(value?: Omit<UserSpace, 'user'|'space'|'invite_link'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function UserSpaceToJSONTyped(value?: Omit<UserSpace, 'id'|'user'|'space'|'invite_link'|'created_at'|'updated_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'groups': ((value['groups'] as Array<any>).map(GroupToJSON)),
         'household': HouseholdToJSON(value['household']),
         'active': value['active'],

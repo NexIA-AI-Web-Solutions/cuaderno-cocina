@@ -32,7 +32,7 @@ export interface SyncLog {
      * @type {number}
      * @memberof SyncLog
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {Sync}
@@ -63,6 +63,7 @@ export interface SyncLog {
  * Check if a given object implements the SyncLog interface.
  */
 export function instanceOfSyncLog(value: object): value is SyncLog {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('sync' in value) || value['sync'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
@@ -79,7 +80,7 @@ export function SyncLogFromJSONTyped(json: any, ignoreDiscriminator: boolean): S
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'sync': SyncFromJSON(json['sync']),
         'status': json['status'],
         'msg': json['msg'] == null ? undefined : json['msg'],
@@ -91,14 +92,13 @@ export function SyncLogToJSON(json: any): SyncLog {
     return SyncLogToJSONTyped(json, false);
 }
 
-export function SyncLogToJSONTyped(value?: Omit<SyncLog, 'sync'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
+export function SyncLogToJSONTyped(value?: Omit<SyncLog, 'id'|'sync'|'created_at'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'status': value['status'],
         'msg': value['msg'],
     };

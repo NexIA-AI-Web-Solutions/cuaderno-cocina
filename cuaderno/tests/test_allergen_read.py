@@ -1,6 +1,7 @@
 """Declared/unknown allergen reads over the native recipe graph."""
 
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -9,6 +10,7 @@ from django_scopes import scopes_disabled
 from cookbook.models import Food, Ingredient, Recipe, Space, Step
 from cuaderno.models import AllergenDeclaration, ServicePlan, SpaceProfile
 from cuaderno.tests.test_services import ServiceFixtureMixin
+from cuaderno.services.allergens import _assessment
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
@@ -70,8 +72,8 @@ class AllergenReadTests(ServiceFixtureMixin, TestCase):
 
         self.assertEqual(data["assessment"], AllergenDeclaration.DECLARED)
         self.assertEqual(data["foods"][0]["declarations"], [
-            {"id": nuts.pk, "name": "Frutos secos", "state": AllergenDeclaration.DECLARED},
-            {"id": latest.pk, "name": "Gluten", "state": AllergenDeclaration.UNKNOWN},
+            {"id": nuts.pk, "name": "Frutos secos", "state": AllergenDeclaration.DECLARED, "created_by": None, "created_at": nuts.created_at.isoformat()},
+            {"id": latest.pk, "name": "Gluten", "state": AllergenDeclaration.UNKNOWN, "created_by": None, "created_at": latest.created_at.isoformat()},
         ])
         with scopes_disabled():
             self.assertEqual(AllergenDeclaration.objects.filter(pk__in=[old.pk, latest.pk, nuts.pk]).count(), 3)
@@ -98,23 +100,24 @@ class AllergenReadTests(ServiceFixtureMixin, TestCase):
         self.assertTrue(data["unknown_ingredients"])
         foods = {row["id"]: row for row in data["foods"]}
         self.assertEqual(foods[self.food.pk]["declarations"], [
-            {"id": declaration.pk, "name": "Apio", "state": AllergenDeclaration.DECLARED},
+            {"id": declaration.pk, "name": "Apio", "state": AllergenDeclaration.DECLARED, "created_by": None, "created_at": declaration.created_at.isoformat()},
         ])
         self.assertEqual(foods[known_without_amount.pk]["declarations"], [])
 
     def test_invalid_legacy_states_are_unknown_without_rewriting_history(self):
+        # New database checks reject invalid states. The read boundary remains
+        # defensive for historical/imported payloads without corrupting live rows.
         for state in ("absent", "safe", "", "corrupt"):
-            with self.subTest(state=state), scopes_disabled():
-                declaration = AllergenDeclaration.objects.create(
-                    space=self.space, food=self.food, name="Gluten", state=state,
-                )
-                data = self.assert_json(self.food_get())
+            with self.subTest(state=state), patch('cuaderno.services.allergens.AllergenDeclaration.objects.filter') as query:
+                historical = {'id': 1, 'food_id': self.food.pk, 'name': 'Gluten', 'state': state,
+                              'created_by_id': None, 'created_at': None}
+                query.return_value.order_by.return_value.values.return_value = [historical]
+                data = _assessment({'type': 'food', 'id': self.food.pk, 'name': self.food.name}, [self.food], self.space)
                 self.assertEqual(data["assessment"], AllergenDeclaration.UNKNOWN)
                 self.assertEqual(data["foods"][0]["declarations"], [{
-                    "id": declaration.pk, "name": "Gluten", "state": AllergenDeclaration.UNKNOWN,
+                    "id": 1, "name": "Gluten", "state": AllergenDeclaration.UNKNOWN, "created_by": None, "created_at": None,
                 }])
-                declaration.refresh_from_db()
-                self.assertEqual(declaration.state, state)
+                self.assertEqual(historical['state'], state)
 
     def test_step_and_food_subrecipes_are_walked_and_foods_are_deduplicated(self):
         with scopes_disabled():
@@ -145,7 +148,7 @@ class AllergenReadTests(ServiceFixtureMixin, TestCase):
         self.assertEqual(set(ids), {self.food.pk, output_food.pk, child_food.pk})
         child_row = next(row for row in data["foods"] if row["id"] == child_food.pk)
         self.assertEqual(child_row["declarations"], [
-            {"id": declaration.pk, "name": "Leche", "state": AllergenDeclaration.DECLARED},
+            {"id": declaration.pk, "name": "Leche", "state": AllergenDeclaration.DECLARED, "created_by": None, "created_at": declaration.created_at.isoformat()},
         ])
 
     def test_private_child_and_cross_space_ids_fail_closed_without_names(self):

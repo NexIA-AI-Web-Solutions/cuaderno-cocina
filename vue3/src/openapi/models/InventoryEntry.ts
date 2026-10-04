@@ -46,7 +46,7 @@ export interface InventoryEntry {
      * @type {number}
      * @memberof InventoryEntry
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {InventoryLocation}
@@ -119,6 +119,7 @@ export interface InventoryEntry {
  * Check if a given object implements the InventoryEntry interface.
  */
 export function instanceOfInventoryEntry(value: object): value is InventoryEntry {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('inventoryLocation' in value) || value['inventoryLocation'] === undefined) return false;
     if (!('food' in value) || value['food'] === undefined) return false;
     if (!('unit' in value) || value['unit'] === undefined) return false;
@@ -138,7 +139,7 @@ export function InventoryEntryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'inventoryLocation': InventoryLocationFromJSON(json['inventory_location']),
         'subLocation': json['sub_location'] == null ? undefined : json['sub_location'],
         'code': json['code'] == null ? undefined : json['code'],
@@ -157,14 +158,13 @@ export function InventoryEntryToJSON(json: any): InventoryEntry {
     return InventoryEntryToJSONTyped(json, false);
 }
 
-export function InventoryEntryToJSONTyped(value?: Omit<InventoryEntry, 'label'|'created_at'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
+export function InventoryEntryToJSONTyped(value?: Omit<InventoryEntry, 'id'|'label'|'created_at'|'created_by'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'inventory_location': InventoryLocationToJSON(value['inventoryLocation']),
         'sub_location': value['subLocation'],
         'code': value['code'],

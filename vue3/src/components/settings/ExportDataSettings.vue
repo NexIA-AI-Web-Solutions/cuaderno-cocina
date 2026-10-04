@@ -48,7 +48,7 @@ const loading = ref(false)
  * show export option for all types that have export marked as true in integration list
  */
 const exportFormats = computed(() => {
-    let formats = []
+    const formats: Array<{title: string, value: string}> = []
 
     INTEGRATIONS.forEach(integration => {
         if (integration.export) {

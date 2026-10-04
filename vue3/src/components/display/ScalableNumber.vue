@@ -23,7 +23,7 @@ import {calculateFoodAmount} from "@/utils/number_utils.ts";
  * @param x
  * @return {number | string}
  */
-function calculateAmount(x) {
-    return calculateFoodAmount(x, props.factor, useUserPreferenceStore().userSettings.useFractions)
+function calculateAmount(x: number | undefined) {
+    return calculateFoodAmount(x ?? 0, props.factor, useUserPreferenceStore().userSettings.useFractions)
 }
 </script>

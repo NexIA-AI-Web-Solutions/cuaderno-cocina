@@ -20,18 +20,18 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="d in metadata.datatypes">
+                <tr v-for="d in supportedDatatypes" :key="d">
                     <td>
                         <v-checkbox hide-details density="compact" :loading="loading" v-model="importDatatype[d]"></v-checkbox>
                     </td>
                     <td>{{ $t(d.charAt(0).toUpperCase() + d.slice(1)) }}</td>
-                    <td>{{ metadata[requestData.selectedVersion][d] }}</td>
+                    <td>{{ objectCount(requestData.selectedVersion, d) }}</td>
                     <td>
-                        <template v-if="responseData[d]">
-                            <p v-if="responseData[d].totalCreated > 0" ><i class="fas fa-plus-circle"></i> {{ responseData[d].totalCreated }} {{ $t('Created') }}</p>
-                            <p v-if="responseData[d].totalUpdated > 0"><i class="fas fa-pencil-alt"></i> {{ responseData[d].totalUpdated }} {{ $t('Updated') }}</p>
-                            <p v-if="responseData[d].totalUntouched > 0"><i class="fas fa-forward"></i> {{ responseData[d].totalUntouched }} {{ $t('Unchanged') }}</p>
-                            <p v-if="responseData[d].totalErrored > 0"><i class="fas fa-exclamation-circle"></i> {{ responseData[d].totalErrored }} {{ $t('Error') }}</p>
+                        <template v-if="responseDetail(d)">
+                            <p v-if="(responseDetail(d)?.totalCreated ?? 0) > 0" ><i class="fas fa-plus-circle"></i> {{ responseDetail(d)?.totalCreated }} {{ $t('Created') }}</p>
+                            <p v-if="(responseDetail(d)?.totalUpdated ?? 0) > 0"><i class="fas fa-pencil-alt"></i> {{ responseDetail(d)?.totalUpdated }} {{ $t('Updated') }}</p>
+                            <p v-if="(responseDetail(d)?.totalUntouched ?? 0) > 0"><i class="fas fa-forward"></i> {{ responseDetail(d)?.totalUntouched }} {{ $t('Unchanged') }}</p>
+                            <p v-if="(responseDetail(d)?.totalErrored ?? 0) > 0"><i class="fas fa-exclamation-circle"></i> {{ responseDetail(d)?.totalErrored }} {{ $t('Error') }}</p>
                         </template>
                     </td>
                 </tr>
@@ -46,16 +46,19 @@
 
 <script setup lang="ts">
 
-import {ApiApi, ImportOpenData, ImportOpenDataMetaData, ImportOpenDataResponse} from "@/openapi";
+import {ApiApi, type ImportOpenDataMetaData, type ImportOpenDataRequest, type ImportOpenDataResponse, type ImportOpenDataResponseDetail, type ImportOpenDataVersionMetaData} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
+
+const datatypeKeys = ['food', 'unit', 'category', 'property', 'store', 'conversion'] as const
+type Datatype = typeof datatypeKeys[number]
 
 let loading = ref(false)
 let metadata = ref({} as ImportOpenDataMetaData)
-let requestData = ref({useMetric: true, updateExisting: true} as ImportOpenData)
+let requestData = ref<ImportOpenDataRequest>({selectedVersion: '', selectedDatatypes: [], useMetric: true, updateExisting: true})
 let responseData = ref({} as ImportOpenDataResponse)
 
-let importDatatype = ref({
+let importDatatype = ref<Record<Datatype, boolean>>({
     food: true,
     unit: true,
     category: true,
@@ -63,6 +66,31 @@ let importDatatype = ref({
     store: false,
     conversion: true
 })
+
+const supportedDatatypes = computed(() => metadata.value.datatypes?.filter(isDatatype) ?? [])
+
+function isDatatype(value: string): value is Datatype {
+    return datatypeKeys.some(key => key === value)
+}
+
+function responseDetail(datatype: Datatype): ImportOpenDataResponseDetail | undefined {
+    return responseData.value[datatype]
+}
+
+function versionMetadata(version: string): ImportOpenDataVersionMetaData | undefined {
+    const versions: Record<string, ImportOpenDataVersionMetaData> = {
+        base: metadata.value.base, cs: metadata.value.cs, da: metadata.value.da, de: metadata.value.de,
+        el: metadata.value.el, en: metadata.value.en, es: metadata.value.es, fr: metadata.value.fr,
+        hu: metadata.value.hu, it: metadata.value.it, nb_NO: metadata.value.nbNO, nl: metadata.value.nl,
+        pl: metadata.value.pl, pt: metadata.value.pt, pt_BR: metadata.value.ptBR, sk: metadata.value.sk,
+        sl: metadata.value.sl, zh_Hans: metadata.value.zhHans,
+    }
+    return versions[version]
+}
+
+function objectCount(version: string, datatype: Datatype): number {
+    return versionMetadata(version)?.[datatype] ?? 0
+}
 
 onMounted(() => {
     loadMetadata()
@@ -94,7 +122,7 @@ function importOpenData() {
     loading.value = true
 
     requestData.value.selectedDatatypes = []
-    Object.keys(importDatatype.value).forEach(key => {
+    datatypeKeys.forEach(key => {
         if (importDatatype.value[key]) {
             requestData.value.selectedDatatypes.push(key)
         }

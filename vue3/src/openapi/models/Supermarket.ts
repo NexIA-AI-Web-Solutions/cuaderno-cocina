@@ -73,7 +73,7 @@ export interface Supermarket {
      * @type {number}
      * @memberof Supermarket
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -110,6 +110,7 @@ export interface Supermarket {
  * Check if a given object implements the Supermarket interface.
  */
 export function instanceOfSupermarket(value: object): value is Supermarket {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('categoryToSupermarket' in value) || value['categoryToSupermarket'] === undefined) return false;
     return true;
@@ -125,7 +126,7 @@ export function SupermarketFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'shoppingLists': json['shopping_lists'] == null ? undefined : ((json['shopping_lists'] as Array<any>).map(ShoppingListFromJSON)),
@@ -138,14 +139,13 @@ export function SupermarketToJSON(json: any): Supermarket {
     return SupermarketToJSONTyped(json, false);
 }
 
-export function SupermarketToJSONTyped(value?: Omit<Supermarket, 'category_to_supermarket'> | null, ignoreDiscriminator: boolean = false): any {
+export function SupermarketToJSONTyped(value?: Omit<Supermarket, 'id'|'category_to_supermarket'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'description': value['description'],
         'shopping_lists': value['shoppingLists'] == null ? undefined : ((value['shoppingLists'] as Array<any>).map(ShoppingListToJSON)),

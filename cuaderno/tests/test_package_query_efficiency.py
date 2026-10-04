@@ -1,5 +1,6 @@
 """Privacy and query-shape contracts for the package list endpoint."""
 
+import json
 import re
 from datetime import timedelta
 from decimal import Decimal
@@ -127,14 +128,25 @@ class PackageListPrivacyAndQueryTests(TestCase):
     @staticmethod
     def _root_selects(captured, table):
         marker = f'"{table}"'
-        return [
-            query["sql"]
-            for query in captured.captured_queries
-            if " FROM " in query["sql"]
-            and query["sql"].split(" FROM ", 1)[1].startswith(marker)
-        ]
+        selected = []
+        # Correlated projections may contain FROM before the outer query's FROM.
+        # Recognize SQL nesting and quoted literals instead of the first substring.
+        tokens = re.compile(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|[()]|\bFROM\b", re.IGNORECASE)
+        for query in captured.captured_queries:
+            sql, depth = query['sql'], 0
+            for token in tokens.finditer(sql):
+                value = token.group()
+                if value == '(':
+                    depth += 1
+                elif value == ')':
+                    depth -= 1
+                elif value.upper() == 'FROM' and depth == 0:
+                    if sql[token.end():].lstrip().startswith(marker):
+                        selected.append(sql)
+                    break
+        return selected
 
-    def test_private_recipe_package_is_owner_only_and_guest_remains_forbidden(self):
+    def test_private_recipe_package_is_owner_only_and_guest_read_is_filtered(self):
         observer_response = self.client_for(self.observer).get(self.url)
         self.assertEqual(observer_response.status_code, 200, observer_response.content)
         self.assertEqual(self._ids(observer_response), {self.visible_package.pk})
@@ -149,7 +161,8 @@ class PackageListPrivacyAndQueryTests(TestCase):
         )
 
         guest_response = self.client_for(self.guest).get(self.url)
-        self.assertEqual(guest_response.status_code, 403, guest_response.content)
+        self.assertEqual(guest_response.status_code, 200, guest_response.content)
+        self.assertEqual(self._ids(guest_response), {self.visible_package.pk})
         self.assertNotIn(self.private_food.name, str(getattr(guest_response, "data", "")))
 
     def test_share_grants_visibility_and_revocation_is_effective_immediately(self):
@@ -281,14 +294,68 @@ class PackageListPrivacyAndQueryTests(TestCase):
         self.assertEqual(len(ten_queries), len(fifty_queries))
 
         for captured in (ten_queries, fifty_queries):
-            package_selects = self._root_selects(captured, "cuaderno_packageformat")
-            price_selects = self._root_selects(captured, "cuaderno_priceversion")
+            package_selects = [
+                query["sql"] for query in captured.captured_queries
+                if '"cuaderno_packageformat"' in query["sql"]
+            ]
             self.assertEqual(len(package_selects), 1)
-            self.assertEqual(len(price_selects), 1)
-            self.assertLessEqual(len(captured), 7)
-            self.assertNotRegex(price_selects[0], re.compile(r'package_id"\s+IN\s*\(\s*\d'))
-            self.assertTrue(
-                'JOIN "cuaderno_packageformat"' in price_selects[0]
-                or re.search(r"\bSELECT\b", price_selects[0].split(" IN ", 1)[-1]),
-                price_selects[0],
-            )
+            sql = package_selects[0]
+            normalized = sql.upper()
+            self.assertIn("LATEST_PRICES AS MATERIALIZED", normalized)
+            self.assertIn("DISTINCT ON", normalized)
+            self.assertIn("ROW_TO_JSON(", normalized)
+            self.assertIn("JSON_AGG(", normalized)
+            self.assertLessEqual(len(captured), 5)
+            self.assertIn('"cuaderno_priceversion"', sql)
+            self.assertRegex(sql, r'latest_price\.package_id\s*=\s*package\.id')
+            self.assertNotRegex(sql, r'WHERE\s+price\.package_id\s*=\s*package\.id')
+
+    def test_empty_package_list_is_a_json_array_and_exposes_lazy_data(self):
+        with scopes_disabled():
+            PackageFormat.objects.filter(space=self.space).delete()
+
+        response = self.client_for(self.observer).get(self.url)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response["Content-Type"], "application/json")
+        self.assertEqual(response.content, b"[]")
+        self.assertEqual(response.data, [])
+
+    def test_package_json_keeps_pk_order_null_price_and_exact_timestamp_shape(self):
+        exact_time = timezone.now().replace(microsecond=123456) - timedelta(minutes=1)
+        with scopes_disabled():
+            self.ordinary_food.name = "Aceite ñandú"
+            self.ordinary_food.save(update_fields=["name"])
+            self.visible_package.label = "Botella única"
+            self.visible_package.save(update_fields=["label"])
+            priced = self._price(self.visible_package, "12.34", exact_time)
+            unpriced_food = Food.add_root(space=self.space, name="Sin precio")
+            unpriced = self._package(unpriced_food, self.unit, "Formato sin precio")
+            priced.refresh_from_db()
+            self.visible_package.refresh_from_db()
+
+        response = self.client_for(self.observer).get(self.url)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        decoded = json.loads(response.content)
+        self.assertEqual(decoded, response.data)
+        self.assertEqual(
+            [row["id"] for row in decoded],
+            sorted([self.visible_package.pk, unpriced.pk]),
+        )
+        self.assertTrue(all(set(row) == {
+            "id", "food", "food_name", "unit", "unit_name", "label",
+            "quantity", "is_reference", "current_price",
+        } for row in decoded))
+        by_id = {row["id"]: row for row in decoded}
+        current = by_id[self.visible_package.pk]["current_price"]
+        self.assertEqual(current, {
+            "id": priced.pk,
+            "amount": format(priced.amount, "f"),
+            "explicit_free": False,
+            "valid_from": priced.valid_from.isoformat(),
+        })
+        self.assertIs(current["explicit_free"], False)
+        self.assertEqual(by_id[self.visible_package.pk]["food_name"], "Aceite ñandú")
+        self.assertEqual(by_id[self.visible_package.pk]["label"], "Botella única")
+        self.assertIsNone(by_id[unpriced.pk]["current_price"])

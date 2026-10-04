@@ -157,11 +157,12 @@ function dropCalendarItemOnDate(undefinedItem: IMealPlanNormalizedCalendarItem, 
 
             // create copy of item if control is pressed
             if (event.ctrlKey) {
-                let new_entry = Object.assign({}, mealPlan)
-                new_entry.fromDate = newFrom
-                new_entry.toDate = newTo
-                new_entry.addshopping = mealPlan.shopping
-                useMealPlanStore().createObject(new_entry)
+                useMealPlanStore().createObject({
+                    ...mealPlan,
+                    fromDate: newFrom,
+                    toDate: newTo,
+                    addshopping: mealPlan.shopping,
+                })
             } else {
                 mealPlan.fromDate = newFrom
                 mealPlan.toDate = newTo

@@ -7,7 +7,10 @@
             Producir es una acción explícita: solo en Integral consume ingredientes de las existencias del hogar del servicio.
             Un alérgeno sin declarar no se trata como ausente.
         </p>
+        <v-alert v-if="editionMessage" type="info" variant="tonal" class="mb-4" role="status">{{ editionMessage }}</v-alert>
         <v-alert v-if="notice" type="info" class="mb-4" role="status">{{ notice }}</v-alert>
+        <v-alert v-if="productionEnabled && !canOperate" type="info" variant="tonal" class="mb-4" role="status">Modo Consulta: las fichas están disponibles solo para lectura.</v-alert>
+        <fieldset v-if="productionEnabled" :disabled="!canOperate" class="operation-fieldset">
         <v-row class="no-print">
             <v-col cols="12" md="6">
                 <v-card class="print-card">
@@ -43,7 +46,12 @@
                     <v-card-text>
                         <v-text-field v-model="service.title" label="Nombre" />
                         <v-text-field v-model="service.date" label="Fecha del servicio" type="date" />
-                        <v-text-field v-model="service.covers" label="Comensales" inputmode="numeric" />
+                        <v-row dense>
+                            <v-col cols="12" sm="4"><v-text-field v-model="service.baseCovers" label="Comensales previstos" inputmode="numeric" /></v-col>
+                            <v-col cols="6" sm="4"><v-text-field v-model="service.extra" label="Altas" inputmode="numeric" /></v-col>
+                            <v-col cols="6" sm="4"><v-text-field v-model="service.cancelled" label="Cancelaciones" inputmode="numeric" /></v-col>
+                        </v-row>
+                        <p class="text-body-2">Total del servicio: {{ serviceCoversTotal ?? '—' }} comensales.</p>
                         <v-model-select v-model="service.recipe" model="Recipe" label="Receta del servicio" search-on-load />
                         <allergen-assessment-panel
                             class="no-print"
@@ -186,18 +194,21 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        </fieldset>
     </v-container>
 </template>
 
 <script setup lang="ts">
-import {onMounted, onUnmounted, reactive, ref, watch} from "vue"
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue"
 import {cuadernoFetch, readJson} from "@/cuaderno/api"
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import ServicePreparationPanel from '@/cuaderno/components/ServicePreparationPanel.vue'
 import AllergenAssessmentPanel from '@/cuaderno/components/AllergenAssessmentPanel.vue'
 import ProductionWastePanel from '@/cuaderno/components/ProductionWastePanel.vue'
-import {apiError, productionUsage, productionWarning, serviceBody, yieldBody, confirmedCostLabel} from '@/cuaderno/forms'
+import {apiError, productionUsage, productionWarning, serviceBody, serviceCovers, yieldBody, confirmedCostLabel} from '@/cuaderno/forms'
 import {inventoryRequests} from '@/cuaderno/inventoryRequests'
+import {editionOperationalRole} from '@/cuaderno/operationalRoleUi'
+import {cuadernoNavigationCapabilities} from '@/cuaderno/navigationUi'
 import {
     financeMoneyLabel,
     financeRatioLabel,
@@ -227,7 +238,12 @@ const serviceMessage = ref("")
 const sheetMessage = ref("")
 const allergenMessage = ref("")
 const usages = ref<{component: string; quantity: string}[]>([])
-const service = reactive({title: "", covers: "", date: "", recipe: null as any})
+const service = reactive({title: "", baseCovers: "", extra: "0", cancelled: "0", date: "", recipe: null as any})
+const serviceCoversTotal = computed(() => {
+    const values = serviceCovers(service.baseCovers, service.extra, service.cancelled)
+    if (!values) return null
+    return (BigInt(values.base_covers) + BigInt(values.extra) - BigInt(values.cancelled)).toString()
+})
 type ServiceRow = {
     id: number; title: string; covers: string; service_date: string | null; state: string;
     snapshot?: {cost?: {status: string; total: string | null; display: string | null}; warnings?: unknown[];
@@ -257,6 +273,9 @@ const listMessage = ref('')
 const busyPlan = ref<number | null>(null)
 const confirmation = ref<{plan: ServiceRow; action: 'produce' | 'cancel' | 'reverse'} | null>(null)
 const serviceRequests = inventoryRequests()
+const canOperate = ref(false)
+const productionEnabled = ref<boolean | null>(null)
+const editionMessage = ref('')
 const sheet = reactive({component: "", quantity: ""})
 const allergen = reactive({food: null as any, name: "", state: "unknown"})
 const foodAllergens = ref<AllergenAssessment | null>(null)
@@ -379,6 +398,7 @@ function frozenAllergens(plan: ServiceRow): AllergenAssessment | null {
 }
 
 async function calculateRecipes() {
+    if (!canOperate.value) return
     if (calculatingRecipes.value || !selectedRecipes.value.length) return
     calculatingRecipes.value = true
     recipeNeeds.value = []
@@ -400,6 +420,7 @@ async function calculateRecipes() {
 }
 
 async function saveYield() {
+    if (!canOperate.value) return
     if (savingYield.value) return
     const payload = yieldBody(output.quantity, output.unit?.id)
     if (!output.recipe?.id || !payload) { yieldMessage.value = 'Selecciona receta, unidad y una cantidad de salida positiva.'; return }
@@ -421,6 +442,7 @@ function explain(status: number, data: unknown) {
 }
 
 function addUsage() {
+    if (!canOperate.value) return
     const line = productionUsage(sheet.component, sheet.quantity)
     if (!line) { sheetMessage.value = 'Indica un componente con su unidad y una cantidad positiva.'; return }
     usages.value.push(line)
@@ -430,9 +452,14 @@ function addUsage() {
 }
 
 async function saveService() {
+    if (!canOperate.value) return
     if (savingService.value) return
-    const payload = serviceBody(service.title, service.covers, service.date, service.recipe?.id)
-    if (!payload) { serviceMessage.value = 'Indica nombre, fecha válida y de 1 a 9999 comensales enteros.'; return }
+    const covers = serviceCovers(service.baseCovers, service.extra, service.cancelled)
+    const total = serviceCoversTotal.value
+    const base = total === null ? null : serviceBody(service.title, total, service.date, service.recipe?.id)
+    if (!covers || !base) { serviceMessage.value = 'Indica nombre, fecha válida y comensales previstos, altas y cancelaciones; el total debe estar entre 1 y 9999.'; return }
+    const {covers: _total, ...serviceData} = base
+    const payload = {...serviceData, ...covers}
     savingService.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/services/", {
         method: "POST",
@@ -517,6 +544,7 @@ function validReversalResponse(value: unknown, plan: ServiceRow): value is Rever
 }
 
 async function loadServices() {
+    if (productionEnabled.value !== true) return
     if (loadingServices.value) return
     loadingServices.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/services/'))
@@ -527,6 +555,7 @@ async function loadServices() {
 }
 
 async function transition(plan: ServiceRow, action: ServiceAction) {
+    if (!canOperate.value) return
     if (busyPlan.value !== null) return
     const submittedConfirmation = confirmation.value
     busyPlan.value = plan.id
@@ -582,13 +611,32 @@ async function transition(plan: ServiceRow, action: ServiceAction) {
 }
 
 function printServices() { window.print() }
-onMounted(loadServices)
+async function loadEdition() {
+    const {ok, status, data} = await readJson(await cuadernoFetch('/api/cuaderno/edition/'))
+    canOperate.value = false
+    if (!ok) {
+        productionEnabled.value = false
+        editionMessage.value = apiError(status, data)
+        return
+    }
+    productionEnabled.value = cuadernoNavigationCapabilities(data).production
+    if (!productionEnabled.value) {
+        editionMessage.value = 'La producción está disponible en las ediciones Profesional e Integral.'
+        return
+    }
+    editionMessage.value = ''
+    canOperate.value = editionOperationalRole(data)?.can_operate_cuaderno === true
+    await loadServices()
+}
+
+onMounted(loadEdition)
 onUnmounted(() => {
     foodAllergenController?.abort()
     recipeAllergenController?.abort()
 })
 
 async function consolidate() {
+    if (!canOperate.value) return
     if (consolidating.value || !usages.value.length) return
     consolidating.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch("/api/cuaderno/production/", {
@@ -606,6 +654,7 @@ async function consolidate() {
 }
 
 async function saveAllergen() {
+    if (!canOperate.value) return
     if (savingAllergen.value) return
     const submittedName = allergenDeclarationName(allergen.name)
     if (!isSafeAllergenId(allergen.food?.id) || !submittedName) {
@@ -646,6 +695,7 @@ async function saveAllergen() {
 </script>
 
 <style scoped>
+.operation-fieldset { border: 0; margin: 0; min-width: 0; padding: 0; }
 @media print {
     .print-card { break-inside: avoid; }
     .no-print { display: none; }

@@ -2,7 +2,7 @@
     <model-editor-base
         :loading="loading"
         :dialog="dialog"
-        @save="saveObject().then((obj:MealPlan) => { useMealPlanStore().plans.set(obj.id, obj);})"
+        @save="saveObject().then(obj => { if (obj) useMealPlanStore().plans.set(obj.id, obj); })"
         @delete="useMealPlanStore().plans.delete(editingObj.id); deleteObject()"
         @close="emit('close'); editingObjChanged = false"
         :is-update="isUpdate()"
@@ -138,6 +138,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['create', 'save', 'delete', 'close', 'changedState'])
+type EditableMealPlan = Omit<MealPlan, 'shopping'> & {shopping: boolean, addshopping?: boolean}
 const {
     setupState,
     deleteObject,
@@ -149,7 +150,7 @@ const {
     editingObj,
     editingObjChanged,
     modelClass
-} = useModelEditorFunctions<MealPlan>('MealPlan', emit)
+} = useModelEditorFunctions<EditableMealPlan>('MealPlan', emit)
 
 /**
  * watch prop changes and re-initialize editor
@@ -229,8 +230,9 @@ function initializeEditor() {
 
             editingObj.value.servings = 1
 
-            if (useUserPreferenceStore().userSettings.defaultMealType){
-                editingObj.value.mealType = useUserPreferenceStore().userSettings.defaultMealType
+            const defaultMealType = useUserPreferenceStore().userSettings.defaultMealType
+            if (defaultMealType){
+                editingObj.value.mealType = defaultMealType
             }
 
             editingObj.value.addshopping = useUserPreferenceStore().userSettings.mealplanAutoaddShopping
@@ -268,9 +270,12 @@ function initializeEditor() {
 // TODO properly hook into beforeSave hook if i ever implement one for model editors
 function updateDate() {
     if (dateRangeValue.value != null) {
-        editingObj.value.fromDate = dateRangeValue.value[0]
-        if (dateRangeValue.value[dateRangeValue.value.length - 1] > editingObj.value.fromDate) {
-            editingObj.value.toDate = dateRangeValue.value[dateRangeValue.value.length - 1]
+        const firstDate = dateRangeValue.value[0]
+        const lastDate = dateRangeValue.value[dateRangeValue.value.length - 1]
+        if (!firstDate || !lastDate) return
+        editingObj.value.fromDate = firstDate
+        if (lastDate > editingObj.value.fromDate) {
+            editingObj.value.toDate = lastDate
         } else {
             editingObj.value.toDate = editingObj.value.fromDate
         }

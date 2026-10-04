@@ -1,0 +1,58 @@
+From d81c2d7eb705c62294ba03299255672078e89115 Mon Sep 17 00:00:00 2001
+From: Mark Adler <git@madler.net>
+Date: Wed, 16 Sep 2026 19:39:45 -0700
+Subject: [PATCH] Honor gzprintf's all-or-nothing-written contract when
+ blocked.
+
+---
+ gzwrite.c | 16 ++++++++++++++++
+ zlib.h    |  2 +-
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/gzwrite.c b/gzwrite.c
+index 805c3f96be..3052259ea5 100644
+--- a/gzwrite.c
++++ b/gzwrite.c
+@@ -483,6 +483,14 @@ int ZEXPORTVA gzvprintf(gzFile file, const char *format, va_list va) {
+ 
+     /* write out buffer if more than half is occupied */
+     ret = gz_vacate(state);
++    if (ret) {
++        /* discard unwritten formatted output */
++        strm->avail_in -= (unsigned)len;
++        state->x.pos -= len;
++        if (state->again)
++            gz_error(state, Z_BUF_ERROR, "stalled write on gzprintf");
++        return state->err;
++    }
+     if (state->err && !state->again)
+         return state->err;
+     return len;
+@@ -597,6 +605,14 @@ int ZEXPORTVA gzprintf(gzFile file, const char *format, int a1, int a2, int a3,
+ 
+     /* write out buffer if more than half is occupied */
+     ret = gz_vacate(state);
++    if (ret) {
++        /* discard unwritten formatted output */
++        strm->avail_in -= (unsigned)len;
++        state->x.pos -= len;
++        if (state->again)
++            gz_error(state, Z_BUF_ERROR, "stalled write on gzprintf");
++        return state->err;
++    }
+     if (state->err && !state->again)
+         return state->err;
+     return (int)len;
+diff --git a/zlib.h b/zlib.h
+index d9befa4ae8..e51097d1e7 100644
+--- a/zlib.h
++++ b/zlib.h
+@@ -1569,7 +1569,7 @@ ZEXTERN int ZEXPORTVA gzprintf();
+    these possibilities can be determined using zlibCompileFlags().
+ 
+      If a Z_BUF_ERROR is returned, then nothing was written due to a stall on
+-   the non-blocking write destination.
++   the non-blocking write destination. The operation can be retried.
+ */
+ 
+ ZEXTERN int ZEXPORT gzputs(gzFile file, const char *s);

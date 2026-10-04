@@ -245,6 +245,36 @@ export function priceAmountLabel(amount: string, currency: string): string {
     return `${normalized.replace('.', ',')} ${currency}`
 }
 
+export function pricePerBaseLabel(amount: string, quantity: string, currency: string, unit = ''): string {
+    const normalizedAmount = canonicalDecimal(amount)
+    const normalizedQuantity = canonicalDecimal(quantity)
+    if (normalizedAmount === null || normalizedQuantity === null || exactZero(normalizedQuantity) || !currencyCode(currency)) return '—'
+    const scale = 4
+    const asFraction = (value: string) => {
+        const [whole = '', fraction = ''] = value.split('.')
+        return {integer: BigInt(`${whole}${fraction}`), scale: fraction.length}
+    }
+    const power10 = (exponent: number) => {
+        let result = 1n
+        for (let index = 0; index < exponent; index += 1) result *= 10n
+        return result
+    }
+    const left = asFraction(normalizedAmount)
+    const right = asFraction(normalizedQuantity)
+    const numerator = left.integer * power10(right.scale + scale)
+    const denominator = right.integer * power10(left.scale)
+    const quotient = numerator / denominator
+    const rounded = (numerator % denominator) * 2n >= denominator ? quotient + 1n : quotient
+    const digits = rounded.toString().padStart(scale + 1, '0')
+    const display = `${digits.slice(0, -scale)},${digits.slice(-scale)}`
+    return `${display} ${currency}${unit ? `/${unit}` : ''}`
+}
+
+export function priceDateLabel(value: string): string {
+    if (!timestamp(value)) return '—'
+    return new Intl.DateTimeFormat('es-ES', {dateStyle: 'medium'}).format(new Date(value))
+}
+
 export function priceTimingLabel(item: PriceHistoryItem, asOf: string): string {
     if (item.is_current) return 'Actual'
     if (Date.parse(item.valid_from) > Date.parse(asOf)) return 'Programado; todavía no actual'

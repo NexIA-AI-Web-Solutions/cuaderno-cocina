@@ -1,6 +1,6 @@
 <template>
 
-    <v-container>
+    <v-container v-if="editingObj">
         <v-row>
             <v-col>
                 <v-card>
@@ -18,7 +18,7 @@
         <v-row v-if="editingObj" dense>
             <v-col>
                 <v-card>
-                    <v-card-title class="text-h4">{{ $t('Delete') }} {{ $t(genericModel.model.localizationKey) }}: {{ genericModel.getLabel(editingObj) }}</v-card-title>
+                    <v-card-title class="text-h4">{{ $t('Delete') }} {{ $t(genericModel.model.localizationKey) }}: {{ editingObj ? genericModel.getLabel(editingObj) : '' }}</v-card-title>
                 </v-card>
             </v-col>
         </v-row>
@@ -66,16 +66,16 @@
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
-                                               v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.isAdvancedDelete"
+                                               v-if="relatedModel(item.model) && relatedModel(item.model)?.model.isAdvancedDelete"
                                                :to="{name: 'ModelDeletePage', params: {model: item.model, id: item.id}}"></v-btn>
                                         <v-btn icon="$delete" variant="plain" size="small"
-                                               v-if="getGenericModelFromString(item.model, $t) && !getGenericModelFromString(item.model, $t).model.isAdvancedDelete && !getGenericModelFromString(item.model, $t).model.disableDelete">
+                                               v-if="relatedModel(item.model) && !relatedModel(item.model)?.model.isAdvancedDelete && !relatedModel(item.model)?.model.disableDelete">
                                             <v-icon icon="$delete" variant="plain" size="small"></v-icon>
-                                            <delete-confirm-dialog :object-name="genericModel.getLabel(editingObj)" :model-name="$t(genericModel.model.localizationKey)"
+                                            <delete-confirm-dialog :object-name="editingObj ? genericModel.getLabel(editingObj) : ''" :model-name="$t(genericModel.model.localizationKey)"
                                                                    @delete="deleteRelated(item.model, item.id)"></delete-confirm-dialog>
                                         </v-btn>
                                         <v-btn icon="$edit" variant="plain" size="small" target="_blank"
-                                               v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.editorComponent"
+                                               v-if="relatedModel(item.model) && relatedModel(item.model)?.model.editorComponent"
                                                :to="{name: 'ModelEditPage', params: {model: item.model, id: item.id}}"></v-btn>
                                     </template>
                                 </v-data-table-server>
@@ -100,16 +100,16 @@
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
-                                               v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.isAdvancedDelete"
+                                               v-if="relatedModel(item.model) && relatedModel(item.model)?.model.isAdvancedDelete"
                                                :to="{name: 'ModelDeletePage', params: {model: item.model, id: item.id}}"></v-btn>
                                         <v-btn icon="$delete" variant="plain" size="small"
-                                               v-if="getGenericModelFromString(item.model, $t) && !getGenericModelFromString(item.model, $t).model.isAdvancedDelete && !getGenericModelFromString(item.model, $t).model.disableDelete">
+                                               v-if="relatedModel(item.model) && !relatedModel(item.model)?.model.isAdvancedDelete && !relatedModel(item.model)?.model.disableDelete">
                                             <v-icon icon="$delete" variant="plain" size="small"></v-icon>
-                                            <delete-confirm-dialog :object-name="genericModel.getLabel(editingObj)" :model-name="$t(genericModel.model.localizationKey)"
+                                            <delete-confirm-dialog :object-name="editingObj ? genericModel.getLabel(editingObj) : ''" :model-name="$t(genericModel.model.localizationKey)"
                                                                    @delete="deleteRelated(item.model, item.id)"></delete-confirm-dialog>
                                         </v-btn>
                                         <v-btn icon="$edit" variant="plain" size="small" target="_blank"
-                                               v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.editorComponent"
+                                               v-if="relatedModel(item.model) && relatedModel(item.model)?.model.editorComponent"
                                                :to="{name: 'ModelEditPage', params: {model: item.model, id: item.id}}"></v-btn>
                                     </template>
                                 </v-data-table-server>
@@ -134,16 +134,16 @@
                                     </template>
                                     <template #item.actions="{item}">
                                         <v-btn icon="$delete" variant="plain" size="small" target="_blank"
-                                               v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.isAdvancedDelete"
+                                               v-if="relatedModel(item.model) && relatedModel(item.model)?.model.isAdvancedDelete"
                                                :to="{name: 'ModelDeletePage', params: {model: item.model, id: item.id}}"></v-btn>
                                         <v-btn icon="$delete" variant="plain" size="small"
-                                               v-if="getGenericModelFromString(item.model, $t) && !getGenericModelFromString(item.model, $t).model.isAdvancedDelete && !getGenericModelFromString(item.model, $t).model.disableDelete">
+                                               v-if="relatedModel(item.model) && !relatedModel(item.model)?.model.isAdvancedDelete && !relatedModel(item.model)?.model.disableDelete">
                                             <v-icon icon="$delete" variant="plain" size="small"></v-icon>
-                                            <delete-confirm-dialog :object-name="genericModel.getLabel(editingObj)" :model-name="$t(genericModel.model.localizationKey)"
+                                            <delete-confirm-dialog :object-name="editingObj ? genericModel.getLabel(editingObj) : ''" :model-name="$t(genericModel.model.localizationKey)"
                                                                    @delete="deleteRelated(item.model, item.id)"></delete-confirm-dialog>
                                         </v-btn>
                                         <v-btn icon="$edit" variant="plain" size="small" target="_blank"
-                                               v-if="getGenericModelFromString(item.model, $t) && getGenericModelFromString(item.model, $t).model.editorComponent"
+                                               v-if="relatedModel(item.model) && relatedModel(item.model)?.model.editorComponent"
                                                :to="{name: 'ModelEditPage', params: {model: item.model, id: item.id}}"></v-btn>
                                     </template>
                                 </v-data-table-server>
@@ -178,7 +178,7 @@
                 <v-card class="border-error border-sm border-opacity-100">
                     <v-card-title>{{ $t('Delete') }}</v-card-title>
                     <v-card-text>
-                        {{ $t('delete_confirmation', {source: `${$t(genericModel.model.localizationKey)} ${genericModel.getLabel(editingObj)}`}) }}
+                        {{ $t('delete_confirmation', {source: `${$t(genericModel.model.localizationKey)} ${editingObj ? genericModel.getLabel(editingObj) : ''}`}) }}
                     </v-card-text>
                     <v-card-actions>
                         <v-btn color="delete" prepend-icon="$delete" :disabled="protectingObjectsCount > 0" @click="deleteObject()" :loading="deleteLoading">{{
@@ -197,14 +197,14 @@
 <script setup lang="ts">
 
 import {onBeforeMount, onMounted, PropType, ref} from "vue";
-import {EditorSupportedModels, GenericModel, getGenericModelFromString} from "@/types/Models.ts";
+import {EditorSupportedModels, EditorSupportedTypes, GenericModel, SUPPORTED_MODELS, getGenericModelFromString} from "@/types/Models.ts";
 import {useTitle} from "@vueuse/core";
 import {useI18n} from "vue-i18n";
 import {ApiApi, GenericModelReference} from "@/openapi";
 import {VDataTableUpdateOptions} from "@/vuetify.ts";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {useRouter} from "vue-router";
-import {VDataTableHeaders} from "vuetify/components";
+import {VDataTable} from "vuetify/components";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import ModelMergeDialog from "@/components/dialogs/ModelMergeDialog.vue";
 import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
@@ -223,10 +223,10 @@ const tableHeaders = [
     {title: t('Model'), key: 'model',},
     {title: t('Name'), key: 'name',},
     {title: t('Actions'), key: 'actions', align: 'end'},
-] as VDataTableHeaders[]
+] satisfies NonNullable<InstanceType<typeof VDataTable>['$props']['headers']>
 
 const genericModel = ref({} as GenericModel)
-const editingObj = ref({} as EditorSupportedModels)
+const editingObj = ref<EditorSupportedTypes>()
 const tab = ref('protecting')
 const deleteLoading = ref(false)
 
@@ -267,7 +267,7 @@ onMounted(() => {
 function loadObject() {
     genericModel.value.retrieve(Number(props.id)).then(obj => {
         editingObj.value = obj
-        title.value = t('DeleteSomething', {item: `${t(genericModel.value.model.localizationKey)} ${genericModel.value.getLabel(editingObj.value)}`})
+        title.value = t('DeleteSomething', {item: `${t(genericModel.value.model.localizationKey)} ${genericModel.value.getLabel(obj)}`})
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     })
@@ -292,9 +292,9 @@ function deleteObject() {
  * @param cache if reload should occur using cached data or not
  */
 function reloadAll(cache: boolean = true) {
-    loadProtected({page: 1, itemsPerPage: pageSize.value}, cache)
-    loadCascading({page: 1, itemsPerPage: pageSize.value}, cache)
-    loadNulling({page: 1, itemsPerPage: pageSize.value}, cache)
+    loadProtected({page: 1, itemsPerPage: pageSize.value, search: ''}, cache)
+    loadCascading({page: 1, itemsPerPage: pageSize.value, search: ''}, cache)
+    loadNulling({page: 1, itemsPerPage: pageSize.value, search: ''}, cache)
 }
 
 /**
@@ -357,8 +357,13 @@ function loadNulling(options: VDataTableUpdateOptions, cache: boolean = true) {
  * @param model
  * @param id
  */
-function deleteRelated(model: EditorSupportedModels, id: number) {
-    let genericModel = getGenericModelFromString(model, t)
+function relatedModel(name: string): GenericModel | undefined {
+    const definition = SUPPORTED_MODELS.get(name.toLowerCase())
+    return definition ? new GenericModel(definition, t) : undefined
+}
+
+function deleteRelated(model: string, id: number) {
+    let genericModel = relatedModel(model)
     if (genericModel) {
         genericModel.destroy(id).then(() => {
             reloadAll(false)

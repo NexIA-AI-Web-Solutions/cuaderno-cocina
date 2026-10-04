@@ -1,5 +1,6 @@
 services:
   db:
+    stop_grace_period: 60s
     image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     container_name: cuaderno-release-db
     environment:
@@ -14,11 +15,13 @@ services:
       timeout: 3s
       retries: 20
   web:
-    image: cuaderno-cocina:local
+    image: ${CUADERNO_LOCAL_IMAGE:-cuaderno-cocina:local}
     container_name: cuaderno-release-web
     depends_on:
       db:
         condition: service_healthy
+      media-init:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:18081:80"
     environment:
@@ -50,6 +53,25 @@ services:
       retries: 60
     volumes:
       - cuaderno_release_media:/opt/recipes/mediafiles
+    user: "10001:10001"
+    stop_grace_period: 45s
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  media-init:
+    image: ${CUADERNO_LOCAL_IMAGE:-cuaderno-cocina:local}
+    user: "0:0"
+    entrypoint: [/bin/sh, -ec]
+    command: ["chown -R 10001:10001 /media"]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - cuaderno_release_media:/media
 volumes:
   cuaderno_release_database:
   cuaderno_release_media:

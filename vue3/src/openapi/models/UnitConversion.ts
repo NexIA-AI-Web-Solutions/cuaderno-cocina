@@ -39,7 +39,7 @@ export interface UnitConversion {
      * @type {number}
      * @memberof UnitConversion
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -88,6 +88,7 @@ export interface UnitConversion {
  * Check if a given object implements the UnitConversion interface.
  */
 export function instanceOfUnitConversion(value: object): value is UnitConversion {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('baseAmount' in value) || value['baseAmount'] === undefined) return false;
     if (!('baseUnit' in value) || value['baseUnit'] === undefined) return false;
@@ -106,7 +107,7 @@ export function UnitConversionFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'],
         'baseAmount': json['base_amount'],
         'baseUnit': UnitFromJSON(json['base_unit']),
@@ -121,14 +122,13 @@ export function UnitConversionToJSON(json: any): UnitConversion {
     return UnitConversionToJSONTyped(json, false);
 }
 
-export function UnitConversionToJSONTyped(value?: Omit<UnitConversion, 'name'> | null, ignoreDiscriminator: boolean = false): any {
+export function UnitConversionToJSONTyped(value?: Omit<UnitConversion, 'id'|'name'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'base_amount': value['baseAmount'],
         'base_unit': UnitToJSON(value['baseUnit']),
         'converted_amount': value['convertedAmount'],

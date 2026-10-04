@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import cache
+from django.db import connection
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from django_scopes import scopes_disabled
@@ -43,6 +44,157 @@ from cuaderno.services.ledger import apply_movement
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class OperationalFoodVisibilityTests(TestCase):
+    def _read_after_dispatch_change(self, client, url, change):
+        changed = False
+        def intercept(execute, sql, parameters, many, context):
+            nonlocal changed
+            projection = ('JSON_AGG(' in sql.upper() and
+                          ('"cuaderno_packageformat"' in sql or '"cuaderno_stockmovement"' in sql))
+            if projection and not changed:
+                changed = True
+                with scopes_disabled():
+                    change()
+            return execute(sql, parameters, many, context)
+        with connection.execute_wrapper(intercept):
+            response = client.get(url)
+        self.assertTrue(changed, "The change must occur immediately before the protected projection.")
+        self.assert_status(response, 200)
+        return response
+
+    def test_list_projection_rechecks_groups_revoked_after_permission_dispatch(self):
+        client = self._client(self.observer)
+        with scopes_disabled():
+            membership = UserSpace.objects.get(user=self.observer, space=self.space)
+            group = Group.objects.get(name="user")
+            apply_movement(entry_id=self.public_entry.pk, space=self.space, user=self.owner,
+                           kind=StockMovement.RECEIPT, quantity="1", idempotency_key="race-group-own")
+        for url in ("/api/cuaderno/packages/", "/api/cuaderno/movements/"):
+            with self.subTest(url=url):
+                response = self._read_after_dispatch_change(client, url, membership.groups.clear)
+                self.assertEqual(response.data, [])
+                with scopes_disabled():
+                    membership.groups.add(group)
+
+    def test_movement_projection_uses_household_reassigned_after_permission_dispatch(self):
+        client = self._client(self.owner)
+        with scopes_disabled():
+            membership = UserSpace.objects.get(user=self.owner, space=self.space)
+            other = Household.objects.create(space=self.space, name="Reassigned at dispatch")
+            apply_movement(entry_id=self.public_entry.pk, space=self.space, user=self.owner,
+                           kind=StockMovement.RECEIPT, quantity="1", idempotency_key="race-household")
+        response = self._read_after_dispatch_change(
+            client, "/api/cuaderno/movements/",
+            lambda: UserSpace.objects.filter(pk=membership.pk).update(household=other),
+        )
+        self.assertEqual(response.data, [])
+
+    def test_list_projection_fails_closed_on_second_active_space_after_dispatch(self):
+        client = self._client(self.observer)
+        response = self._read_after_dispatch_change(
+            client, "/api/cuaderno/packages/",
+            lambda: UserSpace.objects.create(user=self.observer, space=self.foreign_space, active=True),
+        )
+        self.assertEqual(response.data, [])
+
+    def test_movement_projection_drops_admin_oversight_revoked_after_dispatch(self):
+        client = self._client(self.owner)
+        with scopes_disabled():
+            membership = UserSpace.objects.get(user=self.owner, space=self.space)
+            admin = Group.objects.get_or_create(name="admin")[0]
+            membership.groups.add(admin)
+            other = Household.objects.create(space=self.space, name="Other household during revocation")
+            location = InventoryLocation.objects.create(space=self.space, household=other,
+                name="Other location during revocation", created_by=self.owner)
+            entry = InventoryEntry.objects.create(space=self.space, inventory_location=location,
+                food=self.public_food, unit=self.unit, amount=Decimal("1"), created_by=self.owner)
+            denied = apply_movement(entry_id=entry.pk, space=self.space, user=self.owner,
+                kind=StockMovement.RECEIPT, quantity="1", idempotency_key="race-admin-other")
+            allowed = apply_movement(entry_id=self.public_entry.pk, space=self.space, user=self.owner,
+                kind=StockMovement.RECEIPT, quantity="1", idempotency_key="race-admin-own")
+        response = self._read_after_dispatch_change(client, "/api/cuaderno/movements/",
+            lambda: membership.groups.remove(admin))
+        identifiers = {row["id"] for row in response.data}
+        self.assertIn(allowed.pk, identifiers)
+        self.assertNotIn(denied.pk, identifiers)
+
+    def test_guest_native_inventory_reads_keep_household_and_space_boundaries(self):
+        client = self._client(self.guest)
+        with scopes_disabled():
+            other_household = Household.objects.create(space=self.space, name="Other kitchen")
+            other_location = InventoryLocation.objects.create(
+                space=self.space, household=other_household, name="Other stockroom", created_by=self.owner,
+            )
+            other_entry = InventoryEntry.objects.create(
+                space=self.space, inventory_location=other_location, food=self.public_food,
+                unit=self.unit, amount=Decimal("3"), created_by=self.owner,
+            )
+        for endpoint, allowed, denied in (
+            ("inventory-entry", self.public_entry, other_entry),
+            ("inventory-location", self.location, other_location),
+            ("unit", self.unit, self.foreign_unit),
+        ):
+            with self.subTest(endpoint=endpoint):
+                response = client.get(f"/api/{endpoint}/")
+                self.assert_status(response, 200)
+                ids = {row["id"] for row in self._rows(response)}
+                self.assertIn(allowed.pk, ids)
+                self.assertNotIn(denied.pk, ids)
+                self.assert_status(client.get(f"/api/{endpoint}/{allowed.pk}/"), 200)
+                self.assert_status(client.head(f"/api/{endpoint}/{allowed.pk}/"), 200)
+                self.assert_status(client.get(f"/api/{endpoint}/{denied.pk}/"), 404)
+        entry_ids = {row["id"] for row in self._rows(client.get("/api/inventory-entry/"))}
+        self.assertNotIn(self.private_entry.pk, entry_ids)
+        self.assertNotIn(self.corrupt_entry.pk, entry_ids)
+
+    def test_guest_native_inventory_private_sharing_revokes_without_relogin(self):
+        client = self._client(self.guest)
+        path = f"/api/inventory-entry/{self.private_entry.pk}/"
+        self.assert_status(client.get(path), 404)
+        with scopes_disabled():
+            self.private_recipe.shared.add(self.guest)
+        self.assert_status(client.get(path), 200)
+        with scopes_disabled():
+            self.private_recipe.shared.remove(self.guest)
+        self.assert_status(client.get(path), 404)
+        response = client.get("/api/inventory-entry/")
+        self.assert_status(response, 200)
+        self.assertNotIn(self.private_entry.pk, {row["id"] for row in self._rows(response)})
+
+    def test_guest_native_reads_fail_closed_when_household_or_membership_is_revoked(self):
+        client = self._client(self.guest)
+        with scopes_disabled():
+            membership = UserSpace.objects.get(user=self.guest, space=self.space)
+            membership.household = None
+            membership.save(update_fields=["household"])
+        for endpoint in ("inventory-entry", "inventory-location"):
+            response = client.get(f"/api/{endpoint}/")
+            self.assert_status(response, 200)
+            self.assertEqual(self._rows(response), [])
+        with scopes_disabled():
+            membership.groups.clear()
+        for endpoint in ("inventory-entry", "inventory-location", "unit"):
+            self.assert_status(client.get(f"/api/{endpoint}/"), 403)
+
+    def test_guest_native_mutations_and_relation_inspection_stay_forbidden(self):
+        client = self._client(self.guest)
+        for endpoint, obj in (
+            ("inventory-entry", self.public_entry), ("inventory-location", self.location), ("unit", self.unit),
+        ):
+            for method, path in (
+                ("post", f"/api/{endpoint}/"),
+                ("patch", f"/api/{endpoint}/{obj.pk}/"),
+                ("delete", f"/api/{endpoint}/{obj.pk}/"),
+                ("get", f"/api/{endpoint}/{obj.pk}/protecting/"),
+                ("get", f"/api/{endpoint}/{obj.pk}/cascading/"),
+            ):
+                with self.subTest(endpoint=endpoint, method=method, path=path):
+                    self.assert_status(self._request(client, method, path), 403)
+        self.assert_status(client.post(f"/api/inventory-entry/{self.public_entry.pk}/consume/", {"quantity": "1"}, format="json"), 403)
+        self.assert_status(client.put(f"/api/unit/{self.unit.pk}/merge/{self.foreign_unit.pk}/", {}, format="json"), 403)
+        with scopes_disabled():
+            self.public_entry.refresh_from_db()
+            self.assertEqual(self.public_entry.amount, Decimal("4"))
+
     def test_space_inheritance_reset_cannot_mutate_unshared_private_foods(self):
         admin = self._admin_client("inheritance-reset")
         with scopes_disabled():
@@ -1294,7 +1446,12 @@ class OperationalFoodVisibilityTests(TestCase):
         )
         for method, path, data in guest_vectors:
             with self.subTest(role="guest", method=method, path=path):
-                self.assert_status(self._request(guest, method, path, data), 403)
+                expected = (404 if "/prices/" in path else 200) if method == "get" else 403
+                response = self._request(guest, method, path, data)
+                self.assert_status(response, expected)
+                if expected == 200:
+                    self.assertNotIn(self.private_food.name, str(response.data))
+                    self.assertNotIn(self.foreign_food.name, str(response.data))
         # CustomRecipePermission intentionally lets guests read public recipes,
         # but that must not make a private Food's package visible by direct ID.
         guest_impact = guest.get(
@@ -1337,4 +1494,99 @@ class OperationalFoodVisibilityTests(TestCase):
                 rendered = str(getattr(response, "data", ""))
                 self.assertNotIn(self.foreign_food.name, rendered)
                 self.assertNotIn(self.foreign_supplier.name, rendered)
+        self.assertEqual(self._write_counts(), before)
+
+
+    def test_guest_safe_reads_filter_private_cross_space_and_revoke_immediately(self):
+        with scopes_disabled():
+            public_offer = PurchaseOffer.objects.create(
+                space=self.space, package=self.public_package, supplier=self.supplier,
+                amount=Decimal("7"), valid_from=timezone.now(), created_by=self.owner,
+            )
+            public_order = PurchaseOrder.objects.create(
+                space=self.space, household=self.household, food=self.public_food,
+                unit=self.unit, quantity=Decimal("2"), supplier=self.supplier,
+                package=self.public_package, package_count=Decimal("2"),
+                package_quantity_snapshot=self.public_package.quantity,
+                package_unit_snapshot=self.unit, created_by=self.owner,
+            )
+            public_movement = apply_movement(
+                entry_id=self.public_entry.pk, space=self.space, user=self.owner,
+                kind=StockMovement.RECEIPT, quantity="1",
+                idempotency_key="guest-safe-public-movement",
+            )
+        guest = self._client(self.guest)
+
+        def read_ids(*, private_visible=False):
+            packages = guest.get("/api/cuaderno/packages/")
+            public_prices = guest.get(
+                f"/api/cuaderno/packages/{self.public_package.pk}/prices/"
+            )
+            private_prices = guest.get(
+                f"/api/cuaderno/packages/{self.private_package.pk}/prices/"
+            )
+            offers = guest.get("/api/cuaderno/purchase-offers/")
+            orders = guest.get("/api/cuaderno/purchase-orders/")
+            minimums = guest.get("/api/cuaderno/stock-minimums/")
+            movements = guest.get("/api/cuaderno/movements/")
+            exchange = guest.get("/api/cuaderno/exchange/")
+            for response in (packages, public_prices, offers, orders, minimums, movements, exchange):
+                self.assert_status(response, 200)
+            self.assert_status(private_prices, 200 if private_visible else 404)
+            rendered = " ".join(str(getattr(response, "data", response.content)) for response in (
+                packages, offers, orders, minimums, movements,
+            )) + str(exchange.content)
+            self.assertNotIn(self.foreign_food.name, rendered)
+            self.assertNotIn(self.foreign_supplier.name, rendered)
+            return {
+                "packages": {row["id"] for row in packages.data},
+                "offers": {row["id"] for row in offers.data},
+                "orders": {row["id"] for row in orders.data},
+                "minimums": {row["id"] for row in minimums.data["items"]},
+                "movements": {row["id"] for row in movements.data},
+                "recipes": {row["name"] for row in exchange.json()["recipes"]},
+            }
+
+        hidden = read_ids()
+        self.assertEqual(hidden["packages"], {self.public_package.pk})
+        self.assertEqual(hidden["offers"], {public_offer.pk})
+        self.assertEqual(hidden["orders"], {public_order.pk})
+        self.assertEqual(hidden["minimums"], {self.public_minimum.pk})
+        self.assertEqual(hidden["movements"], {public_movement.pk})
+        self.assertNotIn(self.private_recipe.name, hidden["recipes"])
+
+        with scopes_disabled():
+            self.private_recipe.shared.add(self.guest)
+        shared = read_ids(private_visible=True)
+        self.assertIn(self.private_package.pk, shared["packages"])
+        self.assertIn(self.private_offer.pk, shared["offers"])
+        self.assertIn(self.private_order.pk, shared["orders"])
+        self.assertIn(self.private_minimum.pk, shared["minimums"])
+        self.assertIn(self.private_movement.pk, shared["movements"])
+        self.assertIn(self.private_recipe.name, shared["recipes"])
+
+        with scopes_disabled():
+            self.private_recipe.shared.remove(self.guest)
+        revoked = read_ids()
+        self.assertEqual(revoked, hidden)
+
+    def test_guest_safe_read_permission_never_opens_unsafe_methods(self):
+        guest = self._client(self.guest)
+        before = self._write_counts()
+        vectors = (
+            ("post", "/api/cuaderno/packages/", {}),
+            ("post", f"/api/cuaderno/packages/{self.public_package.pk}/prices/", {}),
+            ("post", "/api/cuaderno/movements/", {}),
+            ("post", "/api/cuaderno/services/", {}),
+            ("post", "/api/cuaderno/purchase-offers/", {}),
+            ("post", "/api/cuaderno/purchase-orders/", {}),
+            ("post", "/api/cuaderno/replenishment/", {}),
+            ("put", "/api/cuaderno/stock-minimums/", {}),
+            ("post", "/api/cuaderno/allergens/", {}),
+            ("post", "/api/cuaderno/exchange/", {}),
+        )
+        for method, path, data in vectors:
+            with self.subTest(method=method, path=path):
+                response = self._request(guest, method, path, data)
+                self.assert_status(response, 403)
         self.assertEqual(self._write_counts(), before)

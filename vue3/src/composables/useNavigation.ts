@@ -3,7 +3,59 @@ import {VDivider, VListItem} from "vuetify/components";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {useDjangoUrls} from "@/composables/useDjangoUrls.ts";
 import {TANDOOR_PLUGINS} from "@/types/Plugins.ts";
-import {plugin} from "@/plugins/open_data_plugin/plugin.ts";
+import {ref} from 'vue'
+import {cuadernoFetch, readJson} from '@/cuaderno/api'
+import {cuadernoNavigationCapabilities, type CuadernoEdition} from '@/cuaderno/navigationUi'
+
+const navigationEdition = ref<CuadernoEdition | null>(null)
+let navigationEditionSpace: number | null = null
+let navigationEditionLoading = false
+let navigationEditionRefresh: ReturnType<typeof setTimeout> | null = null
+
+function loadNavigationEdition(spaceId: unknown) {
+    if (!Number.isSafeInteger(spaceId) || Number(spaceId) <= 0) return
+    const requestedSpace = Number(spaceId)
+    if (navigationEditionLoading) {
+        if (navigationEditionSpace !== requestedSpace) {
+            navigationEditionSpace = requestedSpace
+            navigationEdition.value = null
+        }
+        return
+    }
+    if (navigationEditionSpace !== requestedSpace) {
+        if (navigationEditionRefresh !== null) clearTimeout(navigationEditionRefresh)
+        navigationEdition.value = null
+    }
+    navigationEditionSpace = requestedSpace
+    navigationEditionLoading = true
+    cuadernoFetch('/api/cuaderno/edition/')
+        .then(readJson)
+        .then(result => {
+            if (navigationEditionSpace !== requestedSpace) return
+            navigationEdition.value = result.ok ? cuadernoNavigationCapabilities(result.data).edition : null
+            scheduleNavigationEditionRefresh(requestedSpace, result.ok ? 60_000 : 5_000)
+        })
+        .catch(() => {
+            if (navigationEditionSpace === requestedSpace) {
+                navigationEdition.value = null
+                scheduleNavigationEditionRefresh(requestedSpace, 5_000)
+            }
+        })
+        .finally(() => {
+            navigationEditionLoading = false
+            if (navigationEditionSpace !== requestedSpace && navigationEditionSpace !== null) {
+                loadNavigationEdition(navigationEditionSpace)
+            }
+        })
+}
+
+function scheduleNavigationEditionRefresh(spaceId: number, delay: number) {
+    if (navigationEditionRefresh !== null) clearTimeout(navigationEditionRefresh)
+    navigationEditionRefresh = setTimeout(() => {
+        navigationEditionRefresh = null
+        if (navigationEditionSpace === spaceId) loadNavigationEdition(spaceId)
+    }, delay)
+}
 
 /**
  * manages configuration and loading of navigation entries for tandoor main app and plugins
@@ -12,12 +64,16 @@ export function useNavigation() {
     const {t} = useI18n()
 
     function getNavigationDrawer() {
+        const preferenceStore = useUserPreferenceStore()
+        loadNavigationEdition(preferenceStore.activeSpace.id)
+        const cuaderno = cuadernoNavigationCapabilities({edition: navigationEdition.value})
         let navigation = [
             {component: VListItem, prependIcon: '$recipes', title: 'Home', to: {name: 'StartPage', params: {}}},
-            {component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}},
+            ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}}] : []),
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},
             {component: VListItem, prependIcon: '$mealplan', title: t('Meal_Plan'), to: {name: 'MealPlanPage', params: {}}},
-            {component: VListItem, prependIcon: 'fa-solid fa-clipboard-list', title: 'Producción', to: {name: 'CuadernoProduccionPage', params: {}}},
+            ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-clipboard-list', title: 'Producción', to: {name: 'CuadernoProduccionPage', params: {}}}] : []),
+            ...(cuaderno.warehouse ? [{component: VListItem, prependIcon: 'fa-solid fa-warehouse', title: 'Almacén', to: {name: 'CuadernoAlmacenPage', params: {}}}] : []),
             {component: VListItem, prependIcon: '$shopping', title: t('Shopping'), to: {name: 'ShoppingListPage', params: {}}},
             {component: VListItem, prependIcon: 'fas fa-globe', title: t('Import'), to: {name: 'RecipeImportPage', params: {}}},
             {component: VListItem, prependIcon: '$pantry', title: t('Pantry'), to: {name: 'PantryPage', params: {}}},
@@ -39,8 +95,14 @@ export function useNavigation() {
     }
 
     function getBottomNavigation() {
+        const preferenceStore = useUserPreferenceStore()
+        loadNavigationEdition(preferenceStore.activeSpace.id)
+        const cuaderno = cuadernoNavigationCapabilities({edition: navigationEdition.value})
         let navigation = [
             {component: VListItem, prependIcon: 'fa-solid fa-sliders', title: t('Settings'), to: {name: 'SettingsPage', params: {}}},
+            ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}}] : []),
+            ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-clipboard-list', title: 'Producción', to: {name: 'CuadernoProduccionPage', params: {}}}] : []),
+            ...(cuaderno.warehouse ? [{component: VListItem, prependIcon: 'fa-solid fa-warehouse', title: 'Almacén', to: {name: 'CuadernoAlmacenPage', params: {}}}] : []),
             {component: VListItem, prependIcon: 'fas fa-globe', title: t('Import'), to: {name: 'RecipeImportPage', params: {}}},
             {component: VListItem, prependIcon: 'fa-solid fa-folder-tree', title: t('Database'), to: {name: 'DatabasePage', params: {}}},
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},

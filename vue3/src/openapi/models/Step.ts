@@ -39,7 +39,7 @@ export interface Step {
      * @type {number}
      * @memberof Step
      */
-    id?: number;
+    readonly id: number;
     /**
      * 
      * @type {string}
@@ -118,6 +118,7 @@ export interface Step {
  * Check if a given object implements the Step interface.
  */
 export function instanceOfStep(value: object): value is Step {
+    if (!('id' in value) || value['id'] === undefined) return false;
     if (!('ingredients' in value) || value['ingredients'] === undefined) return false;
     if (!('instructionsMarkdown' in value) || value['instructionsMarkdown'] === undefined) return false;
     if (!('stepRecipeData' in value) || value['stepRecipeData'] === undefined) return false;
@@ -135,7 +136,7 @@ export function StepFromJSONTyped(json: any, ignoreDiscriminator: boolean): Step
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'instruction': json['instruction'] == null ? undefined : json['instruction'],
         'ingredients': ((json['ingredients'] as Array<any>).map(IngredientFromJSON)),
@@ -155,14 +156,13 @@ export function StepToJSON(json: any): Step {
     return StepToJSONTyped(json, false);
 }
 
-export function StepToJSONTyped(value?: Omit<Step, 'instructions_markdown'|'step_recipe_data'|'numrecipe'> | null, ignoreDiscriminator: boolean = false): any {
+export function StepToJSONTyped(value?: Omit<Step, 'id'|'instructions_markdown'|'step_recipe_data'|'numrecipe'> | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'id': value['id'],
         'name': value['name'],
         'instruction': value['instruction'],
         'ingredients': ((value['ingredients'] as Array<any>).map(IngredientToJSON)),

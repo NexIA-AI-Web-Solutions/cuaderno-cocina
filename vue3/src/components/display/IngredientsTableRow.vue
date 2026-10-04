@@ -5,11 +5,11 @@
         </template>
         <template v-else>
             <td>
-                <v-checkbox-btn v-model="ingredient.checked" color="success"></v-checkbox-btn>
+                <v-checkbox-btn v-model="checked" color="success"></v-checkbox-btn>
             </td>
-            <td @click="ingredient.checked = !ingredient.checked">{{ ingredient.amount * props.ingredientFactor }}</td>
-            <td @click="ingredient.checked = !ingredient.checked"><span v-if="ingredient.unit != null">{{ ingredient.unit.name }}</span></td>
-            <td @click="ingredient.checked = !ingredient.checked"><span v-if="ingredient.food != null">{{ ingredient.food.name }}</span></td>
+            <td @click="checked = !checked">{{ ingredient.amount * props.ingredientFactor }}</td>
+            <td @click="checked = !checked"><span v-if="ingredient.unit != null">{{ ingredient.unit.name }}</span></td>
+            <td @click="checked = !checked"><span v-if="ingredient.food != null">{{ ingredient.food.name }}</span></td>
             <td v-if="props.showNotes">
                 <v-icon class="far fa-comment float-right" v-if="ingredient.note != '' && ingredient.note != undefined" @click="showTooltip = !showTooltip">
                     <v-tooltip v-model="showTooltip" activator="parent" location="start">{{ ingredient.note }}</v-tooltip>
@@ -25,6 +25,7 @@ import {PropType, ref} from 'vue'
 import {Ingredient} from "@/openapi";
 
 const ingredient = defineModel<Ingredient>({required: true})
+const checked = ref(ingredient.value.checked)
 
 const props = defineProps({
     showNotes: {
