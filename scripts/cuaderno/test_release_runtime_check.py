@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import subprocess
+import sys
 
 if __package__:
     from . import release_runtime_check as subject
@@ -123,11 +124,42 @@ class RuntimeCheckTests(unittest.TestCase):
         with patch.object(subject, "_run_inside", side_effect=lambda argv: calls.append(argv) or 0):
             self.assertEqual(subject.inside("performance-final"), 0)
         self.assertEqual(calls[0], ["/opt/recipes/venv/bin/pip", "check"])
-        self.assertEqual(calls[1][1:5], ["-m", "venv", "--system-site-packages", "/tmp/cuaderno-release-test-venv"])
-        self.assertIn("/release-tests/dev-requirements.txt", calls[2])
-        self.assertIn("/opt/recipes/PYTHON-PRODUCTION.constraints.txt", calls[2])
-        self.assertIn("/release-tests/python-test.constraints.txt", calls[2])
-        self.assertIn("cuaderno.tests.test_performance", calls[3])
+        self.assertEqual(calls[1][:4], ["/opt/recipes/venv/bin/python", "-m", "pip", "install"])
+        self.assertIn("--target", calls[1])
+        overlay = calls[1][calls[1].index("--target") + 1]
+        self.assertRegex(overlay, r"^/tmp/cuaderno-release-test-overlay-[a-z0-9_-]+$")
+        self.assertIn("/release-tests/dev-requirements.txt", calls[1])
+        self.assertIn("/opt/recipes/PYTHON-PRODUCTION.constraints.txt", calls[1])
+        self.assertIn("/release-tests/python-test.constraints.txt", calls[1])
+        self.assertEqual(calls[2][0], "/opt/recipes/venv/bin/python")
+        self.assertIn(subject.OVERLAY_LAUNCHER, calls[2])
+        self.assertIn(overlay, calls[2])
+        self.assertIn("/opt/recipes/manage.py", calls[2])
+        self.assertIn("cuaderno.tests.test_performance", calls[2])
+
+    def test_overlay_launcher_preserves_runtime_precedence_and_loads_overlay_only_module(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            runtime = base / "runtime"
+            overlay = base / "overlay"
+            runtime.mkdir()
+            overlay.mkdir()
+            (runtime / "shared_marker.py").write_text("VALUE = 'production'\n", encoding="utf-8")
+            (overlay / "shared_marker.py").write_text("VALUE = 'overlay'\n", encoding="utf-8")
+            (overlay / "overlay_only.py").write_text("VALUE = 'available'\n", encoding="utf-8")
+            (runtime / "probe.py").write_text(
+                "import shared_marker, overlay_only\n"
+                "print(shared_marker.VALUE + ':' + overlay_only.VALUE)\n",
+                encoding="utf-8",
+            )
+            argv = subject.overlay_command(
+                sys.executable, overlay.as_posix(), "path", str(runtime / "probe.py"), [],
+            )
+            result = subprocess.run(
+                argv, cwd=runtime, check=False, capture_output=True, text=True, encoding="utf-8",
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "production:available")
 
     def test_runtime_pip_check_also_checks_native_extension_links_and_propagates_errors(self):
         calls = []
@@ -160,7 +192,9 @@ class RuntimeCheckTests(unittest.TestCase):
         self.assertEqual(calls[0], ["/opt/recipes/venv/bin/pip", "check"])
         self.assertIn("spectacular", calls[1])
         self.assertIn("--fail-on-warn", calls[1])
-        self.assertEqual(calls[2][1:4], ["-m", "venv", "--system-site-packages"])
+        self.assertEqual(calls[2][:4], ["/opt/recipes/venv/bin/python", "-m", "pip", "install"])
+        self.assertEqual(calls[3][0], "/opt/recipes/venv/bin/python")
+        self.assertIn(subject.OVERLAY_LAUNCHER, calls[3])
 
     def test_standalone_schema_fails_on_warnings(self):
         calls = []

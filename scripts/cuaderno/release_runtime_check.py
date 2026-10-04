@@ -22,6 +22,22 @@ TIMEOUT_MAXIMUM = 7200
 BAKED_SCRIPT = "/opt/recipes/release-tools/release_runtime_check.py"
 SCHEMA_REFERENCE = Path("/release-reference/openapi.json")
 TEST_CONSTRAINTS = Path("/release-tests/python-test.constraints.txt")
+OVERLAY_LAUNCHER = """\
+import runpy
+import sys
+
+overlay = sys.argv.pop(1)
+kind = sys.argv.pop(1)
+target = sys.argv.pop(1)
+sys.path.append(overlay)
+sys.argv[0] = target
+if kind == "module":
+    runpy.run_module(target, run_name="__main__", alter_sys=True)
+elif kind == "path":
+    runpy.run_path(target, run_name="__main__")
+else:
+    raise SystemExit("overlay launcher kind invalid")
+"""
 DECLARED_ARTIFACTS = frozenset({
     "runtime_application", "sbom_python", "sbom_frontend", "frontend_provenance", "version_info", "security_python_backports", "security_alpine_backports", "security_node_runtime",
 })
@@ -365,6 +381,13 @@ def _schema_contract(python: str) -> int:
         return 0 if actual == expected else 1
 
 
+def overlay_command(python: str, overlay: str, kind: str, target: str,
+                    arguments: list[str]) -> list[str]:
+    if kind not in {"module", "path"}:
+        raise RuntimeCheckFailure("Tipo de launcher overlay inválido.")
+    return [python, "-c", OVERLAY_LAUNCHER, overlay, kind, target, *arguments]
+
+
 def inside(check: str) -> int:
     """Entry point copied into the candidate image by the release Dockerfile."""
     python = "/opt/recipes/venv/bin/python"
@@ -398,21 +421,21 @@ def inside(check: str) -> int:
         if check == "security-final":
             if _schema_contract(python):
                 return 1
-        overlay = "/tmp/cuaderno-release-test-venv"
-        if _run_inside([python, "-m", "venv", "--system-site-packages", overlay]):
-            return 1
-        pip = f"{overlay}/bin/pip"
+        overlay = f"/tmp/cuaderno-release-test-overlay-{uuid.uuid4().hex}"
         if _run_inside([
-            pip, "install", "--disable-pip-version-check", "--no-cache-dir",
+            python, "-m", "pip", "install", "--target", overlay,
+            "--disable-pip-version-check", "--no-cache-dir",
             "-c", "/opt/recipes/PYTHON-PRODUCTION.constraints.txt",
             "-c", TEST_CONSTRAINTS.as_posix(), "-r", "/release-tests/dev-requirements.txt",
         ]):
             return 1
         args = TEST_ARGUMENTS[check]
         if args[0] == "pytest":
-            return _run_inside([f"{overlay}/bin/pytest", *args[1:]])
-        return _run_inside([f"{overlay}/bin/python", "manage.py", "test", *args[1:], "--noinput",
-                            "--verbosity", "2"])
+            return _run_inside(overlay_command(python, overlay, "module", "pytest", args[1:]))
+        return _run_inside(overlay_command(
+            python, overlay, "path", "/opt/recipes/manage.py",
+            ["test", *args[1:], "--noinput", "--verbosity", "2"],
+        ))
     raise RuntimeCheckFailure(f"Check interno desconocido: {check}")
 
 
