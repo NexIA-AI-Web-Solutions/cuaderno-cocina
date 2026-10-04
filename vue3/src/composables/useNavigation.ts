@@ -68,7 +68,7 @@ export function useNavigation() {
         loadNavigationEdition(preferenceStore.activeSpace.id)
         const cuaderno = cuadernoNavigationCapabilities({edition: navigationEdition.value})
         let navigation = [
-            {component: VListItem, prependIcon: '$recipes', title: 'Home', to: {name: 'StartPage', params: {}}},
+            {component: VListItem, prependIcon: '$recipes', title: t('Home'), to: {name: 'StartPage', params: {}}},
             ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}}] : []),
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},
             {component: VListItem, prependIcon: '$mealplan', title: t('Meal_Plan'), to: {name: 'MealPlanPage', params: {}}},

@@ -580,27 +580,6 @@ def produce_service_plan(plan: ServicePlan, user, raw_key) -> tuple[ServicePlan,
     return plan, movement_ids, stock_changed
 
 
-SERVICE_LIST_VALUE_FIELDS = (
-    "pk", "title", "covers", "service_date", "state", "meal_plan_id",
-    "household_id", "snapshot", "confirmed_at", "produced_at",
-    "created_by_id", "meal_plan__recipe_id",
-)
-
-def _service_list_base(request):
-    rows = ServicePlan.objects.filter(space=request.space)
-    if not has_group_permission(request, ["admin"]):
-        membership = getattr(request, "user_space", None)
-        if membership is None:
-            return rows.none()
-        if membership.household_id:
-            rows = rows.filter(
-                Q(household_id=membership.household_id)
-                | Q(household__isnull=True, created_by=request.user),
-            )
-        else:
-            rows = rows.filter(household__isnull=True, created_by=request.user)
-    return rows
-
 def _snapshot_recipe_ids(row):
     """Return None for any malformed historical ACL document (fail closed)."""
     identifier = _snapshot_identifier
@@ -628,21 +607,13 @@ def _snapshot_recipe_ids(row):
 
 def accessible_service_plan_rows(request):
     """Bounded list-only ACL using dictionaries; never used for writes."""
-    candidates = list(
-        _service_list_base(request)
-        .order_by("-pk")
-        .values(*SERVICE_LIST_VALUE_FIELDS)[:100]
-    )
+    from cuaderno.services.operational_reads import service_plan_rows, visible_service_recipe_ids
+    candidates = service_plan_rows(request)
     required_by_pk = {row["pk"]: _snapshot_recipe_ids(row) for row in candidates}
     all_recipe_ids = set().union(*(
         required for required in required_by_pk.values() if required is not None
     )) if required_by_pk else set()
-    from cuaderno.services.costing import visible_recipes
-    visible_ids = set(
-        visible_recipes(request.user, request.space)
-        .filter(pk__in=all_recipe_ids)
-        .values_list("pk", flat=True)
-    ) if all_recipe_ids else set()
+    visible_ids = visible_service_recipe_ids(request, all_recipe_ids)
     allowed = [
         row for row in candidates
         if required_by_pk[row["pk"]] is not None

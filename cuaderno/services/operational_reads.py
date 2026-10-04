@@ -3,6 +3,8 @@
 Authorization is evaluated in the same statement as its data; there is no
 permission or response cache. These projections do not participate in writes.
 """
+import json
+
 from django.db import connection
 from django.utils import timezone
 
@@ -28,17 +30,16 @@ def _food_visibility(path):
 
 
 AUTH_SQL = """WITH auth AS MATERIALIZED (
-    SELECT membership.household_id,
-           EXISTS (SELECT 1 FROM "cookbook_userspace_groups" roles
-                   JOIN "auth_group" role ON role.id = roles.group_id
-                   WHERE roles.userspace_id = membership.id AND role.name = 'admin') AS admin
+    SELECT MIN(membership.household_id) AS household_id,
+           BOOL_OR(role.name = 'admin') AS admin
     FROM "cookbook_userspace" membership
-    WHERE membership.user_id = %(user)s AND membership.active AND membership.space_id = %(space)s
-      AND (SELECT count(*) FROM "cookbook_userspace" active
-           WHERE active.user_id = %(user)s AND active.active) = 1
-      AND EXISTS (SELECT 1 FROM "cookbook_userspace_groups" roles
-                  JOIN "auth_group" role ON role.id = roles.group_id
-                  WHERE roles.userspace_id = membership.id AND role.name IN ('guest', 'user', 'admin'))
+    LEFT JOIN "cookbook_userspace_groups" roles ON roles.userspace_id = membership.id
+    LEFT JOIN "auth_group" role ON role.id = roles.group_id
+    WHERE membership.user_id = %(user)s AND membership.active
+    GROUP BY membership.user_id
+    HAVING COUNT(DISTINCT membership.id) = 1
+       AND BOOL_AND(membership.space_id = %(space)s)
+       AND BOOL_OR(role.name IN ('guest', 'user', 'admin'))
 )
 """
 
@@ -111,6 +112,39 @@ FROM (
 """
 
 
+SERVICE_ROWS_SQL = AUTH_SQL.rstrip() + """
+SELECT plan.id, plan.title, plan.covers, plan.service_date, plan.state,
+       plan.meal_plan_id, plan.household_id, plan.snapshot,
+       plan.confirmed_at, plan.produced_at, plan.created_by_id,
+       meal.recipe_id
+FROM "cuaderno_serviceplan" plan
+LEFT JOIN "cookbook_mealplan" meal ON meal.id = plan.meal_plan_id
+WHERE plan.space_id = %(space)s
+  AND EXISTS (SELECT 1 FROM auth)
+  AND (
+      (SELECT admin FROM auth)
+      OR plan.household_id = (SELECT household_id FROM auth)
+      OR (plan.household_id IS NULL AND plan.created_by_id = %(user)s)
+  )
+ORDER BY plan.id DESC
+LIMIT 100
+"""
+
+
+VISIBLE_RECIPE_IDS_SQL = """
+SELECT recipe.id
+FROM "cookbook_recipe" recipe
+WHERE recipe.space_id = %(space)s AND recipe.id = ANY(%(recipe_ids)s)
+  AND (
+      NOT recipe.private OR recipe.created_by_id = %(user)s
+      OR EXISTS (
+          SELECT 1 FROM "cookbook_recipe_shared" shared
+          WHERE shared.recipe_id = recipe.id AND shared.user_id = %(user)s
+      )
+  )
+"""
+
+
 def _document(sql, request, **parameters):
     if connection.vendor != "postgresql":
         raise ValueError("Operational projections require PostgreSQL")
@@ -128,3 +162,43 @@ def movement_document(request):
     if not entries:
         return "[]"
     return _document(MOVEMENT_SQL, request, entries=entries)
+
+
+def service_plan_rows(request):
+    """Return fixed list columns without Django's per-request query compiler cost."""
+    if connection.vendor != "postgresql":
+        raise ValueError("Operational projections require PostgreSQL")
+    columns = (
+        "pk", "title", "covers", "service_date", "state", "meal_plan_id",
+        "household_id", "snapshot", "confirmed_at", "produced_at",
+        "created_by_id", "meal_plan__recipe_id",
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(SERVICE_ROWS_SQL, {"space": request.space.pk, "user": request.user.pk})
+        rows = []
+        for values in cursor.fetchall():
+            row = dict(zip(columns, values))
+            # Django deliberately configures raw PostgreSQL cursors to leave
+            # jsonb as text; model JSONField normally performs this decode.
+            if isinstance(row["snapshot"], str):
+                try:
+                    row["snapshot"] = json.loads(row["snapshot"])
+                except (json.JSONDecodeError, UnicodeError):
+                    # Historical corruption must reach the existing list ACL
+                    # validator as an invalid value and remain undisclosed.
+                    pass
+            rows.append(row)
+        return rows
+
+
+def visible_service_recipe_ids(request, recipe_ids):
+    if not recipe_ids:
+        return set()
+    if connection.vendor != "postgresql":
+        raise ValueError("Operational projections require PostgreSQL")
+    with connection.cursor() as cursor:
+        cursor.execute(
+            VISIBLE_RECIPE_IDS_SQL,
+            {"space": request.space.pk, "user": request.user.pk, "recipe_ids": list(recipe_ids)},
+        )
+        return {row[0] for row in cursor.fetchall()}

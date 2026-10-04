@@ -1,13 +1,15 @@
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 
+from django.contrib.auth.models import Group
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django_scopes import scopes_disabled
 
-from cookbook.models import Food, Household, InventoryEntry, InventoryLocation, MealPlan, MealType, Recipe, Space
+from cookbook.models import Food, Household, InventoryEntry, InventoryLocation, MealPlan, MealType, Recipe, Space, UserSpace
 from cuaderno.models import ServicePlan, SpaceProfile, StockMovement
 from cuaderno.tests.test_services import ServiceFixtureMixin
 
@@ -104,6 +106,27 @@ class ListQueryEfficiencyTests(ServiceFixtureMixin, TestCase):
         self.assertIsNone(response.data[-1]["service_date"])
         self.assertEqual(len(self._model_selects(captured, "cuaderno_serviceplan")), 1)
         self.assertLessEqual(len(captured), 8)
+
+    def test_raw_service_projection_fails_closed_for_missing_role_and_duplicate_membership(self):
+        from cuaderno.services.operational_reads import service_plan_rows
+
+        plan = self._service(self.recipe, "Servicio protegido por membresía")
+        with scopes_disabled():
+            membership = UserSpace.objects.get(user=self.user, space=self.space, active=True)
+            original_groups = list(membership.groups.all())
+        request = SimpleNamespace(user=self.user, space=self.space, user_space=membership)
+        self.assertEqual([row["pk"] for row in service_plan_rows(request)], [plan.pk])
+
+        with scopes_disabled():
+            membership.groups.clear()
+        self.assertEqual(service_plan_rows(request), [])
+
+        with scopes_disabled():
+            membership.groups.set(original_groups)
+            other_space = Space.objects.create(name="Membresía activa duplicada", created_by=self.user)
+            duplicate = UserSpace.objects.create(user=self.user, space=other_space, active=True)
+            duplicate.groups.add(Group.objects.get_or_create(name="user")[0])
+        self.assertEqual(service_plan_rows(request), [])
 
     def test_service_query_reduction_keeps_private_root_and_graph_acl(self):
         visible = self._service(self.recipe, "Visible")
