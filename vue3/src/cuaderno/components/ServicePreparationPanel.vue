@@ -67,7 +67,7 @@
                                         :model-value="item.checked"
                                         :aria-label="`${item.checked ? 'Desmarcar' : 'Marcar'} ${item.name || 'paso de preparación'}`"
                                         class="preparation-check flex-shrink-0"
-                                        :disabled="!payload.can_edit || conflict || loading || savingItem !== null"
+                                        :disabled="!props.canOperate || !payload.can_edit || conflict || loading || savingItem !== null"
                                         @update:model-value="value => updateItem(item, value)"
                                     />
                                     <div class="min-width-0">
@@ -106,7 +106,7 @@ import {
     type ServicePreparationState,
 } from '@/cuaderno/servicePreparationUi'
 
-const props = defineProps<{serviceId: number; serviceState: string}>()
+const props = withDefaults(defineProps<{serviceId: number; serviceState: string; canOperate?: boolean}>(), {canOperate: true})
 const opened = ref(false)
 const payload = ref<ServicePreparationEnvelope | null>(null)
 const loading = ref(false)
@@ -166,7 +166,7 @@ async function load() {
 }
 
 async function updateItem(item: ServicePreparationItem, value: unknown) {
-    if (!payload.value?.can_edit || conflict.value || loading.value
+    if (!props.canOperate || !payload.value?.can_edit || conflict.value || loading.value
         || savingItem.value !== null || typeof value !== 'boolean') return
     if (value === item.checked) return
     const parsed = servicePreparationWrite(item.id, value, payload.value.revision)

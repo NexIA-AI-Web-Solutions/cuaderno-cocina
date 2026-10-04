@@ -136,7 +136,7 @@ test('Consulta keeps purchase history readable while every write control is disa
         for (const label of ['Formato de compra', 'Proveedor', 'Precio por envase', 'Oferta expresamente gratuita', 'Formato', 'Oferta (opcional)', 'Número de envases']) {
             assert.equal(field(root, label).props.disabled, true, label)
         }
-        for (const label of ['Guardar oferta', 'Crear borrador', 'Cancelar', 'Recibir']) {
+        for (const label of ['Guardar oferta', 'Crear borrador', 'Cancelar', 'Recibir', 'Calcular desde servicios confirmados']) {
             for (const control of buttons(root, label)) assert.equal(control.props.disabled, true, label)
         }
         assert.equal(all(root, node => node.type === 'stock-minimum-panel')[0].props.canOperate, false)
@@ -145,5 +145,7 @@ test('Consulta keeps purchase history readable while every write control is disa
         await buttons(root, 'Recepciones')[0].props.onClick(); await flush()
         assert.ok(calls.some(call => call.url === '/api/cuaderno/purchase-orders/10/receipts/' && !call.options.method))
         assert.equal(buttons(root, 'Revertir recepción')[0].props.disabled, true)
+        await buttons(root, 'Calcular desde servicios confirmados')[0].props.onClick(); await flush()
+        assert.equal(calls.some(call => call.options.method === 'POST'), false)
     } finally { app.unmount(); delete globalThis.__purchasePanelTransport }
 })

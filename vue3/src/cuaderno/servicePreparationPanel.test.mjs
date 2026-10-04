@@ -71,7 +71,7 @@ function payload(serviceId = 12, checked = false, revision = 'a'.repeat(64)) {
 }
 
 let nextId = 0
-async function mount(transport) {
+async function mount(transport, initialProps = {}) {
     const id = ++nextId
     globalThis.__cuadernoPreparationUnit ??= new Map()
     const calls = []
@@ -102,7 +102,7 @@ async function mount(transport) {
         return `from ${JSON.stringify(replacements.get(name))}`
     })
     const component = (await import(moduleUrl(code))).default
-    const props = Vue.reactive({serviceId: 12, serviceState: 'confirmed'})
+    const props = Vue.reactive({serviceId: 12, serviceState: 'confirmed', canOperate: true, ...initialProps})
     const root = {type: 'root', props: {}, children: [], parent: null}
     const app = virtualRenderer().createApp({setup: () => () => Vue.h(component, props)})
     // Real panel logic/render; transparent widget stubs retain event handlers.
@@ -120,6 +120,25 @@ async function mount(transport) {
     await flush()
     return {root, props, calls, close() { app.unmount(); globalThis.__cuadernoPreparationUnit.delete(id) }}
 }
+
+test('Consulta can lazily load and reload preparation but cannot write checklist items', async () => {
+    const mounted = await mount((_url, options) => {
+        if (options?.method === 'PUT') return assert.fail('Consulta must not write preparation items')
+        return {ok: true, status: 200, data: payload()}
+    }, {canOperate: false})
+    try {
+        button(mounted.root, 'Ver preparación').props.onClick()
+        await flush()
+        assert.equal(mounted.calls.length, 1)
+        assert.equal(checkbox(mounted.root).props.disabled, true)
+        checkbox(mounted.root).props['onUpdate:modelValue'](true)
+        await flush()
+        assert.equal(mounted.calls.length, 1)
+        button(mounted.root, 'Recargar').props.onClick()
+        await flush()
+        assert.equal(mounted.calls.length, 2)
+    } finally { mounted.close() }
+})
 
 test('lazy real panel blocks reload during PUT and edits during GET, then releases controls', async () => {
     let releasePut

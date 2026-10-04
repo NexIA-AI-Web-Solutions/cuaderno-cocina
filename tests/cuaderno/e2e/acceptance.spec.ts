@@ -150,6 +150,21 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
       for (const name of ['Calcular necesidades', 'Guardar rendimiento', 'Anotar servicio', 'Añadir línea', 'Consolidar', 'Declarar']) {
         await expect(cleanPage.getByRole('button', {name, exact: true})).toBeDisabled()
       }
+      const refreshServices = cleanPage.getByRole('button', {name: 'Actualizar servicios', exact: true})
+      await expect(refreshServices).toBeEnabled()
+      await expect(cleanPage.getByRole('button', {name: 'Imprimir fichas', exact: true})).toBeEnabled()
+      const servicesResponse = cleanPage.waitForResponse(response =>
+        response.request().method() === 'GET' && /\/api\/cuaderno\/services\/$/.test(response.url()),
+      )
+      await refreshServices.click()
+      expect((await servicesResponse).status()).toBe(200)
+      const preparation = cleanPage.getByRole('button', {name: 'Ver preparación', exact: true}).first()
+      await expect(preparation).toBeEnabled()
+      const preparationResponse = cleanPage.waitForResponse(response =>
+        response.request().method() === 'GET' && /\/api\/cuaderno\/services\/\d+\/preparation\/$/.test(response.url()),
+      )
+      await preparation.click()
+      expect((await preparationResponse).status()).toBe(200)
     } else {
       await expect(cleanPage.getByText(
         'La producción está disponible en las ediciones Profesional e Integral.',
@@ -171,6 +186,7 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
       await expect(cleanPage.getByRole('button', {name: 'Guardar oferta', exact: true})).toBeDisabled()
       await expect(cleanPage.getByRole('button', {name: 'Crear borrador', exact: true})).toBeDisabled()
       await expect(cleanPage.getByRole('button', {name: 'Guardar mínimo', exact: true})).toBeDisabled()
+      await expect(cleanPage.getByRole('button', {name: 'Calcular desde servicios confirmados', exact: true})).toBeDisabled()
       for (const action of ['Cancelar', 'Recibir']) {
         const controls = cleanPage.getByRole('button', {name: action, exact: true})
         for (const control of await controls.all()) await expect(control).toBeDisabled()

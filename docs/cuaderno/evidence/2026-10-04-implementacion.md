@@ -4,6 +4,8 @@ Este documento registra la implementación realizada después de [AUDITORIA_2026
 
 ## Resultado técnico incorporado
 
+La revisión independiente posterior al primer build encontró un bloqueo de lectura en Producción: el `fieldset` deshabilitado también impedía a Consulta actualizar, imprimir y abrir la preparación. Se sustituyó por controles mutantes deshabilitados individualmente y guardas en handlers. El panel de preparación recibe el permiso operativo y conserva GET/recarga; su checkbox y PUT quedan bloqueados para Consulta. TDD: página 1/1 y preparación 4/4 PASS, con rojo previo tanto del fieldset heredado como del checkbox. Compras restringe también el cálculo POST de reposición: componente 2/2 PASS, con rojo previo. La aceptación Playwright incorpora estas lecturas y la restricción de reposición. El candidato final se reconstruye después de esas correcciones; el primer build no certifica la nueva fuente.
+
 ### Arquitectura, permisos y contratos
 
 - Las APIs Cuaderno comparten una base que resuelve el contexto de Space/Hogar y aplica lectura operativa acotada. Consulta puede leer los recursos permitidos de su contexto; las mutaciones siguen exigiendo Cocina/Responsable y autorización de servidor. Los filtros conservan privacidad de recetas, alimentos, existencias, servicios y grafos privados. El middleware de scope toma un snapshot por petición y evita consultas repetidas.

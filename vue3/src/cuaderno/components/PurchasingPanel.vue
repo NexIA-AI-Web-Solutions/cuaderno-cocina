@@ -189,7 +189,7 @@
                 <v-card-title class="d-flex align-center flex-wrap ga-2">
                     <span>Propuesta de reposición</span>
                     <v-spacer />
-                    <v-btn color="primary" variant="tonal" min-height="44" :loading="loadingReplenishment" @click="loadReplenishment">
+                    <v-btn color="primary" variant="tonal" min-height="44" :disabled="!canOperate" :loading="loadingReplenishment" @click="loadReplenishment">
                         Calcular desde servicios confirmados
                     </v-btn>
                 </v-card-title>
@@ -479,6 +479,7 @@ async function reverseReceipt(order: Order, document: ReceiptDocument) {
 }
 
 async function loadReplenishment() {
+    if (!props.canOperate) return
     loadingReplenishment.value = true; replenishmentMessage.value = ''
     const result = await readJson(await cuadernoFetch('/api/cuaderno/replenishment/', {method: 'POST', body: JSON.stringify({})}))
     loadingReplenishment.value = false

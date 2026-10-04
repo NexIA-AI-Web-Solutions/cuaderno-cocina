@@ -10,15 +10,15 @@
         <v-alert v-if="editionMessage" type="info" variant="tonal" class="mb-4" role="status">{{ editionMessage }}</v-alert>
         <v-alert v-if="notice" type="info" class="mb-4" role="status">{{ notice }}</v-alert>
         <v-alert v-if="productionEnabled && !canOperate" type="info" variant="tonal" class="mb-4" role="status">Modo Consulta: las fichas están disponibles solo para lectura.</v-alert>
-        <fieldset v-if="productionEnabled" :disabled="!canOperate" class="operation-fieldset">
+        <div v-if="productionEnabled">
         <v-row class="no-print">
             <v-col cols="12" md="6">
                 <v-card class="print-card">
                     <v-card-title>Ficha desde recetas</v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Calcula las necesidades de las recetas con sus cantidades guardadas. Las subrecetas necesitan un rendimiento de salida declarado.</p>
-                        <v-model-select v-model="selectedRecipes" model="Recipe" label="Recetas" multiple chips search-on-load :disabled="calculatingRecipes" />
-                        <v-btn color="primary" :loading="calculatingRecipes" :disabled="!selectedRecipes.length" min-height="44" @click="calculateRecipes">Calcular necesidades</v-btn>
+                        <v-model-select v-model="selectedRecipes" model="Recipe" label="Recetas" multiple chips search-on-load :disabled="!canOperate || calculatingRecipes" />
+                        <v-btn color="primary" :loading="calculatingRecipes" :disabled="!canOperate || !selectedRecipes.length" min-height="44" @click="calculateRecipes">Calcular necesidades</v-btn>
                         <p class="mt-2" role="status">{{ recipeMessage }}</p>
                         <v-alert v-for="(warning, index) in recipeWarnings" :key="index" type="warning" class="mt-3" role="status">{{ warning }}</v-alert>
                         <v-list v-if="recipeNeeds.length">
@@ -32,10 +32,10 @@
                     <v-card-title>Rendimiento de subreceta</v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Indica cuánto producto terminado obtienes al elaborar una vez la receta completa. No equivale al número de raciones.</p>
-                        <v-model-select v-model="output.recipe" model="Recipe" label="Receta" search-on-load />
-                        <v-text-field v-model="output.quantity" label="Cantidad obtenida" inputmode="decimal" />
-                        <v-model-select v-model="output.unit" model="Unit" label="Unidad de salida" search-on-load />
-                        <v-btn color="primary" :loading="savingYield" min-height="44" @click="saveYield">Guardar rendimiento</v-btn>
+                        <v-model-select v-model="output.recipe" model="Recipe" label="Receta" search-on-load :disabled="!canOperate || savingYield" />
+                        <v-text-field v-model="output.quantity" label="Cantidad obtenida" inputmode="decimal" :disabled="!canOperate || savingYield" />
+                        <v-model-select v-model="output.unit" model="Unit" label="Unidad de salida" search-on-load :disabled="!canOperate || savingYield" />
+                        <v-btn color="primary" :loading="savingYield" :disabled="!canOperate" min-height="44" @click="saveYield">Guardar rendimiento</v-btn>
                         <p class="mt-2" role="status">{{ yieldMessage }}</p>
                     </v-card-text>
                 </v-card>
@@ -44,15 +44,15 @@
                 <v-card class="print-card">
                     <v-card-title>Servicio</v-card-title>
                     <v-card-text>
-                        <v-text-field v-model="service.title" label="Nombre" />
-                        <v-text-field v-model="service.date" label="Fecha del servicio" type="date" />
+                        <v-text-field v-model="service.title" label="Nombre" :disabled="!canOperate || savingService" />
+                        <v-text-field v-model="service.date" label="Fecha del servicio" type="date" :disabled="!canOperate || savingService" />
                         <v-row dense>
-                            <v-col cols="12" sm="4"><v-text-field v-model="service.baseCovers" label="Comensales previstos" inputmode="numeric" /></v-col>
-                            <v-col cols="6" sm="4"><v-text-field v-model="service.extra" label="Altas" inputmode="numeric" /></v-col>
-                            <v-col cols="6" sm="4"><v-text-field v-model="service.cancelled" label="Cancelaciones" inputmode="numeric" /></v-col>
+                            <v-col cols="12" sm="4"><v-text-field v-model="service.baseCovers" label="Comensales previstos" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
+                            <v-col cols="6" sm="4"><v-text-field v-model="service.extra" label="Altas" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
+                            <v-col cols="6" sm="4"><v-text-field v-model="service.cancelled" label="Cancelaciones" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
                         </v-row>
                         <p class="text-body-2">Total del servicio: {{ serviceCoversTotal ?? '—' }} comensales.</p>
-                        <v-model-select v-model="service.recipe" model="Recipe" label="Receta del servicio" search-on-load />
+                        <v-model-select v-model="service.recipe" model="Recipe" label="Receta del servicio" search-on-load :disabled="!canOperate || savingService" />
                         <allergen-assessment-panel
                             class="no-print"
                             title="Alérgenos de la receta seleccionada"
@@ -61,7 +61,7 @@
                             :loading="loadingRecipeAllergens"
                             :error="recipeAllergenError"
                         />
-                        <v-btn color="primary" :loading="savingService" min-height="44" @click="saveService">Anotar servicio</v-btn>
+                        <v-btn color="primary" :loading="savingService" :disabled="!canOperate" min-height="44" @click="saveService">Anotar servicio</v-btn>
                         <p class="mt-2" role="status">{{ serviceMessage }}</p>
                     </v-card-text>
                 </v-card>
@@ -71,13 +71,13 @@
                     <v-card-title>Consolidación manual</v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Suma las necesidades introducidas. Incluye la unidad en el componente y usa la misma unidad en todas sus líneas. No se guardan como receta ni descuentan existencias.</p>
-                        <v-text-field v-model="sheet.component" label="Componente y unidad" placeholder="Por ejemplo: aceite · L" />
-                        <v-text-field v-model="sheet.quantity" label="Cantidad" inputmode="decimal" />
-                        <v-btn variant="text" :disabled="consolidating" min-height="44" @click="addUsage">Añadir línea</v-btn>
-                        <v-btn color="primary" :loading="consolidating" :disabled="!usages.length" min-height="44" @click="consolidate">Consolidar</v-btn>
+                        <v-text-field v-model="sheet.component" label="Componente y unidad" placeholder="Por ejemplo: aceite · L" :disabled="!canOperate || consolidating" />
+                        <v-text-field v-model="sheet.quantity" label="Cantidad" inputmode="decimal" :disabled="!canOperate || consolidating" />
+                        <v-btn variant="text" :disabled="!canOperate || consolidating" min-height="44" @click="addUsage">Añadir línea</v-btn>
+                        <v-btn color="primary" :loading="consolidating" :disabled="!canOperate || !usages.length" min-height="44" @click="consolidate">Consolidar</v-btn>
                         <v-list v-if="usages.length">
                             <v-list-item v-for="(line, index) in usages" :key="index" :title="`${line.component} · ${line.quantity}`">
-                                <template #append><v-btn variant="text" icon="fa-solid fa-xmark" :aria-label="`Quitar ${line.component}`" :disabled="consolidating" min-height="44" @click="usages.splice(index, 1); sheetMessage = ''" /></template>
+                                <template #append><v-btn variant="text" icon="fa-solid fa-xmark" :aria-label="`Quitar ${line.component}`" :disabled="!canOperate || consolidating" min-height="44" @click="removeUsage(index)" /></template>
                             </v-list-item>
                         </v-list>
                         <p role="status">{{ sheetMessage }}</p>
@@ -88,10 +88,10 @@
                 <v-card>
                     <v-card-title>Alérgeno</v-card-title>
                     <v-card-text>
-                        <v-model-select v-model="allergen.food" model="Food" label="Alimento" search-on-load />
-                        <v-text-field v-model="allergen.name" label="Nombre" />
-                        <v-select v-model="allergen.state" label="Estado" :items="states" item-title="title" item-value="value" />
-                        <v-btn color="primary" :loading="savingAllergen" min-height="44" @click="saveAllergen">Declarar</v-btn>
+                        <v-model-select v-model="allergen.food" model="Food" label="Alimento" search-on-load :disabled="!canOperate || savingAllergen" />
+                        <v-text-field v-model="allergen.name" label="Nombre" :disabled="!canOperate || savingAllergen" />
+                        <v-select v-model="allergen.state" label="Estado" :items="states" item-title="title" item-value="value" :disabled="!canOperate || savingAllergen" />
+                        <v-btn color="primary" :loading="savingAllergen" :disabled="!canOperate" min-height="44" @click="saveAllergen">Declarar</v-btn>
                         <p class="mt-2" role="status">{{ allergenMessage }}</p>
                         <allergen-assessment-panel
                             class="no-print"
@@ -160,13 +160,13 @@
                                 v-if="plan.state === 'produced' || plan.state === 'cancelled'"
                                 :classification="frozenProductionWaste(plan)"
                             />
-                            <service-preparation-panel class="mt-4" :service-id="plan.id" :service-state="plan.state" />
+                            <service-preparation-panel class="mt-4" :service-id="plan.id" :service-state="plan.state" :can-operate="canOperate" />
                         </v-card-text>
                         <v-card-actions class="flex-wrap ga-2 no-print">
-                            <v-btn v-if="plan.state === 'draft'" color="primary" :loading="busyPlan === plan.id" :disabled="busyPlan !== null" min-height="44" @click="transition(plan, 'confirm')">Confirmar ficha</v-btn>
-                            <v-btn v-if="plan.state === 'confirmed'" color="primary" :disabled="busyPlan !== null" min-height="44" @click="confirmation = {plan, action: 'produce'}">Producir</v-btn>
-                            <v-btn v-if="plan.state === 'produced'" color="primary" :disabled="busyPlan !== null" min-height="44" @click="confirmation = {plan, action: 'reverse'}">Revertir producción</v-btn>
-                            <v-btn v-if="['draft', 'confirmed'].includes(plan.state)" :disabled="busyPlan !== null" min-height="44" @click="confirmation = {plan, action: 'cancel'}">Cancelar servicio</v-btn>
+                            <v-btn v-if="plan.state === 'draft'" color="primary" :loading="busyPlan === plan.id" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="transition(plan, 'confirm')">Confirmar ficha</v-btn>
+                            <v-btn v-if="plan.state === 'confirmed'" color="primary" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="openConfirmation(plan, 'produce')">Producir</v-btn>
+                            <v-btn v-if="plan.state === 'produced'" color="primary" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="openConfirmation(plan, 'reverse')">Revertir producción</v-btn>
+                            <v-btn v-if="['draft', 'confirmed'].includes(plan.state)" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="openConfirmation(plan, 'cancel')">Cancelar servicio</v-btn>
                         </v-card-actions>
                     </v-card>
                 </v-col>
@@ -188,13 +188,13 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-btn :disabled="busyPlan !== null" min-height="44" @click="confirmation = null">Volver</v-btn>
-                    <v-btn color="primary" :disabled="busyPlan !== null" :loading="busyPlan !== null" min-height="44" @click="transition(confirmation.plan, confirmation.action)">
+                    <v-btn color="primary" :disabled="!canOperate || busyPlan !== null" :loading="busyPlan !== null" min-height="44" @click="transition(confirmation.plan, confirmation.action)">
                         {{ confirmation.action === 'reverse' ? 'Confirmar reversión' : 'Confirmar acción' }}
                     </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        </fieldset>
+        </div>
     </v-container>
 </template>
 
@@ -451,6 +451,12 @@ function addUsage() {
     sheet.quantity = ""
 }
 
+function removeUsage(index: number) {
+    if (!canOperate.value || consolidating.value) return
+    usages.value.splice(index, 1)
+    sheetMessage.value = ''
+}
+
 async function saveService() {
     if (!canOperate.value) return
     if (savingService.value) return
@@ -480,6 +486,11 @@ function confirmationTitle(action: ServiceAction) {
     if (action === 'produce') return 'Producir servicio'
     if (action === 'reverse') return 'Revertir producción'
     return 'Cancelar servicio'
+}
+
+function openConfirmation(plan: ServiceRow, action: 'produce' | 'cancel' | 'reverse') {
+    if (!canOperate.value || busyPlan.value !== null) return
+    confirmation.value = {plan, action}
 }
 
 function reversalAuditLabel(production: NonNullable<NonNullable<ServiceRow['snapshot']>['production']>) {
@@ -695,7 +706,6 @@ async function saveAllergen() {
 </script>
 
 <style scoped>
-.operation-fieldset { border: 0; margin: 0; min-width: 0; padding: 0; }
 @media print {
     .print-card { break-inside: avoid; }
     .no-print { display: none; }
