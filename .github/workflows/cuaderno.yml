@@ -361,17 +361,12 @@ jobs:
         run: |
           node prepare-auth.mjs --base-url "$BASE_URL"
           node prepare-auth.mjs --base-url "$BASE_URL" --reuse
-      - name: Ejecutar los 27 proyectos con reportes exclusivos
-        working-directory: tests/cuaderno/e2e
+      - name: Matriz completa sin retries y con preview verificado
         shell: bash
         run: |
-          status=0
-          for edition in esencial profesional integral; do
-            CUADERNO_E2E_OUTPUT_DIR="test-results/$edition" \
-            CUADERNO_E2E_HTML_REPORT="playwright-report/$edition" \
-              npx playwright test --project="$edition-*" || status=$?
-          done
-          exit "$status"
+          mkdir -p .cuaderno-runs
+          export CUADERNO_CANDIDATE_IMAGE="$(cat candidate-image-id.txt)"
+          python scripts/cuaderno/release_e2e_check.py
       - name: Capturar diagnostico del preview
         if: failure()
         shell: bash
@@ -386,9 +381,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: cuaderno-playwright-reports-${{ github.run_id }}
-          path: tests/cuaderno/e2e/playwright-report
+          path: .cuaderno-runs/e2e-final-*/playwright-report
           if-no-files-found: warn
-          include-hidden-files: false
+          include-hidden-files: true
           retention-days: 7
       - name: Subir evidencia Playwright solo al fallar
         if: failure()
@@ -396,10 +391,10 @@ jobs:
         with:
           name: cuaderno-playwright-failure-${{ github.run_id }}
           path: |
-            tests/cuaderno/e2e/test-results
+            .cuaderno-runs/e2e-final-*/test-results
             tests/cuaderno/e2e/runtime-diagnostics
           if-no-files-found: warn
-          include-hidden-files: false
+          include-hidden-files: true
           retention-days: 7
       - name: Cerrar preview aislado
         if: always()

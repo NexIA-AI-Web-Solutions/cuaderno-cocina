@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "lockfile": {
+    "path": "yarn.lock",
+    "sha256": "808717e2f84a420778e75150b52d76538884d77948b36957d3ebd6b070c845e2"
+  },
+  "roots": [
+    "typescript",
+    "vue-tsc"
+  ],
+  "packages": [
+    {
+      "name": "@babel/helper-string-parser",
+      "version": "7.29.7",
+      "path": "node_modules/@babel/helper-string-parser",
+      "files": 5,
+      "sha256": "20fb7f9782b2a59d3bbbded1bf57f758f9fb30a644598bee14b589cd7b2cf66a"
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.29.7",
+      "path": "node_modules/@babel/helper-validator-identifier",
+      "files": 9,
+      "sha256": "345099d2d0ede0e8d810652e14085fd6cea5b8d5c37ec69027b3d175157b270f"
+    },
+    {
+      "name": "@babel/parser",
+      "version": "7.29.7",
+      "path": "node_modules/@babel/parser",
+      "files": 8,
+      "sha256": "eb0f0aaaca165a2d79a6b70940a84a81e2384ee7c2eb0c12d91a247e62917751"
+    },
+    {
+      "name": "@babel/types",
+      "version": "7.29.7",
+      "path": "node_modules/@babel/types",
+      "files": 178,
+      "sha256": "667ce951b23d70603a48dfc91132de8f23858190176d364b431d6c6c12f701ca"
+    },
+    {
+      "name": "@volar/language-core",
+      "version": "2.4.28",
+      "path": "node_modules/@volar/language-core",
+      "files": 12,
+      "sha256": "282b01ab08f68fc061230df1e928f58f23c2a91b848e4976246afcd550d010b7"
+    },
+    {
+      "name": "@volar/source-map",
+      "version": "2.4.28",
+      "path": "node_modules/@volar/source-map",
+      "files": 11,
+      "sha256": "5f567a45cd813c1acb8cf294d9f5826143301c1ac1d1c288b5341f56d2c143a9"
+    },
+    {
+      "name": "@volar/typescript",
+      "version": "2.4.28",
+      "path": "node_modules/@volar/typescript",
+      "files": 44,
+      "sha256": "ad309fb9a551ad54a8aef263ddd8cb42e488a9b26aba0ebc6522c389fc4a4170"
+    },
+    {
+      "name": "@vue/compiler-core",
+      "version": "3.5.38",
+      "path": "node_modules/@vue/compiler-core",
+      "files": 8,
+      "sha256": "7d98e0919d5769d85804df6f8d027815b954df5991cfd581ebb574a46d1afe7a"
+    },
+    {
+      "name": "entities",
+      "version": "7.0.1",
+      "path": "node_modules/@vue/compiler-core/node_modules/entities",
+      "files": 109,
+      "sha256": "de1bbee007ddf6a2aa362870312badb6cc3dce551538d8ecf0c206808d1f1459"
+    },
+    {
+      "name": "@vue/compiler-dom",
+      "version": "3.5.38",
+      "path": "node_modules/@vue/compiler-dom",
+      "files": 12,
+      "sha256": "8b110d4aad6c89415ba643385515a64b85fa05abfc9807bae888b1e607738e58"
+    },
+    {
+      "name": "@vue/language-core",
+      "version": "3.3.5",
+      "path": "node_modules/@vue/language-core",
+      "files": 156,
+      "sha256": "42db448e306cd14727d79ff05dd016c21b6985b5a32af34172a5d7ab9bcf0a19"
+    },
+    {
+      "name": "@vue/shared",
+      "version": "3.5.38",
+      "path": "node_modules/@vue/shared",
+      "files": 8,
+      "sha256": "cba5352044a6674fd85b1adbce61e0aa95942df64b5f96aec0a8b3d77c66bb8b"
+    },
+    {
+      "name": "alien-signals",
+      "version": "3.2.1",
+      "path": "node_modules/alien-signals",
+      "files": 9,
+      "sha256": "7cd673ac3e55a601cd8519a07ee8a3d308f6752d7d88b5f12d89be5d00230e0e"
+    },
+    {
+      "name": "estree-walker",
+      "version": "2.0.2",
+      "path": "node_modules/estree-walker",
+      "files": 17,
+      "sha256": "8f994659e877db410aed1445e5288eed04f5c5ded48c6316c0519778eb69ae78"
+    },
+    {
+      "name": "muggle-string",
+      "version": "0.4.1",
+      "path": "node_modules/muggle-string",
+      "files": 31,
+      "sha256": "52a709d64ffc57fa8236e401ab3f2341ce266be1952abd4a22e48c42ee0ff1ce"
+    },
+    {
+      "name": "path-browserify",
+      "version": "1.0.1",
+      "path": "node_modules/path-browserify",
+      "files": 19,
+      "sha256": "77f8af7eeab6e33a7d2ba8a55e593c8f24d96bf6eefc1cf79a665d4ef0d4b134"
+    },
+    {
+      "name": "picomatch",
+      "version": "4.0.4",
+      "path": "node_modules/picomatch",
+      "files": 10,
+      "sha256": "eb9c83701dc7c347dd60f807b79ef9d6d34a4e0dc79a4781e245fc9dfd69cc16"
+    },
+    {
+      "name": "source-map-js",
+      "version": "1.2.1",
+      "path": "node_modules/source-map-js",
+      "files": 18,
+      "sha256": "ae8247220a736e618219d81aab40c3a2b79d4903ace87321e7c2352029009c21"
+    },
+    {
+      "name": "typescript",
+      "version": "5.9.3",
+      "path": "node_modules/typescript",
+      "files": 132,
+      "sha256": "c9f7ba9829bc4631acca6b6aa064132acd9d30f9d9c3e73d59a3e2b66caa8c41"
+    },
+    {
+      "name": "vscode-uri",
+      "version": "3.1.0",
+      "path": "node_modules/vscode-uri",
+      "files": 17,
+      "sha256": "be4cdcb4f004fe0c88e4483afe6a731c9da578a09df2e937e5e0d5766ed5bf90"
+    },
+    {
+      "name": "vue-tsc",
+      "version": "3.3.5",
+      "path": "node_modules/vue-tsc",
+      "files": 6,
+      "sha256": "381a82c9ac29dad406a30749e86660032829b4cc95b5daed21f25b948eeaf12e"
+    }
+  ]
+}

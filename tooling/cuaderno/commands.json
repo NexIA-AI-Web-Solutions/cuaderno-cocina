@@ -3201,21 +3201,20 @@
       "timeout_seconds": 3600,
       "isolated_mutations": false,
       "verified": true,
-      "note": "Node24.21.0 OCI fijo, red desactivada, checkout readonly; compiler exit0 sin allowance heredada.",
+      "note": "Etapa frontend Linux desde fuente y yarn.lock congelados; Image ID inmutable, runtime sin red y readonly; verificador del compilador antes de typecheck, sin dependencias host ni allowance heredada.",
       "purpose": "typecheck-final del candidato identificado; verified acredita la interfaz y sus pruebas unitarias, no un PASS del candidato.",
       "verification_note": "Interfaz implementada y ensayada; aceptación runtime pendiente con contexto idéntico."
     },
     "e2e-final": {
       "argv": [
-        "npx.cmd",
-        "playwright",
-        "test"
+        "python",
+        "scripts/cuaderno/release_e2e_check.py"
       ],
-      "cwd": "tests/cuaderno/e2e",
+      "cwd": ".",
       "timeout_seconds": 7200,
       "isolated_mutations": true,
       "verified": true,
-      "note": "Requires prevalidated .auth states, seeded fixtures, candidate preview and exclusive artifact dirs.",
+      "note": "Exact healthy candidate preview and loopback binding checked before/after; pinned local Node/Playwright, zero retries, exclusive ignored artifact dirs. Requires seeded fixtures/auth states.",
       "purpose": "e2e-final del candidato identificado; verified acredita la interfaz y sus pruebas unitarias, no un PASS del candidato.",
       "verification_note": "Interfaz implementada y ensayada; aceptación runtime pendiente con contexto idéntico."
     },

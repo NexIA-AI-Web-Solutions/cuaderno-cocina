@@ -2,7 +2,7 @@
 
 El código se mantiene en la rama `cuaderno/main` de `NexIA-AI-Web-Solutions/cuaderno-cocina`. Es un único producto Tandoor/Django/DRF/Vue/Vuetify/PostgreSQL; no hay que instalar los donantes.
 
-**Estado de esta entrega:** el build y los ensayos locales están comprobados; G7 sigue abierto. No se ha desplegado este procedimiento en un VPS. Antes de admitir datos reales deben cerrarse los pendientes de [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md): rendimiento, navegador, regresión final y auditoría de imagen. Las instrucciones siguientes son una preparación para el operador, no un despliegue certificado.
+**Estado de esta entrega:** el resultado local vigente se determina mediante los 17 registros del candidato en `.cuaderno-runs/release-manifest.json` y `.cuaderno-runs/RELEASE_REPORT.md`, según [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md). Los resultados históricos no sustituyen ese manifiesto. No se ha desplegado este procedimiento en un VPS; las instrucciones productivas son una preparación para el operador y requieren validación en su destino antes de admitir datos reales.
 
 ## Uso local comprobado
 
@@ -21,6 +21,14 @@ python scripts/cuaderno/check.py release-http --allow-isolated-mutations
 Abre http://127.0.0.1:18081. Cuentas **solo DEMO**: `demo-esencial`, `demo-profesional`, `demo-integral`; contraseña `Demo-Cocina-2026!`. Cada cuenta usa un Space independiente. El seed está restringido al entorno local; no ejecutarlo en producción. Uso de costes, menús, compras, preparación y reversión en [MANUAL_ES](MANUAL_ES.md).
 
 El build puede reutilizar stages cacheados y tarda varios minutos. No editar el checkout ni crear commits durante el build: su identidad incluye HEAD y el hash de los archivos locales. Los precios 500+17, 1000+20 y 1500+30 son metadata comercial, no una pasarela de cobro.
+
+## Herramientas de aceptación local
+
+El gate E2E utiliza Node **24.21.0** y la instalación local de Playwright fijada en `tests/cuaderno/e2e/package-lock.json`; no descarga un runner alternativo mediante npx. Instala esa versión de Node en PATH o define `CUADERNO_E2E_NODE` como ruta absoluta a su ejecutable. En Windows también se verifica el SHA256 oficial de `win-x64/node.exe` (`ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32`), publicado en [checksums de Node 24.21.0](https://nodejs.org/dist/v24.21.0/SHASUMS256.txt). Un Node distinto detiene la aceptación.
+
+`candidate_check.py e2e-final --context <contexto>` proporciona la imagen esperada. El wrapper comprueba imagen, salud y binding exclusivo `127.0.0.1:18081` antes y después del navegador, fuerza cero retries y crea artefactos en un directorio nuevo de `.cuaderno-runs`. La aceptación requiere las cuentas y fixtures sintéticos; ningún dato real participa.
+
+El typecheck utiliza la fuente y todas las dependencias de la etapa Linux `frontend` construida desde el checkout con `yarn.lock` congelado. Se ejecuta contra su Image ID inmutable, sin red y con filesystem de solo lectura; las dependencias mutables del host no sirven para acreditar el resultado.
 
 ## Preparación del servidor, solo cuando se autorice el despliegue
 
