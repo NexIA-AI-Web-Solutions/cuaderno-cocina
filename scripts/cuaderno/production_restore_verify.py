@@ -23,6 +23,20 @@ PG16_IMAGE = "postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105
 IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
 
 
+def database_ready_probe(db_user: str, db_name: str) -> str:
+    """Reject the socket-only init server, then verify the exact local database."""
+    # Runtime configuration already confines identifiers; keep this shell boundary explicit.
+    if not all(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,62}", value) for value in (db_user, db_name)):
+        raise ValueError("Identificador de base de datos no admitido.")
+    return (
+        f"pg_isready -q -h 127.0.0.1 -t 1 -U {db_user} -d {db_name} >/dev/null 2>&1 && "
+        "result=$(PGCONNECT_TIMEOUT=2 PGOPTIONS='-c statement_timeout=1000' "
+        f"timeout 2 psql -X -w -h /var/run/postgresql -U {db_user} -d {db_name} "
+        "-v ON_ERROR_STOP=1 -At -c 'SELECT 1' 2>/dev/null) && "
+        '[ "$result" = "1" ]'
+    )
+
+
 def trusted_bundle(bundle: Path) -> tuple[Path, dict]:
     if bundle.is_symlink() or not bundle.is_dir():
         raise ValueError("El bundle debe ser un directorio local regular, sin enlaces.")
@@ -212,7 +226,7 @@ def verify(bundle: Path, *, boundary: RestoreBoundary | None = None,
         finally:
             db_env.unlink(missing_ok=True)
         boundary.run(["docker", "exec", db, "sh", "-ec",
-                      f"for attempt in $(seq 1 120); do pg_isready -U {db_user} -d {db_name} && exit 0; sleep 1; done; exit 1"])
+                      f"for attempt in $(seq 1 120); do {database_ready_probe(db_user, db_name)} && exit 0; sleep 1; done; exit 1"])
         _run_from_file(boundary, ["docker", "exec", "-i", db, "pg_restore", "-U", db_user, "-d", db_name,
                                    "--exit-on-error", "--no-owner", "--no-acl"], bundle / "database.dump")
         restored_database = _db_manifest(boundary, db, db_user=db_user, db_name=db_name)

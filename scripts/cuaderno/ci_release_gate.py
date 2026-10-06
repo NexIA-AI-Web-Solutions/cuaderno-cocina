@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import secrets
 import socket
 import subprocess
@@ -134,10 +135,37 @@ def provision_scanner():
     return hashlib.sha256(raw_receipt).hexdigest()
 
 
+def restore_error_category(error: RuntimeError) -> str:
+    """Reduce a bounded native error to a public enum; never retain its contents."""
+    message = str(error)[-2000:].lower()
+    categories = (
+        ('connection_refused', ('connection refused',)),
+        ('connection_closed', ('server closed the connection unexpectedly',
+                               'connection to server was lost', 'connection reset by peer')),
+        ('server_starting_or_stopping', ('the database system is starting up',
+                                         'the database system is shutting down',
+                                         'the database system is in recovery mode')),
+        ('archive_invalid', ('did not find magic string in file header',
+                              'input file does not appear to be a valid archive',
+                              'input file is too short')),
+        ('permission_error', ('permission denied', 'must be owner of')),
+        ('sql_restore_error', ('could not execute query', 'errors ignored on restore')),
+    )
+    if re.search(r'database "[^"\r\n]+" does not exist', message):
+        return 'database_missing'
+    if 'unsupported version (' in message and 'in file header' in message:
+        return 'archive_version_unsupported'
+    for category, fragments in categories:
+        if any(fragment in message for fragment in fragments):
+            return category
+    return 'other'
+
+
 def production_round_trip(image_id):
     """Exercise the real production profile/tools on a fresh CI-only database."""
     class DiagnosticBoundary(production_restore_verify.RestoreBoundary):
         failed_operation = None
+        restore_error_category = None
 
         @staticmethod
         def operation(argv):
@@ -173,9 +201,11 @@ def production_round_trip(image_id):
         def tracked(self, method, argv, **kwargs):
             try:
                 return method(argv, **kwargs)
-            except Exception:
+            except Exception as exc:
                 if self.failed_operation is None:
                     self.failed_operation = self.operation(argv)
+                    if self.failed_operation == 'docker.exec.pg_restore' and isinstance(exc, RuntimeError):
+                        self.restore_error_category = restore_error_category(exc)
                 raise
 
         def run(self, argv, *, data=None):
@@ -251,6 +281,8 @@ Path('/opt/recipes/mediafiles/ci-recovery.txt').write_text('CI persisted media\\
                           'operation': boundary.failed_operation or phase, 'cleanup': cleanup}
             if failure is not None:
                 diagnostic['error_type'] = type(failure).__name__
+            if boundary.restore_error_category is not None:
+                diagnostic['restore_error_category'] = boundary.restore_error_category
             with (report_directory / 'production-round-trip-diagnostic.json').open('x') as stream:
                 os.fchmod(stream.fileno(), 0o600)
                 json.dump(diagnostic, stream, sort_keys=True)

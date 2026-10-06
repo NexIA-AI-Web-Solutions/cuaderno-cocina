@@ -173,6 +173,14 @@ La CI del sexto candidato `ff5d1ab` pasó raíz 193/193, G7 17/17 y el ensayo pr
 
 El OOM concurrente y las recreaciones ajenas quedan en STATUS. El gestor `user@1000.service` se observó de nuevo activo a las 18:54 UTC sin actuación de Cuaderno. Capturar una nueva referencia antes de arrancar, conservar las anteriores y comparar servicios, contenedores, archivos Caddy, memoria, swap, disco y eventos OOM tras cada fase propia. No reiniciar servicios ajenos.
 
+## Readiness de PostgreSQL y diagnóstico de restauración
+
+El séptimo candidato `bda944d` pasó raíz 193/193, prefijo 309/309 y los 17 registros G7, pero su ensayo productivo adicional falló en pg_restore. No autoriza despliegue; su stderr no se retuvo y no se afirma una causa demostrada. La inicialización de la imagen oficial PostgreSQL ejecuta un servidor temporal que solo acepta sockets Unix; `pg_isready` sin host puede aceptarlo antes del servidor definitivo. Además, pg_isready no acredita por sí solo que exista la base solicitada.
+
+El octavo candidato exige TCP `127.0.0.1` con timeout de un segundo, seguido de `SELECT 1` en la base exacta por `/var/run/postgresql`, sin contraseña en argumentos, con `psql -X -w`, `ON_ERROR_STOP`, `PGCONNECT_TIMEOUT=2`, statement_timeout de un segundo y `timeout 2`. Deben coincidir salida exacta `1` y código cero. Se conservan las 120 iteraciones y sleep de un segundo, y healthcheck 10 segundos/timeout 3 segundos/20 reintentos. El presupuesto máximo previo de la espera era 480 segundos, no 120 segundos totales. pg_restore se ejecuta una vez después de readiness.
+
+El ensayo aislado externo `37531553112` pasa con la imagen PostgreSQL fijada: copia su entrypoint real (SHA256 `9c440299ae04a0a79d55b8bf03307036d890a40979d2fb698073c9050d4b20a5`), reproduce socket temporal/TCP definitivo/consulta SQL, confirma soporte de timeout y limpia sus cuatro recursos propios. Guarda solo booleanos, enums y hashes; no constituye certificación de Cuaderno. En la CI siguiente, solo el primer RuntimeError de la operación pg_restore puede añadir `restore_error_category` de una lista fija al diagnóstico. No retiene stderr, SQL, argumentos, entorno ni secretos; fallos desconocidos siguen siendo `other`. No cambia transporte, retries ni resultado del gate.
+
 ## Actualización, rollback y reboot
 
 Antes de actualizar: copia verificada, ensayo de migración aislado y registro del

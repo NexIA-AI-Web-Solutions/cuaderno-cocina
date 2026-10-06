@@ -8,9 +8,11 @@ import unittest
 if __package__:
     from . import production_restore_verify as subject
     from .production_backup import media_manifest, sha256
+    from .test_production_config_check import FakePostgresClients
 else:
     import production_restore_verify as subject
     from production_backup import media_manifest, sha256
+    from test_production_config_check import FakePostgresClients
 
 
 def archive_bytes() -> bytes:
@@ -238,6 +240,82 @@ class RestoreVerifyTests(unittest.TestCase):
         self.assertFalse(any("docker rm" in row or "network rm" in row or "volume rm" in row
                              for row in commands))
         self.assertEqual(sum(row.startswith("docker stop ") for row in commands), 2)
+
+    def database_probe_boundary(self, **kwargs):
+        clients = FakePostgresClients(**kwargs)
+        self.addCleanup(clients.cleanup)
+
+        class DatabaseProbeRestore(FakeRestore):
+            def run(self, argv, *, data=None):
+                if argv[:2] == ["docker", "exec"] and "sh" in argv and "pg_isready" in argv[-1]:
+                    self.calls.append((list(argv), data))
+                    result = clients.run(argv[-1])
+                    if result.returncode:
+                        # The real boundary retains the failure; never expose client stderr here.
+                        raise RuntimeError("synthetic database readiness failure")
+                    return result.stdout
+                if "pg_restore" in argv:
+                    self.polls_before_restore = int((clients.root / "polls").read_text())
+                return super().run(argv, data=data)
+
+        return DatabaseProbeRestore(archive_bytes()), clients
+
+    def test_waits_for_final_tcp_before_restoring_once(self):
+        docker, clients = self.database_probe_boundary(tcp_at=2)
+        self.assertTrue(subject.verify(self.bundle, boundary=docker)["passed"])
+        self.assertEqual(docker.polls_before_restore, 2)
+        self.assertEqual(sum("pg_restore" in argv for argv, _ in docker.calls), 1)
+        self.assertEqual(sum(row.startswith("sql:") for row in clients.rows()), 1)
+        self.assertEqual(clients.rows().count("sleep:1"), 1)
+
+    def test_database_missing_or_failed_sql_prevents_restore(self):
+        docker, clients = self.database_probe_boundary(sql_exit=1)
+        with self.assertRaisesRegex(RuntimeError, "database readiness failure"):
+            subject.verify(self.bundle, boundary=docker)
+        self.assertFalse(any("pg_restore" in argv for argv, _ in docker.calls))
+        self.assertEqual(sum(row.startswith("ready:") for row in clients.rows()), 120)
+        self.assertEqual(clients.rows().count("sleep:1"), 120)
+
+    def test_tcp_never_ready_does_not_query_or_restore(self):
+        docker, clients = self.database_probe_boundary(tcp_at=121)
+        with self.assertRaises(RuntimeError):
+            subject.verify(self.bundle, boundary=docker)
+        self.assertFalse(any("pg_restore" in argv for argv, _ in docker.calls))
+        self.assertFalse(any(row.startswith("sql:") for row in clients.rows()))
+        self.assertEqual(sum(row.startswith("ready:") for row in clients.rows()), 120)
+
+    def test_wrong_sql_scalar_does_not_restore(self):
+        docker, _ = self.database_probe_boundary(sql_result="0")
+        with self.assertRaises(RuntimeError):
+            subject.verify(self.bundle, boundary=docker)
+        self.assertFalse(any("pg_restore" in argv for argv, _ in docker.calls))
+
+    def test_allowlisted_saved_database_is_used_by_both_readiness_clients(self):
+        self.edit_manifest(schema_version=3, configuration={"runtime_environment": {
+            "POSTGRES_DB": "cuaderno_saved", "POSTGRES_USER": "cuaderno_saved_user"}})
+        docker, clients = self.database_probe_boundary()
+        subject.verify(self.bundle, boundary=docker)
+        for prefix in ("ready:", "sql:"):
+            row = next(row for row in clients.rows() if row.startswith(prefix))
+            self.assertIn("-U cuaderno_saved_user -d cuaderno_saved", row)
+
+    def test_database_probe_keeps_the_existing_poll_and_per_probe_budget(self):
+        docker = FakeRestore(archive_bytes())
+        subject.verify(self.bundle, boundary=docker)
+        command = next(argv[-1] for argv, _ in docker.calls if "pg_isready" in argv[-1])
+        self.assertIn("seq 1 120", command)
+        self.assertIn("sleep 1", command)
+        self.assertIn("-t 1", command)
+        self.assertIn("timeout 2 psql", command)
+        self.assertIn("PGCONNECT_TIMEOUT=2", command)
+        self.assertIn("statement_timeout=1000", command)
+
+    def test_probe_refuses_shell_syntax_or_overlong_identifiers(self):
+        for invalid in ("name; exit 0", "name\nother", "-option", "a" * 64):
+            with self.subTest(length=len(invalid)), self.assertRaises(ValueError):
+                subject.database_ready_probe(invalid, "cuaderno_prod")
+            with self.subTest(length=len(invalid)), self.assertRaises(ValueError):
+                subject.database_ready_probe("cuaderno_prod", invalid)
 
 
 if __name__ == "__main__":

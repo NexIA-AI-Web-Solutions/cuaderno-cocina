@@ -24,7 +24,7 @@ services:
     pids_limit: 128
     security_opt: [no-new-privileges:true]
     healthcheck:
-      test: [CMD-SHELL, pg_isready -U cuaderno_prod -d cuaderno_prod]
+      test: ["CMD-SHELL", "pg_isready -q -h 127.0.0.1 -t 1 -U cuaderno_prod -d cuaderno_prod >/dev/null 2>&1 && result=$$(PGCONNECT_TIMEOUT=2 PGOPTIONS='-c statement_timeout=1000' timeout 2 psql -X -w -h /var/run/postgresql -U cuaderno_prod -d cuaderno_prod -v ON_ERROR_STOP=1 -At -c 'SELECT 1' 2>/dev/null) && [ \"$$result\" = \"1\" ]"]
       interval: 10s
       timeout: 3s
       retries: 20
