@@ -110,7 +110,7 @@ jobs:
         shell: bash
         run: |
           sed '/# Development/,$d' requirements.txt > /tmp/cuaderno-production-requirements.txt
-          python -c 'from pathlib import Path; from scripts.cuaderno.release_runtime_check import _dev_requirements; Path("/tmp/cuaderno-test-requirements.txt").write_text(_dev_requirements(Path("requirements.txt")))'
+          python -c 'from pathlib import Path; from scripts.cuaderno.release_runtime_check import _dev_requirements; Path("/tmp/cuaderno-test-requirements.txt").write_text(_dev_requirements(Path(".")))'
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt pip setuptools wheel setuptools-rust
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt -r /tmp/cuaderno-production-requirements.txt
           python scripts/cuaderno/python_lock.py --constraints tooling/cuaderno/python-production.constraints.txt --requirements /tmp/cuaderno-production-requirements.txt --installed
@@ -172,7 +172,7 @@ jobs:
         shell: bash
         run: |
           sed '/# Development/,$d' requirements.txt > /tmp/cuaderno-production-requirements.txt
-          python -c 'from pathlib import Path; from scripts.cuaderno.release_runtime_check import _dev_requirements; Path("/tmp/cuaderno-test-requirements.txt").write_text(_dev_requirements(Path("requirements.txt")))'
+          python -c 'from pathlib import Path; from scripts.cuaderno.release_runtime_check import _dev_requirements; Path("/tmp/cuaderno-test-requirements.txt").write_text(_dev_requirements(Path(".")))'
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt pip setuptools wheel setuptools-rust
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt -r /tmp/cuaderno-production-requirements.txt
           python scripts/cuaderno/python_lock.py --constraints tooling/cuaderno/python-production.constraints.txt --requirements /tmp/cuaderno-production-requirements.txt --installed

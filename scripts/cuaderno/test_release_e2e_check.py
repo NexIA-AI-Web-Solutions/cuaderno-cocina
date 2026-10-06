@@ -236,7 +236,8 @@ class ReleaseE2ECheckTests(unittest.TestCase):
                     raise subprocess.TimeoutExpired(["node"], timeout, output="partial\n")
                 return "tail\n", None
 
-        with patch.object(subject.os, "name", "nt"):
+        with patch.object(subject.os, "name", "nt"), \
+             patch.object(subject.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x200, create=True):
             code, output = subject.run_process(
                 ["node"], cwd=self.e2e, env={}, timeout=3,
                 process_factory=lambda argv, **kwargs: Process(),
@@ -269,7 +270,8 @@ class ReleaseE2ECheckTests(unittest.TestCase):
             def communicate(self, timeout=None):
                 raise subprocess.TimeoutExpired(["node"], timeout, output="partial")
 
-        with patch.object(subject.os, "name", "nt"):
+        with patch.object(subject.os, "name", "nt"), \
+             patch.object(subject.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x200, create=True):
             failed, failed_output = subject.run_process(
                 ["node"], cwd=self.e2e, env={}, timeout=2,
                 process_factory=lambda argv, **kwargs: Process(),

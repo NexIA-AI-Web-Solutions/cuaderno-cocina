@@ -322,7 +322,7 @@ class RuntimeCheckTests(unittest.TestCase):
         cleanup = []
         with patch.object(subject.subprocess, "Popen", return_value=Process()), \
              patch.object(subject.subprocess, "run", side_effect=lambda argv, **_kwargs: cleanup.append(argv)), \
-             patch.object(subject.subprocess, "CREATE_NEW_PROCESS_GROUP", 0), \
+             patch.object(subject.subprocess, "CREATE_NEW_PROCESS_GROUP", 0, create=True), \
              patch.object(subject.subprocess, "DEVNULL", -3):
             code, output = subject.run_container(["docker", "run"], root=self.root, timeout=3600,
                                                  container="cuaderno-release-check-deadbeef")
