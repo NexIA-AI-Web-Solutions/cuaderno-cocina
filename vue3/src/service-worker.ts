@@ -1,28 +1,39 @@
 /// <reference lib="webworker" />
 // Cache only built/public assets. Authenticated data is always network-only.
-import {precacheAndRoute, cleanupOutdatedCaches} from 'workbox-precaching';
+import {precacheAndRoute} from 'workbox-precaching';
 import {registerRoute, setCatchHandler} from 'workbox-routing';
-import {CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate} from 'workbox-strategies';
+import {CacheFirst, NetworkFirst, NetworkOnly} from 'workbox-strategies';
 import {ExpirationPlugin} from 'workbox-expiration';
 import {Queue} from 'workbox-background-sync';
-import {clientsClaim} from 'workbox-core';
+import {clientsClaim, setCacheNameDetails} from 'workbox-core';
 
 declare let self: ServiceWorkerGlobalScope
-cleanupOutdatedCaches()
-precacheAndRoute(self.__WB_MANIFEST)
+const scope = new URL(self.registration.scope)
+if (scope.origin !== self.location.origin || scope.pathname === '/' || !scope.pathname.endsWith('/')) {
+    throw new Error('Cuaderno service worker requires a same-origin deployment prefix')
+}
+const namespace = `cuaderno-${encodeURIComponent(scope.pathname)}`
+const staticPath = `${scope.pathname}static/`
+const builtAssets = new URL('static/vue3/', scope)
+setCacheNameDetails({prefix: namespace, suffix: 'v1', precache: 'precache', runtime: 'runtime'})
+// The worker is served beside the application, while Vite emits build-relative URLs.
+// Reject any manifest entry outside this application's public static directory.
+const publicManifest = self.__WB_MANIFEST.flatMap(entry => {
+    const url = new URL(typeof entry === 'string' ? entry : entry.url, builtAssets)
+    if (url.origin !== scope.origin || !url.pathname.startsWith(staticPath)) return []
+    return [typeof entry === 'string' ? url.href : {...entry, url: url.href}]
+})
+precacheAndRoute(publicManifest)
 self.skipWaiting()
 clientsClaim()
 
-// Keep the legacy identity only to discard pending writes, never to replay them.
+// Pending writes belong only to this deployment and are discarded, never replayed.
 async function discardQueuedWrites({queue}: {queue: Queue}) {
     while (await queue.shiftRequest()) { /* intentionally no fetch/replay */ }
 }
-const queue = new Queue('shopping-sync-queue', {onSync: discardQueuedWrites})
+const queue = new Queue(`${namespace}-shopping-sync-queue`, {onSync: discardQueuedWrites})
 self.addEventListener('activate', event => {
-    event.waitUntil(Promise.all([
-        ...['images', 'api', 'api-recipe', 'html', 'offline-html'].map(name => caches.delete(name)),
-        discardQueuedWrites({queue}),
-    ]))
+    event.waitUntil(discardQueuedWrites({queue}))
 })
 
 setCatchHandler(async ({request}) => {
@@ -40,29 +51,26 @@ setCatchHandler(async ({request}) => {
 // Must precede asset routes: protected data must never reach a runtime cache.
 registerRoute(
     ({request, url}) => request.destination === 'document' ||
-        url.pathname.startsWith('/api/') || url.pathname.startsWith('/media/') ||
+        (url.origin === scope.origin && (url.pathname.startsWith(`${scope.pathname}api/`) ||
+            url.pathname.startsWith(`${scope.pathname}media/`))) ||
         (request.destination === 'image' &&
-            (url.origin !== self.location.origin || !url.pathname.startsWith('/static/'))),
+            (url.origin !== self.location.origin || !url.pathname.startsWith(staticPath))),
     new NetworkOnly(),
 )
 for (const method of ['POST', 'PATCH', 'PUT', 'DELETE'] as const) {
-    registerRoute(({url}) => url.origin === self.location.origin, new NetworkOnly(), method)
+    registerRoute(({url}) => url.origin === scope.origin && url.pathname.startsWith(scope.pathname), new NetworkOnly(), method)
 }
 registerRoute(
     ({request, url}) => request.destination === 'image' &&
-        url.origin === self.location.origin && url.pathname.startsWith('/static/'),
-    new CacheFirst({cacheName: 'public-images', plugins: [new ExpirationPlugin({maxEntries: 20})]}),
+        url.origin === self.location.origin && url.pathname.startsWith(staticPath),
+    new CacheFirst({cacheName: `${namespace}-public-images`, plugins: [new ExpirationPlugin({maxEntries: 20})]}),
 )
 registerRoute(
-    ({request, url}) => url.origin === self.location.origin && url.pathname.startsWith('/static/') &&
+    ({request, url}) => url.origin === self.location.origin && url.pathname.startsWith(staticPath) &&
         (request.destination === 'script' || request.destination === 'style'),
-    new NetworkFirst({cacheName: 'assets', plugins: [new ExpirationPlugin({
+    new NetworkFirst({cacheName: `${namespace}-assets`, plugins: [new ExpirationPlugin({
         maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7,
     })]}),
-)
-registerRoute(
-    ({url}) => url.origin === self.location.origin && /\/(jsreverse|jsi18n)\//.test(url.pathname),
-    new StaleWhileRevalidate({cacheName: 'assets'}),
 )
 self.addEventListener('message', event => {
     const port = event.ports[0]

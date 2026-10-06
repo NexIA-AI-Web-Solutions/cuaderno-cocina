@@ -1,5 +1,21 @@
 # Aceptación final
 
+## Candidato para prefijo — 6 de octubre de 2026
+
+- [x] Paquete y fuente inicial comprobados; autorización de fork/VPS vigente.
+- [x] Correcciones de prefijo/cookies/media/manifest/worker/health y recursos implementadas con pruebas focalizadas y revisión independiente.
+- [x] Inspección VPS: rutas/namespaces/puertos libres, correo 8080 conservado, reboot existente sin cambios.
+- [ ] CI del nuevo commit, imagen inmutable, SBOM/provenance y auditoría Linux.
+- [ ] 17 checks G7 del mismo candidato, restauración y rollback reales aislados.
+- [ ] Playwright HTTPS con prefijo: tres ediciones, tres roles, tres anchuras y tres motores.
+- [ ] Arranque productivo nuevo, migraciones, administrador y smokes por loopback.
+- [ ] Backup local privado y restauración productiva aislada; copia externa no configurada.
+- [ ] Caddy respaldado/validado/recargado y apps existentes comparadas.
+- [ ] Playwright HTTPS real y medición de recursos/OOM/persistencia.
+
+Estas casillas son pendientes reales; el CI base verde no las completa. La imagen recibida es referencia para rollback, no imagen con estas correcciones.
+
+
 El cierre actual usa `scripts/cuaderno/candidate_check.py`, `release_manifest_collect.py` y `release_gate.py`. El resultado actual y los hashes de sus 17 pruebas se conservan en `.cuaderno-runs/release-manifest.json`; la explicación legible está en `.cuaderno-runs/RELEASE_REPORT.md`. Esta evidencia generada queda fuera de Git para no invalidar las fuentes congeladas ni publicar trazas/sesiones sintéticas. Las casillas históricas siguientes conservan su fecha: no son el dictamen del nuevo candidato.
 
 La matriz browser incluye Esencial/Profesional/Integral, Consulta/Cocina/Responsable, 390/768/1440 px y controles adicionales Firefox/WebKit. El informe distingue ejecuciones exploratorias de la imagen anterior y aceptación final. La certificación de iPad físico, datos del programa antiguo y VPS/TLS reales sigue requiriendo sus respectivos entornos.

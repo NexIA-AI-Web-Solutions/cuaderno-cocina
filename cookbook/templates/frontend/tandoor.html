@@ -53,16 +53,24 @@
 
 <div id="app"></div>
 
+{{ django_config|json_script:'django_config' }}
+
 {% vite_hmr_client %}
 {% vite_asset 'src/apps/tandoor/main.ts' %}
 
 <script type="application/javascript">
     window.addEventListener("load", () => {
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("{% url 'service_worker' %}", {scope: document.baseURI}).then(function (reg) {
-            }).catch(function (err) {
-                console.warn('Error whilst registering service worker', err);
-            });
+            const scope = new URL(document.baseURI);
+            const worker = new URL("{% url 'service_worker' %}", scope);
+            // This origin hosts other applications: never register a root worker.
+            if (scope.origin === window.location.origin && scope.pathname !== '/' &&
+                scope.pathname.endsWith('/') && !scope.search && !scope.hash &&
+                worker.href === new URL('service-worker.js', scope).href) {
+                navigator.serviceWorker.register(worker.href, {scope: scope.href}).catch(function (err) {
+                    console.warn('Error whilst registering service worker', err);
+                });
+            }
         } else {
             console.warn('service worker not in navigator');
         }

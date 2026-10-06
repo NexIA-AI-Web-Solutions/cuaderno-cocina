@@ -33,6 +33,7 @@ export default defineConfig(async ({command, mode, isSsrBuild, isPreview}) => {
                 autoImport: true,
             }),
             VitePWA({
+                injectRegister: false,
                 //registerType: 'autoUpdate',
                 strategies: 'injectManifest',
                 srcDir: 'src',

@@ -1,45 +1,60 @@
 import {expect, test as base, type Page, type TestInfo} from '@playwright/test'
-import {parseProject, type Identity} from './contracts.js'
+import {appPath, parseProject, type Identity} from './contracts.js'
 
 type Fixtures = {identity: Identity; cleanPage: Page}
+
+export function collectBrowserFailures(page: Page): () => Promise<void> {
+  const failures: string[] = []
+  const pendingConsole = new Set<Promise<void>>()
+  page.on('pageerror', error => failures.push(`pageerror: ${error.message}`))
+  page.on('console', message => {
+    if (message.type() !== 'error') return
+    const capture = Promise.all(message.args().map(async argument => {
+      try {
+        const value: unknown = await argument.evaluate(value => {
+          if (value instanceof Error) {
+            return {name: value.name, message: value.message, stack: value.stack}
+          }
+          return value
+        })
+        return typeof value === 'string' ? value : JSON.stringify(value)
+      } catch {
+        return argument.toString()
+      }
+    })).then(values => {
+      const detail = values.filter(Boolean).join(' ')
+      failures.push(`console: ${detail || message.text()}`)
+    })
+    pendingConsole.add(capture)
+    void capture.finally(() => pendingConsole.delete(capture))
+  })
+  page.on('request', request => {
+    const url = new URL(request.url())
+    const base = new URL(process.env.BASE_URL || 'http://127.0.0.1:18081')
+    const prefix = base.pathname.replace(/\/+$/, '') + '/'
+    if (prefix !== '/' && url.origin === base.origin && !url.pathname.startsWith(prefix)) {
+      failures.push(`outside application prefix: ${request.method()} ${url.pathname}`)
+    }
+  })
+  page.on('requestfailed', request => {
+    const reason = request.failure()?.errorText || 'fallo desconocido'
+    if (!reason.includes('ERR_ABORTED')) failures.push(`network: ${request.method()} ${request.url()} (${reason})`)
+  })
+  page.on('response', response => {
+    if (response.status() >= 500) failures.push(`http ${response.status()}: ${response.request().method()} ${response.url()}`)
+  })
+  return async () => {
+    await Promise.allSettled(pendingConsole)
+    expect(failures, failures.join('\n')).toEqual([])
+  }
+}
 
 export const test = base.extend<Fixtures>({
   identity: async ({}, use, testInfo) => use(parseProject(testInfo.project.name)),
   cleanPage: async ({page}, use) => {
-    const failures: string[] = []
-    const pendingConsole = new Set<Promise<void>>()
-    page.on('pageerror', error => failures.push(`pageerror: ${error.message}`))
-    page.on('console', message => {
-      if (message.type() !== 'error') return
-      const capture = Promise.all(message.args().map(async argument => {
-        try {
-          const value: unknown = await argument.evaluate(value => {
-            if (value instanceof Error) {
-              return {name: value.name, message: value.message, stack: value.stack}
-            }
-            return value
-          })
-          return typeof value === 'string' ? value : JSON.stringify(value)
-        } catch {
-          return argument.toString()
-        }
-      })).then(values => {
-        const detail = values.filter(Boolean).join(' ')
-        failures.push(`console: ${detail || message.text()}`)
-      })
-      pendingConsole.add(capture)
-      void capture.finally(() => pendingConsole.delete(capture))
-    })
-    page.on('requestfailed', request => {
-      const reason = request.failure()?.errorText || 'fallo desconocido'
-      if (!reason.includes('ERR_ABORTED')) failures.push(`network: ${request.method()} ${request.url()} (${reason})`)
-    })
-    page.on('response', response => {
-      if (response.status() >= 500) failures.push(`http ${response.status()}: ${response.request().method()} ${response.url()}`)
-    })
+    const assertClean = collectBrowserFailures(page)
     await use(page)
-    await Promise.allSettled(pendingConsole)
-    expect(failures, failures.join('\n')).toEqual([])
+    await assertClean()
   },
 })
 
@@ -53,13 +68,15 @@ export async function api<T = unknown>(
   init: {method?: string; body?: unknown; headers?: Record<string, string>} = {},
 ): Promise<ApiResult<T>> {
   const csrf = await page.evaluate(() => {
-    const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))
+    const config = JSON.parse(document.getElementById('django_config')?.textContent || '{}')
+    const name = config.csrfCookieName || (location.pathname.startsWith('/cuaderno-cocina/') ? 'cuaderno_csrftoken' : 'csrftoken')
+    const cookie = document.cookie.split('; ').find(row => row.startsWith(name + '='))
     return cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : ''
   })
   const method = init.method || 'GET'
   // Share the real browser session/cookies while keeping deliberate HTTP error
   // assertions out of its console. UI requests still use the strict collector.
-  const response = await page.context().request.fetch(path, {
+  const response = await page.context().request.fetch(appPath(path), {
     method,
     headers: {
       Accept: 'application/json',
@@ -87,7 +104,7 @@ export function rows(value: unknown): Record<string, unknown>[] {
 }
 
 export async function enterApp(page: Page): Promise<void> {
-  await page.goto('/')
+  await page.goto(appPath('/'))
   await expect(page).not.toHaveURL(/\/accounts\/login\//)
   await expect(page.locator('#app')).toBeVisible()
 }

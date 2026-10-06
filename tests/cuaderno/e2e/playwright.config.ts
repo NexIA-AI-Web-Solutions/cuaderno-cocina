@@ -4,10 +4,11 @@ import {authFile, editions, projectName, roles, widths} from './contracts.js'
 const baseURL = process.env.BASE_URL || 'http://127.0.0.1:18081'
 const outputDir = process.env.CUADERNO_E2E_OUTPUT_DIR || 'test-results'
 const htmlReportDir = process.env.CUADERNO_E2E_HTML_REPORT || 'playwright-report'
+const prefixAcceptance = process.env.CUADERNO_E2E_PREFIX === '1'
 
 const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => widths.map(width => ({
   name: projectName(edition, role, width),
-  testIgnore: /browser-acceptance\.spec\.ts/,
+  testIgnore: prefixAcceptance ? /browser-acceptance\.spec\.ts/ : /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/,
   use: {
     ...devices['Desktop Chrome'],
     baseURL,
@@ -22,7 +23,7 @@ const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => wi
 projects.push(
   {
     name: projectName('esencial', 'responsable', 390, 'firefox'),
-    testMatch: /browser-acceptance\.spec\.ts/,
+    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/ : /browser-acceptance\.spec\.ts/,
     use: {
       ...devices['Desktop Firefox'],
       baseURL,
@@ -32,7 +33,7 @@ projects.push(
   },
   {
     name: projectName('integral', 'responsable', 768, 'webkit'),
-    testMatch: /browser-acceptance\.spec\.ts/,
+    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/ : /browser-acceptance\.spec\.ts/,
     use: {
       ...devices['Desktop Safari'],
       baseURL,
@@ -56,6 +57,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['line'], ['html', {open: 'never', outputFolder: htmlReportDir}]] : 'list',
   use: {
     baseURL,
+    ignoreHTTPSErrors: process.env.CUADERNO_E2E_SELF_SIGNED === '1',
     locale: 'es-ES',
     timezoneId: 'Europe/Madrid',
     actionTimeout: 10_000,

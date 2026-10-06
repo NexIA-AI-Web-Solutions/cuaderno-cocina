@@ -13,7 +13,7 @@ acceso de administrador al host.
 
 La herramienta crea un subdirectorio nuevo por ejecución, detiene `web`, rechaza
 clientes de base de datos ajenos, genera el dump y el archivo media, y vuelve a
-iniciar `web` en un bloque `finally`. No lee ni imprime valores del env file.
+iniciar `web` en un bloque `finally`. Con `--include-env` copia el env file a `environment.env`, privado 0600 y con hash; no imprime sus valores.
 
 La retención, el cifrado y la copia remota deben implementarse como un hook externo
 que solo reciba bundles cerrados que ya contienen `manifest.json`. Ese hook debe
@@ -28,6 +28,6 @@ Verifica periódicamente una copia con:
 ```
 
 La verificación crea recursos con el prefijo `cuaderno-restore-<uuid>` en una red
-interna sin puertos publicados y los conserva para revisión. Nunca modifica ni
+interna sin puertos publicados. Detiene los contenedores de ese namespace después del ensayo y conserva sus volúmenes para revisión. Nunca modifica ni
 promueve `cuaderno-prod`. Si se facilita `--runtime-image sha256:...`, también
 arranca esa imagen en el namespace aislado y exige que su readiness responda.

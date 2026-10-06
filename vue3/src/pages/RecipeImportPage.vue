@@ -654,15 +654,19 @@ const {updateRecipeImage, doAiImport, doAppImport, fileApiLoading} = useFileApi(
 const {getFullUrl} = useDjangoUrls()
 
 const bookmarkletContent = computed(() => {
+    const config = JSON.stringify({
+        url: getFullUrl('/api/bookmarklet-import/'),
+        redirect: getFullUrl('/recipe/import/'),
+        token: bookmarkletToken.value,
+    })
+    const scriptUrl = new URL(bookmarkletJs, new URL('static/vue3/', document.baseURI)).href
     return 'javascript:(function(){' +
-        'if(window.bookmarkletTandoor!==undefined){' +
-        'bookmarkletTandoor();' +
-        '} else {' +
-        `localStorage.setItem("importURL", "${getFullUrl('/api/bookmarklet-import/')}");` +
-        `localStorage.setItem("redirectURL", "${getFullUrl('/recipe/import/')}");` +
-        `localStorage.setItem("token", "${bookmarkletToken.value}");` +
-        `document.body.appendChild(document.createElement("script")).src="${bookmarkletJs}"}` +
-        `})()`
+        `const config=${config};` +
+        'if(window.cuadernoBookmarklet!==undefined){window.cuadernoBookmarklet(config);}' +
+        'else{const script=document.createElement("script");' +
+        'script.onload=function(){window.cuadernoBookmarklet(config);};' +
+        `script.src=${JSON.stringify(scriptUrl)};document.body.appendChild(script);}` +
+        '})()'
 })
 
 const importType = ref<'url' | 'ai' | 'app' | 'bookmarklet' | 'source' | 'url-list'>("url")

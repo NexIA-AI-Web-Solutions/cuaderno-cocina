@@ -1,5 +1,6 @@
 import {acceptHMRUpdate, defineStore} from 'pinia'
 import {ref} from "vue";
+import {cuadernoStorageKey} from "@/cuaderno/storage";
 import {useStorage} from "@vueuse/core";
 import {DateTime} from "luxon";
 import {ResponseError} from "@/openapi";
@@ -76,7 +77,7 @@ export class Message {
 }
 
 export const useMessageStore = defineStore('message_store', () => {
-    let messages = useStorage('LOCAL_MESSAGES', [] as Message[])
+    let messages = useStorage(cuadernoStorageKey('messages'), [] as Message[])
     let snackbarQueue = ref([] as Message[])
 
     const {t} = useI18n()

@@ -314,6 +314,19 @@ def main(*, environ=None, process_runner=None, context_validator=None):
     if environ.get("CUADERNO_ENV") not in {"local", "test", "development"}:
         raise ValueError("Solo un entorno local aislado; nunca datos reales.")
     candidate_image = _candidate_image(environ, root=ROOT, context_validator=context_validator)
+    native_image = environ.get("CUADERNO_NATIVE_BASELINE_IMAGE")
+    native_proof = environ.get("CUADERNO_NATIVE_BASELINE_PROOF")
+    if native_image is not None or native_proof is not None:
+        if environ.get("CUADERNO_ENV") != "test":
+            raise ValueError("La base nativa reproducible solo se admite en CUADERNO_ENV=test.")
+        if not native_image or IMAGE_RE.fullmatch(native_image) is None or not native_proof or not candidate_image:
+            raise ValueError("La base nativa exige ImageID, prueba y contexto candidato exactos.")
+        try:
+            from .native_baseline_build import verify_proof
+        except ImportError:
+            from native_baseline_build import verify_proof
+        verify_proof(native_image, Path(native_proof), parent_image=candidate_image, root=ROOT,
+                     process_runner=process_runner)
     password = uuid.uuid4().hex
 
     def run(argv, *, check=True):
@@ -324,9 +337,11 @@ def main(*, environ=None, process_runner=None, context_validator=None):
             raise RuntimeError(f"Comando fallido (exit={result.returncode}); recursos sintéticos retenidos.")
         return result
 
-    pin = run(["docker", "image", "inspect", PIN_IMAGE, "--format", "{{.Id}}"])
-    if pin.stdout.strip() != PIN_IMAGE_ID:
-        raise ValueError("Imagen pin no coincide con baseline intacto.")
+    if native_image is None:
+        pin = run(["docker", "image", "inspect", PIN_IMAGE, "--format", "{{.Id}}"])
+        if pin.stdout.strip() != PIN_IMAGE_ID:
+            raise ValueError("Imagen pin no coincide con baseline intacto.")
+    pin_image = native_image or PIN_IMAGE_ID
     release_ref = candidate_image or "cuaderno-cocina:local"
     release = run(["docker", "image", "inspect", release_ref, "--format", "{{.Id}}"])
     release_image = release.stdout.strip()
@@ -369,7 +384,7 @@ def main(*, environ=None, process_runner=None, context_validator=None):
         f"assert database['HOST']=={db_container!r}; assert database['NAME']=={database!r}; "
         "print('UPGRADE_PREFLIGHT_OK: exact isolated host/database verified before migrations')"
     )
-    for phase, image, source in (("pin", PIN_IMAGE_ID, PIN_FIXTURE), ("release", release_tag, UPGRADE_ASSERTIONS)):
+    for phase, image, source in (("pin", pin_image, PIN_FIXTURE), ("release", release_tag, UPGRADE_ASSERTIONS)):
         container = f"{namespace}-{phase}"
         run(["docker", "run", "--name", f"{container}-preflight", "--network", namespace, *environment,
              "--entrypoint", "/opt/recipes/venv/bin/python", image, "-c", preflight])

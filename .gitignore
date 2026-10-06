@@ -102,3 +102,14 @@ vue3/vite.config.js
 vue3/vite.config.d.ts
 vue3/src/types/Plugins.js
 vue3/src/types/Plugins.d.ts
+
+# Portable private runtime and evidence exclusions
+.cuaderno-runs/
+.git/
+.env
+.env.*
+**/.env
+**/.env.*
+.venv/
+venv/
+data/

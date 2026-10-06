@@ -32,7 +32,7 @@ El typecheck utiliza la fuente y todas las dependencias de la etapa Linux `front
 
 ## Preparación del servidor, solo cuando se autorice el despliegue
 
-Necesita Linux con Docker/Compose, espacio para PostgreSQL/media/copias y un dominio con HTTPS. Usar el Caddy que ya sirve el VPS: [fragmento Caddy](../install/caddy/Caddyfile). No arrancar un segundo proxy. El servicio web debe publicar **solo `127.0.0.1:8080:80`**; PostgreSQL no publica puertos. No reutilizar nombres, redes ni volúmenes `cuaderno-release` de la demo.
+Necesita Linux con Docker/Compose, espacio para PostgreSQL/media/copias y un dominio con HTTPS. Usar el Caddy que ya sirve el VPS: [fragmento Caddy](../install/caddy/Caddyfile). No arrancar un segundo proxy. El servicio web debe publicar **solo `127.0.0.1:18081:80`**; PostgreSQL no publica puertos. No reutilizar nombres, redes ni volúmenes `cuaderno-release` de la demo.
 
 1. Obtener la rama y fijar un commit revisado, sin modificaciones locales. Construir con `deploy/cuaderno/Dockerfile`, no con el Dockerfile upstream ni una imagen Tandoor sin nuestros módulos. En un checkout limpio de Linux:
 
@@ -77,7 +77,7 @@ python3 scripts/cuaderno/production_backup.py --env-file /etc/cuaderno/productio
 python3 scripts/cuaderno/production_restore_verify.py /var/backups/cuaderno/BUNDLE --runtime-image sha256:IMAGE_ID
 ```
 
-`production_backup.py` valida el archivo privado y destino, identifica únicamente `cuaderno-prod`, detiene su escritor web, rechaza clientes externos de BD, obtiene dump/media y hashes/conteos/secuencias, y reanuda la web en `finally`. No imprime ni guarda valores secretos. Cada ejecución crea un bundle nuevo. `production_restore_verify.py` verifica el bundle antes de actuar y restaura en red, BD y media nuevos, sin puertos publicados; con `--runtime-image` exige readiness de esa imagen exacta. Conserva recursos aislados e informe para revisión y nunca promueve ni sustituye `cuaderno-prod`.
+`production_backup.py` valida el archivo privado y destino, identifica únicamente `cuaderno-prod`, detiene su escritor web, rechaza clientes externos de BD, obtiene dump/media y hashes/conteos/secuencias, y reanuda la web en `finally`. No imprime secretos. Con `--include-env` guarda además una copia privada 0600 de la configuración, cuya transferencia exige cifrado. Cada ejecución crea un bundle nuevo. `production_restore_verify.py` verifica el bundle antes de actuar y restaura en red, BD y media nuevos, sin puertos publicados; con `--runtime-image` exige readiness de esa imagen exacta. Detiene únicamente los contenedores aislados verificados y conserva volúmenes e informe para revisión y nunca promueve ni sustituye `cuaderno-prod`.
 
 Las [unidades de backup](../../deploy/cuaderno/backup/README.md) son ejemplos para systemd; el operador debe revisar usuario, rutas, privilegios Docker y ventana antes de activarlas. La retención y copia cifrada remota requieren un destino y política elegidos por el operador. No se configura un proveedor externo ni se activa un temporizador automáticamente.
 

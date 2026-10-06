@@ -1,5 +1,18 @@
 # Estado del producto
 
+## Despliegue autorizado bajo prefijo — 6 de octubre de 2026
+
+El propietario autoriza corregir, publicar en su fork y desplegar en `https://gex-dashboard.hopto.org/cuaderno-cocina/`. Se verificaron paquete, HEAD limpio inicial y los 2.350 archivos: `f2e3f3ca6da66848fd1234c6189a342184316d52+worktree.d793040fafe38d541b0a69356ce7ba2b91ba8fcbb6f7b3b8e88205fe98604725`. La autorización actual sustituye las restricciones históricas de publicación de este documento.
+
+Correcciones implementadas: URLs y uploads derivados del base Django, cookies configuradas y limitadas al prefijo, media compartida de mismo origen, share target del manifiesto, healthcheck con excepción HTTPS exacta, worker/caches/cola/storage propios, Compose de bajo consumo y recuperación con configuración reproducida e identidad de imagen estricta. Revisión independiente de código recibida; el CI y las pruebas reales del nuevo candidato todavía deben terminar. Los resultados del CI base no se transfieren a esta revisión.
+
+Pruebas focalizadas: 25 frontend/PWA PASS, 4 Django proxy PASS tras regresión roja, 21 backup/restore unitarias PASS y 3 autenticación E2E PASS. Se usan dependencias existentes, sin instalar Node ni navegadores en el VPS. La matriz CI añade HTTPS con prefijo y perfil productivo, conservando ediciones/roles/anchuras y Firefox/WebKit; G7 recoge 17 evidencias reales del mismo candidato y falla si falta alguna.
+
+Inspección inicial: RAM disponible 2,3 GiB; swap usada 2,2/4 GiB; disco libre 23 GiB; ningún OOM en el journal consultado. 18081–18083 y los directorios productivos propuestos estaban libres. Correo en 8080 intacto; no se reinicia ningún servicio ajeno. El temporizador de reboot existente permanece habilitado. **Todavía no hay despliegue de Cuaderno ni modificación/recarga de Caddy.**
+
+El propietario indica backups en una subcarpeta del proyecto. Será una copia local privada; no existe destino externo confirmado y no se acredita offsite. Procedimiento y límites en [runbook VPS](VPS_RUNBOOK_ES.md). Las pruebas reales de recuperación/rollback del nuevo candidato siguen pendientes hasta disponer de su imagen.
+
+
 ## Candidato local de cierre — 4 de octubre
 
 La continuidad actual ejecuta los gates del candidato y la aceptación multiagente real. El resultado verificable se guarda fuera de las fuentes congeladas en `.cuaderno-runs/release-manifest.json` y `.cuaderno-runs/RELEASE_REPORT.md`; una implementación o un informe antiguo no sustituyen ese resultado. El preview local está autorizado en http://127.0.0.1:18081. No hay autorización nueva de despliegue externo.

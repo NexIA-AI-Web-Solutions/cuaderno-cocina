@@ -24,7 +24,7 @@ def application(environ, start_response):
     if script_name:
         environ['SCRIPT_NAME'] = script_name
         path_info = environ['PATH_INFO']
-        if path_info.startswith(script_name):
+        if path_info == script_name or path_info.startswith(script_name + '/'):
             environ['PATH_INFO'] = path_info[len(script_name):]
 
     scheme = environ.get('HTTP_X_SCHEME', '')

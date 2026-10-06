@@ -54,6 +54,7 @@ import {useI18n} from "vue-i18n";
 import {SUPPORT_LOCALES, resolveLocale, localeCoverage, LOCALE_MIN_COVERAGE} from "@/i18n.ts";
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import HelpView from "@/components/display/HelpView.vue";
+import {setDjangoLanguage} from "@/utils/djangoConfig";
 
 interface LocalizationWithCoverage {
     code: string
@@ -124,7 +125,7 @@ onMounted(() => {
 function updateLanguage() {
     const expires = new Date();
     expires.setTime(expires.getTime() + (100 * 365 * 24 * 60 * 60 * 1000));
-    document.cookie = `django_language=${locale.value}; expires=${expires.toUTCString()}; path=/`;
+    setDjangoLanguage(locale.value, expires);
     location.reload()
 }
 

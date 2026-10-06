@@ -1,3 +1,5 @@
+import {djangoBaseUrl, getDjangoConfig} from "@/utils/djangoConfig"
+
 export const RECIPE_SHARE_TOKEN_KEY = 'recipeShareToken'
 
 /** Attach recipe capability only to same-origin protected media. */
@@ -11,7 +13,9 @@ export function sharedMediaUrl(source: string | undefined, token: string | undef
         return source
     }
 
-    if (mediaUrl.origin !== origin || !mediaUrl.pathname.startsWith('/media/')) return source
+    const mediaRoot = new URL(getDjangoConfig().mediaUrl, origin)
+    const mediaPath = mediaRoot.pathname.replace(/\/+$/, '') + '/'
+    if (mediaRoot.origin !== origin || mediaUrl.origin !== origin || !mediaPath.startsWith(djangoBaseUrl().pathname) || !mediaUrl.pathname.startsWith(mediaPath)) return source
 
     mediaUrl.searchParams.set('share', token)
     return source.startsWith('/') ? `${mediaUrl.pathname}${mediaUrl.search}${mediaUrl.hash}` : mediaUrl.toString()

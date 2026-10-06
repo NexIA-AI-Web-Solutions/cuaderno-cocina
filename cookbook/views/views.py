@@ -494,7 +494,7 @@ def web_manifest(request):
             ]
         }],
         "share_target": {
-            "action": "/recipe/import",
+            "action": reverse('index').rstrip('/') + "/recipe/import",
             "method": "GET",
             "enctype": "application/x-www-form-urlencoded",
             "params": {

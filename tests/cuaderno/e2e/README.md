@@ -32,6 +32,39 @@ Concurrent waves must set exclusive `CUADERNO_E2E_OUTPUT_DIR` and
 regular `.auth` state files, global setup validates and reuses them without another
 login.
 
+Authentication states live under `.auth/<target-hash>/`. Reuse requires matching
+origin (including protocol and port), application path, demo identity, and the
+expected session/CSRF cookie names, domain, path, Secure, HttpOnly and expiry.
+Empty or stale state files trigger the normal serial setup; `--reuse` fails without
+logging in. Root and prefixed candidate states never share a directory.
+
+For the isolated HTTPS prefix candidate, set these variables before auth setup and
+the full suite:
+
+```sh
+export BASE_URL=https://127.0.0.1:18443/cuaderno-cocina/
+export CUADERNO_E2E_PREFIX=1
+export CUADERNO_E2E_SELF_SIGNED=1
+node prepare-auth.mjs
+npm run typecheck
+npm test
+```
+
+`CUADERNO_E2E_SELF_SIGNED=1` is limited to the isolated loopback test proxy. Prefix
+tests assert base/assets/API/deep reloads, manifest/icon/shortcut URLs, exact worker
+scope, public-only caches and preservation of a foreign cache, cookie limits,
+language changes/logout, valid/invalid CSRF, and synthetic private image uploads,
+share capabilities and print routing. Consulta must receive an explicit 403 on
+creation; Cocina and Responsable create and delete their own temporary recipes.
+The Chromium matrix and the existing Firefox/WebKit projects all include these
+tests when the prefix flag is enabled. Root runs exclude the prefix file through
+project configuration; no test skips, error budgets, retries or timeouts change.
+Logout uses a fresh context without saved authentication, once per edition/role
+at width 1440. These additional login submissions share a persisted 16-second
+minimum spacing in the serial harness, keeping them below the existing five per
+minute limit. Other widths still verify CSRF, language, foreign cookies and caches.
+The shared fixture session is checked again after the isolated logout.
+
 The full edition, role, and viewport matrix runs on Chromium. A focused Firefox
 mobile project and WebKit tablet project additionally exercise keyboard focus,
 landmark rendering, overflow, and print CSS. Install all three pinned browsers with

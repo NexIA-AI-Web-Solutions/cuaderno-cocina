@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-import {getCookie} from "@/utils/cookie"; // MANUAL: CSRF cookie reader
+import {csrfHeadersForUrl, djangoBaseUrl} from "@/utils/djangoConfig"; // MANUAL: Django application configuration
 
 /**
  * Tandoor
@@ -37,7 +37,7 @@ export class Configuration {
 
     get basePath(): string {
         if (this.configuration.basePath != null) return this.configuration.basePath;
-        return new URL(document.baseURI).pathname.replace(/\/+$/, ''); // MANUAL: use <base href> instead of localStorage
+        return djangoBaseUrl().pathname.replace(/\/+$/, ''); // MANUAL: use Django <base> configuration
     }
 
     get fetchApi(): FetchAPI | undefined {
@@ -150,8 +150,7 @@ export class BaseAPI {
             url += '?' + this.configuration.queryParamsStringify(context.query);
         }
 
-        const csrf = getCookie('csrftoken');
-        const headers = Object.assign({}, this.configuration.headers, context.headers, csrf ? {'X-CSRFToken': csrf} : {});
+        const headers = Object.assign({}, this.configuration.headers, context.headers);
         Object.keys(headers).forEach(key => headers[key] === undefined ? delete headers[key] : {});
 
         const initOverrideFn =
@@ -163,7 +162,7 @@ export class BaseAPI {
             method: context.method,
             headers,
             body: context.body,
-            credentials: this.configuration.credentials,
+            credentials: this.configuration.credentials ?? 'same-origin',
         };
 
         const overriddenInit: RequestInit = {
@@ -203,6 +202,11 @@ export class BaseAPI {
                 }) || fetchParams;
             }
         }
+        // MANUAL: apply CSRF after middleware has chosen the final destination.
+        const headers = new Headers(fetchParams.init.headers);
+        headers.delete('X-CSRFToken');
+        for (const [name, value] of Object.entries(csrfHeadersForUrl(fetchParams.url))) headers.set(name, value);
+        fetchParams.init = {...fetchParams.init, headers, redirect: 'error'};
         let response: Response | undefined = undefined;
         try {
             response = await (this.configuration.fetchApi || fetch)(fetchParams.url, fetchParams.init);

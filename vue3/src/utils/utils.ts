@@ -1,6 +1,6 @@
-import {getCookie} from "@/utils/cookie";
-import {Recipe, RecipeFromJSON, RecipeImageFromJSON, UserFileFromJSON} from "@/openapi";
-import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
+import {csrfHeadersForUrl, resolveDjangoUrl} from "@/utils/djangoConfig";
+import {RecipeImageFromJSON} from "@/openapi";
+import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {DateTime} from "luxon";
 
 /** Standard debounce delay for search/filter inputs (milliseconds) */
@@ -33,17 +33,17 @@ export function getNestedProperty(object: any, path: string): any {
 export function uploadRecipeImage(recipeId: number, file: File) {
     let formData = new FormData()
     formData.append('image', file)
-    const csrfToken = getCookie('csrftoken')
-
-    //TODO proper URL finding (sub path setups)
+    const url = resolveDjangoUrl(`/api/recipe/${recipeId}/image/`)
     // TODO maybe better use existing URL clients response functions for parsing
 
-    fetch('/api/recipe/' + recipeId + '/image/', {
+    return fetch(url, {
         method: 'PUT',
-        headers: csrfToken ? {'X-CSRFToken': csrfToken} : {},
+        headers: csrfHeadersForUrl(url),
+        credentials: 'same-origin',
+        redirect: 'error',
         body: formData
     }).then(r => {
-        r.json().then(r => {
+        return r.json().then(r => {
             return RecipeImageFromJSON(r)
         })
 

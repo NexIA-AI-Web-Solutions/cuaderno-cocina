@@ -1,4 +1,5 @@
 import path from 'node:path'
+import {authDirectory} from './auth-state.mjs'
 
 export const editions = ['esencial', 'profesional', 'integral'] as const
 export const roles = ['consulta', 'cocina', 'responsable'] as const
@@ -26,7 +27,7 @@ export function parseProject(name: string): Identity {
 }
 
 export function authFile(edition: Edition, role: Role): string {
-  return path.join(import.meta.dirname, '.auth', `${edition}-${role}.json`)
+  return path.join(authDirectory(), `${edition}-${role}.json`)
 }
 
 export const featureMatrix = {
@@ -36,3 +37,17 @@ export const featureMatrix = {
 } as const
 
 export const fixturePrefix = process.env.CUADERNO_E2E_FIXTURE_PREFIX || 'CUADERNO-E2E'
+
+// Browser and API paths share the deployment prefix; root remains a valid baseline.
+export function appPath(value: string, baseURL = process.env.BASE_URL || 'http://127.0.0.1:18081'): string {
+  const base = new URL(baseURL)
+  const prefix = base.pathname.replace(/\/+$/, '')
+  if (!value.startsWith('/') || value.startsWith('//')) throw new Error('Ruta de aceptación inválida.')
+  const input = new URL(value, base.origin)
+  const alreadyPrefixed = prefix && (input.pathname === prefix || input.pathname.startsWith(prefix + '/'))
+  const resolved = new URL(alreadyPrefixed ? value : prefix + value, base.origin)
+  if (resolved.origin !== base.origin || (prefix && resolved.pathname !== prefix && !resolved.pathname.startsWith(prefix + '/'))) {
+    throw new Error('La ruta de aceptación escapa del prefijo.')
+  }
+  return resolved.pathname + resolved.search + resolved.hash
+}

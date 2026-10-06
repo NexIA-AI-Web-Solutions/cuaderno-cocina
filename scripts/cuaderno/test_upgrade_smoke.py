@@ -17,15 +17,16 @@ RETAINED_TAG = f"cuaderno-cocina:upgrade-{SUFFIX}"
 
 
 class FakeDocker:
-    def __init__(self, *, retained_image_id: str = RELEASE_IMAGE_ID):
+    def __init__(self, *, retained_image_id: str = RELEASE_IMAGE_ID, pin_image_id: str = upgrade_smoke.PIN_IMAGE_ID):
         self.calls: list[list[str]] = []
         self.retained_image_id = retained_image_id
+        self.pin_image_id = pin_image_id
 
     def __call__(self, argv, **kwargs):
         command = list(argv)
         self.calls.append(command)
         if command[:4] == ["docker", "image", "inspect", upgrade_smoke.PIN_IMAGE]:
-            stdout = upgrade_smoke.PIN_IMAGE_ID + "\n"
+            stdout = self.pin_image_id + "\n"
         elif command[:4] == ["docker", "image", "inspect", "cuaderno-cocina:local"]:
             stdout = RELEASE_IMAGE_ID + "\n"
         elif command[:4] == ["docker", "image", "inspect", RETAINED_TAG]:
@@ -119,6 +120,13 @@ class UpgradeSmokeOrchestrationTests(unittest.TestCase):
         )
         self.assertFalse(any(command[:3] == ["docker", "run", "-d"] for command in docker.calls))
 
+    def test_legacy_pin_image_guard_remains_exact_and_aborts_before_tagging(self):
+        docker = FakeDocker(pin_image_id=RELEASE_IMAGE_ID)
+        with self.assertRaisesRegex(ValueError, "baseline intacto"):
+            self.run_main(docker)
+        self.assertEqual(docker.calls, [["docker", "image", "inspect", upgrade_smoke.PIN_IMAGE,
+                                         "--format", "{{.Id}}"]])
+
     def test_invalid_environment_aborts_without_invoking_docker(self):
         docker = FakeDocker()
 
@@ -159,6 +167,21 @@ class UpgradeSmokeOrchestrationTests(unittest.TestCase):
             ["docker", "image", "inspect", RELEASE_IMAGE_ID, "--format", "{{.Id}}"], docker.calls,
         )
         self.assertFalse(any("cuaderno-cocina:local" in command for command in docker.calls))
+
+    def test_native_override_requires_verified_proof_before_any_resource_creation(self):
+        docker = FakeDocker()
+        environ = {"CUADERNO_ENV": "test", "CUADERNO_NATIVE_BASELINE_IMAGE": "sha256:" + "9" * 64}
+        with self.assertRaisesRegex(ValueError, "proof|prueba|contexto"):
+            upgrade_smoke.main(environ=environ, process_runner=docker)
+        self.assertEqual(docker.calls, [])
+
+    def test_native_override_is_rejected_outside_test_environment(self):
+        docker = FakeDocker()
+        environ = {"CUADERNO_ENV": "local", "CUADERNO_NATIVE_BASELINE_IMAGE": "sha256:" + "9" * 64,
+                   "CUADERNO_NATIVE_BASELINE_PROOF": "/tmp/untrusted.json"}
+        with self.assertRaisesRegex(ValueError, "test"):
+            upgrade_smoke.main(environ=environ, process_runner=docker)
+        self.assertEqual(docker.calls, [])
 
     def test_candidate_mode_rejects_context_mismatch_before_docker(self):
         temporary = tempfile.TemporaryDirectory()

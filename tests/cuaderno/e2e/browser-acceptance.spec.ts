@@ -1,7 +1,8 @@
+import {appPath} from './contracts.js'
 import {assertNoHorizontalOverflow, expect, test} from './fixtures.js'
 
 test('mantiene la navegación por teclado en motores alternativos', async ({cleanPage, identity}, testInfo) => {
-  await cleanPage.goto('/cuaderno/precios')
+  await cleanPage.goto(appPath('/cuaderno/precios'))
   await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
   await expect(cleanPage.locator('main')).toHaveCount(1)
 
@@ -17,7 +18,7 @@ test('mantiene la navegación por teclado en motores alternativos', async ({clea
 })
 
 test('aplica la hoja de impresión sin navegación ni desbordamiento', async ({cleanPage}, testInfo) => {
-  await cleanPage.goto('/cuaderno/precios')
+  await cleanPage.goto(appPath('/cuaderno/precios'))
   await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
   await cleanPage.emulateMedia({media: 'print'})
 

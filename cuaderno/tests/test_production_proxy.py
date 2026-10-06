@@ -25,6 +25,20 @@ def production_profile(**overrides):
 
 
 class ProductionProxyTests(SimpleTestCase):
+    def test_prefixed_internal_readiness_is_exactly_exempt_from_https_redirect(self):
+        profile = production_profile(SCRIPT_NAME='/cuaderno-cocina', FORCE_SCRIPT_NAME='/cuaderno-cocina')
+        names = ('SECURE_SSL_REDIRECT', 'SECURE_PROXY_SSL_HEADER', 'SECURE_REDIRECT_EXEMPT')
+        with override_settings(**{name: getattr(profile, name) for name in names}):
+            middleware = SecurityMiddleware(lambda _request: HttpResponse('{"ready":true}', content_type='application/json'))
+            for path, expected in (('/cuaderno-cocina/health/ready/', 200),
+                                   ('/health/ready/', 301), ('/cuaderno-cocina/health/ready/extra', 301),
+                                   ('/cuaderno-cocina/api/cuaderno/edition/', 301)):
+                with self.subTest(path=path):
+                    response = middleware(RequestFactory().get(path))
+                    self.assertEqual(response.status_code, expected)
+                    if expected == 200:
+                        self.assertEqual(response.content, b'{"ready":true}')
+
     def test_production_does_not_start_external_connectors_even_when_enabled_in_base(self):
         profile = production_profile(DISABLE_EXTERNAL_CONNECTORS=False)
         self.assertTrue(profile.DISABLE_EXTERNAL_CONNECTORS)

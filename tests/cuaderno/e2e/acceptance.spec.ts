@@ -1,7 +1,7 @@
 import {readFile} from 'node:fs/promises'
 import type {Browser, Page, TestInfo} from '@playwright/test'
 import {api, assertNoHorizontalOverflow, enterApp, expect, rows, test} from './fixtures.js'
-import {featureMatrix, fixturePrefix} from './contracts.js'
+import {appPath, featureMatrix, fixturePrefix} from './contracts.js'
 
 const corePages = [
   {path: '/', marker: '#app'},
@@ -11,7 +11,7 @@ const corePages = [
 ] as const
 
 async function gotoAndIdentify(page: Page, route: typeof corePages[number]): Promise<void> {
-  await page.goto(route.path)
+  await page.goto(appPath(route.path))
   await expect(page).not.toHaveURL(/\/accounts\/login\//)
   if ('heading' in route) await expect(page.getByText(route.heading, {exact: true}).first()).toBeVisible()
   else await expect(page.locator(route.marker)).toBeVisible()
@@ -35,7 +35,7 @@ async function assertEditionNavigation(
 ): Promise<void> {
   await openEditionNavigation(page, identity.width)
   const scope = identity.width === 1440 ? page.locator('.v-navigation-drawer') : page.locator('.v-bottom-sheet')
-  const link = scope.locator(`a[href="${href}"]`)
+  const link = scope.locator(`a[href="${appPath(href)}"]`)
   if (expected) await expect(link).toBeVisible()
   else await expect(link).toHaveCount(0)
 }
@@ -79,7 +79,7 @@ test('expone solo la navegación y APIs incluidas en la edición', async ({clean
   const movements = await api(cleanPage, '/api/cuaderno/movements/')
   expect(movements.status).toBe(expectedWarehouse ? 200 : 403)
 
-  await cleanPage.goto('/cuaderno/produccion')
+  await cleanPage.goto(appPath('/cuaderno/produccion'))
   await expect(cleanPage.getByRole('heading', {name: 'Producción', exact: true})).toBeVisible()
   if (!expectedProduction) {
     await expect(cleanPage.getByText(
@@ -95,7 +95,7 @@ test('expone solo la navegación y APIs incluidas en la edición', async ({clean
     )).toBeVisible()
   }
 
-  await cleanPage.goto('/cuaderno/almacen')
+  await cleanPage.goto(appPath('/cuaderno/almacen'))
   await expect(cleanPage.getByRole('heading', {name: 'Compras y movimientos', exact: true})).toBeVisible()
   if (!expectedWarehouse) {
     await expect(cleanPage.getByText(
@@ -117,7 +117,7 @@ test('expone solo la navegación y APIs incluidas en la edición', async ({clean
 
 test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage, identity}) => {
   await enterApp(cleanPage)
-  await cleanPage.goto('/cuaderno/precios')
+  await cleanPage.goto(appPath('/cuaderno/precios'))
   const savePackage = cleanPage.getByRole('button', {name: 'Guardar formato'})
   await expect(savePackage).toBeVisible()
   if (identity.role === 'consulta') {
@@ -134,14 +134,14 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
     await expect(cleanPage.getByRole('button', {name: 'Actualizar precio', exact: true})).toHaveCount(0)
     await expect(cleanPage.getByLabel(/^Nuevo precio /)).toHaveCount(0)
 
-    await cleanPage.goto('/cuaderno/lista')
+    await cleanPage.goto(appPath('/cuaderno/lista'))
     await expect(cleanPage.getByText('Modo Consulta: puedes revisar la lista, pero no modificarla.')).toBeVisible()
     await expect(cleanPage.getByRole('button', {name: 'Crear', exact: true})).toBeDisabled()
     await expect(cleanPage.getByRole('button', {name: 'Añadir', exact: true})).toBeDisabled()
     const shoppingToggle = cleanPage.getByRole('checkbox', {name: /^(Marcar|Desmarcar) /}).first()
     if (await shoppingToggle.count()) await expect(shoppingToggle).toBeDisabled()
 
-    await cleanPage.goto('/cuaderno/produccion')
+    await cleanPage.goto(appPath('/cuaderno/produccion'))
     if (featureMatrix.production.has(identity.edition)) {
       await expect(cleanPage.getByText(
         'Modo Consulta: las fichas están disponibles solo para lectura.',
@@ -175,7 +175,7 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
       }
     }
 
-    await cleanPage.goto('/cuaderno/almacen')
+    await cleanPage.goto(appPath('/cuaderno/almacen'))
     if (featureMatrix.warehouse.has(identity.edition)) {
       await expect(cleanPage.getByText(
         'Modo Consulta: puedes revisar compras y movimientos, pero no modificarlos.',
@@ -226,7 +226,7 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
 test('no desborda en recetas, lista, inventario, precios, servicio y producción', async ({cleanPage}, testInfo) => {
   const routes = ['/', '/cuaderno/lista', '/pantry', '/cuaderno/precios', '/cuaderno/produccion']
   for (const route of routes) {
-    await cleanPage.goto(route)
+    await cleanPage.goto(appPath(route))
     await expect(cleanPage.locator('#app')).toBeVisible()
     await cleanPage.evaluate(() => document.fonts.ready)
     await assertNoHorizontalOverflow(cleanPage, testInfo)
@@ -235,7 +235,7 @@ test('no desborda en recetas, lista, inventario, precios, servicio y producción
 
 test('genera una vista de impresión PDF privada en el directorio del resultado', async ({cleanPage, identity}, testInfo) => {
   const route = featureMatrix.production.has(identity.edition) ? '/cuaderno/produccion' : '/cuaderno/precios'
-  await cleanPage.goto(route)
+  await cleanPage.goto(appPath(route))
   if (featureMatrix.production.has(identity.edition)) {
     await expect(cleanPage.getByRole('heading', {name: 'Producción', exact: true})).toBeVisible()
   } else {
@@ -297,15 +297,15 @@ async function newAuthenticatedPage(browser: Browser, testInfo: TestInfo): Promi
   const storageState = testInfo.project.use.storageState
   const baseURL = testInfo.project.use.baseURL
   if (typeof storageState !== 'string' || typeof baseURL !== 'string') throw new Error('El proyecto no declaró auth/baseURL.')
-  const context = await browser.newContext({storageState, baseURL})
+  const context = await browser.newContext({storageState, baseURL, ignoreHTTPSErrors: process.env.CUADERNO_E2E_SELF_SIGNED === '1'})
   const page = await context.newPage()
-  const health = await page.goto('/health/ready/')
+  const health = await page.goto(appPath('/health/ready/'))
   expect(health?.status()).toBe(200)
   return {page, close: () => context.close()}
 }
 
 test('rechaza el segundo escritor de una línea de compra obsoleta', async ({browser, cleanPage, identity}, testInfo) => {
-  const health = await cleanPage.goto('/health/ready/')
+  const health = await cleanPage.goto(appPath('/health/ready/'))
   expect(health?.status()).toBe(200)
   const edition = await api<{edition?: string; operational_role?: {code?: string}}>(cleanPage, '/api/cuaderno/edition/')
   expect(edition.status).toBe(200)

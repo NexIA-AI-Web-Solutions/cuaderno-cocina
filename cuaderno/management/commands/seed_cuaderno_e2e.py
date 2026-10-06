@@ -57,6 +57,10 @@ class Command(BaseCommand):
             owner_membership = owner.userspace_set.get(active=True)
         except (User.DoesNotExist, UserSpace.DoesNotExist, UserSpace.MultipleObjectsReturned) as exc:
             raise CommandError(f"La base DEMO de {edition} no está preparada de forma unívoca.") from exc
+        # This guarded, disposable fixture namespace exercises explicit recipe shares.
+        # Production settings and the ordinary demo seed keep sharing disabled.
+        owner_membership.space.allow_sharing = True
+        owner_membership.space.save(update_fields=['allow_sharing'])
         if owner_membership.household_id is None:
             raise CommandError(f"La base DEMO de {edition} no tiene hogar operativo.")
         space = owner_membership.space

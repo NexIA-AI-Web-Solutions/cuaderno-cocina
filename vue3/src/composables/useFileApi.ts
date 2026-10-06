@@ -1,7 +1,8 @@
 import {useDjangoUrls} from "@/composables/useDjangoUrls";
 import {ref} from "vue";
-import {getCookie} from "@/utils/cookie";
-import {RecipeFromSourceResponseFromJSON, RecipeImageFromJSON, ResponseError, UserFile, UserFileFromJSON} from "@/openapi";
+import {csrfHeadersForUrl} from "@/utils/djangoConfig";
+import {RecipeFromSourceResponseFromJSON, RecipeImageFromJSON, ResponseError, UserFileFromJSON} from "@/openapi";
+import type {UserFile} from "@/openapi";
 
 
 /**
@@ -11,10 +12,12 @@ export function useFileApi() {
     const {getDjangoUrl} = useDjangoUrls()
 
     const fileApiLoading = ref(false)
-    const csrfHeaders = (): Record<string, string> => {
-        const token = getCookie('csrftoken')
-        return token ? {'X-CSRFToken': token} : {}
-    }
+    const upload = (url: string, options: RequestInit) => fetch(url, {
+        ...options,
+        headers: csrfHeadersForUrl(url),
+        credentials: 'same-origin',
+        redirect: 'error',
+    })
 
     /**
      * creates or updates an existing UserFile if an id is given
@@ -39,9 +42,8 @@ export function useFileApi() {
             fetchMethod = 'PUT'
         }
 
-        return fetch(fetchUrl, {
+        return upload(fetchUrl, {
             method: fetchMethod,
-            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             if (r.ok) {
@@ -71,9 +73,8 @@ export function useFileApi() {
             formData.append('image_url', imageUrl)
         }
 
-        return fetch(getDjangoUrl(`api/recipe/${recipeId}/image/`), {
+        return upload(getDjangoUrl(`api/recipe/${recipeId}/image/`), {
             method: 'PUT',
-            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             return r.json().then(r => {
@@ -103,9 +104,8 @@ export function useFileApi() {
         formData.append('ai_provider_id', providerId.toString())
         fileApiLoading.value = true
 
-        return fetch(getDjangoUrl(`api/ai-import/`), {
+        return upload(getDjangoUrl(`api/ai-import/`), {
             method: 'POST',
-            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             return r.json().then(r => {
@@ -139,9 +139,8 @@ export function useFileApi() {
             formData.append('files', file)
         })
 
-        return fetch(getDjangoUrl(`api/import/`), {
+        return upload(getDjangoUrl(`api/import/`), {
             method: 'POST',
-            headers: csrfHeaders(),
             body: formData
         }).then(r => {
             return r.json().then(r => {

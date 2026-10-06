@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: cuaderno-${{ github.workflow }}-${{ github.ref }}
@@ -190,6 +191,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
       - name: Identidad exacta de fuente
         id: source
         shell: bash
@@ -197,38 +201,49 @@ jobs:
           test -z "$(git status --porcelain --untracked-files=all)"
           source_hash=$(python -c 'from scripts.cuaderno.delivery_backup import source_manifest; print(source_manifest()["sha256"])')
           echo "identity=$(git rev-parse HEAD)+worktree.$source_hash" >> "$GITHUB_OUTPUT"
-      - name: Construir y verificar paquetes de seguridad desde fuentes fijadas
-        run: python scripts/cuaderno/build_runtime_security_apks.py --output .cuaderno-runs/runtime-security-ci
-      - name: Construir una sola imagen candidata
+      - name: Construir candidato y capturar evidencia real de build
+        env:
+          CUADERNO_ENV: test
         run: >-
-          docker build --pull -f deploy/cuaderno/Dockerfile
-          --build-context runtime_security=.cuaderno-runs/runtime-security-ci
-          --build-arg SOURCE_COMMIT=${{ steps.source.outputs.identity }}
-          -t cuaderno-cocina:ci .
-      - name: Contratos inmutables sin base de datos
+          python scripts/cuaderno/candidate_check.py build-image
+          --context .cuaderno-runs/ci-context.json --bootstrap-image cuaderno-cocina:local
+      - name: Contratos del mismo candidato
+        env:
+          CUADERNO_ENV: test
         shell: bash
         run: |
           for check in runtime-python-lock runtime-pip-check frontend-provenance sbom-python sbom-frontend; do
-            docker run --rm --entrypoint /opt/recipes/venv/bin/python cuaderno-cocina:ci \
-              /opt/recipes/release-tools/release_runtime_check.py "$check" --inside
+            python scripts/cuaderno/candidate_check.py "$check" --context .cuaderno-runs/ci-context.json --allow-isolated-mutations
           done
       - name: Exportar imagen por ID y hash
         shell: bash
         run: |
-          image_id=$(docker image inspect cuaderno-cocina:ci --format '{{.Id}}')
-          test "$(docker image inspect cuaderno-cocina:ci --format '{{index .Config.Labels "io.cuaderno.source-identity"}}')" = '${{ steps.source.outputs.identity }}'
-          printf '%s\n' "$image_id" > candidate-image-id.txt
-          printf '%s\n' '${{ steps.source.outputs.identity }}' > candidate-source-identity.txt
-          docker save cuaderno-cocina:ci | gzip -1 > candidate-image.tar.gz
-          sha256sum candidate-image.tar.gz > candidate-image.tar.gz.sha256
+          image_id=$(docker image inspect cuaderno-cocina:local --format '{{.Id}}')
+          test "$(docker image inspect cuaderno-cocina:local --format '{{index .Config.Labels "io.cuaderno.source-identity"}}')" = '${{ steps.source.outputs.identity }}'
+          printf '%s\n' "$image_id" > .cuaderno-runs/candidate-image-id.txt
+          printf '%s\n' '${{ steps.source.outputs.identity }}' > .cuaderno-runs/candidate-source-identity.txt
+          docker save "$image_id" | gzip -1 > .cuaderno-runs/candidate-image.tar.gz
+          sha256sum .cuaderno-runs/candidate-image.tar.gz > .cuaderno-runs/candidate-image.tar.gz.sha256
       - uses: actions/upload-artifact@v7
         with:
           name: cuaderno-candidate-image
           path: |
-            candidate-image.tar.gz
-            candidate-image.tar.gz.sha256
-            candidate-image-id.txt
-            candidate-source-identity.txt
+            .cuaderno-runs/candidate-image.tar.gz
+            .cuaderno-runs/candidate-image.tar.gz.sha256
+            .cuaderno-runs/candidate-image-id.txt
+            .cuaderno-runs/candidate-source-identity.txt
+            .cuaderno-runs/ci-context.json
+            .cuaderno-runs/*-build-image-*.json
+            .cuaderno-runs/*-build-image-*.log
+            .cuaderno-runs/*-runtime-python-lock-*.json
+            .cuaderno-runs/*-runtime-python-lock-*.log
+            .cuaderno-runs/*-runtime-pip-check-*.json
+            .cuaderno-runs/*-runtime-pip-check-*.log
+            .cuaderno-runs/*-frontend-provenance-*.json
+            .cuaderno-runs/*-frontend-provenance-*.log
+            .cuaderno-runs/*-sbom-*.json
+            .cuaderno-runs/*-sbom-*.log
+          include-hidden-files: true
           compression-level: 0
           retention-days: 3
 
@@ -257,12 +272,13 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: cuaderno-candidate-image
+          path: .cuaderno-runs
       - name: Cargar la imagen candidata exacta
         shell: bash
         run: |
-          sha256sum -c candidate-image.tar.gz.sha256
-          gunzip -c candidate-image.tar.gz | docker load
-          test "$(docker image inspect cuaderno-cocina:ci --format '{{.Id}}')" = "$(cat candidate-image-id.txt)"
+          sha256sum -c .cuaderno-runs/candidate-image.tar.gz.sha256
+          gunzip -c .cuaderno-runs/candidate-image.tar.gz | docker load
+          test "$(docker image inspect "$(cat .cuaderno-runs/candidate-image-id.txt)" --format '{{.Id}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
       - name: Instalar frontend para Markdown
         working-directory: vue3
         run: yarn install --frozen-lockfile --non-interactive
@@ -277,8 +293,8 @@ jobs:
             -e POSTGRES_HOST=host.docker.internal -e POSTGRES_PORT=5432 \
             -e POSTGRES_DB=cuaderno_ci_markdown -e POSTGRES_USER=cuaderno_ci \
             -e POSTGRES_PASSWORD=cuaderno-ci-only -e ENABLE_SIGNUP=0 -e DEBUG=0 \
-            cuaderno-cocina:ci
-          test "$(docker inspect cuaderno-g0-t002-web --format '{{.Image}}')" = "$(cat candidate-image-id.txt)"
+            "$(cat .cuaderno-runs/candidate-image-id.txt)"
+          test "$(docker inspect cuaderno-g0-t002-web --format '{{.Image}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
           for attempt in $(seq 1 120); do
             if docker exec cuaderno-g0-t002-web /opt/recipes/venv/bin/python -c \
               "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1/health/ready/',timeout=3))['ready'] is True"; then
@@ -299,14 +315,24 @@ jobs:
         run: docker rm -f cuaderno-g0-t002-web >/dev/null 2>&1 || true
 
   playwright-candidate:
+    strategy:
+      fail-fast: false
+      matrix:
+        deployment: [root, prefix]
     runs-on: ubuntu-latest
     timeout-minutes: 180
     needs: candidate-image
     env:
-      BASE_URL: http://127.0.0.1:18081
+      BASE_URL: ${{ matrix.deployment == 'prefix' && 'https://127.0.0.1:18443/cuaderno-cocina/' || 'http://127.0.0.1:18081' }}
+      CUADERNO_E2E_PREFIX: ${{ matrix.deployment == 'prefix' && '1' || '0' }}
+      CUADERNO_E2E_SELF_SIGNED: ${{ matrix.deployment == 'prefix' && '1' || '0' }}
+      CUADERNO_ENV: test
       CI: "1"
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
       - uses: actions/setup-node@v7
         with:
           node-version: "24.21.0"
@@ -315,13 +341,14 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: cuaderno-candidate-image
+          path: .cuaderno-runs
       - name: Cargar la imagen candidata exacta
         shell: bash
         run: |
-          sha256sum -c candidate-image.tar.gz.sha256
-          gunzip -c candidate-image.tar.gz | docker load
-          test "$(docker image inspect cuaderno-cocina:ci --format '{{.Id}}')" = "$(cat candidate-image-id.txt)"
-          docker tag "$(cat candidate-image-id.txt)" cuaderno-cocina:local
+          sha256sum -c .cuaderno-runs/candidate-image.tar.gz.sha256
+          gunzip -c .cuaderno-runs/candidate-image.tar.gz | docker load
+          test "$(docker image inspect "$(cat .cuaderno-runs/candidate-image-id.txt)" --format '{{.Id}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
+          docker tag "$(cat .cuaderno-runs/candidate-image-id.txt)" cuaderno-cocina:local
       - name: Instalar Playwright bloqueado y los tres motores
         working-directory: tests/cuaderno/e2e
         run: |
@@ -351,11 +378,30 @@ jobs:
           printf 'CUADERNO_LOCAL_DB_PASSWORD=%s\nCUADERNO_LOCAL_SECRET_KEY=%s\n' \
             "$CUADERNO_LOCAL_DB_PASSWORD" "$CUADERNO_LOCAL_SECRET_KEY" > "$env_file"
           chmod 600 "$env_file"
-          export CUADERNO_LOCAL_IMAGE="$(cat candidate-image-id.txt)"
+          export CUADERNO_LOCAL_IMAGE="$(cat .cuaderno-runs/candidate-image-id.txt)"
+          override=()
+          if test "$CUADERNO_E2E_PREFIX" = 1; then override=(-f deploy/cuaderno/compose.e2e-prefix.yml); fi
           docker compose --project-name cuaderno-release --env-file "$env_file" \
-            -f deploy/cuaderno/compose.local.yml up -d --wait --wait-timeout 600
-          test "$(docker inspect cuaderno-release-web --format '{{.Image}}')" = "$(cat candidate-image-id.txt)"
-          test "$(docker inspect cuaderno-release-web --format '{{.Config.Image}}')" = "$(cat candidate-image-id.txt)"
+            -f deploy/cuaderno/compose.local.yml "${override[@]}" up -d --wait --wait-timeout 600
+          test "$(docker inspect cuaderno-release-web --format '{{.Image}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
+          test "$(docker inspect cuaderno-release-web --format '{{.Config.Image}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
+      - name: Ingress HTTPS aislado bajo prefijo
+        if: matrix.deployment == 'prefix'
+        shell: bash
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=127.0.0.1 \
+            -addext subjectAltName=IP:127.0.0.1 -keyout .cuaderno-runs/ci-tls.key -out .cuaderno-runs/ci-tls.crt
+          chmod 600 .cuaderno-runs/ci-tls.key
+          python scripts/cuaderno/e2e_prefix_proxy.py --cert .cuaderno-runs/ci-tls.crt --key .cuaderno-runs/ci-tls.key > .cuaderno-runs/prefix-proxy.log 2>&1 &
+          echo "$!" > .cuaderno-runs/prefix-proxy.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --insecure "$BASE_URL"health/ready/ > .cuaderno-runs/prefix-ready.json; then
+              python -c 'import json; assert json.load(open(".cuaderno-runs/prefix-ready.json"))["ready"] is True'
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
       - name: Sembrar fixtures sinteticos guardados
         run: >-
           docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD="$CUADERNO_DEMO_PASSWORD"
@@ -369,8 +415,17 @@ jobs:
         shell: bash
         run: |
           mkdir -p .cuaderno-runs
-          export CUADERNO_CANDIDATE_IMAGE="$(cat candidate-image-id.txt)"
-          python scripts/cuaderno/release_e2e_check.py
+          export CUADERNO_CANDIDATE_IMAGE="$(cat .cuaderno-runs/candidate-image-id.txt)"
+          python scripts/cuaderno/candidate_check.py e2e-final --context .cuaderno-runs/ci-context.json --allow-isolated-mutations
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cuaderno-e2e-records-${{ matrix.deployment }}
+          path: |
+            .cuaderno-runs/*-e2e-final-*.json
+            .cuaderno-runs/*-e2e-final-*.log
+          include-hidden-files: true
+          retention-days: 7
       - name: Capturar diagnostico del preview
         if: failure()
         shell: bash
@@ -384,8 +439,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: cuaderno-playwright-reports-${{ github.run_id }}
-          path: .cuaderno-runs/e2e-final-*/playwright-report
+          name: cuaderno-playwright-reports-${{ github.run_id }}-${{ matrix.deployment }}
+          path: |
+            .cuaderno-runs/e2e-final-*/playwright-report
+            .cuaderno-runs/*-e2e-final-*.json
+            .cuaderno-runs/*-e2e-final-*.log
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 7
@@ -393,7 +451,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: cuaderno-playwright-failure-${{ github.run_id }}
+          name: cuaderno-playwright-failure-${{ github.run_id }}-${{ matrix.deployment }}
           path: |
             .cuaderno-runs/e2e-final-*/test-results
             tests/cuaderno/e2e/runtime-diagnostics
@@ -407,4 +465,101 @@ jobs:
           if test -f data/cuaderno/local/compose.env; then
             docker compose --project-name cuaderno-release --env-file data/cuaderno/local/compose.env \
               -f deploy/cuaderno/compose.local.yml down --remove-orphans || true
+          fi
+
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    needs: [candidate-image, playwright-candidate, markdown-runtime]
+    env:
+      CUADERNO_ENV: test
+      CUADERNO_BACKUP_TARGET: release
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v8
+        with:
+          name: cuaderno-candidate-image
+          path: .cuaderno-runs
+      - uses: actions/download-artifact@v8
+        with:
+          name: cuaderno-e2e-records-root
+          path: .cuaderno-runs
+      - uses: actions/download-artifact@v8
+        with:
+          name: cuaderno-candidate-image
+          run-id: 37451427468
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .cuaderno-runs/prior-image
+      - name: Secretos sinteticos y entorno previo aislado
+        shell: bash
+        run: |
+          db_password=$(openssl rand -hex 24)
+          secret_key=$(openssl rand -hex 48)
+          demo_password=$(openssl rand -hex 24)
+          echo "::add-mask::$db_password"
+          echo "::add-mask::$secret_key"
+          echo "::add-mask::$demo_password"
+          echo "CUADERNO_DEMO_PASSWORD=$demo_password" >> "$GITHUB_ENV"
+          mkdir -p data/cuaderno/local data/cuaderno/backups
+          printf 'CUADERNO_LOCAL_DB_PASSWORD=%s\nCUADERNO_LOCAL_SECRET_KEY=%s\n' "$db_password" "$secret_key" > data/cuaderno/local/compose.env
+          chmod 600 data/cuaderno/local/compose.env
+          cd .cuaderno-runs/prior-image
+          sha256sum -c candidate-image.tar.gz.sha256
+          gunzip -c candidate-image.tar.gz | docker load
+          cd ../..
+          python scripts/cuaderno/verify_loaded_image.py --archive .cuaderno-runs/prior-image/candidate-image.tar.gz \
+            --image-id-file .cuaderno-runs/prior-image/candidate-image-id.txt \
+            --source-identity-file .cuaderno-runs/prior-image/candidate-source-identity.txt \
+            --local-id-output .cuaderno-runs/prior-local-image-id.txt --report .cuaderno-runs/prior-image-binding.json
+          prior_id=$(cat .cuaderno-runs/prior-local-image-id.txt)
+          git worktree add --detach .cuaderno-runs/prior-source f2e3f3ca6da66848fd1234c6189a342184316d52
+          CUADERNO_LOCAL_IMAGE="$prior_id" docker compose --project-name cuaderno-prior-ci \
+            --env-file data/cuaderno/local/compose.env -f .cuaderno-runs/prior-source/deploy/cuaderno/compose.local.yml \
+            up -d --wait --wait-timeout 600
+          docker exec -e CUADERNO_ENV=test -e CUADERNO_DEMO_PASSWORD="$demo_password" \
+            cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_demo
+          export CUADERNO_DEMO_PASSWORD="$demo_password"
+          cd .cuaderno-runs/prior-source
+          python -c 'from scripts.cuaderno.delivery_backup import create_backup; print(create_backup())' > ../prior-bundle-path.txt
+          cd ../..
+          prior_bundle=$(tail -1 .cuaderno-runs/prior-bundle-path.txt)
+          cp -a "$prior_bundle" data/cuaderno/backups/prior-ci
+          echo "CUADERNO_PRIOR_RELEASE_BUNDLE=data/cuaderno/backups/prior-ci" >> "$GITHUB_ENV"
+          CUADERNO_LOCAL_IMAGE="$prior_id" docker compose --project-name cuaderno-prior-ci \
+            --env-file data/cuaderno/local/compose.env -f .cuaderno-runs/prior-source/deploy/cuaderno/compose.local.yml down
+      - name: Candidato exacto para todos los controles restantes
+        shell: bash
+        run: |
+          sha256sum -c .cuaderno-runs/candidate-image.tar.gz.sha256
+          gunzip -c .cuaderno-runs/candidate-image.tar.gz | docker load
+          export CUADERNO_CANDIDATE_IMAGE="$(cat .cuaderno-runs/candidate-image-id.txt)"
+          python scripts/cuaderno/local_up.py --no-build
+          docker exec -e CUADERNO_ENV=test -e CUADERNO_DEMO_PASSWORD="$CUADERNO_DEMO_PASSWORD" \
+            cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_e2e
+      - name: Diecisiete evidencias del mismo candidato y gate estricto
+        run: python scripts/cuaderno/ci_release_gate.py --context .cuaderno-runs/ci-context.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cuaderno-release-gate-evidence
+          path: |
+            .cuaderno-runs/*.json
+            .cuaderno-runs/*.log
+            data/cuaderno/scans/**/grype-linux.json
+            data/cuaderno/scans/**/summary-linux.json
+            data/cuaderno/backups/**/restore-result.json
+          include-hidden-files: true
+          retention-days: 7
+      - name: Cerrar solo el preview de CI
+        if: always()
+        run: |
+          if test -f data/cuaderno/local/compose.env; then
+            docker compose --project-name cuaderno-release --env-file data/cuaderno/local/compose.env \
+              -f deploy/cuaderno/compose.local.yml down || true
           fi

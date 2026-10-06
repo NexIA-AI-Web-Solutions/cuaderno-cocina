@@ -1,10 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {readFileSync} from 'node:fs'
-import ts from 'typescript'
-const source = readFileSync(new URL('./sharedMedia.ts', import.meta.url), 'utf8')
-const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
-const {sharedMediaUrl} = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+import {loadTestModule} from './testModuleLoader.mjs'
+const {sharedMediaUrl} = await import(await loadTestModule('./sharedMedia.ts'))
 const origin = 'https://cocina.example'
 test('local media receives encoded share token while preserving query and fragment', () => {
     const result = new URL(sharedMediaUrl('/media/recipes/photo.jpg?size=40#image', 'a+b&c', origin), origin)

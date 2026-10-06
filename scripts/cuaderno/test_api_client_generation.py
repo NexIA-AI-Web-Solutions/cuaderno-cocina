@@ -12,6 +12,16 @@ from unittest.mock import patch
 from scripts import generate_api_client as subject
 
 
+CONFIGURED_CSRF_RUNTIME = """import {csrfHeadersForUrl} from '@/utils/djangoConfig';
+let fetchParams = {url, init};
+const headers = new Headers(fetchParams.init.headers);
+headers.delete('X-CSRFToken');
+for (const [name, value] of Object.entries(csrfHeadersForUrl(fetchParams.url))) headers.set(name, value);
+fetchParams.init = {...fetchParams.init, headers, redirect: 'error'};
+fetch(fetchParams.url, fetchParams.init);
+"""
+
+
 def snapshot(directory: Path) -> dict[str, bytes]:
     return {
         path.relative_to(directory).as_posix(): path.read_bytes()
@@ -46,7 +56,7 @@ class ApiClientGenerationTests(unittest.TestCase):
         (output / "apis/DemoApi.ts").write_text(f"api {suffix}\n", encoding="utf-8")
         (output / "models/Demo.ts").write_text(f"model {suffix}\n", encoding="utf-8")
         (output / "index.ts").write_text(f"index {suffix}\n", encoding="utf-8")
-        runtime = "const token = getCookie('csrftoken'); headers['X-CSRFToken'] = token;\n" if csrf else "fetch('/api')\n"
+        runtime = CONFIGURED_CSRF_RUNTIME if csrf else "fetch('/api')\n"
         (output / "runtime.ts").write_text(runtime, encoding="utf-8")
         return output
 
@@ -172,16 +182,47 @@ class ApiClientGenerationTests(unittest.TestCase):
             self.call(string_only)
         self.assert_original_sdk()
 
-    def test_header_must_bind_the_cookie_read_value(self):
+    def test_header_must_bind_the_configuration_helper_value(self):
         def wrong_value(argv, **_kwargs):
             output = self.generated(argv)
             (output / "runtime.ts").write_text(
-                "const token = getCookie('csrftoken'); headers['X-CSRFToken'] = other;\n",
+                CONFIGURED_CSRF_RUNTIME.replace("headers.set(name, value)", "headers.set(name, other)"),
                 encoding="utf-8",
             )
         with self.assertRaisesRegex(ValueError, "CSRF"):
             self.call(wrong_value)
         self.assert_original_sdk()
+
+    def test_checked_in_runtime_and_generator_template_keep_configured_csrf(self):
+        client = Path(__file__).resolve().parents[2] / "vue3/src/openapi"
+        for relative in ("runtime.ts", "templates/runtime.mustache"):
+            with self.subTest(relative=relative):
+                self.assertTrue(subject.executable_csrf_contract((client / relative).read_bytes()))
+
+    def test_configured_csrf_contract_binds_destination_headers_and_fetch_init(self):
+        self.assertTrue(subject.executable_csrf_contract(CONFIGURED_CSRF_RUNTIME.encode()))
+        for wrong in (
+            CONFIGURED_CSRF_RUNTIME.replace("@/utils/djangoConfig", "@/other/config"),
+            CONFIGURED_CSRF_RUNTIME.replace("csrfHeadersForUrl(fetchParams.url)", "csrfHeadersForUrl(other.url)"),
+            CONFIGURED_CSRF_RUNTIME.replace("headers.set(name, value)", "headers.set(name, other)"),
+            CONFIGURED_CSRF_RUNTIME.replace("headers.set(name, value)", "other.set(name, value)"),
+            CONFIGURED_CSRF_RUNTIME.replace("...fetchParams.init, headers,", "...fetchParams.init, headers: other,"),
+            CONFIGURED_CSRF_RUNTIME.replace("fetch(fetchParams.url, fetchParams.init)", "fetch(fetchParams.url, other.init)"),
+            CONFIGURED_CSRF_RUNTIME.replace("headers.delete('X-CSRFToken');", ""),
+            CONFIGURED_CSRF_RUNTIME.replace("redirect: 'error'", "redirect: 'follow'"),
+            CONFIGURED_CSRF_RUNTIME.replace("fetch(fetchParams.url, fetchParams.init)", "fetchParams.url = external; fetch(fetchParams.url, fetchParams.init)"),
+            "const token = getCookie('csrftoken'); headers['X-CSRFToken'] = token;",
+            "// " + CONFIGURED_CSRF_RUNTIME.replace("\n", "\n// "),
+            "const decoy = " + repr(CONFIGURED_CSRF_RUNTIME) + ";",
+        ):
+            with self.subTest(runtime=wrong):
+                self.assertFalse(subject.executable_csrf_contract(wrong.encode()))
+                def invalid_runtime(argv, **_kwargs):
+                    output = self.generated(argv)
+                    (output / "runtime.ts").write_text(wrong, encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "CSRF"):
+                    self.call(invalid_runtime)
+                self.assert_original_sdk()
 
 
 if __name__ == "__main__":

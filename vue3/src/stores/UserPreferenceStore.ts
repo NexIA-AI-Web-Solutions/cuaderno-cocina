@@ -1,4 +1,5 @@
 import {acceptHMRUpdate, defineStore} from 'pinia'
+import {cuadernoStorageKey} from "@/cuaderno/storage";
 import {useStorage} from "@vueuse/core";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
 import {ApiApi, ServerSettings, Space, Unit, UserPreference, UserSpace} from "@/openapi";
@@ -8,12 +9,12 @@ import {DeviceSettings} from "@/types/settings";
 import {useTheme} from "vuetify";
 import {useRoute, useRouter} from "vue-router";
 
-const DEVICE_SETTINGS_KEY = 'TANDOOR_DEVICE_SETTINGS'
-const USER_PREFERENCE_KEY = 'TANDOOR_USER_PREFERENCE'
-const SERVER_SETTINGS_KEY = 'TANDOOR_SERVER_SETTINGS'
-const ACTIVE_SPACE_KEY = 'TANDOOR_ACTIVE_SPACE'
-const USER_SPACES_KEY = 'TANDOOR_USER_SPACES'
-const SPACES_KEY = 'TANDOOR_SPACES'
+const DEVICE_SETTINGS_KEY = cuadernoStorageKey('device-settings')
+const USER_PREFERENCE_KEY = cuadernoStorageKey('user-preference')
+const SERVER_SETTINGS_KEY = cuadernoStorageKey('server-settings')
+const ACTIVE_SPACE_KEY = cuadernoStorageKey('active-space')
+const USER_SPACES_KEY = cuadernoStorageKey('user-spaces')
+const SPACES_KEY = cuadernoStorageKey('spaces')
 
 export const useUserPreferenceStore = defineStore('user_preference_store', () => {
     /**

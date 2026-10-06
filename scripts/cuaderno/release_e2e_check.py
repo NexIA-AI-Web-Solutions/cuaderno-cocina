@@ -18,6 +18,7 @@ import uuid
 ROOT = Path(__file__).resolve().parents[2]
 CONTAINER = "cuaderno-release-web"
 BASE_URL = "http://127.0.0.1:18081"
+PREFIX_BASE_URL = "https://127.0.0.1:18443/cuaderno-cocina/"
 EXPECTED_BINDINGS = {"80/tcp": [{"HostIp": "127.0.0.1", "HostPort": "18081"}]}
 TIMEOUT_SECONDS = 7000
 NODE_VERSION = "v24.21.0"
@@ -286,7 +287,7 @@ def run(
 
     environment = {
         **os.environ,
-        "BASE_URL": BASE_URL,
+        "BASE_URL": PREFIX_BASE_URL if os.environ.get("CUADERNO_E2E_PREFIX") == "1" else BASE_URL,
         "CI": "1",
         "CUADERNO_E2E_OUTPUT_DIR": str(results),
         "CUADERNO_E2E_HTML_REPORT": str(report),

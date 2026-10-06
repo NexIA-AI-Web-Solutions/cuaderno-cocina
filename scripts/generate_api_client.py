@@ -43,7 +43,12 @@ def strict_pairs(pairs):
 
 
 def executable_csrf_contract(runtime: bytes) -> bool:
-    """Require a cookie read and an executable header binding, excluding comments."""
+    """Require the shared configuration helper bound to the final fetch transport.
+
+    This protects the pinned generator customization; frontend transport tests
+    separately exercise the helper's configured-cookie and origin/path policy.
+    Comments and string decoys never supply executable contract tokens.
+    """
     source = runtime.decode("utf-8")
     lexer = re.compile(r"(?P<comment>//[^\r\n]*|/\*[\s\S]*?\*/)|(?P<string>'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\"|`(?:\\.|[^`\\])*`)|(?P<identifier>[A-Za-z_$][A-Za-z0-9_$]*)|(?P<other>\S)")
     tokens = []
@@ -52,13 +57,50 @@ def executable_csrf_contract(runtime: bytes) -> bool:
             continue
         value = match.group()
         if match.lastgroup == "string":
-            value = ("COOKIE_LITERAL" if value in ("'csrftoken'", '"csrftoken"')
+            value = ("CONFIG_LITERAL" if value in ("'@/utils/djangoConfig'", '"@/utils/djangoConfig"')
                      else "HEADER_LITERAL" if value in ("'X-CSRFToken'", '"X-CSRFToken"')
+                     else "ERROR_LITERAL" if value in ("'error'", '"error"')
                      else "STRING_LITERAL")
         tokens.append(value)
     executable = " ".join(tokens)
-    reads = re.findall(r"\b(?:const|let|var) ([A-Za-z_$][A-Za-z0-9_$]*) = getCookie \( COOKIE_LITERAL \)", executable)
-    return any(re.search(r"(?:HEADER_LITERAL : " + re.escape(name) + r"\b|\[ HEADER_LITERAL \] = " + re.escape(name) + r"\b)", executable) for name in reads)
+    if not re.search(r"\bimport \{ [^{};]*\bcsrfHeadersForUrl (?=,|\})[^{};]*\} from CONFIG_LITERAL", executable):
+        return False
+    identifier = r"[A-Za-z_$][A-Za-z0-9_$]*"
+    for constructor in re.finditer(
+        rf"\b(?:const|let|var) (?P<headers>{identifier}) = new Headers \( (?P<params>{identifier}) \. init \. headers \) ;",
+        executable,
+    ):
+        headers, params = map(re.escape, (constructor["headers"], constructor["params"]))
+        deletion = re.search(rf"{headers} \. delete \( HEADER_LITERAL \) ;", executable[constructor.end():])
+        if deletion is None:
+            continue
+        start = constructor.end() + deletion.end()
+        binding = re.search(
+            rf"for \( const \[ (?P<name>{identifier}) , (?P<value>{identifier}) \] of Object \. entries \( "
+            rf"csrfHeadersForUrl \( {params} \. url \) \) \) (?:\{{ )?"
+            rf"{headers} \. set \( (?P=name) , (?P=value) \) ;",
+            executable[start:],
+        )
+        if binding is None:
+            continue
+        start += binding.end()
+        init = re.search(
+            rf"{params} \. init = \{{ \. \. \. {params} \. init , {headers} , redirect : ERROR_LITERAL \}} ;",
+            executable[start:],
+        )
+        if init is None:
+            continue
+        start += init.end()
+        fetch = re.search(
+            rf"(?:\bfetch|\( this \. configuration \. fetchApi \| \| fetch \)) \( {params} \. url , {params} \. init \)",
+            executable[start:],
+        )
+        if fetch is not None:
+            # Changes after the final binding would bypass its destination policy.
+            middle = executable[start:start + fetch.start()]
+            if not re.search(rf"\b{params} (?:\. (?:url|init) )?=", middle):
+                return True
+    return False
 
 
 def files(directory: Path) -> dict[str, bytes]:

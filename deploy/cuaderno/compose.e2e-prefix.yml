@@ -1,0 +1,17 @@
+# Only merge into the isolated CI preview. Never seed production databases.
+services:
+  web:
+    environment:
+      DJANGO_SETTINGS_MODULE: recipes.cuaderno_production_settings
+      SCRIPT_NAME: /cuaderno-cocina
+      STATIC_URL: /cuaderno-cocina/static/
+      MEDIA_URL: /cuaderno-cocina/media/
+      SESSION_COOKIE_NAME: cuaderno_sessionid
+      CSRF_COOKIE_NAME: cuaderno_csrftoken
+      LANGUAGE_COOKIE_NAME: cuaderno_language
+      SESSION_COOKIE_PATH: /cuaderno-cocina/
+      CSRF_COOKIE_PATH: /cuaderno-cocina/
+      LANGUAGE_COOKIE_PATH: /cuaderno-cocina/
+      LANGUAGE_COOKIE_SECURE: '1'
+      CSRF_TRUSTED_ORIGINS: https://127.0.0.1:18443
+      ALLAUTH_TRUSTED_PROXY_COUNT: '2'

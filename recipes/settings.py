@@ -278,6 +278,12 @@ except ValueError:
 
 SESSION_COOKIE_DOMAIN = os.getenv('SESSION_COOKIE_DOMAIN', None)
 SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'sessionid')
+SESSION_COOKIE_PATH = os.getenv('SESSION_COOKIE_PATH', f'{SCRIPT_NAME}/')
+CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'csrftoken')
+CSRF_COOKIE_PATH = os.getenv('CSRF_COOKIE_PATH', f'{SCRIPT_NAME}/')
+LANGUAGE_COOKIE_NAME = os.getenv('LANGUAGE_COOKIE_NAME', 'django_language')
+LANGUAGE_COOKIE_PATH = os.getenv('LANGUAGE_COOKIE_PATH', f'{SCRIPT_NAME}/')
+LANGUAGE_COOKIE_SECURE = extract_bool('LANGUAGE_COOKIE_SECURE', False)
 
 ENABLE_SIGNUP = extract_bool('ENABLE_SIGNUP', False)
 
@@ -681,7 +687,7 @@ if os.getenv('S3_ACCESS_KEY', ''):
     if os.getenv('S3_CUSTOM_DOMAIN', ''):
         AWS_S3_CUSTOM_DOMAIN = os.getenv('S3_CUSTOM_DOMAIN', '')
 
-MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
+MEDIA_URL = os.getenv('MEDIA_URL', f'{SCRIPT_NAME}/media/')
 MEDIA_ROOT = os.getenv('MEDIA_ROOT', os.path.join(BASE_DIR, "mediafiles"))
 LOCAL_STORAGE_PATHS = extract_comma_list('LOCAL_STORAGE_PATHS', os.path.join(MEDIA_ROOT, 'local_provider'))
 

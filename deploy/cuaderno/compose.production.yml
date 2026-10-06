@@ -10,6 +10,8 @@ services:
   db:
     image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     restart: unless-stopped
+    user: postgres
+    cap_drop: [ALL]
     logging: *logging
     environment:
       POSTGRES_DB: cuaderno_prod
@@ -17,13 +19,17 @@ services:
       POSTGRES_PASSWORD: ${CUADERNO_DB_PASSWORD:?secreto requerido}
     volumes:
       - database:/var/lib/postgresql/data
+    command: [postgres, -c, shared_buffers=64MB, -c, max_connections=30, -c, work_mem=2MB, -c, maintenance_work_mem=32MB]
+    cpus: ${CUADERNO_DB_CPUS:-0.5}
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
     healthcheck:
       test: [CMD-SHELL, pg_isready -U cuaderno_prod -d cuaderno_prod]
       interval: 10s
       timeout: 3s
       retries: 20
     stop_grace_period: 60s
-    mem_limit: ${CUADERNO_DB_MEMORY:-1g}
+    mem_limit: ${CUADERNO_DB_MEMORY:-512m}
   media-init:
     network_mode: none
     read_only: true
@@ -47,7 +53,7 @@ services:
       media-init:
         condition: service_completed_successfully
     ports:
-      - "127.0.0.1:${CUADERNO_HTTP_PORT:-8080}:80"
+      - "127.0.0.1:${CUADERNO_HTTP_PORT:-18081}:80"
     environment:
       DJANGO_SETTINGS_MODULE: recipes.cuaderno_production_settings
       SECRET_KEY: ${CUADERNO_SECRET_KEY:?secreto requerido}
@@ -60,20 +66,31 @@ services:
       POSTGRES_PASSWORD: ${CUADERNO_DB_PASSWORD:?secreto requerido}
       ALLOWED_HOSTS: 127.0.0.1,localhost,${CUADERNO_DOMAIN:?dominio requerido}
       CSRF_TRUSTED_ORIGINS: https://${CUADERNO_DOMAIN:?dominio requerido}
-      ALLAUTH_TRUSTED_PROXY_COUNT: ${CUADERNO_PROXY_COUNT:-1}
+      ALLAUTH_TRUSTED_PROXY_COUNT: ${CUADERNO_PROXY_COUNT:-2}
       TZ: ${CUADERNO_TIMEZONE:-Europe/Madrid}
       CUADERNO_LANGUAGE: es
+      SCRIPT_NAME: ${CUADERNO_SCRIPT_NAME:-/cuaderno-cocina}
+      STATIC_URL: ${CUADERNO_STATIC_URL:-/cuaderno-cocina/static/}
+      MEDIA_URL: ${CUADERNO_MEDIA_URL:-/cuaderno-cocina/media/}
+      SESSION_COOKIE_NAME: cuaderno_sessionid
+      CSRF_COOKIE_NAME: cuaderno_csrftoken
+      LANGUAGE_COOKIE_NAME: cuaderno_language
+      SESSION_COOKIE_PATH: ${CUADERNO_COOKIE_PATH:-/cuaderno-cocina/}
+      CSRF_COOKIE_PATH: ${CUADERNO_COOKIE_PATH:-/cuaderno-cocina/}
+      LANGUAGE_COOKIE_PATH: ${CUADERNO_COOKIE_PATH:-/cuaderno-cocina/}
+      LANGUAGE_COOKIE_SECURE: '1'
       ENABLE_SIGNUP: "0"
       DEBUG: "0"
       PLUGINS_BUILD: "0"
       GUNICORN_MEDIA: "0"
-      GUNICORN_WORKERS: ${CUADERNO_WORKERS:-2}
+      GUNICORN_WORKERS: ${CUADERNO_WORKERS:-1}
       GUNICORN_THREADS: ${CUADERNO_THREADS:-2}
     user: "10001:10001"
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     pids_limit: 256
-    mem_limit: ${CUADERNO_WEB_MEMORY:-2g}
+    mem_limit: ${CUADERNO_WEB_MEMORY:-768m}
+    cpus: ${CUADERNO_WEB_CPUS:-0.5}
     stop_grace_period: 45s
     volumes:
       - media:/opt/recipes/mediafiles

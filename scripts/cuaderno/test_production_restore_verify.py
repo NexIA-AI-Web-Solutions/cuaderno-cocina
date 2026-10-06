@@ -28,6 +28,8 @@ class FakeRestore:
         self.restored_media = restored_media
         self.fail_readiness = fail_readiness
         self.runtime_environment = None
+        self.image_id = "sha256:" + "a" * 64
+        self.foreign_ownership = False
 
     def exists(self, kind, name):
         self.calls.append((["exists", kind, name], None))
@@ -36,13 +38,19 @@ class FakeRestore:
     def run(self, argv, *, data=None):
         self.calls.append((list(argv), data))
         joined = " ".join(argv)
+        if argv[:2] == ["docker", "inspect"]:
+            name = argv[-1]
+            return json.dumps([{
+                "Id": ("e" if name.endswith("-web") else "d") * 64, "Name": "/" + name,
+                "Config": {"Labels": {"io.cuaderno.restore": "foreign" if self.foreign_ownership else name.rsplit("-", 1)[0]}},
+            }]).encode()
         if "docker run -d" in joined and "-web" in joined:
             env_path = Path(argv[argv.index("--env-file") + 1])
             self.runtime_environment = env_path.read_text(encoding="utf-8")
         if self.fail_readiness and "urllib.request.urlopen" in joined:
             raise RuntimeError("synthetic readiness timeout")
         if "docker image inspect" in joined:
-            return ("sha256:" + "a" * 64 + "\n").encode()
+            return (self.image_id + "\n").encode()
         if "pg_tables" in joined:
             return b"demo\n"
         if data is not None and b"content_md5" in data:
@@ -74,6 +82,7 @@ class RestoreVerifyTests(unittest.TestCase):
             "database": database, "media": media_manifest(self.bundle / "media.tar"),
             "files": {name: sha256(self.bundle / name) for name in ("database.dump", "media.tar")},
             "source_commit": "a" * 40,
+            "runtime": {"web_image_id": "sha256:" + "a" * 64},
         }
         (self.bundle / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
@@ -101,7 +110,7 @@ class RestoreVerifyTests(unittest.TestCase):
 
     def test_runtime_uses_https_csrf_and_bounded_readiness_poll(self):
         docker = FakeRestore(archive_bytes())
-        report = subject.verify(self.bundle, boundary=docker, runtime_image="candidate")
+        report = subject.verify(self.bundle, boundary=docker, runtime_image="sha256:" + "a" * 64)
         self.assertIn("CSRF_TRUSTED_ORIGINS=https://127.0.0.1\n", docker.runtime_environment)
         commands = [" ".join(argv) for argv, _ in docker.calls]
         readiness = next(row for row in commands if "urllib.request.urlopen" in row)
@@ -109,13 +118,126 @@ class RestoreVerifyTests(unittest.TestCase):
         self.assertIn("time.sleep(2)", readiness)
         self.assertEqual(report["runtime_candidate"]["image_id"], "sha256:" + "a" * 64)
 
+    def edit_manifest(self, **updates):
+        path = self.bundle / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest.update(updates)
+        path.write_text(json.dumps(manifest))
+
+    def test_rejects_other_or_mutable_runtime_image_before_namespace_mutation(self):
+        for supplied in ("", "candidate:latest", "sha256:" + "b" * 64):
+            docker = FakeRestore(archive_bytes())
+            with self.subTest(supplied=supplied), self.assertRaisesRegex(ValueError, "Image|imagen"):
+                subject.verify(self.bundle, boundary=docker, runtime_image=supplied)
+            self.assertFalse(any("create" in argv or "run" in argv for argv, _ in docker.calls))
+
+    def test_restores_allowlisted_prefix_and_database_config_with_bounded_containers(self):
+        config = {
+            "SCRIPT_NAME": "/kitchen", "STATIC_URL": "/kitchen/static/", "MEDIA_URL": "/kitchen/media/",
+            "SESSION_COOKIE_NAME": "cuaderno_sessionid", "CSRF_COOKIE_NAME": "cuaderno_csrftoken",
+            "LANGUAGE_COOKIE_NAME": "cuaderno_language", "SESSION_COOKIE_PATH": "/kitchen/",
+            "CSRF_COOKIE_PATH": "/kitchen/", "LANGUAGE_COOKIE_PATH": "/kitchen/",
+            "DB_ENGINE": "django.db.backends.postgresql", "POSTGRES_DB": "cuaderno_saved", "POSTGRES_USER": "cuaderno_saved",
+        }
+        self.edit_manifest(schema_version=3, configuration={"runtime_environment": config})
+        docker = FakeRestore(archive_bytes())
+        report = subject.verify(self.bundle, boundary=docker, runtime_image="sha256:" + "a" * 64)
+        for key, value in config.items():
+            self.assertIn(f"{key}={value}\n", docker.runtime_environment)
+        self.assertIn("GUNICORN_WORKERS=1\n", docker.runtime_environment)
+        self.assertIn("GUNICORN_THREADS=2\n", docker.runtime_environment)
+        runs = [argv for argv, _ in docker.calls if argv[:3] == ["docker", "run", "-d"]]
+        self.assertEqual(len(runs), 2)
+        for argv, memory in zip(runs, ("512m", "768m")):
+            self.assertEqual(argv[argv.index("--memory") + 1], memory)
+            self.assertEqual(argv[argv.index("--cpus") + 1], "0.5")
+            self.assertIn("--restart=no", argv)
+            self.assertNotIn("-p", argv)
+            self.assertNotIn("-P", argv)
+        self.assertTrue(report["containers_stopped"])
+
+    def test_rejects_unsafe_manifest_configuration_before_docker_resources(self):
+        for values in ({"SCRIPT_NAME": "/../other"}, {"SCRIPT_NAME": "/kitchen", "MEDIA_URL": "https://other.example/media/"},
+                       {"POSTGRES_DB": "unsafe\nname"}, {"SECRET_KEY": "untrusted-secret"}):
+            self.edit_manifest(schema_version=3, configuration={"runtime_environment": values})
+            docker = FakeRestore(archive_bytes())
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                subject.verify(self.bundle, boundary=docker)
+            self.assertEqual(docker.calls, [])
+
+    def test_accepts_v2_without_runtime_metadata_for_database_only_verification(self):
+        path = self.bundle / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest.pop("runtime")
+        path.write_text(json.dumps(manifest))
+        self.assertTrue(subject.verify(self.bundle, boundary=FakeRestore(archive_bytes()))["passed"])
+
+    def test_checks_optional_protected_env_hash_before_docker_calls(self):
+        copied = self.bundle / "environment.env"
+        copied.write_text("SECRET_KEY=never-print-this\n")
+        copied.chmod(0o600)
+        path = self.bundle / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["files"]["environment.env"] = sha256(copied)
+        manifest["schema_version"] = 3
+        manifest["configuration"] = {"runtime_environment": {}, "secrets_recorded": True}
+        path.write_text(json.dumps(manifest))
+        subject.trusted_bundle(self.bundle)
+        copied.write_text("SECRET_KEY=tampered\n")
+        docker = FakeRestore(archive_bytes())
+        with self.assertRaisesRegex(ValueError, "Hash incorrecto"):
+            subject.verify(self.bundle, boundary=docker)
+        self.assertEqual(docker.calls, [])
+
+    def test_stop_checks_namespace_ownership_and_uses_inspected_ids(self):
+        docker = FakeRestore(archive_bytes())
+        report = subject.verify(self.bundle, boundary=docker)
+        stops = [argv for argv, _ in docker.calls if argv[:2] == ["docker", "stop"]]
+        self.assertEqual(stops, [["docker", "stop", "d" * 64]])
+        self.assertTrue(report["containers_stopped"])
+        docker = FakeRestore(archive_bytes())
+        docker.foreign_ownership = True
+        with self.assertRaisesRegex(ValueError, "propiedad"):
+            subject.verify(self.bundle, boundary=docker)
+        self.assertFalse(any(argv[:2] == ["docker", "stop"] for argv, _ in docker.calls))
+
+    def test_local_image_inspection_mismatch_fails_before_creating_resources(self):
+        docker = FakeRestore(archive_bytes())
+        docker.image_id = "sha256:" + "b" * 64
+        with self.assertRaisesRegex(ValueError, "ImageID"):
+            subject.verify(self.bundle, boundary=docker, runtime_image="sha256:" + "a" * 64)
+        self.assertEqual(len(docker.calls), 1)
+        self.assertEqual(docker.calls[0][0][:3], ["docker", "image", "inspect"])
+
+    def test_unprotected_env_copy_is_rejected_before_resource_mutation(self):
+        copied = self.bundle / "environment.env"
+        copied.write_text("SECRET_KEY=private\n")
+        copied.chmod(0o644)
+        path = self.bundle / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["files"]["environment.env"] = sha256(copied)
+        manifest["configuration"] = {"secrets_recorded": True}
+        path.write_text(json.dumps(manifest))
+        docker = FakeRestore(archive_bytes())
+        with self.assertRaisesRegex(ValueError, "0600"):
+            subject.verify(self.bundle, boundary=docker)
+        self.assertEqual(docker.calls, [])
+
+    def test_missing_backup_image_metadata_cannot_claim_same_image_runtime_restore(self):
+        self.edit_manifest(runtime={})
+        docker = FakeRestore(archive_bytes())
+        with self.assertRaisesRegex(ValueError, "ImageID"):
+            subject.verify(self.bundle, boundary=docker, runtime_image="sha256:" + "a" * 64)
+        self.assertEqual(docker.calls, [])
+
     def test_failed_readiness_preserves_isolated_resources(self):
         docker = FakeRestore(archive_bytes(), fail_readiness=True)
         with self.assertRaisesRegex(RuntimeError, "synthetic readiness timeout"):
-            subject.verify(self.bundle, boundary=docker, runtime_image="candidate")
+            subject.verify(self.bundle, boundary=docker, runtime_image="sha256:" + "a" * 64)
         commands = [" ".join(argv) for argv, _ in docker.calls]
         self.assertFalse(any("docker rm" in row or "network rm" in row or "volume rm" in row
                              for row in commands))
+        self.assertEqual(sum(row.startswith("docker stop ") for row in commands), 2)
 
 
 if __name__ == "__main__":
