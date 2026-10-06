@@ -77,7 +77,25 @@ FROM (
 """
 
 
-MOVEMENT_SQL = AUTH_SQL.rstrip() + """
+# The authorized IDs and response are one statement, so PostgreSQL evaluates
+# both from the same snapshot. Materializing the small ID array also prevents
+# the Food/Unit/private-recipe ACL graph from running for every movement row.
+MOVEMENT_SQL = AUTH_SQL.rstrip() + """,
+authorized_entries AS MATERIALIZED (
+    SELECT COALESCE(ARRAY_AGG(entry.id ORDER BY entry.id), ARRAY[]::bigint[]) AS ids
+    FROM "cookbook_inventoryentry" entry
+    JOIN "cookbook_inventorylocation" location ON location.id = entry.inventory_location_id
+    JOIN "cookbook_household" household ON household.id = location.household_id
+    LEFT JOIN "cookbook_food" food ON food.id = entry.food_id
+    LEFT JOIN "cookbook_unit" unit ON unit.id = entry.unit_id
+    WHERE entry.space_id = %(space)s AND location.space_id = %(space)s
+      AND household.space_id = %(space)s
+      AND EXISTS (SELECT 1 FROM auth)
+      AND ((SELECT admin FROM auth) OR household.id = (SELECT household_id FROM auth))
+      AND (entry.unit_id IS NULL OR unit.space_id = %(space)s)
+      AND (entry.food_id IS NULL OR (food.space_id = %(space)s AND
+""" + _food_visibility('food."path"') + """))
+)
 SELECT COALESCE(JSON_AGG(ROW_TO_JSON(document))::text, '[]')
 FROM (
     SELECT movement.id, movement.kind, movement.quantity::text AS quantity,
@@ -89,18 +107,8 @@ FROM (
              || '+00:00' AS created_at,
            movement.created_by_id AS created_by, movement.metadata_snapshot
     FROM "cuaderno_stockmovement" movement
-    JOIN "cookbook_inventoryentry" entry ON entry.id = movement.entry_id
-    JOIN "cookbook_inventorylocation" location ON location.id = entry.inventory_location_id
-    JOIN "cookbook_household" household ON household.id = location.household_id
-    LEFT JOIN "cookbook_food" food ON food.id = entry.food_id
-    LEFT JOIN "cookbook_unit" unit ON unit.id = entry.unit_id
-    WHERE movement.space_id = %(space)s AND entry.space_id = %(space)s
-      AND location.space_id = %(space)s AND household.space_id = %(space)s
-      AND EXISTS (SELECT 1 FROM auth)
-      AND ((SELECT admin FROM auth) OR household.id = (SELECT household_id FROM auth))
-      AND (entry.unit_id IS NULL OR unit.space_id = %(space)s)
-      AND (entry.food_id IS NULL OR (food.space_id = %(space)s AND
-""" + _food_visibility('food."path"') + """))
+    WHERE movement.space_id = %(space)s
+      AND movement.entry_id = ANY((SELECT ids FROM authorized_entries)::bigint[])
     ORDER BY movement.id DESC
     LIMIT 100
 ) document

@@ -288,12 +288,31 @@ class ListQueryEfficiencyTests(ServiceFixtureMixin, TestCase):
         } for row in response.data))
         entry_selects = self._model_selects(captured, "cookbook_inventoryentry")
         self.assertEqual(len(entry_selects), 1)
-        self.assertIn("ARRAY_AGG", entry_selects[0])
-        self.assertNotIn('"cuaderno_stockmovement"', entry_selects[0])
         movement_selects = self._model_selects(captured, "cuaderno_stockmovement")
         self.assertEqual(len(movement_selects), 1)
-        self.assertRegex(movement_selects[0], r'movement\.entry_id\s*=\s*ANY')
-        projection = movement_selects[0].split(" FROM ", 1)[0]
+        self.assertEqual(entry_selects[0], movement_selects[0])
+        statement = movement_selects[0]
+        self.assertIn("authorized_entries AS MATERIALIZED", statement)
+        self.assertIn("ARRAY_AGG", statement)
+        self.assertIn("JSON_AGG", statement)
+        self.assertRegex(
+            statement,
+            r'movement\.entry_id\s*=\s*ANY\(\(SELECT ids FROM authorized_entries\)::bigint\[\]\)',
+        )
+        for acl_fragment in (
+            'FROM "cookbook_userspace" membership',
+            'LEFT JOIN "cookbook_userspace_groups" roles',
+            'LEFT JOIN "auth_group" role',
+            'FROM "cookbook_inventoryentry" entry',
+            'JOIN "cookbook_inventorylocation" location',
+            'JOIN "cookbook_household" household',
+            'LEFT JOIN "cookbook_food" food',
+            'LEFT JOIN "cookbook_unit" unit',
+            'FROM "cookbook_recipe" recipe',
+            'FROM "cookbook_recipe_shared" shared',
+        ):
+            self.assertIn(acl_fragment, statement)
+        projection = statement.split(" FROM ", 1)[0]
         self.assertNotIn('"cookbook_inventoryentry".', projection)
         self.assertLessEqual(len(captured), 7)
 

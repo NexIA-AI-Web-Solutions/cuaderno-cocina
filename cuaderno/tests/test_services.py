@@ -120,6 +120,18 @@ class ServiceFixtureMixin:
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
 class ServiceWorkflowTests(ServiceFixtureMixin, TestCase):
+    @override_settings(TIME_ZONE="America/New_York")
+    def test_create_uses_configured_timezone_across_both_dst_boundaries(self):
+        local_zone = ZoneInfo("America/New_York")
+        for service_date, offset in (("2026-03-08", -18000), ("2026-11-01", -14400)):
+            with self.subTest(service_date=service_date):
+                response, plan = self.create_plan(service_date=service_date, covers=2)
+                local_start = timezone.localtime(plan.meal_plan.from_date, local_zone)
+                self.assertEqual(response.data["timezone"], "America/New_York")
+                self.assertEqual(local_start.date(), date.fromisoformat(service_date))
+                self.assertEqual(local_start.hour, 0)
+                self.assertEqual(local_start.utcoffset().total_seconds(), offset)
+
     def test_list_is_bounded_and_detail_can_access_an_older_service(self):
         plans = ServicePlan.objects.bulk_create([
             ServicePlan(space=self.space, household=self.household, title=f"Turno {index}", covers=1, created_by=self.user)
@@ -134,6 +146,7 @@ class ServiceWorkflowTests(ServiceFixtureMixin, TestCase):
         self.assertEqual(detail.status_code, 200)
         self.assertEqual(detail.data["id"], plans[0].pk)
 
+    @override_settings(TIME_ZONE="Europe/Madrid")
     def test_create_uses_local_service_date_and_requires_positive_integer_covers(self):
         response, plan = self.create_plan(service_date="2026-10-25", covers=45)
 
