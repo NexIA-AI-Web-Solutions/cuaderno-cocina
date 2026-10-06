@@ -13,6 +13,18 @@ import yaml
 
 
 class CIRequirementsTests(unittest.TestCase):
+    def test_markdown_runtime_allows_its_exact_loopback_healthcheck_host(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = yaml.safe_load((root / ".github/workflows/cuaderno.yml").read_text(encoding="utf-8"))
+        step = next(step for step in workflow["jobs"]["markdown-runtime"]["steps"]
+                    if step.get("name") == "Arrancar runtime Markdown aislado")
+        launch = step["run"].split('test "$(docker inspect', 1)[0].replace("\\\n", " ")
+        arguments = shlex.split(launch)
+        environment = dict(arguments[index + 1].split("=", 1)
+                           for index, argument in enumerate(arguments) if argument == "-e")
+        self.assertEqual(set(environment.get("ALLOWED_HOSTS", "").split(",")),
+                         {"127.0.0.1", "localhost"})
+
     def test_typecheck_lockfile_has_the_exact_platform_independent_bytes(self):
         root = Path(__file__).resolve().parents[2]
         manifest = json.loads((root / "tooling/cuaderno/typecheck-toolchain.json").read_text(encoding="utf-8"))

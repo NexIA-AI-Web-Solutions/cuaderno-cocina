@@ -272,6 +272,7 @@ jobs:
           docker run -d --name cuaderno-g0-t002-web \
             --add-host=host.docker.internal:host-gateway \
             -e SECRET_KEY=cuaderno-ci-synthetic-secret-not-for-production \
+            -e ALLOWED_HOSTS=127.0.0.1,localhost \
             -e DB_ENGINE=django.db.backends.postgresql -e DB_OPTIONS="{'options': '-c jit=off'}" \
             -e POSTGRES_HOST=host.docker.internal -e POSTGRES_PORT=5432 \
             -e POSTGRES_DB=cuaderno_ci_markdown -e POSTGRES_USER=cuaderno_ci \
