@@ -39,7 +39,7 @@ def extract_comma_list(env_key, default=None):
 
 load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCRIPT_NAME = os.getenv('SCRIPT_NAME', '')
+SCRIPT_NAME = os.getenv('CUADERNO_APP_SCRIPT_NAME', os.getenv('SCRIPT_NAME', ''))
 FORCE_SCRIPT_NAME = SCRIPT_NAME or None
 
 STATIC_URL = os.getenv('STATIC_URL', f'{SCRIPT_NAME}/static/')

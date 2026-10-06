@@ -12,6 +12,8 @@ Inspección inicial: RAM disponible 2,3 GiB; swap usada 2,2/4 GiB; disco libre 2
 
 El propietario indica backups en una subcarpeta del proyecto. Será una copia local privada; no existe destino externo confirmado y no se acredita offsite. Procedimiento y límites en [runbook VPS](VPS_RUNBOOK_ES.md). Las pruebas reales de recuperación/rollback del nuevo candidato siguen pendientes hasta disponer de su imagen.
 
+Primer candidato publicado: `00c3d87`, [CI 37463061834](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37463061834). Tooling, frontend, ambas suites PostgreSQL, build/identidad/SBOM/procedencia, Markdown runtime y Playwright raíz (193 pruebas, retries=0) PASS. El preview de prefijo falló: Gunicorn interpreta la variable reservada `SCRIPT_NAME` antes del adaptador WSGI y rechaza las rutas ya recortadas por el proxy. G7 no se ejecutó por esa dependencia fallida; este candidato no está aprobado para despliegue. Se corrige la separación entre prefijo lógico de Django y entorno de transporte de Gunicorn, con regresión HTTP real. Toda corrección exige otra imagen y nuevas evidencias; no se trasladan los PASS al candidato siguiente.
+
 
 ## Candidato local de cierre — 4 de octubre
 

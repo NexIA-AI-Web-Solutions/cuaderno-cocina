@@ -215,6 +215,16 @@ jobs:
           for check in runtime-python-lock runtime-pip-check frontend-provenance sbom-python sbom-frontend; do
             python scripts/cuaderno/candidate_check.py "$check" --context .cuaderno-runs/ci-context.json --allow-isolated-mutations
           done
+      - name: Transporte Gunicorn real de raíz y prefijo
+        shell: bash
+        run: |
+          image_id=$(python -c 'import json; print(json.load(open(".cuaderno-runs/ci-context.json"))["image_id"])')
+          docker run --rm --network none --memory 512m --cpus 0.5 --cap-drop ALL \
+            --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,nosuid,nodev,size=32m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/work,readonly" \
+            --entrypoint /opt/recipes/venv/bin/python "$image_id" \
+            /work/scripts/cuaderno/gunicorn_prefix_transport.py --source-root /work \
+            > .cuaderno-runs/gunicorn-prefix-transport.json
       - name: Exportar imagen por ID y hash
         shell: bash
         run: |
@@ -233,6 +243,7 @@ jobs:
             .cuaderno-runs/candidate-image-id.txt
             .cuaderno-runs/candidate-source-identity.txt
             .cuaderno-runs/ci-context.json
+            .cuaderno-runs/gunicorn-prefix-transport.json
             .cuaderno-runs/*-build-image-*.json
             .cuaderno-runs/*-build-image-*.log
             .cuaderno-runs/*-runtime-python-lock-*.json
@@ -471,6 +482,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 300
     needs: [candidate-image, playwright-candidate, markdown-runtime]
+    # A prefix failure still fails the entire workflow. Run the independent G7
+    # checks as well so its recovery/security diagnostics are available; a failed
+    # root matrix cannot supply the required passing e2e-final artifact.
+    if: always() && !cancelled() && needs.candidate-image.result == 'success' && needs.markdown-runtime.result == 'success'
     env:
       CUADERNO_ENV: test
       CUADERNO_BACKUP_TARGET: release

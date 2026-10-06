@@ -101,4 +101,8 @@ echo "Starting gunicorn"
 # use /tmp as directory since that is writable as a non-root user
 # https://github.com/benoitc/gunicorn/issues/2245
 umask 027
+# Gunicorn consumes SCRIPT_NAME as a transport prefix before Django receives a
+# request. Our proxy strips that prefix, so retain it only for Django's settings.
+export CUADERNO_APP_SCRIPT_NAME="${CUADERNO_APP_SCRIPT_NAME-${SCRIPT_NAME:-}}"
+unset SCRIPT_NAME
 exec python /opt/recipes/release-tools/process_supervisor.py gunicorn --bind unix:/tmp/tandoor.sock --workers "$GUNICORN_WORKERS" --threads "$GUNICORN_THREADS" --timeout "${GUNICORN_TIMEOUT:-30}" --access-logfile - --error-logfile - --log-level "$GUNICORN_LOG_LEVEL" recipes.wsgi

@@ -19,6 +19,12 @@ desactivados. Compose usa un worker, dos threads, web 768 MiB y BD 512 MiB con
 host, IP y script name; nginx añade su salto, por lo que el contador inicial es 2.
 Verificar la IP resultante con una petición propia antes de aceptar ese contador.
 
+El arranque conserva el prefijo lógico en `CUADERNO_APP_SCRIPT_NAME` y retira
+`SCRIPT_NAME` solo del proceso Gunicorn: esa variable reservada hace que Gunicorn
+rechace las rutas que Caddy ya recorta. Los comandos de gestión y el metadata del
+contenedor conservan la configuración original para backups. No añadir de nuevo
+el prefijo en nginx ni cambiar el handler previsto de Caddy.
+
 El ImageID de Docker no es un tag ni necesariamente el digest de configuración:
 Docker 29 con containerd puede identificar el manifiesto OCI. Antes de cargar,
 verificar SHA256 del archivo, config digest del archivo, identidad de fuentes,
