@@ -336,7 +336,7 @@ jobs:
     env:
       BASE_URL: ${{ matrix.deployment == 'prefix' && 'https://127.0.0.1:18443/cuaderno-cocina/' || 'http://127.0.0.1:18081' }}
       CUADERNO_E2E_PREFIX: ${{ matrix.deployment == 'prefix' && '1' || '0' }}
-      CUADERNO_E2E_SELF_SIGNED: ${{ matrix.deployment == 'prefix' && '1' || '0' }}
+      CUADERNO_E2E_SELF_SIGNED: "0"
       CUADERNO_ENV: test
       CI: "1"
     steps:
@@ -367,7 +367,7 @@ jobs:
           node --test *.test.mjs
           npx playwright install --with-deps chromium firefox webkit
           npm run typecheck
-          npx playwright test --list
+          if test "$CUADERNO_E2E_PREFIX" != 1; then npx playwright test --list; fi
       - name: Crear secretos sinteticos efimeros
         shell: bash
         run: |
@@ -401,22 +401,44 @@ jobs:
         shell: bash
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=127.0.0.1 \
-            -addext subjectAltName=IP:127.0.0.1 -keyout .cuaderno-runs/ci-tls.key -out .cuaderno-runs/ci-tls.crt
+            -addext subjectAltName=IP:127.0.0.1 \
+            -addext basicConstraints=critical,CA:TRUE \
+            -addext keyUsage=critical,digitalSignature,keyEncipherment,keyCertSign \
+            -addext extendedKeyUsage=serverAuth \
+            -keyout .cuaderno-runs/ci-tls.key -out .cuaderno-runs/ci-tls.crt
           chmod 600 .cuaderno-runs/ci-tls.key
+          cert=$(realpath .cuaderno-runs/ci-tls.crt)
+          policy=$(realpath .cuaderno-runs/ci-firefox-policies.json)
+          python -c 'import json,sys; json.dump({"policies":{"Certificates":{"Install":[sys.argv[1]]}}},open(sys.argv[2],"w"))' "$cert" "$policy"
+          # Trust only this job's generated certificate, on its disposable runner.
+          # Chromium also pins its exact SPKI; Firefox receives the policy below;
+          # WebKit's bundled launcher uses the runner's system CA bundle.
+          sudo install -m 0644 "$cert" "/usr/local/share/ca-certificates/cuaderno-e2e-${{ github.run_id }}.crt"
+          sudo update-ca-certificates > .cuaderno-runs/ci-ca-install.log
+          printf 'CUADERNO_E2E_TLS_CERT=%s\nCUADERNO_E2E_TLS_CA=%s\nNODE_EXTRA_CA_CERTS=%s\nPLAYWRIGHT_FIREFOX_POLICIES_JSON=%s\n' \
+            "$cert" "$cert" "$cert" "$policy" >> "$GITHUB_ENV"
           python scripts/cuaderno/e2e_prefix_proxy.py --cert .cuaderno-runs/ci-tls.crt --key .cuaderno-runs/ci-tls.key > .cuaderno-runs/prefix-proxy.log 2>&1 &
           echo "$!" > .cuaderno-runs/prefix-proxy.pid
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --insecure "$BASE_URL"health/ready/ > .cuaderno-runs/prefix-ready.json; then
+            if curl --fail --silent --cacert "$cert" "$BASE_URL"health/ready/ > .cuaderno-runs/prefix-ready.json; then
               python -c 'import json; assert json.load(open(".cuaderno-runs/prefix-ready.json"))["ready"] is True'
               exit 0
             fi
             sleep 1
           done
           exit 1
+      - name: Listar matriz prefijada con confianza TLS verificada
+        if: matrix.deployment == 'prefix'
+        working-directory: tests/cuaderno/e2e
+        run: npx playwright test --list
       - name: Sembrar fixtures sinteticos guardados
         run: >-
           docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD="$CUADERNO_DEMO_PASSWORD"
           cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_e2e
+      - name: Verificar confianza TLS y worker real en los tres motores
+        if: matrix.deployment == 'prefix'
+        working-directory: tests/cuaderno/e2e
+        run: node tls-fixture-preflight.mjs > ../../../.cuaderno-runs/tls-fixture-preflight.json
       - name: Preparar autenticacion una vez
         working-directory: tests/cuaderno/e2e
         run: |
@@ -435,6 +457,7 @@ jobs:
           path: |
             .cuaderno-runs/*-e2e-final-*.json
             .cuaderno-runs/*-e2e-final-*.log
+            .cuaderno-runs/tls-fixture-preflight.json
           include-hidden-files: true
           retention-days: 7
       - name: Capturar diagnostico del preview

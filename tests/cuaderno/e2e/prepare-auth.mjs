@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import {pathToFileURL} from 'node:url'
 import {authDirectory, saveAuthState, validAuthState} from './auth-state.mjs'
+import {ciTlsLaunchOptions} from './tls-fixture.mjs'
 
 const editions = ['esencial', 'profesional', 'integral']
 const roles = ['consulta', 'cocina', 'responsable']
@@ -38,7 +39,7 @@ export async function prepare({baseURL, reuse, password = process.env.CUADERNO_D
   if (!password) throw new Error('Falta CUADERNO_DEMO_PASSWORD para preparar autenticación.')
 
   const {chromium} = await import('@playwright/test')
-  const browser = await chromium.launch()
+  const browser = await chromium.launch(ciTlsLaunchOptions('chromium', {...process.env, BASE_URL: baseURL.replace(/\/$/, '') + '/'}))
   try {
     for (let index = 0; index < missing.length; index += 1) {
       if (index > 0 && index % 4 === 0) await new Promise(resolve => setTimeout(resolve, 61_000))

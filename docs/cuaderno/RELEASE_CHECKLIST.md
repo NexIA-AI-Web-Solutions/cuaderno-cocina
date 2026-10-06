@@ -17,6 +17,8 @@ Estas casillas son pendientes reales; el CI base verde no las completa. La image
 
 El primer intento nuevo, `00c3d87` / CI `37463061834`, pasó raíz (193 Playwright, retries=0) y los controles iniciales, pero falló en el transporte Gunicorn del prefijo. No está desplegado. La CI corregida obtiene también los diagnósticos independientes G7 si falla el prefijo; el workflow completo debe ser verde, incluida su matriz de prefijo, antes de desplegar.
 
+Segundo intento `11e8e116` / CI `37468038137`: siete jobs PASS, raíz 193/193, preview prefijado saludable, pero prefijo 66 PASS/243 FAIL. Se corrigen confianza TLS del worker de CI, contextos anónimos que heredaban sesiones y sincronización del harness. G7 falla en la descarga HTTP 403 de su DB fijada antes de los controles; no es PASS de seguridad ni recuperación. Las casillas permanecen pendientes para el nuevo candidato. La corrección del cliente conserva URL y hashes del scanner/DB y las aserciones browser conservan collector, timeout y retries.
+
 
 El cierre actual usa `scripts/cuaderno/candidate_check.py`, `release_manifest_collect.py` y `release_gate.py`. El resultado actual y los hashes de sus 17 pruebas se conservan en `.cuaderno-runs/release-manifest.json`; la explicación legible está en `.cuaderno-runs/RELEASE_REPORT.md`. Esta evidencia generada queda fuera de Git para no invalidar las fuentes congeladas ni publicar trazas/sesiones sintéticas. Las casillas históricas siguientes conservan su fecha: no son el dictamen del nuevo candidato.
 

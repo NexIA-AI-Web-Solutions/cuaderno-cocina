@@ -1,16 +1,19 @@
 import {defineConfig, devices, type Project} from '@playwright/test'
 import {authFile, editions, projectName, roles, widths} from './contracts.js'
+import {ciTlsLaunchOptions} from './tls-fixture.mjs'
 
 const baseURL = process.env.BASE_URL || 'http://127.0.0.1:18081'
 const outputDir = process.env.CUADERNO_E2E_OUTPUT_DIR || 'test-results'
 const htmlReportDir = process.env.CUADERNO_E2E_HTML_REPORT || 'playwright-report'
 const prefixAcceptance = process.env.CUADERNO_E2E_PREFIX === '1'
+const chromiumLaunchOptions = ciTlsLaunchOptions('chromium')
 
 const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => widths.map(width => ({
   name: projectName(edition, role, width),
   testIgnore: prefixAcceptance ? /browser-acceptance\.spec\.ts/ : /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/,
   use: {
     ...devices['Desktop Chrome'],
+    launchOptions: chromiumLaunchOptions,
     baseURL,
     viewport: {width, height: width === 390 ? 844 : width === 768 ? 1024 : 900},
     storageState: authFile(edition, role),
@@ -26,6 +29,7 @@ projects.push(
     testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/ : /browser-acceptance\.spec\.ts/,
     use: {
       ...devices['Desktop Firefox'],
+      launchOptions: ciTlsLaunchOptions('firefox'),
       baseURL,
       viewport: {width: 390, height: 844},
       storageState: authFile('esencial', 'responsable'),
@@ -36,6 +40,7 @@ projects.push(
     testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/ : /browser-acceptance\.spec\.ts/,
     use: {
       ...devices['Desktop Safari'],
+      launchOptions: ciTlsLaunchOptions('webkit'),
       baseURL,
       viewport: {width: 768, height: 1024},
       storageState: authFile('integral', 'responsable'),

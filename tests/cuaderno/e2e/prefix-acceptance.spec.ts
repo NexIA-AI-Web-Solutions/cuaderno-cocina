@@ -1,4 +1,4 @@
-import type {Page} from '@playwright/test'
+import type {BrowserContext, Page} from '@playwright/test'
 import {appPath, fixturePrefix} from './contracts.js'
 import {reserveFreshLogin} from './auth-state.mjs'
 import {api, assertNoHorizontalOverflow, collectBrowserFailures, enterApp, expect, rows, test} from './fixtures.js'
@@ -7,6 +7,37 @@ const target = new URL(process.env.BASE_URL || 'http://127.0.0.1:18081')
 const scopePath = target.pathname.replace(/\/+$/, '') + '/'
 const scopeUrl = target.origin + scopePath
 const namespace = `cuaderno-${encodeURIComponent(scopePath)}-`
+
+async function assertUnauthenticated(context: BrowserContext): Promise<void> {
+  expect(await context.cookies()).toEqual([])
+  const response = await context.request.get(appPath('/api/cuaderno/edition/'), {maxRedirects: 0})
+  expect(response.status()).toBe(403)
+  expect((await context.cookies(scopeUrl)).some(cookie => cookie.name === 'cuaderno_sessionid')).toBe(false)
+}
+
+async function activateWorker(page: Page, script: string): Promise<void> {
+  const activated = await page.evaluate(async ({script, scope}) => {
+    const current = await navigator.serviceWorker.getRegistration(scope)
+    if (current?.scope !== scope || current.active?.scriptURL === script) throw new Error('Se requiere una actualización del registro exacto de Cuaderno.')
+    const registration = await navigator.serviceWorker.register(script, {scope, updateViaCache: 'none'})
+    const worker = registration.installing || registration.waiting || registration.active
+    if (!worker || worker.scriptURL !== script) throw new Error('No se instaló el worker solicitado.')
+    if (worker.state !== 'activated') await new Promise<void>((resolve, reject) => {
+      const changed = () => {
+        if (worker.state === 'activated' || worker.state === 'redundant') {
+          worker.removeEventListener('statechange', changed)
+          if (worker.state === 'activated') resolve()
+          else reject(new Error('La actualización del worker fue descartada.'))
+        }
+      }
+      worker.addEventListener('statechange', changed)
+      changed()
+    })
+    return {scope: registration.scope, script: worker.scriptURL, state: worker.state}
+  }, {script, scope: scopeUrl})
+  expect(activated).toEqual({scope: scopeUrl, script, state: 'activated'})
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller?.scriptURL || '')).toBe(script)
+}
 
 async function csrf(page: Page): Promise<string> {
   return page.evaluate(() => {
@@ -107,18 +138,25 @@ test.describe('despliegue aislado bajo prefijo', () => {
     await expect.poll(() => cleanPage.evaluate(() => navigator.serviceWorker.controller?.scriptURL || '')).toBe(target.origin + appPath('/service-worker.js'))
     const registered = await cleanPage.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).map(registration => registration.scope))
     expect(registered).toEqual([scopeUrl])
-    // Seed an actual foreign cache before a fresh Cuaderno activation. Never
-    // unregister a worker outside the exact application scope.
+    // Exercise installation/activation through real updates, keeping the
+    // registration alive. Unregister/reload tests browser uninstall behavior.
     const foreignKey = target.origin + '/foreign-cache-probe'
-    await cleanPage.evaluate(async ({scope, key}) => {
+    await cleanPage.evaluate(async key => {
       await (await caches.open('images')).put(key, new Response('foreign sentinel'))
-      const registration = (await navigator.serviceWorker.getRegistrations()).find(item => item.scope === scope)
-      if (!registration) throw new Error('Falta el registro de Cuaderno.')
-      await registration.unregister()
-    }, {scope: scopeUrl, key: foreignKey})
+    }, foreignKey)
+    const foreignSentinel = () => cleanPage.evaluate(async key => (await (await caches.open('images')).match(key))?.text(), foreignKey)
+    expect(await foreignSentinel()).toBe('foreign sentinel')
+    const canonicalScript = target.origin + appPath('/service-worker.js')
+    const updateScript = new URL(canonicalScript)
+    updateScript.searchParams.set('e2e-activation', crypto.randomUUID())
+    await activateWorker(cleanPage, updateScript.href)
+    expect(await foreignSentinel()).toBe('foreign sentinel')
+    await activateWorker(cleanPage, canonicalScript)
+    expect(await foreignSentinel()).toBe('foreign sentinel')
     await cleanPage.reload()
-    await expect.poll(() => cleanPage.evaluate(() => navigator.serviceWorker.controller?.scriptURL || '')).toBe(target.origin + appPath('/service-worker.js'))
-    expect(await cleanPage.evaluate(async key => (await (await caches.open('images')).match(key))?.text(), foreignKey)).toBe('foreign sentinel')
+    await expect.poll(() => cleanPage.evaluate(() => navigator.serviceWorker.controller?.scriptURL || '')).toBe(canonicalScript)
+    expect(await cleanPage.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).map(registration => ({scope: registration.scope, script: registration.active?.scriptURL})))).toEqual([{scope: scopeUrl, script: canonicalScript}])
+    expect(await foreignSentinel()).toBe('foreign sentinel')
     await api(cleanPage, '/api/recipe/?page_size=100')
     await assertPublicCaches(cleanPage)
   })
@@ -144,9 +182,11 @@ test.describe('despliegue aislado bajo prefijo', () => {
     await cleanPage.goto(appPath('/settings/cosmetic'))
     await cleanPage.locator('.language-select .v-field').click()
     await Promise.all([
-      cleanPage.waitForNavigation({waitUntil: 'domcontentloaded'}),
+      cleanPage.waitForNavigation({waitUntil: 'load'}),
       cleanPage.getByRole('option').filter({hasText: /\(en\)/}).first().click(),
     ])
+    await expect(cleanPage.locator('html')).toHaveAttribute('lang', 'en')
+    await expect(cleanPage.locator('.language-select .v-field')).toBeVisible()
     const language = (await context.cookies(scopeUrl)).find(cookie => cookie.name === 'cuaderno_language')
     expect(language).toMatchObject({value: 'en', path: scopePath, secure: true})
     const foreign = (await context.cookies(target.origin + '/')).filter(cookie => ['sessionid', 'csrftoken', 'django_language'].includes(cookie.name))
@@ -160,10 +200,12 @@ test.describe('despliegue aislado bajo prefijo', () => {
     if (identity.width !== 1440) return
     const password = process.env.CUADERNO_DEMO_PASSWORD
     if (!password) throw new Error('Falta CUADERNO_DEMO_PASSWORD para la sesión aislada de login/logout.')
-    const isolated = await browser.newContext({baseURL: scopeUrl, ignoreHTTPSErrors: process.env.CUADERNO_E2E_SELF_SIGNED === '1'})
+    // Playwright Test injects project defaults into newContext unless overridden.
+    const isolated = await browser.newContext({baseURL: scopeUrl, storageState: {cookies: [], origins: []}, ignoreHTTPSErrors: process.env.CUADERNO_E2E_SELF_SIGNED === '1'})
     const freshPage = await isolated.newPage()
     const assertClean = collectBrowserFailures(freshPage)
     try {
+      await assertUnauthenticated(isolated)
       await isolated.addCookies([
         {name: 'sessionid', value: 'foreign-session', domain: target.hostname, path: '/', secure: true, httpOnly: true},
         {name: 'csrftoken', value: 'foreign-csrf', domain: target.hostname, path: '/', secure: true},
@@ -208,8 +250,9 @@ test.describe('despliegue aislado bajo prefijo', () => {
     }
     expect(created.status).toBe(201)
     const recipeId = created.body.id
-    const anonymous = await browser.newContext({baseURL: scopeUrl, ignoreHTTPSErrors: process.env.CUADERNO_E2E_SELF_SIGNED === '1'})
+    const anonymous = await browser.newContext({baseURL: scopeUrl, storageState: {cookies: [], origins: []}, ignoreHTTPSErrors: process.env.CUADERNO_E2E_SELF_SIGNED === '1'})
     try {
+      await assertUnauthenticated(anonymous)
       const png = await cleanPage.evaluate(() => {
         const canvas = document.createElement('canvas')
         canvas.width = canvas.height = 4

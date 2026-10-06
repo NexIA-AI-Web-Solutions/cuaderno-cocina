@@ -25,7 +25,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def download(url, destination, digest):
-    with urllib.request.urlopen(url, timeout=120) as response, destination.open('xb') as output:
+    request = urllib.request.Request(url, headers={'User-Agent': 'cuaderno-ci-audit/1.0'})
+    with urllib.request.urlopen(request, timeout=120) as response, destination.open('xb') as output:
         while chunk := response.read(1024 * 1024):
             output.write(chunk)
     with destination.open('rb') as stream:

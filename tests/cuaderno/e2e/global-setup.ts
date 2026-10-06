@@ -2,6 +2,7 @@ import {chromium, type FullConfig} from '@playwright/test'
 import {chmod, mkdir} from 'node:fs/promises'
 import {appPath, authFile, editions, roles} from './contracts.js'
 import {authDirectory, saveAuthState, validAuthState} from './auth-state.mjs'
+import {ciTlsLaunchOptions} from './tls-fixture.mjs'
 
 export default async function globalSetup(config: FullConfig): Promise<void> {
   const baseURL = config.projects[0]?.use.baseURL
@@ -23,7 +24,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     )
   }
 
-  const browser = await chromium.launch()
+  const browser = await chromium.launch(ciTlsLaunchOptions('chromium', {...process.env, BASE_URL: baseURL}))
   try {
     for (let index = 0; index < missing.length; index += 1) {
       if (index > 0 && index % 4 === 0) await new Promise(resolve => setTimeout(resolve, 61_000))

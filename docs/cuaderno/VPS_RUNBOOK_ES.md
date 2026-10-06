@@ -90,6 +90,18 @@ alarma local visible en journal. Retención máxima propuesta: siete bundles
 cerrados; borrar únicamente bundles propios verificados, nunca datos activos.
 No enviar correo ni activar servicios externos automáticamente.
 
+Wrapper operativo preparado en `/opt/cuaderno-cocina/bin/backup.py`, fuera de la
+fuente congelada: ejecuta el backup coherente y cifra una copia en `../backups/encrypted`
+con GnuPG AES256 y protección de integridad. La clave propia es
+`/etc/cuaderno-cocina/backup-encryption.key` (0600); no mostrarla ni ponerla en Git,
+en argumentos o dentro de la copia cifrada. Usa un home GnuPG privado propio y
+`--no-symkey-cache`. Comprueba descifrado completo y hashes; antes de la retención
+vuelve a descifrar cada copia y coteja los cuatro archivos regulares exactos contra
+el bundle. Solo siete pares completos verificados cuentan para borrar los anteriores.
+El servicio puede escribir únicamente backups y su home GnuPG. El cifrado y la
+retención pasan pruebas sintéticas y revisión independiente; aún no están activados
+ni acreditan una copia/restauración real de producción.
+
 La ubicación indicada está en este mismo VPS. **No hay copia externa configurada**.
 No afirmar protección frente a pérdida del servidor. Una futura transferencia
 requiere destino autorizado, cifrado antes de salir y comprobación de recepción.
