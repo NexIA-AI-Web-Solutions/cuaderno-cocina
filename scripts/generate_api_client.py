@@ -16,6 +16,12 @@ CLIENT = ROOT / "vue3/src/openapi"
 PARTS = ("apis", "models", "index.ts", "runtime.ts")
 
 
+def generator_user_args() -> list[str]:
+    # Generated files must stay readable and removable by the checkout owner.
+    # Docker Desktop handles Windows mounts without POSIX host IDs.
+    return ["--user", f"{os.getuid()}:{os.getgid()}"] if os.name == "posix" else []
+
+
 def reject_links(path: Path) -> None:
     if path.is_symlink() or path.is_junction():
         raise ValueError("Refusing a linked generation path.")
@@ -83,6 +89,7 @@ def generate(schema: Path, *, check=False, runner=subprocess.run) -> bool:
         shutil.copytree(CLIENT / "templates", stage / "templates")
         runner([
             "docker", "run", "--rm", "--network", "none",
+            *generator_user_args(),
             "--mount", f"type=bind,source={stage},target=/local", GENERATOR,
             "generate", "-g", "typescript-fetch", "-i", "/local/schema.json",
             "-t", "/local/templates", "-o", "/local/generated",

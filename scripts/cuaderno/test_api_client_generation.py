@@ -57,6 +57,23 @@ class ApiClientGenerationTests(unittest.TestCase):
     def assert_original_sdk(self):
         self.assertEqual(snapshot(self.client), self.before)
 
+    def test_generator_runs_as_the_host_user_on_posix(self):
+        with patch.object(subject.os, "name", "posix"), \
+             patch.object(subject.os, "getuid", return_value=1001, create=True), \
+             patch.object(subject.os, "getgid", return_value=1002, create=True):
+            self.assertEqual(subject.generator_user_args(), ["--user", "1001:1002"])
+        with patch.object(subject.os, "name", "nt"):
+            self.assertEqual(subject.generator_user_args(), [])
+
+        def generate_as_user(argv, **_kwargs):
+            self.assertEqual(argv[argv.index("--user") + 1], "1001:1002")
+            self.assertEqual(argv[argv.index("--network") + 1], "none")
+            self.assertIn(subject.GENERATOR, argv)
+            self.generated(argv)
+
+        with patch.object(subject, "generator_user_args", return_value=["--user", "1001:1002"]):
+            self.assertTrue(self.call(generate_as_user))
+
     def test_failed_generator_preserves_every_original_sdk_file(self):
         def fail(_argv, **_kwargs):
             raise subject.subprocess.CalledProcessError(17, ["docker", "run"])
