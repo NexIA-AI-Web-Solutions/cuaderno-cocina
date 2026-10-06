@@ -1,0 +1,64 @@
+name: Cuaderno exact 225 production diagnostic
+
+on:
+  push:
+    branches: [cuaderno-production-probe-20261006]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  production-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CUADERNO_ENV: test
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v8
+        with:
+          name: cuaderno-candidate-image
+          repository: NexIA-AI-Web-Solutions/cuaderno-cocina
+          github-token: ${{ github.token }}
+          run-id: '37490988588'
+          path: .cuaderno-runs
+          digest-mismatch: error
+      - name: Exact retained-image production round trip only
+        run: python -B scripts/cuaderno/ci_production_probe.py
+      - name: Ensure a sanitized failure artifact exists
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          directory = Path('.cuaderno-runs')
+          directory.mkdir(mode=0o700, exist_ok=True)
+          directory.chmod(0o700)
+          path = directory / 'production-probe-summary.json'
+          if not path.exists():
+              with path.open('x') as stream:
+                  os.fchmod(stream.fileno(), 0o600)
+                  json.dump({'kind': 'cuaderno-production-diagnostic', 'release_certification': False,
+                             'passed': False, 'phase': 'workflow-before-probe',
+                             'error_type': 'ProbeNotExecuted'}, stream)
+                  stream.write('\n')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cuaderno-production-diagnostic
+          path: |
+            .cuaderno-runs/production-probe-summary.json
+            .cuaderno-runs/production-round-trip-diagnostic.json
+            .cuaderno-runs/production-restore-report.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3

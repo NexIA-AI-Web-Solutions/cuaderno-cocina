@@ -136,6 +136,57 @@ def provision_scanner():
 
 def production_round_trip(image_id):
     """Exercise the real production profile/tools on a fresh CI-only database."""
+    class DiagnosticBoundary(production_restore_verify.RestoreBoundary):
+        failed_operation = None
+
+        @staticmethod
+        def operation(argv):
+            if argv[:2] == ['docker', 'compose']:
+                category = 'compose'
+                for action in ('exec', 'ps', 'stop', 'up'):
+                    if action in argv:
+                        category += '.' + action
+                        break
+            elif argv[:2] == ['docker', 'exec']:
+                category = 'docker.exec'
+            elif argv[:2] == ['docker', 'run']:
+                category = 'docker.run'
+            elif argv[:3] == ['docker', 'image', 'inspect']:
+                return 'docker.image.inspect'
+            elif argv[:2] == ['docker', 'inspect']:
+                return 'docker.inspect'
+            elif argv[:2] == ['docker', 'cp']:
+                return 'docker.cp'
+            elif argv[:2] == ['docker', 'stop']:
+                return 'docker.stop'
+            elif argv[:2] in (['docker', 'network'], ['docker', 'volume']):
+                return 'docker.resource'
+            else:
+                return 'boundary.other'
+            for tool in ('pg_dump', 'pg_restore', 'psql', 'pg_isready', 'tar', 'chown'):
+                if tool in argv:
+                    return category + '.' + tool
+            if any(Path(argument).name == 'python' for argument in argv):
+                return category + '.python-smoke'
+            return category
+
+        def tracked(self, method, argv, **kwargs):
+            try:
+                return method(argv, **kwargs)
+            except Exception:
+                if self.failed_operation is None:
+                    self.failed_operation = self.operation(argv)
+                raise
+
+        def run(self, argv, *, data=None):
+            return self.tracked(super().run, argv, data=data)
+
+        def run_to_file(self, argv, destination):
+            return self.tracked(super().run_to_file, argv, destination=destination)
+
+        def run_from_file(self, argv, source):
+            return self.tracked(super().run_from_file, argv, source=source)
+
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 18082))
     directory = ROOT / 'data/cuaderno/production-ci'
@@ -150,6 +201,12 @@ def production_round_trip(image_id):
     env.chmod(0o600)
     command = ['docker', 'compose', '--project-name', 'cuaderno-prod', '--env-file', str(env),
                '-f', 'deploy/cuaderno/compose.production.yml']
+    report_directory = ROOT / '.cuaderno-runs'
+    report_directory.mkdir(mode=0o700, exist_ok=True)
+    report_directory.chmod(0o700)
+    boundary = DiagnosticBoundary()
+    phase, failure = 'startup', None
+    cleanup = {'attempted': False, 'passed': False}
     try:
         subprocess.run([*command, 'up', '-d', '--wait', '--wait-timeout', '600'], cwd=ROOT, check=True)
         # Synthetic persisted media and recipe data; never a production deployment.
@@ -163,16 +220,41 @@ with scopes_disabled():
  Recipe.objects.create(space=space,created_by=user,name='CI persisted recipe',private=True,servings=4)
 Path('/opt/recipes/mediafiles/ci-recovery.txt').write_text('CI persisted media\\n')
 """
+        phase = 'fixture'
         subprocess.run([*command, 'exec', '-T', 'web', '/opt/recipes/venv/bin/python', 'manage.py',
                         'shell', '-c', fixture], cwd=ROOT, check=True)
-        bundle = production_backup.create_backup(env, backups, include_env=True)
-        report = production_restore_verify.verify(bundle, runtime_image=image_id,
+        phase = 'backup'
+        bundle = production_backup.create_backup(env, backups, include_env=True, boundary=boundary)
+        phase = 'restore'
+        report = production_restore_verify.verify(bundle, runtime_image=image_id, boundary=boundary,
                     report_path=ROOT / '.cuaderno-runs/production-restore-report.json')
         if not report['passed']:
             raise ValueError('Restauración del perfil productivo no aprobada.')
+        phase = 'manifest'
         (ROOT / '.cuaderno-runs/production-backup-manifest.json').write_bytes((bundle / 'manifest.json').read_bytes())
+        phase = 'complete'
+    except Exception as exc:
+        failure = exc
+        raise
     finally:
-        subprocess.run([*command, 'stop'], cwd=ROOT, check=True)
+        cleanup['attempted'] = True
+        try:
+            subprocess.run([*command, 'stop'], cwd=ROOT, check=True)
+            cleanup['passed'] = True
+        except Exception as exc:
+            cleanup['error_type'] = type(exc).__name__
+            if failure is None:
+                phase, failure = 'cleanup', exc
+                raise
+        finally:
+            diagnostic = {'passed': failure is None, 'phase': phase,
+                          'operation': boundary.failed_operation or phase, 'cleanup': cleanup}
+            if failure is not None:
+                diagnostic['error_type'] = type(failure).__name__
+            with (report_directory / 'production-round-trip-diagnostic.json').open('x') as stream:
+                os.fchmod(stream.fileno(), 0o600)
+                json.dump(diagnostic, stream, sort_keys=True)
+                stream.write('\n')
 
 
 
