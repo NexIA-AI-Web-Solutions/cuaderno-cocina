@@ -123,7 +123,7 @@ class FakeRunner:
             ), stderr="")
         if argv[1:] == ["db", "status", "-o", "json"]:
             return subprocess.CompletedProcess(argv, 0, stdout=json.dumps({
-                "schemaVersion": subject.shared.DB_CLIENT_VERSION,
+                "schemaVersion": subject.shared.DB_SCHEMA_VERSION,
                 "from": subject.shared.DB_SOURCE,
                 "built": subject.shared.DB_BUILT,
                 "path": str(self.paths.database),
@@ -198,10 +198,53 @@ class ArchiveAuditTests(unittest.TestCase):
         self.assertEqual(scan[1]["env"]["GRYPE_DB_AUTO_UPDATE"], "false")
         self.assertEqual(scan[1]["env"]["GRYPE_EXTERNAL_SOURCES_ENABLE"], "false")
 
+    def test_receipt_identity_is_rechecked_after_status_and_scan(self):
+        runner = FakeRunner(self.paths, self.ids["config"])
+        stamp = json.loads(self.paths.db_stamp.read_text())
+        stamp["digest"] = "xxh64:0123456789abcdef"
+        self.paths.db_stamp.write_text(json.dumps(stamp))
+        receipt = {"import_metadata": stamp,
+            "installed_database_sha256": self.hashes["expected_db_hash"],
+            "import_metadata_sha256": subject._sha256(self.paths.db_stamp),
+            "raw_database_sha256": subject.shared.VULNERABILITY_DB_RAW_SHA256,
+            "archive_sha256": subject.shared.VULNERABILITY_DB_ARCHIVE_SHA256}
+        with patch.object(subject.scanner_db_provenance, "verify", return_value=receipt) as verify:
+            status, summary = self.run_audit(runner, expected_db_hash=None,
+                expected_db_receipt_sha256="e" * 64)
+        self.assertEqual(status, 2)
+        self.assertEqual(verify.call_count, 4)
+        self.assertTrue(all(call.args[1] == "e" * 64 for call in verify.call_args_list))
+        self.assertEqual(summary["database"], stamp)
+        self.assertEqual(summary["database_provision"]["receipt_sha256"], "e" * 64)
+        self.assertEqual(sum(argv[1:] == ["db", "status", "-o", "json"]
+            for argv, _ in runner.calls), 2)
+
     def test_clean_complete_report_is_accepted(self):
         status, summary = self.run_audit(FakeRunner(self.paths, self.ids["config"], matches=False))
         self.assertEqual(status, 0)
         self.assertEqual(summary["status"], "clean")
+
+    def test_receipt_drift_after_status_aborts_before_scan(self):
+        runner = FakeRunner(self.paths, self.ids["config"])
+        receipt = {"import_metadata": json.loads(self.paths.db_stamp.read_text()),
+            "installed_database_sha256": self.hashes["expected_db_hash"]}
+        with patch.object(subject.scanner_db_provenance, "verify",
+                          side_effect=[receipt, subject.shared.ImageAuditFailure("Receipt changed")]):
+            with self.assertRaisesRegex(subject.shared.ImageAuditFailure, "Receipt changed"):
+                self.run_audit(runner, expected_db_hash=None, expected_db_receipt_sha256="e" * 64)
+        self.assertFalse(any("--fail-on" in argv for argv, _ in runner.calls))
+        self.assertFalse(self.paths.summary.exists())
+
+    def test_stamp_only_mutation_during_scan_rejects_summary(self):
+        class MutatingRunner(FakeRunner):
+            def __call__(self, argv, **kwargs):
+                result = super().__call__(argv, **kwargs)
+                if "--fail-on" in argv:
+                    self.paths.db_stamp.write_text('{}')
+                return result
+        with self.assertRaisesRegex(subject.shared.ImageAuditFailure, "metadata"):
+            self.run_audit(MutatingRunner(self.paths, self.ids["config"]))
+        self.assertFalse(self.paths.summary.exists())
 
     def test_config_manifest_and_index_ids_bind_to_the_same_linux_image(self):
         for identity in (self.ids["config"], self.ids["manifest"], self.ids["index"]):
@@ -322,7 +365,7 @@ class ArchiveAuditTests(unittest.TestCase):
                 return subprocess.CompletedProcess(command, 0, stdout=output, stderr="")
             if guest == ["db", "status", "-o", "json"]:
                 return subprocess.CompletedProcess(command, 0, stdout=json.dumps({
-                    "schemaVersion": subject.shared.DB_CLIENT_VERSION,
+                    "schemaVersion": subject.shared.DB_SCHEMA_VERSION,
                     "from": subject.shared.DB_SOURCE, "built": subject.shared.DB_BUILT,
                     "path": subject.CONTAINER_DATABASE, "valid": True,
                 }), stderr="")
@@ -350,6 +393,12 @@ class ArchiveAuditTests(unittest.TestCase):
             self.assertRegex(command[4], r"^cuaderno-grype-[0-9a-f]{12}$")
             self.assertEqual(command[5:9], ["--network", "none", "--read-only", "--cap-drop"])
             self.assertIn(subject.SCANNER_IMAGE, command)
+            if hasattr(subject.os, "getuid") and hasattr(subject.os, "getgid"):
+                self.assertIn("--user", command)
+                self.assertEqual(command[command.index("--user") + 1],
+                                 f"{subject.os.getuid()}:{subject.os.getgid()}")
+            self.assertIn("HOME=/tmp", command)
+            self.assertIn("XDG_CACHE_HOME=/tmp/.cache", command)
             self.assertNotIn("docker.sock", " ".join(command))
             self.assertNotIn(str(self.root) + ",target=/project", " ".join(command))
             self.assertNotIn("never", " ".join(command))

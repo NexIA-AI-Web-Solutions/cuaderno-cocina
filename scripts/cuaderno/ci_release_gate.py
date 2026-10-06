@@ -35,8 +35,13 @@ def download(url, destination, digest):
 
 
 def provision_scanner():
+    from types import SimpleNamespace
+
     directory = ROOT / 'data/cuaderno/tooling/grype-linux-0.119.0'
-    directory.mkdir(parents=True, exist_ok=False)
+    db_root = ROOT / 'data/cuaderno/tooling/grype-db'
+    audit.shared._reject_link_ancestors(directory, ROOT.resolve(strict=True))
+    audit.shared._reject_link_ancestors(db_root, ROOT.resolve(strict=True))
+    directory.mkdir(mode=0o700, parents=True, exist_ok=False)
     archive = directory / 'grype_0.119.0_linux_amd64.tar.gz'
     download('https://github.com/anchore/grype/releases/download/v0.119.0/' + archive.name,
              archive, audit.LINUX_ARCHIVE_SHA256)
@@ -49,17 +54,84 @@ def provision_scanner():
         raise ValueError('Hash de scanner incorrecto.')
     (directory / 'grype').chmod(0o700)
     db = directory / 'vulnerability-db.tar.zst'
-    download(audit.shared.DB_SOURCE, db, 'ac0db74474a11c2850db2376e4838c1bc5444097d21b277ad9dec767b6d39869')
+    download(audit.shared.DB_ARCHIVE_SOURCE, db, audit.shared.VULNERABILITY_DB_ARCHIVE_SHA256)
+    # Distribution bytes are pinned before the trusted importer adds indexes/statistics.
+    decoder = subprocess.Popen(['zstd', '--decompress', '--stdout', str(db)],
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    raw_hash = hashlib.sha256()
+    members = 0
+    try:
+        with tarfile.open(fileobj=decoder.stdout, mode='r|', ignore_zeros=True) as source:
+            for member in source:
+                members += 1
+                if members != 1 or member.name != 'vulnerability.db' or not member.isfile():
+                    raise ValueError('El archivo DB debe contener solo vulnerability.db regular.')
+                with source.extractfile(member) as stream:
+                    while chunk := stream.read(1024 * 1024):
+                        raw_hash.update(chunk)
+        decoder.stdout.close()
+        if decoder.wait(timeout=10) != 0:
+            raise ValueError('No se pudo descomprimir el archivo DB fijado.')
+    finally:
+        decoder.stdout.close()
+        try:
+            decoder.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            decoder.terminate()
+            try:
+                decoder.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                decoder.kill()
+                decoder.wait(timeout=5)
+    if members != 1 or raw_hash.hexdigest() != audit.shared.VULNERABILITY_DB_RAW_SHA256:
+        raise ValueError('La base DB distribuida no coincide con su pin raw.')
+    paths = SimpleNamespace(root=ROOT, tool=directory / 'grype', zip_archive=archive,
+                            db_root=db_root, db_stamp=db_root / '6/import.json',
+                            database=db_root / '6/vulnerability.db')
+    environment = audit.shared._offline_environment(paths, os.environ)
+    audit.shared._verify_grype(paths, subprocess.run, audit.LINUX_GRYPE_SHA256,
+                               audit.LINUX_ARCHIVE_SHA256)
+    paths.db_root.mkdir(mode=0o700, exist_ok=False)
     subprocess.run([str(directory / 'grype'), 'db', 'import', str(db)], check=True,
-                   env={**os.environ, 'GRYPE_DB_CACHE_DIR': str(ROOT / 'data/cuaderno/tooling/grype-db'),
-                        'GRYPE_CHECK_FOR_APP_UPDATE': 'false', 'GRYPE_DB_AUTO_UPDATE': 'false'})
-    db_root = ROOT / 'data/cuaderno/tooling/grype-db/6'
-    if audit._sha256(db_root / 'vulnerability.db') != audit.shared.VULNERABILITY_DB_SHA256:
-        raise ValueError('La base de vulnerabilidades importada no coincide con el pin.')
-    (db_root / 'import.json').write_text(json.dumps({
-        'digest': audit.shared.DB_DIGEST, 'source': audit.shared.DB_SOURCE,
-        'client_version': audit.shared.DB_CLIENT_VERSION,
-    }) + '\n')
+                   env=environment, timeout=audit.shared.SCAN_TIMEOUT_SECONDS)
+    paths.database.parent.chmod(0o700)
+    installed_hash = audit._sha256(paths.database)
+    stamp, original_stamp = audit.shared._read_json_file(
+        paths.db_stamp, limit=64 * 1024, label='DB stamp')
+    audit.shared._db_stamp(paths, expected_stamp=stamp)
+    status = audit.shared._verify_db_status(paths, subprocess.run, environment)
+    stamp_hash = hashlib.sha256(original_stamp).hexdigest()
+    if (audit._sha256(paths.database) != installed_hash
+            or audit._sha256(paths.db_stamp) != stamp_hash
+            or audit._sha256(paths.tool) != audit.LINUX_GRYPE_SHA256
+            or audit._sha256(archive) != audit.LINUX_ARCHIVE_SHA256
+            or audit._sha256(db) != audit.shared.VULNERABILITY_DB_ARCHIVE_SHA256):
+        raise ValueError('Los artefactos del scanner cambiaron durante su provisión.')
+    receipt = {
+        'schema_version': 1, 'passed': True,
+        'archive_url': audit.shared.DB_ARCHIVE_SOURCE,
+        'archive_sha256': audit.shared.VULNERABILITY_DB_ARCHIVE_SHA256,
+        'raw_database_sha256': raw_hash.hexdigest(),
+        'scanner_binary_sha256': audit.LINUX_GRYPE_SHA256,
+        'scanner_archive_sha256': audit.LINUX_ARCHIVE_SHA256,
+        'scanner_version': audit.shared.GRYPE_VERSION,
+        'scanner_commit': audit.shared.GRYPE_COMMIT,
+        'installed_database_path': str(paths.database.resolve(strict=True)),
+        'installed_database_sha256': installed_hash,
+        'import_metadata_sha256': stamp_hash, 'import_metadata': stamp, 'status': status,
+    }
+    raw_receipt = (json.dumps(receipt, sort_keys=True, separators=(',', ':'),
+                             allow_nan=False) + '\n').encode()
+    receipt_directory = ROOT / '.cuaderno-runs'
+    if receipt_directory.is_symlink():
+        raise ValueError('El directorio de recibos no puede ser un enlace.')
+    receipt_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    receipt_directory.chmod(0o700)
+    receipt_path = receipt_directory / 'scanner-db-provision.json'
+    with receipt_path.open('xb') as stream:
+        os.fchmod(stream.fileno(), 0o600)
+        stream.write(raw_receipt)
+    return hashlib.sha256(raw_receipt).hexdigest()
 
 
 def production_round_trip(image_id):
@@ -112,7 +184,7 @@ def main():
     args = parser.parse_args()
     context = json.loads(args.context.read_text())
     os.environ['CUADERNO_CANDIDATE_IMAGE'] = context['image_id']
-    provision_scanner()
+    os.environ['CUADERNO_SCANNER_DB_RECEIPT_SHA256'] = provision_scanner()
     subprocess.run([sys.executable, 'scripts/cuaderno/native_baseline_build.py',
                     '--candidate-image', context['image_id'], '--proof', '.cuaderno-runs/native-baseline.json'],
                    cwd=ROOT, env={**os.environ, 'CI': 'true'}, check=True)

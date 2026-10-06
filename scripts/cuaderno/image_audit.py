@@ -20,14 +20,19 @@ GRYPE_VERSION = "0.119.0"
 GRYPE_COMMIT = "b6f5194537747ee7f705f4113069ac9eb269919f"
 GRYPE_SHA256 = "5fa9104fb0630b9cd8049b12cb7b29713ce58fcaf586a26b3ad93d418982a52c"
 GRYPE_ZIP_SHA256 = "1db5c23b8ba0038a04acebed9c17945e1ade68d9f83e2fe1c101e4fb1feb9a48"
+# Historical static audit fixture; Linux release imports use a trusted receipt.
 VULNERABILITY_DB_SHA256 = "04d141a255a18805a25dae81566dd3696c551be38bfe17929fd1008b338228d4"
+VULNERABILITY_DB_RAW_SHA256 = "977ceff7828db1b57fa5c0ada35e26f7c0dc783e5485f6b950c13c094761fbd8"
+VULNERABILITY_DB_ARCHIVE_SHA256 = "1535cef8f13c12f3b7cdfc652722bb59d99fab934d0ac80d810a0462466d97cb"
 DB_DIGEST = "xxh64:8803575133ab5141"
 DB_CLIENT_VERSION = "v6.1.9"
-DB_BUILT = "2026-09-30T06:32:47Z"
-DB_SOURCE = (
+DB_SCHEMA_VERSION = "v6.1.10"
+DB_BUILT = "2026-10-06T06:32:14Z"
+DB_SOURCE = "manual import"
+DB_ARCHIVE_SOURCE = (
     "https://grype.anchore.io/databases/v6/"
-    "vulnerability-db_v6.1.9_2026-09-30T00:35:37Z_1790749967.tar.zst"
-    "?checksum=sha256%3Aac0db74474a11c2850db2376e4838c1bc5444097d21b277ad9dec767b6d39869"
+    "vulnerability-db_v6.1.10_2026-10-06T00:34:33Z_1791268334.tar.zst"
+    "?checksum=sha256%3A1535cef8f13c12f3b7cdfc652722bb59d99fab934d0ac80d810a0462466d97cb"
 )
 MAX_REPORT_BYTES = 128 * 1024 * 1024
 SHORT_TIMEOUT_SECONDS = 30
@@ -242,11 +247,17 @@ def _source_identity(runner, image_id):
     return source_ref
 
 
-def _db_stamp(paths):
+def _db_stamp(paths, *, expected_stamp=None):
     document, _raw = _read_json_file(paths.db_stamp, limit=64 * 1024, label="DB stamp")
-    if (not isinstance(document, dict) or document != {
+    expected = expected_stamp if expected_stamp is not None else {
             "digest": DB_DIGEST, "source": DB_SOURCE, "client_version": DB_CLIENT_VERSION,
-    }):
+    }
+    if (not isinstance(document, dict) or document != expected
+            or set(document) != {"digest", "source", "client_version"}
+            or not isinstance(document["digest"], str)
+            or re.fullmatch(r"xxh64:[0-9a-f]{16}", document["digest"]) is None
+            or document["source"] != DB_SOURCE
+            or document["client_version"] != DB_CLIENT_VERSION):
         raise ImageAuditFailure("El DB stamp local de Grype es inválido.")
     if not _regular_nonempty(paths.database, "la base local de vulnerabilidades"):
         raise ImageAuditFailure("La base local de vulnerabilidades está vacía.")
@@ -278,7 +289,7 @@ def _verify_db_status(paths, runner, environment, *, expected_database_path=None
     document = _strict_json_bytes((completed.stdout or "").encode(), "grype db status")
     database_path = document.get("path") if isinstance(document, dict) else None
     if (not isinstance(document, dict)
-            or document.get("schemaVersion") != DB_CLIENT_VERSION
+            or document.get("schemaVersion") != DB_SCHEMA_VERSION
             or document.get("from") != DB_SOURCE
             or document.get("built") != DB_BUILT
             or document.get("valid") is not True

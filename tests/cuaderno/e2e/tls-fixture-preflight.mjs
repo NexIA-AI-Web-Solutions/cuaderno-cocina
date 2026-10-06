@@ -28,6 +28,11 @@ export function assertWorkerProof(proof, baseURL) {
   return {cache_count: Object.keys(proof.caches).length, public_asset_count: entries}
 }
 
+function requestSummary(request) {
+  const url = new URL(request.url())
+  return `${request.method()} ${url.origin}${url.pathname}`
+}
+
 async function enginePreflight(engine, browserType, values) {
   const started = Date.now()
   let browser
@@ -48,12 +53,12 @@ async function enginePreflight(engine, browserType, values) {
       page.on('console', message => {
         if (message.type() === 'error') failures.push(`console: ${message.text()}`)
       })
-      context.on('requestfailed', request => failures.push(`network: ${request.failure()?.errorText || 'fallo desconocido'}`))
+      context.on('requestfailed', request => failures.push(`network: ${requestSummary(request)} ${request.failure()?.errorText || 'fallo desconocido'}`))
       context.on('request', request => {
         const url = new URL(request.url())
         const target = new URL(values.BASE_URL)
         if (['https:', 'http:'].includes(url.protocol) &&
-            (url.origin !== target.origin || !url.pathname.startsWith(target.pathname))) failures.push('Petición fuera del origen o prefijo.')
+            (url.origin !== target.origin || !url.pathname.startsWith(target.pathname))) failures.push(`Petición fuera del origen o prefijo: ${requestSummary(request)}`)
       })
       context.on('response', response => {
         if (response.status() >= 500) failures.push(`http ${response.status()}`)

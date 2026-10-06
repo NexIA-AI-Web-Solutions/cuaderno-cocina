@@ -16,8 +16,10 @@ import uuid
 
 try:
     from . import image_audit as shared
+    from . import scanner_db_provenance
 except ImportError:
     import image_audit as shared
+    import scanner_db_provenance
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -337,10 +339,13 @@ class LinuxContainerRunner:
         else:
             raise shared.ImageAuditFailure("Invocación Grype no incluida en el contrato portable.")
         container = f"cuaderno-grype-{uuid.uuid4().hex[:12]}"
+        identity = (["--user", f"{os.getuid()}:{os.getgid()}"]
+                    if hasattr(os, "getuid") and hasattr(os, "getgid") else [])
         command = [
             "docker", "run", "--rm", "--name", container,
             "--network", "none", "--read-only",
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+            *identity,
             "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=1g",
             "--mount", _mount(self.paths.tool.parent, "/grype-tool", readonly=True),
             "--mount", _mount(self.paths.db_root, "/grype-db", readonly=True),
@@ -350,6 +355,7 @@ class LinuxContainerRunner:
             "-e", "GRYPE_CHECK_FOR_APP_UPDATE=false",
             "-e", "GRYPE_DB_AUTO_UPDATE=false",
             "-e", "GRYPE_EXTERNAL_SOURCES_ENABLE=false",
+            "-e", "HOME=/tmp", "-e", "XDG_CACHE_HOME=/tmp/.cache",
             "--entrypoint", CONTAINER_TOOL, SCANNER_IMAGE, *guest,
         ]
         try:
@@ -374,7 +380,8 @@ def run_archive_audit(*, archive: Path, image_id: str, source_ref: str,
                       runner=None, environ=None, docker_runner=subprocess.run,
                       expected_tool_hash: str = LINUX_GRYPE_SHA256,
                       expected_tool_archive_hash: str = LINUX_ARCHIVE_SHA256,
-                      expected_db_hash: str = shared.VULNERABILITY_DB_SHA256):
+                      expected_db_hash: str | None = None,
+                      expected_db_receipt_sha256: str | None = None):
     environment = dict(os.environ if environ is None else environ)
     if environment.get("CUADERNO_ENV") not in shared.ALLOWED_ENVIRONMENTS:
         raise shared.ImageAuditFailure("CUADERNO_ENV debe ser local, test o dev.")
@@ -398,7 +405,16 @@ def run_archive_audit(*, archive: Path, image_id: str, source_ref: str,
     if runner is None:
         runner = LinuxContainerRunner(paths, runner=docker_runner)
     shared._verify_grype(paths, runner, expected_tool_hash, expected_tool_archive_hash)
-    db_stamp = shared._db_stamp(paths)
+    receipt = None
+    if expected_db_receipt_sha256 is not None or expected_db_hash is None:
+        receipt = scanner_db_provenance.verify(
+            paths, expected_db_receipt_sha256, expected_tool_hash, expected_tool_archive_hash,
+        )
+        expected_db_hash = receipt["installed_database_sha256"]
+    db_stamp = shared._db_stamp(
+        paths, expected_stamp=receipt["import_metadata"] if receipt else None,
+    )
+    stamp_hash = _sha256(paths.db_stamp)
     database_hash = _sha256(paths.database)
     if database_hash != expected_db_hash:
         raise shared.ImageAuditFailure("La base local de vulnerabilidades no coincide con su pin.")
@@ -409,6 +425,10 @@ def run_archive_audit(*, archive: Path, image_id: str, source_ref: str,
         timeout=(shared.SCAN_TIMEOUT_SECONDS if isinstance(runner, LinuxContainerRunner)
                  else shared.SHORT_TIMEOUT_SECONDS),
     )
+    if receipt:
+        scanner_db_provenance.verify(
+            paths, expected_db_receipt_sha256, expected_tool_hash, expected_tool_archive_hash,
+        )
 
     source_input = getattr(runner, "source_input", f"docker-archive:{paths.archive}")
     scanner = shared._completed(runner, [
@@ -426,8 +446,22 @@ def run_archive_audit(*, archive: Path, image_id: str, source_ref: str,
     )
     if scanner.returncode != (2 if matches else 0):
         raise shared.ImageAuditFailure("El exit status de Grype contradice los hallazgos.")
-    if _sha256(paths.archive) != initial_archive_hash or _sha256(paths.database) != database_hash:
-        raise shared.ImageAuditFailure("La imagen o DB cambió durante el scan.")
+    if (_sha256(paths.archive) != initial_archive_hash
+            or _sha256(paths.database) != database_hash or _sha256(paths.db_stamp) != stamp_hash):
+        raise shared.ImageAuditFailure("La imagen o DB, incluido su metadata, cambió durante el scan.")
+    if receipt:
+        scanner_db_provenance.verify(
+            paths, expected_db_receipt_sha256, expected_tool_hash, expected_tool_archive_hash,
+        )
+        shared._verify_db_status(
+            paths, runner, scanner_environment,
+            expected_database_path=getattr(runner, "database_path", None),
+            timeout=shared.SCAN_TIMEOUT_SECONDS if isinstance(runner, LinuxContainerRunner)
+                    else shared.SHORT_TIMEOUT_SECONDS,
+        )
+        scanner_db_provenance.verify(
+            paths, expected_db_receipt_sha256, expected_tool_hash, expected_tool_archive_hash,
+        )
 
     summary = {
         "status": "findings" if matches else "clean",
@@ -447,6 +481,14 @@ def run_archive_audit(*, archive: Path, image_id: str, source_ref: str,
                   "report": paths.report.relative_to(paths.root).as_posix(),
                   "summary": paths.summary.relative_to(paths.root).as_posix()},
     }
+    if receipt:
+        summary["database_provision"] = {
+            "receipt_sha256": expected_db_receipt_sha256,
+            "installed_database_sha256": database_hash,
+            "import_metadata_sha256": stamp_hash,
+            "raw_database_sha256": receipt["raw_database_sha256"],
+            "archive_sha256": receipt["archive_sha256"],
+        }
     try:
         with paths.summary.open("x", encoding="utf-8", newline="\n") as stream:
             json.dump(summary, stream, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
@@ -466,6 +508,7 @@ def main(argv=None) -> int:
     status, summary = run_archive_audit(
         archive=args.archive, image_id=args.image_id, source_ref=args.source_ref,
         expected_archive_sha256=args.archive_sha256,
+        expected_db_receipt_sha256=os.environ.get("CUADERNO_SCANNER_DB_RECEIPT_SHA256"),
     )
     print("CUADERNO_IMAGE_AUDIT " + json.dumps(summary, ensure_ascii=False, sort_keys=True))
     return status

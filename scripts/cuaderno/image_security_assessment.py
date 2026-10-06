@@ -10,17 +10,19 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from types import SimpleNamespace
 import uuid
 
 try:
     from . import (bind_system_node, candidate_context, image_archive_audit, image_audit,
-                   patch_runtime_security)
+                   patch_runtime_security, scanner_db_provenance)
 except ImportError:
     import bind_system_node
     import candidate_context
     import image_archive_audit
     import image_audit
     import patch_runtime_security
+    import scanner_db_provenance
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -466,7 +468,8 @@ def docker_runtime_probe(context: dict, *, root: Path, runner=subprocess.run) ->
 
 def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path: Path,
            proof_paths: list[Path], output_path: Path, root: Path = ROOT,
-           context_validator=candidate_context.same_candidate, runtime_probe=docker_runtime_probe) -> dict:
+           context_validator=candidate_context.same_candidate, runtime_probe=docker_runtime_probe,
+           database_verifier=scanner_db_provenance.verify) -> dict:
     root = root.resolve(strict=True)
     context_file = _regular(context_path, root, "el contexto candidato", direct=True)
     context, _ = _strict(context_file, "El contexto candidato")
@@ -488,6 +491,24 @@ def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path
         report, binding=binding, source_input=reported_input)
     if ignored != [] or not matches:
         raise AssessmentFailure("El informe debe conservar hallazgos y ignoredMatches vacío.")
+    tool_root = root / "data/cuaderno/tooling/grype-linux-0.119.0"
+    db_root = root / "data/cuaderno/tooling/grype-db"
+    db_paths = SimpleNamespace(root=root, tool=tool_root / "grype",
+        zip_archive=tool_root / "grype_0.119.0_linux_amd64.tar.gz", db_root=db_root,
+        database=db_root / "6/vulnerability.db", db_stamp=db_root / "6/import.json")
+    receipt_sha = os.environ.get("CUADERNO_SCANNER_DB_RECEIPT_SHA256")
+    try:
+        receipt = database_verifier(db_paths, receipt_sha, image_archive_audit.LINUX_GRYPE_SHA256,
+                                    image_archive_audit.LINUX_ARCHIVE_SHA256)
+    except image_audit.ImageAuditFailure as exc:
+        raise AssessmentFailure("La provisión de DB no conserva su identidad verificada.") from exc
+    database_provision = {
+        "receipt_sha256": receipt_sha,
+        "installed_database_sha256": receipt["installed_database_sha256"],
+        "import_metadata_sha256": receipt["import_metadata_sha256"],
+        "raw_database_sha256": receipt["raw_database_sha256"],
+        "archive_sha256": receipt["archive_sha256"],
+    }
     expected_summary = {
         "status": "findings", "scanner_exit": 2, "image_id": context["image_id"],
         "source_commit": context["source_identity"], "matches": len(matches), "ignored_matches": 0,
@@ -495,8 +516,8 @@ def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path
         "report_sha256": hashlib.sha256(report_raw).hexdigest(),
         "grype": {"version": image_audit.GRYPE_VERSION, "git_commit": image_audit.GRYPE_COMMIT,
                   "sha256": image_archive_audit.LINUX_GRYPE_SHA256, "platform": "linux_amd64"},
-        "database": {"digest": image_audit.DB_DIGEST, "source": image_audit.DB_SOURCE,
-                     "client_version": image_audit.DB_CLIENT_VERSION},
+        "database": receipt["import_metadata"],
+        "database_provision": database_provision,
         "paths": {"archive": archive.relative_to(root).as_posix(),
                   "report": report_path.relative_to(root).as_posix(),
                   "summary": summary_path.relative_to(root).as_posix()},
@@ -583,6 +604,11 @@ def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path
               **{root / value["path"]: value["sha256"] for value in proofs.values()}}
     if any(_sha(path) != digest for path, digest in stable.items()):
         raise AssessmentFailure("Una entrada retenida cambió durante la evaluación.")
+    try:
+        database_verifier(db_paths, receipt_sha, image_archive_audit.LINUX_GRYPE_SHA256,
+                          image_archive_audit.LINUX_ARCHIVE_SHA256)
+    except image_audit.ImageAuditFailure as exc:
+        raise AssessmentFailure("La identidad de DB cambió durante la evaluación.") from exc
     context_validator(context, root)
     output = output_path if output_path.is_absolute() else root / output_path
     evidence = (root / ".cuaderno-runs").resolve(strict=True)
@@ -597,6 +623,7 @@ def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path
         "assessor_sha256": _sha(Path(__file__).resolve()), "policy": ASSESSMENT_POLICY,
         "proofs": proofs, "fingerprints": [fingerprints[key] for key in sorted(fingerprints)],
         "raw_matches": raw_matches, "ignored_matches": [], "runtime_proof": runtime,
+        "database_provision": database_provision,
     }
     with output.open("x", encoding="utf-8", newline="\n") as stream:
         json.dump(result, stream, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)

@@ -98,6 +98,7 @@ def run(context_path: Path | None = None, *, root: Path = ROOT,
     status, summary = auditor(
         archive=archive, image_id=image_id, source_ref=source,
         expected_archive_sha256=archive_hash, root=root,
+        expected_db_receipt_sha256=os.environ.get("CUADERNO_SCANNER_DB_RECEIPT_SHA256"),
     )
     context_validator(context, root)
     return status, {**metadata, "scan": summary}

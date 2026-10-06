@@ -18,7 +18,7 @@ else:
 IMAGE_ID = "sha256:" + "a" * 64
 SOURCE_REF = "b" * 40 + "+worktree." + "c" * 64
 GRYPE_COMMIT = "b6f5194537747ee7f705f4113069ac9eb269919f"
-DB_BUILT = "2026-09-30T06:32:47Z"
+DB_BUILT = "2026-10-06T06:32:14Z"
 
 
 def container_document(**changes):
@@ -90,7 +90,7 @@ class FakeRunner:
             if self.mutate_tool_before_scan:
                 self.paths.tool.write_bytes(b"mutated tool before scan")
             return subprocess.CompletedProcess(argv, 0, stdout=json.dumps({
-                "schemaVersion": "v6.1.9", "from": subject.DB_SOURCE,
+                "schemaVersion": "v6.1.10", "from": subject.DB_SOURCE,
                 "built": DB_BUILT, "path": str(self.paths.database), "valid": True,
             }), stderr="")
         if argv[0] == str(self.paths.tool):

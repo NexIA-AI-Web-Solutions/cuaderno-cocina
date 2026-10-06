@@ -46,7 +46,11 @@ export function ciTlsLaunchOptions(engine, values = process.env) {
   const caPath = trustFile('CUADERNO_E2E_TLS_CA', values)
   const leaf = certificate(leafPath)
   const ca = certificate(caPath)
-  if (leaf.checkIP(target.hostname) !== target.hostname || !ca.ca || !ca.verify(ca.publicKey) || !leaf.verify(ca.publicKey)) {
+  // Mozilla rejects CA certificates used as end entities, even when trusted.
+  // The fixture must serve a distinct CA:false leaf signed by its private CA.
+  if (leaf.ca) throw new Error('El certificado servidor TLS no puede ser una CA.')
+  if (leaf.checkIP(target.hostname) !== target.hostname || !ca.ca || !ca.verify(ca.publicKey) ||
+      !leaf.checkIssued(ca) || !leaf.verify(ca.publicKey)) {
     throw new Error('El certificado TLS no coincide con loopback o con la CA generada.')
   }
   if (trustFile('NODE_EXTRA_CA_CERTS', values) !== caPath) throw new Error('La CA de Node no coincide con la fixture TLS.')

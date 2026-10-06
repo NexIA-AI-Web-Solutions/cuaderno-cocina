@@ -176,9 +176,13 @@ class Fixture:
                       "git_commit": subject.image_audit.GRYPE_COMMIT,
                       "sha256": subject.image_archive_audit.LINUX_GRYPE_SHA256,
                       "platform": "linux_amd64"},
-            "database": {"digest": subject.image_audit.DB_DIGEST,
+            "database": {"digest": "xxh64:0123456789abcdef",
                          "source": subject.image_audit.DB_SOURCE,
                          "client_version": subject.image_audit.DB_CLIENT_VERSION},
+            "database_provision": {"receipt_sha256": "d" * 64,
+                "installed_database_sha256": "1" * 64, "import_metadata_sha256": "2" * 64,
+                "raw_database_sha256": subject.image_audit.VULNERABILITY_DB_RAW_SHA256,
+                "archive_sha256": subject.image_audit.VULNERABILITY_DB_ARCHIVE_SHA256},
             "paths": {"archive": self.archive.relative_to(self.root).as_posix(),
                       "report": self.report.relative_to(self.root).as_posix(),
                       "summary": self.summary.relative_to(self.root).as_posix()},
@@ -253,14 +257,27 @@ class Fixture:
                                              "stderr": ""}}}
 
     def assess(self, **kwargs):
+        calls = []
+        def verify_database(paths, token, tool_hash, archive_hash):
+            calls.append(token)
+            if token != "d" * 64:
+                raise subject.image_audit.ImageAuditFailure("Invalid trusted token")
+            return {"installed_database_sha256": "1" * 64, "import_metadata_sha256": "2" * 64,
+                "raw_database_sha256": subject.image_audit.VULNERABILITY_DB_RAW_SHA256,
+                "archive_sha256": subject.image_audit.VULNERABILITY_DB_ARCHIVE_SHA256,
+                "import_metadata": {"digest": "xxh64:0123456789abcdef",
+                    "source": subject.image_audit.DB_SOURCE,
+                    "client_version": subject.image_audit.DB_CLIENT_VERSION}}
         with patch.object(subject.image_archive_audit, "_archive_binding", return_value=BINDING), \
+             patch.dict(subject.os.environ, {"CUADERNO_SCANNER_DB_RECEIPT_SHA256": "d" * 64}), \
              patch.object(subject.image_archive_audit, "_validate_archive_report",
                           return_value=(self.matches, [], {"High": len(self.matches)})):
             return subject.assess(context_path=self.context_path, archive=self.archive,
                                   report_path=self.report, summary_path=self.summary,
                                   proof_paths=self.proofs, output_path=self.output, root=self.root,
                                   context_validator=lambda *_: None,
-                                  runtime_probe=kwargs.get("runtime_probe", self.runtime))
+                                  runtime_probe=kwargs.get("runtime_probe", self.runtime),
+                                  database_verifier=kwargs.get("database_verifier", verify_database))
 
 
 class SecurityAssessmentTests(unittest.TestCase):
@@ -276,6 +293,28 @@ class SecurityAssessmentTests(unittest.TestCase):
         self.assertEqual(result["raw_matches"], fixture.matches)
         self.assertEqual(result["ignored_matches"], [])
         self.assertEqual(len(result["fingerprints"]), 11)
+
+    def test_untrusted_database_provision_prevents_assessment(self):
+        fixture = self.fixture()
+        def untrusted(*_):
+            raise subject.image_audit.ImageAuditFailure("Changed receipt")
+        with self.assertRaisesRegex(subject.AssessmentFailure, "provisión"):
+            fixture.assess(database_verifier=untrusted)
+        self.assertFalse(fixture.output.exists())
+
+    def test_database_drift_after_evaluation_prevents_output(self):
+        fixture = self.fixture()
+        summary = json.loads(fixture.summary.read_text())
+        calls = []
+        def changed_on_second_check(*_):
+            calls.append(True)
+            if len(calls) == 2:
+                raise subject.image_audit.ImageAuditFailure("Receipt changed")
+            return {**summary["database_provision"], "import_metadata": summary["database"]}
+        with self.assertRaisesRegex(subject.AssessmentFailure, "cambió durante"):
+            fixture.assess(database_verifier=changed_on_second_check)
+        self.assertEqual(len(calls), 2)
+        self.assertFalse(fixture.output.exists())
 
     def test_extra_unknown_and_duplicate_findings_are_rejected(self):
         unknown = match("CVE-2099-0001", "mystery", "1", "apk", "pkg:apk/alpine/mystery@1", ["/lib/apk/db/installed"])

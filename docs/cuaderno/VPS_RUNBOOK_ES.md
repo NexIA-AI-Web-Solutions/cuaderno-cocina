@@ -32,6 +32,29 @@ SBOM y procedencia. Después de cargar, verificar que el manifiesto local enlaza
 esa misma configuración. Registrar ambos identificadores cuando difieran; no
 atribuir a otra imagen las pruebas de CI.
 
+La fixture TLS prefijada de CI usa una CA efímera y un certificado servidor firmado
+separado, `CA:FALSE`, con SAN `127.0.0.1` y propósito `serverAuth`. La CA se instala
+solo en el runner desechable; Firefox recibe su política de instalación y Chromium
+el SPKI exacto del servidor. Nunca instalar esa CA en este VPS ni usar un certificado
+CA como servidor. El preflight exige activación real del worker en los tres motores.
+Los temas nativos deben resolver también sus fuentes dentro del prefijo.
+
+Grype conserva la validación de antigüedad de DB (120 horas). Antes de certificar
+otro candidato, verificar que sus pins siguen vigentes; si caducan, renovar desde
+la publicación oficial de Anchore, comprobar SHA256 del archivo y SQLite distribuido,
+y verificar por separado el SQLite instalado después de la hidratación real y su
+`import.json` auténtico. No reescribir ese metadata ni confundir la versión del
+cliente (`v6.1.9`) con el esquema de DB (`v6.1.10`). Obtener las huellas instaladas
+con importaciones independientes en CI externo; el diagnóstico comprobó que su
+hidratación no produce bytes deterministas. Por eso el gate enlaza los pins oficiales
+del archivo/SQLite distribuido/binario con un recibo privado de la importación real:
+su SHA se entrega desde el proceso de provisión, nunca desde el propio recibo.
+Auditoría y evaluación revalidan DB, metadata y recibo durante todas sus etapas.
+Sus índices y temporales hacen inadecuada esta operación para el VPS compartido.
+Repetir CI/scan completo.
+Un informe histórico o desactivar la validación
+de edad no acredita el candidato nuevo.
+
 ## Publicación y primer arranque
 
 Publicar cambios revisados en `NexIA-AI-Web-Solutions/cuaderno-cocina`, rama
@@ -61,10 +84,12 @@ a 18081. Conservar rutas/imports/dominos existentes. Validar con el entorno real
 del servicio y recargar Caddy. Comparar endpoints seguros previamente medidos;
 no ejecutar CRUD ni carga en ninguna aplicación ajena.
 
-Playwright remoto debe usar cuentas sintéticas propias y destino explícito,
+Playwright debe usar cuentas sintéticas propias y destino explícito,
 verificando login/logout, cookies/path, CSRF, assets/API/media, manifesto, worker,
 roles, responsive, impresión y recargas. No instalar navegadores/build tools en
-este VPS. No cambiar las guardas loopback del harness CI para apuntarlo a datos
+este VPS. Si se usa el Chromium ya instalado en el host, registrar esa ejecución
+como local y serializar sus contextos; no atribuirle ejecución remota ni los tres
+motores que se verifican por separado en CI. No cambiar las guardas loopback del harness CI para apuntarlo a datos
 reales: el smoke público requiere su namespace/cuentas sintéticas explícitos.
 
 ## Backup y recuperación
