@@ -62,6 +62,14 @@ La imagen debe contener sus dos módulos verificados, licencia PSF y el noveno
 artefacto `SECURITY.tempfile-backport.json`; comprobar Linux con borrado por
 descriptores, sin file flags y limpieza funcional normal. No sustituir estas
 pruebas por aceptación genérica de CVEs ni atribuirle estado de fix publicado.
+El lector runtime obtiene las versiones `P:`/`V:` y los hashes de los bloques del
+mismo registro `/lib/apk/db/installed`, leído una sola vez. Rechaza identidades,
+versiones o paquetes requeridos ausentes/duplicados y conserva paquetes virtuales
+como `.python-rundeps`. `apk info -e` comprueba existencia y por defecto devuelve
+el nombre, no una versión; no usarlo como procedencia. Los controles de integración
+montan además los dos contratos JSON canónicos de tests, solo lectura, con sus
+ancestros y archivos verificados y legibles por UID 10001. Estos fixtures no se
+empaquetan dentro del runtime productivo.
 Un informe histórico o desactivar la validación
 de edad no acredita el candidato nuevo.
 

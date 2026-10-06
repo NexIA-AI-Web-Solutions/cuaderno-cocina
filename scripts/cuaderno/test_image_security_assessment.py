@@ -1,11 +1,14 @@
 """Fail-closed tests for the separate retained-finding assessment."""
 from __future__ import annotations
 
+import ast
 import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
 import shutil
+import re
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -561,6 +564,84 @@ class SecurityAssessmentTests(unittest.TestCase):
             return result
         with self.assertRaisesRegex(subject.AssessmentFailure, "Node"):
             fixture.assess(runtime_probe=broken_wrapper)
+
+
+class InstalledApkRuntimeTests(unittest.TestCase):
+    """Execute the shipped reader against bytes extracted from the real image."""
+
+    def setUp(self):
+        path = subject.ROOT / "tooling/cuaderno/fixtures/apk-installed-3.0.8-reviewed-packages.txt"
+        raw = path.read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         "273896b0678aaaa0b84e4cfdfa7ff179089c6b622110e6d299d47ccd30580e2a")
+        self.installed = raw.decode()
+
+    def read_runtime(self, installed):
+        # Select only the actual metadata reader, never the security behavior probe.
+        selected = []
+        for node in ast.parse(subject.RUNTIME_SCRIPT).body:
+            if isinstance(node, ast.FunctionDef) and node.name == '_installed_apk_records':
+                selected.append(node)
+            elif isinstance(node, ast.Assign) and any(
+                    isinstance(target, ast.Name) and target.id in {
+                        'package_text', 'package_records', 'versions', 'package_blocks'}
+                    for target in node.targets):
+                selected.append(node)
+            elif isinstance(node, ast.For) and isinstance(node.target, ast.Name) and node.target.id == 'block':
+                selected.append(node)
+            elif isinstance(node, ast.With) and any(
+                    isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store) and child.id == 'package_text'
+                    for child in ast.walk(node)):
+                selected.append(node)
+        reads, apk_calls = [], []
+        def open_installed(path, *args, **kwargs):
+            self.assertEqual(path, '/lib/apk/db/installed')
+            reads.append(path)
+            return io.StringIO(installed)
+        def apk_name_only(command, **kwargs):
+            self.assertEqual(command[:3], ['/sbin/apk', 'info', '-e'])
+            apk_calls.append(command)
+            return command[3] + '\n'  # APK 3.0.8 default info_exists output.
+        scope = {'open': open_installed, 'hashlib': hashlib, 're': re,
+                 'subprocess': SimpleNamespace(check_output=apk_name_only)}
+        exec(compile(ast.Module(body=selected, type_ignores=[]), '<shipped-apk-reader>', 'exec'), scope)
+        return scope, reads, apk_calls
+
+    def test_actual_runtime_reads_exact_versions_and_scope_hashes_from_one_database(self):
+        scope, reads, apk_calls = self.read_runtime(self.installed)
+        self.assertEqual(scope['versions'], {name: expected[0] for name, expected in subject.ALPINE_PACKAGES.items()})
+        expected_blocks = {}
+        for block in self.installed.split('\n\n'):
+            for name in ('ada-libs', 'nghttp2-libs'):
+                if '\nP:' + name + '\n' in '\n' + block + '\n':
+                    expected_blocks[name] = hashlib.sha256(block.encode()).hexdigest()
+        self.assertEqual(scope['package_blocks'], expected_blocks)
+        self.assertEqual(len(reads), 1)
+        self.assertEqual(apk_calls, [])
+
+    def test_runtime_accepts_installed_virtual_dependency_package(self):
+        # The real base image also records this APK virtual package.
+        scope, reads, calls = self.read_runtime(self.installed + 'P:.python-rundeps\nV:20261001.214230\n\n')
+        self.assertEqual(scope['versions'], {name: expected[0] for name, expected in subject.ALPINE_PACKAGES.items()})
+        self.assertEqual(len(reads), 1)
+        self.assertEqual(calls, [])
+
+    def test_runtime_rejects_duplicate_missing_or_malformed_package_identity(self):
+        block = next(block for block in self.installed.split('\n\n') if '\nP:busybox\n' in '\n' + block + '\n')
+        mutations = [
+            self.installed + block + '\n\n',
+            self.installed.replace('P:busybox\n', 'P:busybox\nP:busybox\n', 1),
+            self.installed.replace('V:1.37.0-r31\n', 'V:1.37.0-r31\nV:1.37.0-r31\n', 1),
+            self.installed.replace('P:busybox\n', '', 1),
+            self.installed.replace('V:1.37.0-r31\n', '', 1),
+            self.installed.replace('P:busybox\n', 'P:busy box\n', 1),
+            self.installed.replace('V:1.37.0-r31\n', 'V: \n', 1),
+            self.installed.replace(block + '\n\n', '', 1),
+        ]
+        for installed in mutations:
+            with self.subTest(installed_sha=hashlib.sha256(installed.encode()).hexdigest()):
+                with self.assertRaises(ValueError):
+                    self.read_runtime(installed)
 
 
 if __name__ == "__main__":

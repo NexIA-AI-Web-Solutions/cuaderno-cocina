@@ -7,6 +7,7 @@ from unittest.mock import patch
 import subprocess
 import sys
 import stat
+import hashlib
 
 if __package__:
     from . import release_runtime_check as subject
@@ -16,6 +17,8 @@ else:
 
 IMAGE = "sha256:" + "c" * 64
 SOURCE = "a" * 40 + "+worktree." + "b" * 64
+CANONICAL_CONTRACTS = Path(__file__).resolve().parents[2] / "tests/cuaderno/contracts"
+CONTRACT_FILES = ("costing-cases.json", "stock-cases.json")
 
 
 class RuntimeCheckTests(unittest.TestCase):
@@ -27,6 +30,10 @@ class RuntimeCheckTests(unittest.TestCase):
         (self.root / "cuaderno/tests").mkdir(parents=True)
         (self.root / "cookbook/tests").mkdir(parents=True)
         (self.root / "tooling/cuaderno").mkdir(parents=True)
+        self.contracts = self.root / "tests/cuaderno/contracts"
+        self.contracts.mkdir(parents=True)
+        for name in CONTRACT_FILES:
+            (self.contracts / name).write_bytes((CANONICAL_CONTRACTS / name).read_bytes())
         self.schema = self.root / "tooling/cuaderno/openapi.json"
         self.schema.write_text('{"openapi":"3.0.3","paths":{"/health":{}}}', encoding="utf-8")
         self.test_constraints = self.root / "tooling/cuaderno/python-test.constraints.txt"
@@ -97,6 +104,93 @@ class RuntimeCheckTests(unittest.TestCase):
         self.assertNotIn(self.password, joined)
         self.assertRegex(observed["env"], r"TEST_POSTGRES_DB=cuaderno_test_integration_[0-9a-f]{12}")
         self.assertNotIn(self.password, output)
+
+    def test_test_overlay_mounts_exact_canonical_contract_bytes_readable_by_runtime_uid(self):
+        def runner(argv, **_kwargs):
+            mounts = [item for item in argv if "target=/opt/recipes/tests/cuaderno/contracts," in item]
+            self.assertEqual(len(mounts), 1, "Missing root contract fixtures in runtime test overlay")
+            self.assertEqual(mounts[0], f"type=bind,source={self.contracts},target=/opt/recipes/tests/cuaderno/contracts,readonly")
+            expected = {name: hashlib.sha256((CANONICAL_CONTRACTS / name).read_bytes()).hexdigest()
+                        for name in CONTRACT_FILES}
+            for name in CONTRACT_FILES:
+                self.assertEqual((self.contracts / name).read_bytes(), (CANONICAL_CONTRACTS / name).read_bytes())
+            if os.name == "posix":
+                self.assertTrue(self.contracts.stat().st_mode & stat.S_IXOTH)
+                self.assertTrue(all((self.contracts / name).stat().st_mode & stat.S_IROTH for name in CONTRACT_FILES))
+                if os.geteuid() == 0:
+                    # Model the bind's readable directory and exact file inodes,
+                    # bypassing the private host ancestors as Docker does.
+                    with tempfile.TemporaryDirectory(prefix="cuaderno-contract-read-probe-") as temporary:
+                        exposed = Path(temporary)
+                        exposed.chmod(stat.S_IMODE(self.contracts.stat().st_mode))
+                        for name in CONTRACT_FILES:
+                            os.link(self.contracts / name, exposed / name)
+                        result = subprocess.run(
+                            [sys.executable, "-c", "import hashlib,json,pathlib,sys; root=pathlib.Path(sys.argv[1]); print(json.dumps({name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in sys.argv[2:]}))", str(exposed), *CONTRACT_FILES],
+                            user=10001, group=10001, extra_groups=[], cwd=exposed,
+                            check=False, capture_output=True, text=True, encoding="utf-8", timeout=10,
+                        )
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(json.loads(result.stdout), expected)
+            return 0, "canonical root contracts readable in readonly overlay\n"
+
+        for check in sorted(subject.TEST_CHECKS):
+            with self.subTest(check=check), patch.dict(os.environ, {"CUADERNO_ENV": "test"}, clear=False), \
+                 patch.object(subject, "ROOT", self.root):
+                code, _ = subject.execute(check, self.context_path, root=self.root, local_env=self.env_file,
+                                          context_validator=self.valid, preview_inspector=self.preview, process_runner=runner)
+                self.assertEqual(code, 0)
+
+    def test_runtime_checks_do_not_mount_test_contracts(self):
+        with patch.object(subject, "ROOT", self.root):
+            for check in sorted(subject.RUNTIME_CHECKS):
+                argv = subject.docker_argv(check, self.context, "private", self.env_file,
+                                           self.root / "requirements.txt", self.test_constraints, "cuaderno-runtime-only")
+                self.assertFalse(any("target=/opt/recipes/tests/" in item for item in argv))
+
+    def test_contract_mount_rejects_links_missing_and_nonregular_fixtures(self):
+        def rejected():
+            with patch.object(subject, "ROOT", self.root), self.assertRaises(subject.RuntimeCheckFailure):
+                subject.docker_argv("integration-final", self.context, "private", self.env_file,
+                                    self.root / "requirements.txt", self.test_constraints, "cuaderno-invalid-fixtures")
+        for name in CONTRACT_FILES:
+            target = self.contracts / name
+            original = target.read_bytes()
+            target.unlink()
+            rejected()
+            target.mkdir()
+            rejected()
+            target.rmdir()
+            owned = self.root / "owned-contract.json"
+            owned.write_bytes(original)
+            target.symlink_to(owned)
+            rejected()
+            target.unlink()
+            target.write_bytes(original)
+            hardlink = self.root / "second-contract-link.json"
+            os.link(target, hardlink)
+            rejected()
+            hardlink.unlink()
+        tests = self.root / "tests"
+        renamed = self.root / "owned-tests"
+        tests.rename(renamed)
+        tests.symlink_to(renamed, target_is_directory=True)
+        rejected()
+        tests.unlink()
+        renamed.rename(tests)
+
+    def test_contract_fixture_drift_after_runner_is_rejected_by_candidate_binding(self):
+        expected = {name: (self.contracts / name).read_bytes() for name in CONTRACT_FILES}
+        def validator(_context, _root):
+            if any((self.contracts / name).read_bytes() != value for name, value in expected.items()):
+                raise subject.RuntimeCheckFailure("Candidate contract fixture drift")
+        def runner(_argv, **_kwargs):
+            (self.contracts / "costing-cases.json").write_bytes(expected["costing-cases.json"] + b"\n")
+            return 0, "synthetic runner reported success\n"
+        with patch.dict(os.environ, {"CUADERNO_ENV": "test"}, clear=False), patch.object(subject, "ROOT", self.root), \
+             self.assertRaisesRegex(subject.RuntimeCheckFailure, "fixture drift"):
+            subject.execute("integration-final", self.context_path, root=self.root, local_env=self.env_file,
+                            context_validator=validator, preview_inspector=self.preview, process_runner=runner)
 
     def test_mounted_public_requirements_are_readable_by_runtime_uid_without_exposing_secrets(self):
         def runner(argv, **_kwargs):

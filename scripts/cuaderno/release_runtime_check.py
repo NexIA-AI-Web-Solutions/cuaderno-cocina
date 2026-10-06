@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -176,6 +177,22 @@ def _mount(source: Path, target: str) -> list[str]:
     return ["--mount", f"type=bind,source={source.resolve()},target={target},readonly"]
 
 
+def _contracts_mount() -> list[str]:
+    source = ROOT / "tests/cuaderno/contracts"
+    try:
+        if source.resolve(strict=True) != source or not source.is_dir():
+            raise RuntimeCheckFailure("El directorio de contratos no es canónico y regular.")
+        for name in ("costing-cases.json", "stock-cases.json"):
+            fixture = source / name
+            metadata = fixture.lstat()
+            if (fixture.is_symlink() or getattr(fixture, "is_junction", lambda: False)()
+                    or not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1 or metadata.st_size == 0):
+                raise RuntimeCheckFailure("Los contratos requieren archivos regulares sin enlaces.")
+    except (OSError, RuntimeError) as error:
+        raise RuntimeCheckFailure("No se pudieron verificar los contratos canónicos de prueba.") from error
+    return _mount(source, "/opt/recipes/tests/cuaderno/contracts")
+
+
 def docker_argv(check: str, context: dict, network: str, env_file: Path,
                 dev_requirements: Path, test_constraints: Path, container: str) -> list[str]:
     if check not in ALL_CHECKS:
@@ -192,6 +209,7 @@ def docker_argv(check: str, context: dict, network: str, env_file: Path,
         # Application modules and the production virtualenv remain the immutable image bytes.
         argv += _mount(ROOT / "cuaderno/tests", "/opt/recipes/cuaderno/tests")
         argv += _mount(ROOT / "cookbook/tests", "/opt/recipes/cookbook/tests")
+        argv += _contracts_mount()
         argv += _mount(ROOT / "pytest.ini", "/opt/recipes/pytest.ini")
         argv += ["--mount", f"type=bind,source={dev_requirements.resolve()},target=/release-tests/dev-requirements.txt,readonly"]
         argv += _mount(test_constraints, TEST_CONSTRAINTS.as_posix())

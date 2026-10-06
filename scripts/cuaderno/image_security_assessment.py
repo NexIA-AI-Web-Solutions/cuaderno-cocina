@@ -417,7 +417,7 @@ def _valid_node_provenance(value, alpine: dict) -> bool:
     )
 
 
-RUNTIME_SCRIPT = r'''import hashlib,importlib.util,json,os,socket,subprocess,sys,threading
+RUNTIME_SCRIPT = r'''import hashlib,importlib.util,json,os,re,socket,subprocess,sys,threading
 wheel_root="/opt/recipes/venv/lib/python3.13/site-packages/nodejs_wheel"
 wheel_node=wheel_root+"/bin/node"; executable=wheel_root+"/executable.py"; license=wheel_root.rsplit("/",1)[0]+"/nodejs_wheel_binaries-24.19.0.dist-info/licenses/LICENSE"
 def filehash(path):
@@ -448,7 +448,23 @@ py,pysha=read("/opt/recipes/SECURITY.python-backports.json")
 al,alsha=read("/opt/recipes/SECURITY.alpine-backports.json")
 nd,ndsha=read("/opt/recipes/SECURITY.node-runtime.json")
 if al.get("runtime_files",{}).get("/usr/lib/libz.so.1.3.2")!=zlib_sha: raise ValueError("untrusted zlib runtime")
-versions={n:subprocess.check_output(["/sbin/apk","info","-e",n],text=True).strip() for n in ("busybox","busybox-binsh","ssl_client","zlib")}
+def _installed_apk_records(text,required):
+ records={}
+ for block in text.split('\n\n'):
+  if not block: continue
+  names=[line[2:] for line in block.splitlines() if line.startswith('P:')]
+  versions=[line[2:] for line in block.splitlines() if line.startswith('V:')]
+  if len(names)!=1 or len(versions)!=1: raise ValueError('missing or duplicate APK identity/version')
+  name,version=names[0],versions[0]
+  if not re.fullmatch(r'[a-z0-9.][a-z0-9+_.-]*',name) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._+~:-]*',version): raise ValueError('invalid APK identity/version')
+  if name in records: raise ValueError('duplicate installed APK package')
+  records[name]={'version':version,'sha256':hashlib.sha256(block.encode()).hexdigest()}
+ if not set(required).issubset(records): raise ValueError('missing required installed APK package')
+ return records
+with open('/lib/apk/db/installed',encoding='utf-8',newline='') as stream:
+ package_text=stream.read()
+package_records=_installed_apk_records(package_text,('busybox','busybox-binsh','ssl_client','zlib','ada-libs','nghttp2-libs'))
+versions={name:package_records[name]['version'] for name in ('busybox','busybox-binsh','ssl_client','zlib')}
 runtime_files={path:hashlib.sha256(open(path,"rb").read()).hexdigest() for path in ("/bin/busybox","/usr/bin/ssl_client","/usr/lib/libz.so.1.3.2")}
 bb_rejected=[]
 for value in (" bad","\tbad","\rbad","\nbad"):
@@ -466,13 +482,7 @@ wrapped=node_wrapper.node(["--eval",js],return_completed_process=True,capture_ou
 ldd=subprocess.check_output(["ldd","/usr/bin/node"],text=True)
 node_runtime={"wheel_node_is_link":os.path.islink(wheel_node),"wheel_node_target":os.readlink(wheel_node) if os.path.islink(wheel_node) else None,"system_node_is_regular":os.path.isfile("/usr/bin/node") and not os.path.islink("/usr/bin/node"),"system_node_sha256":system_node_sha,"executable_sha256":executable_sha,"license_sha256":license_sha,"zlib_link_target":os.readlink("/usr/lib/libz.so.1") if os.path.islink("/usr/lib/libz.so.1") else None,"zlib_sha256":zlib_sha,"ldd":ldd,"direct":direct,"wrapper":{"returncode":wrapped.returncode,"stdout":wrapped.stdout,"stderr":wrapped.stderr}}
 import tempfile,shutil
-package_text=open('/lib/apk/db/installed').read()
-package_blocks={}
-for block in package_text.split('\n\n'):
- for name in ('ada-libs','nghttp2-libs'):
-  if '\nP:'+name+'\n' in '\n'+block+'\n':
-   if name in package_blocks: raise ValueError('duplicate scope package')
-   package_blocks[name]=hashlib.sha256(block.encode()).hexdigest()
+package_blocks={name:package_records[name]['sha256'] for name in ('ada-libs','nghttp2-libs')}
 paths=[directory+'/nghttpx' for directory in ('/bin','/sbin','/usr/bin','/usr/sbin','/usr/local/bin','/usr/local/sbin')]
 scope_runtime={'package_blocks':package_blocks,'library_files':{path:filehash(path) for path in ('/usr/lib/libada.so.3.3.0','/usr/lib/libnghttp2.so.14.29.4')},'nghttpx_absent_paths':[path for path in paths if not os.path.lexists(path)],'nghttpx_package_files_absent':'R:nghttpx' not in package_text.splitlines(),'proxy_packages_absent':not any(line in ('P:nghttp2','P:nghttp2-proxy') for line in package_text.splitlines())}
 with tempfile.TemporaryDirectory(prefix='cuaderno-benign-outside-') as outside:
