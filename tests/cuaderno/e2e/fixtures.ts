@@ -1,5 +1,6 @@
 import {expect, test as base, type Page, type TestInfo} from '@playwright/test'
 import {appPath, parseProject, type Identity} from './contracts.js'
+import {enterStartPage} from './start-page-ready.js'
 
 type Fixtures = {identity: Identity; cleanPage: Page}
 
@@ -104,9 +105,17 @@ export function rows(value: unknown): Record<string, unknown>[] {
 }
 
 export async function enterApp(page: Page): Promise<void> {
-  await page.goto(appPath('/'))
-  await expect(page).not.toHaveURL(/\/accounts\/login\//)
-  await expect(page.locator('#app')).toBeVisible()
+  const home = new URL(appPath('/'), process.env.BASE_URL || 'http://127.0.0.1:18081')
+  await enterStartPage(page, home.href, async remaining => {
+    await expect(page).not.toHaveURL(/\/accounts\/login\//, {timeout: remaining()})
+    await expect(page.locator('#app')).toBeVisible({timeout: remaining()})
+    const main = page.locator('main')
+    // Both markers require the native recipe count to have reached the UI.
+    await expect(main.locator(`a.v-btn[href="${appPath('/advanced-search')}"], .v-card:has(.fa-eye-slash)`).first()).toBeVisible({timeout: remaining()})
+    // Recipe-count completion can mount scrollers; the optional meal-plan load
+    // has its own progress indicator. Neither may be left pending by navigation.
+    await expect(main.locator('.v-skeleton-loader, .v-progress-linear')).toHaveCount(0, {timeout: remaining()})
+  })
 }
 
 export async function assertNoHorizontalOverflow(page: Page, testInfo: TestInfo): Promise<void> {

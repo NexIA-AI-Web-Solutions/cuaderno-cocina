@@ -11,6 +11,10 @@ const corePages = [
 ] as const
 
 async function gotoAndIdentify(page: Page, route: typeof corePages[number]): Promise<void> {
+  if (route.path === '/') {
+    await enterApp(page)
+    return
+  }
   await page.goto(appPath(route.path))
   await expect(page).not.toHaveURL(/\/accounts\/login\//)
   if ('heading' in route) await expect(page.getByText(route.heading, {exact: true}).first()).toBeVisible()

@@ -167,6 +167,12 @@ La ubicación indicada está en este mismo VPS. **No hay copia externa configura
 No afirmar protección frente a pérdida del servidor. Una futura transferencia
 requiere destino autorizado, cifrado antes de salir y comprobación de recepción.
 
+## Sincronización de aceptación bajo prefijo
+
+La CI del sexto candidato `ff5d1ab` pasó raíz 193/193, G7 17/17 y el ensayo productivo adicional, pero falló prefijo 308/309. No autoriza su despliegue. La traza WebKit muestra cancelaciones nativas de StartPage durante una navegación completa a ajustes, anteriores al cambio de idioma. El séptimo candidato espera la señal visible de StartPage y los cuerpos completos de las respuestas nativas de recetas/planificación observadas en su origen y prefijo. Las peticiones opcionales ausentes no se esperan; cualquier error de finalización sigue fallando. Se conserva el presupuesto compartido de ocho segundos, sin alterar collector ni retries. Las 35 pruebas ligeras y la revisión focal no sustituyen nueva CI, imagen ni aceptación HTTPS real.
+
+El OOM concurrente y las recreaciones ajenas quedan en STATUS. El gestor `user@1000.service` se observó de nuevo activo a las 18:54 UTC sin actuación de Cuaderno. Capturar una nueva referencia antes de arrancar, conservar las anteriores y comparar servicios, contenedores, archivos Caddy, memoria, swap, disco y eventos OOM tras cada fase propia. No reiniciar servicios ajenos.
+
 ## Actualización, rollback y reboot
 
 Antes de actualizar: copia verificada, ensayo de migración aislado y registro del
