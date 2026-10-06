@@ -1,0 +1,2 @@
+# The typecheck manifest verifies these exact lockfile bytes on every OS.
+vue3/yarn.lock text eol=lf

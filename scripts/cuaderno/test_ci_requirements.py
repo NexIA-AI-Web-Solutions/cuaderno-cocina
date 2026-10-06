@@ -1,6 +1,8 @@
 """Execute the dependency extraction commands used by the backend CI jobs."""
 
 from pathlib import Path
+import hashlib
+import json
 import shlex
 import subprocess
 import sys
@@ -11,6 +13,13 @@ import yaml
 
 
 class CIRequirementsTests(unittest.TestCase):
+    def test_typecheck_lockfile_has_the_exact_platform_independent_bytes(self):
+        root = Path(__file__).resolve().parents[2]
+        manifest = json.loads((root / "tooling/cuaderno/typecheck-toolchain.json").read_text(encoding="utf-8"))
+        raw = (root / "vue3" / manifest["lockfile"]["path"]).read_bytes()
+        self.assertNotIn(b"\r", raw)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), manifest["lockfile"]["sha256"])
+
     def test_backend_jobs_extract_test_pins_from_the_checkout_directory(self):
         root = Path(__file__).resolve().parents[2]
         workflow = yaml.safe_load((root / ".github/workflows/cuaderno.yml").read_text(encoding="utf-8"))

@@ -314,21 +314,50 @@ class RuntimeCheckTests(unittest.TestCase):
             pid = 4242
             returncode = None
             calls = 0
+
             def communicate(self, timeout=None):
                 self.calls += 1
                 if self.calls == 1:
                     raise subprocess.TimeoutExpired(["docker"], timeout, output="partial\n")
                 return "tail\n", None
-        cleanup = []
-        with patch.object(subject.subprocess, "Popen", return_value=Process()), \
-             patch.object(subject.subprocess, "run", side_effect=lambda argv, **_kwargs: cleanup.append(argv)), \
-             patch.object(subject.subprocess, "CREATE_NEW_PROCESS_GROUP", 0, create=True), \
-             patch.object(subject.subprocess, "DEVNULL", -3):
-            code, output = subject.run_container(["docker", "run"], root=self.root, timeout=3600,
-                                                 container="cuaderno-release-check-deadbeef")
-        self.assertEqual(code, 124)
-        self.assertIn("TIMEOUT tras 3600s", output)
-        self.assertIn(["docker", "rm", "-f", "cuaderno-release-check-deadbeef"], cleanup)
+
+        container = "cuaderno-release-check-deadbeef"
+        for platform in ("nt", "posix"):
+            with self.subTest(platform=platform):
+                cleanup = []
+                process = Process()
+                with patch.object(subject.os, "name", platform), \
+                     patch.object(subject.os, "killpg", create=True) as killpg, \
+                     patch.object(subject.signal, "SIGKILL", 9, create=True), \
+                     patch.object(subject.subprocess, "Popen", return_value=process) as popen, \
+                     patch.object(subject.subprocess, "run",
+                                  side_effect=lambda argv, **kwargs: cleanup.append((argv, kwargs))), \
+                     patch.object(subject.subprocess, "CREATE_NEW_PROCESS_GROUP", 512, create=True), \
+                     patch.object(subject.subprocess, "DEVNULL", -3):
+                    code, output = subject.run_container(
+                        ["docker", "run"], root=self.root, timeout=3600, container=container,
+                    )
+
+                self.assertEqual(code, 124)
+                self.assertEqual(output, "partial\ntail\n\nTIMEOUT tras 3600s\n")
+                popen.assert_called_once_with(
+                    ["docker", "run"], cwd=self.root, stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
+                    start_new_session=platform != "nt",
+                    creationflags=512 if platform == "nt" else 0,
+                )
+                docker_cleanup = [argv for argv, _kwargs in cleanup if argv[0] == "docker"]
+                self.assertEqual(docker_cleanup, [
+                    ["docker", "rm", "-f", container],
+                    ["docker", "rm", "-f", container],
+                ])
+                taskkill = [argv for argv, _kwargs in cleanup if argv[0] == "taskkill"]
+                if platform == "nt":
+                    self.assertEqual(taskkill, [["taskkill", "/PID", "4242", "/T", "/F"]])
+                    killpg.assert_not_called()
+                else:
+                    self.assertEqual(taskkill, [])
+                    killpg.assert_called_once_with(4242, 9)
 
 
 if __name__ == "__main__":

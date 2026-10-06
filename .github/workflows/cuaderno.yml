@@ -114,7 +114,7 @@ jobs:
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt pip setuptools wheel setuptools-rust
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt -r /tmp/cuaderno-production-requirements.txt
           python scripts/cuaderno/python_lock.py --constraints tooling/cuaderno/python-production.constraints.txt --requirements /tmp/cuaderno-production-requirements.txt --installed
-          python scripts/cuaderno/patch_oauthlib.py
+          python scripts/cuaderno/check_oauthlib_runtime.py
           python -m pip check
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt -c tooling/cuaderno/python-test.constraints.txt -r /tmp/cuaderno-test-requirements.txt
       - name: Suite Cuaderno completa en PostgreSQL
@@ -176,7 +176,7 @@ jobs:
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt pip setuptools wheel setuptools-rust
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt -r /tmp/cuaderno-production-requirements.txt
           python scripts/cuaderno/python_lock.py --constraints tooling/cuaderno/python-production.constraints.txt --requirements /tmp/cuaderno-production-requirements.txt --installed
-          python scripts/cuaderno/patch_oauthlib.py
+          python scripts/cuaderno/check_oauthlib_runtime.py
           python -m pip check
           python -m pip install -c tooling/cuaderno/python-production.constraints.txt -c tooling/cuaderno/python-test.constraints.txt -r /tmp/cuaderno-test-requirements.txt
       - name: Suite nativa completa en PostgreSQL
@@ -349,9 +349,11 @@ jobs:
           printf 'CUADERNO_LOCAL_DB_PASSWORD=%s\nCUADERNO_LOCAL_SECRET_KEY=%s\n' \
             "$CUADERNO_LOCAL_DB_PASSWORD" "$CUADERNO_LOCAL_SECRET_KEY" > "$env_file"
           chmod 600 "$env_file"
+          export CUADERNO_LOCAL_IMAGE="$(cat candidate-image-id.txt)"
           docker compose --project-name cuaderno-release --env-file "$env_file" \
             -f deploy/cuaderno/compose.local.yml up -d --wait --wait-timeout 600
           test "$(docker inspect cuaderno-release-web --format '{{.Image}}')" = "$(cat candidate-image-id.txt)"
+          test "$(docker inspect cuaderno-release-web --format '{{.Config.Image}}')" = "$(cat candidate-image-id.txt)"
       - name: Sembrar fixtures sinteticos guardados
         run: >-
           docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD="$CUADERNO_DEMO_PASSWORD"
