@@ -71,3 +71,15 @@ class RuntimeApplicationTests(unittest.TestCase):
         (self.runtime / "boot.sh").unlink()
         with self.assertRaisesRegex(ValueError, "boot.sh"):
             subject.build(self.runtime)
+
+    def test_packaged_tempfile_patcher_is_bound_and_required(self):
+        relative = "release-tools/patch_tempfile_security.py"
+        self.assertEqual(subject.COPY_FILES.get(relative), "scripts/cuaderno/patch_tempfile_security.py")
+        source = subject.build(self.source, checkout=True)
+        self.assertEqual(self.runtime_build(), source)
+        patcher = self.runtime / relative
+        patcher.write_bytes(b"unexpected patcher bytes\n")
+        self.assertNotEqual(self.runtime_build(), source)
+        patcher.unlink()
+        with self.assertRaisesRegex(ValueError, "patch_tempfile_security.py"):
+            self.runtime_build()

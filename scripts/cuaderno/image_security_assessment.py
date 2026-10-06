@@ -15,7 +15,8 @@ import uuid
 
 try:
     from . import (bind_system_node, candidate_context, image_archive_audit, image_audit,
-                   patch_runtime_security, scanner_db_provenance)
+                   patch_runtime_security, scanner_db_provenance,
+                   patch_tempfile_security, image_component_scope)
 except ImportError:
     import bind_system_node
     import candidate_context
@@ -23,6 +24,8 @@ except ImportError:
     import image_audit
     import patch_runtime_security
     import scanner_db_provenance
+    import patch_tempfile_security
+    import image_component_scope
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,10 +51,12 @@ ALPINE_PACKAGES = {
     "zlib": ("1.3.2-r1", "CVE-2026-85091"),
 }
 ALPINE_RUNTIME_FILES = ("/bin/busybox", "/usr/bin/ssl_client", "/usr/lib/libz.so.1.3.2")
-PROOF_KINDS = frozenset({"python-release", "poplib-backport", "alpine-backports"})
+PROOF_KINDS = frozenset({"python-release", "poplib-backport", "alpine-backports",
+                         "tempfile-backport", "component-scope"})
 ASSESSMENT_POLICY = "reviewed-no-unresolved"
 PYTHON_CONSTRAINTS = {
     "CVE-2025-15367": ("< 3.15.0a6 (unknown)", "3.15.0a6"),
+    "CVE-2026-12345": ("< 3.15.0 (unknown)", "3.15.0"),
     "CVE-2026-15310": ("< 3.15.0rc2 (unknown)", "3.15.0rc2"),
     "CVE-2026-15806": ("< 3.15.0rc2 (unknown)", "3.15.0rc2"),
     "CVE-2026-17084": ("< 3.15.0rc2 (unknown)", "3.15.0rc2"),
@@ -207,10 +212,32 @@ def _classify(fingerprint: dict) -> str:
             return "python-release"
         if cve == patch_runtime_security.CVE:
             return "poplib-backport"
+        if cve == patch_tempfile_security.CVE:
+            return "tempfile-backport"
+    scope = {"CVE-2024-9410": ("ada-libs", "< 2024-10-01 (unknown)"),
+             "CVE-2026-58055": ("nghttp2-libs", "<= 1.69.0 (unknown)")}
+    if cve in scope:
+        package, constraint = scope[cve]
+        metadata = image_component_scope.PACKAGES[package]
+        version, upstream = metadata['version'], metadata['upstream']
+        if (fingerprint['namespace'] == 'nvd:cpe' and artifact == {
+                'name': package, 'version': version, 'type': 'apk',
+                'purl': f'pkg:apk/alpine/{package}@{version}?arch=x86_64&distro=alpine-3.23.6&upstream={upstream}',
+                } and {row['path'] for row in fingerprint['locations']} == {'/lib/apk/db/installed'}):
+            expected = [{'type': 'cpe-match', 'matcher': 'apk-matcher',
+                         'searchedBy': {'namespace': 'nvd:cpe',
+                             'cpes': [f'cpe:2.3:a:{upstream}:{upstream}:{version.split("-r")[0]}:*:*:*:*:*:*:*'],
+                             'package': {'name': upstream, 'version': version}},
+                         'found': {'vulnerabilityID': cve, 'versionConstraint': constraint,
+                             'cpes': [f'cpe:2.3:a:{upstream}:{upstream}:*:*:*:*:*:*:*:*']}}]
+            if fingerprint['match_details'] != expected:
+                raise AssessmentFailure('Los matchDetails del componente no coinciden con la evidencia exacta.')
+            return 'component-scope'
     package = artifact.get("name")
     expected = ALPINE_PACKAGES.get(package)
     upstream = "&upstream=busybox" if package in {"busybox-binsh", "ssl_client"} else ""
-    purl = (f"pkg:apk/alpine/{package}@{expected[0]}?arch=x86_64&distro=alpine-3.23.6{upstream}"
+    architecture = 'noarch' if package == 'busybox-binsh' else 'x86_64'
+    purl = (f"pkg:apk/alpine/{package}@{expected[0]}?arch={architecture}&distro=alpine-3.23.6{upstream}"
             if expected else None)
     if (expected and cve == expected[1] and fingerprint["namespace"] == "nvd:cpe"
             and artifact == {"name": package, "version": expected[0], "type": "apk", "purl": purl}
@@ -222,6 +249,8 @@ def _classify(fingerprint: dict) -> str:
 
 def _validate_python_details(fingerprint: dict) -> None:
     cve = fingerprint["vulnerability_id"]
+    if cve not in PYTHON_CONSTRAINTS:
+        raise AssessmentFailure('El hallazgo Python no tiene una prueba permitida exacta.')
     constraint, suggested = PYTHON_CONSTRAINTS[cve]
     expected = []
     for vendor in ("python", "python_software_foundation"):
@@ -248,7 +277,7 @@ def _validate_apk_details(fingerprint: dict) -> None:
         "type": "cpe-match", "matcher": "apk-matcher",
         "searchedBy": {"namespace": "nvd:cpe",
                        "cpes": [f"cpe:2.3:a:{vendor}:{vendor}:{artifact['version'].split('-r')[0]}:*:*:*:*:*:*:*"],
-                       "package": {"name": artifact["name"], "version": artifact["version"]}},
+                       "package": {"name": vendor, "version": artifact["version"]}},
         "found": {"vulnerabilityID": cve, "versionConstraint": constraint,
                   "cpes": [f"cpe:2.3:a:{vendor}:{vendor}:*:*:*:*:*:*:*:*"]},
     }]
@@ -257,14 +286,15 @@ def _validate_apk_details(fingerprint: dict) -> None:
 
 
 def _validate_proofs(proof_paths: list[Path], root: Path, fingerprints: dict[str, dict]) -> dict:
-    if len(proof_paths) != 3:
-        raise AssessmentFailure("Se requieren exactamente tres artefactos de prueba.")
+    if len(proof_paths) != len(PROOF_KINDS):
+        raise AssessmentFailure("Se requieren exactamente cinco artefactos de prueba.")
     proofs = {}
     covered = set()
     for supplied in proof_paths:
         path = _regular(supplied, root, "un artefacto de prueba", direct=True)
         value, raw = _strict(path, f"La prueba {path.name}")
-        if set(value) != {"schema_version", "kind", "metadata", "fingerprints"} or value["schema_version"] != 1:
+        if (set(value) != {"schema_version", "kind", "metadata", "fingerprints"}
+                or type(value["schema_version"]) is not int or value["schema_version"] != 1):
             raise AssessmentFailure("Un artefacto de prueba no tiene el contrato exacto.")
         kind, rows = value["kind"], value["fingerprints"]
         if kind not in PROOF_KINDS or kind in proofs or not isinstance(rows, list):
@@ -291,6 +321,16 @@ def _validate_proofs(proof_paths: list[Path], root: Path, fingerprints: dict[str
         if kind == "alpine-backports":
             if not _valid_alpine_metadata(metadata):
                 raise AssessmentFailure("La prueba Alpine no coincide con paquetes, fuentes y parches fijados.")
+        if kind == 'tempfile-backport' and (metadata != patch_tempfile_security.provenance()
+                or not isinstance(metadata, dict) or type(metadata.get('schema_version')) is not int):
+            raise AssessmentFailure('La prueba tempfile no coincide con el backport pareado fijado.')
+        if kind == 'component-scope':
+            try:
+                expected_scope = image_component_scope.metadata(root)
+            except (OSError, ValueError, KeyError, TypeError, image_audit.ImageAuditFailure) as exc:
+                raise AssessmentFailure('Las fuentes primarias del alcance no están verificadas.') from exc
+            if metadata != expected_scope:
+                raise AssessmentFailure('La prueba de alcance no coincide con el producto y componente fijados.')
         proofs[kind] = {"path": path.relative_to(root).as_posix(), "sha256": hashlib.sha256(raw).hexdigest(),
                         "metadata": metadata, "fingerprints": rows}
     if covered != set(fingerprints):
@@ -425,7 +465,25 @@ direct=json.loads(subprocess.check_output(["/usr/bin/node","--eval",js],text=Tru
 wrapped=node_wrapper.node(["--eval",js],return_completed_process=True,capture_output=True,text=True,timeout=15)
 ldd=subprocess.check_output(["ldd","/usr/bin/node"],text=True)
 node_runtime={"wheel_node_is_link":os.path.islink(wheel_node),"wheel_node_target":os.readlink(wheel_node) if os.path.islink(wheel_node) else None,"system_node_is_regular":os.path.isfile("/usr/bin/node") and not os.path.islink("/usr/bin/node"),"system_node_sha256":system_node_sha,"executable_sha256":executable_sha,"license_sha256":license_sha,"zlib_link_target":os.readlink("/usr/lib/libz.so.1") if os.path.islink("/usr/lib/libz.so.1") else None,"zlib_sha256":zlib_sha,"ldd":ldd,"direct":direct,"wrapper":{"returncode":wrapped.returncode,"stdout":wrapped.stdout,"stderr":wrapped.stderr}}
-print(json.dumps({"schema_version":1,"python_version":".".join(map(str,sys.version_info[:3])),"poplib_sha256":poplib_sha,"poplib_rejected":rejected,"poplib_sent":[x.hex() for x in p.sock.sent],"apk_versions":versions,"runtime_files":runtime_files,"busybox_rejected":bb_rejected,"busybox_normal":{"returncode":normal.returncode,"stdout":normal.stdout,"stderr":normal.stderr,"server_finished":not t.is_alive()},"python_provenance":py,"python_provenance_sha256":pysha,"alpine_provenance":al,"alpine_provenance_sha256":alsha,"node_provenance":nd,"node_provenance_sha256":ndsha,"node_runtime":node_runtime},sort_keys=True,separators=(",",":")))'''
+import tempfile,shutil
+package_text=open('/lib/apk/db/installed').read()
+package_blocks={}
+for block in package_text.split('\n\n'):
+ for name in ('ada-libs','nghttp2-libs'):
+  if '\nP:'+name+'\n' in '\n'+block+'\n':
+   if name in package_blocks: raise ValueError('duplicate scope package')
+   package_blocks[name]=hashlib.sha256(block.encode()).hexdigest()
+paths=[directory+'/nghttpx' for directory in ('/bin','/sbin','/usr/bin','/usr/sbin','/usr/local/bin','/usr/local/sbin')]
+scope_runtime={'package_blocks':package_blocks,'library_files':{path:filehash(path) for path in ('/usr/lib/libada.so.3.3.0','/usr/lib/libnghttp2.so.14.29.4')},'nghttpx_absent_paths':[path for path in paths if not os.path.lexists(path)],'nghttpx_package_files_absent':'R:nghttpx' not in package_text.splitlines(),'proxy_packages_absent':not any(line in ('P:nghttp2','P:nghttp2-proxy') for line in package_text.splitlines())}
+with tempfile.TemporaryDirectory(prefix='cuaderno-benign-outside-') as outside:
+ outside_file=os.path.join(outside,'preserved');open(outside_file,'w').write('cuaderno')
+ with tempfile.TemporaryDirectory(prefix='cuaderno-benign-inside-') as inside:
+  os.mkdir(os.path.join(inside,'child'));open(os.path.join(inside,'child','file'),'w').write('normal')
+  os.symlink(outside,os.path.join(inside,'link'))
+ benign_cleanup=not os.path.exists(inside) and open(outside_file).read()=='cuaderno'
+tf,tfsha=read('/opt/recipes/SECURITY.tempfile-backport.json')
+tempfile_runtime={'license_sha256':filehash('/opt/recipes/LICENSE.cpython-tempfile-backport'),'provenance':tf,'provenance_sha256':tfsha,'files':{name:filehash('/usr/local/lib/python3.13/'+name) for name in ('tempfile.py','shutil.py')},'rmtree_use_dir_fd':getattr(tempfile,'_rmtree_use_dir_fd',False),'rmtree_avoids_symlink_attacks':shutil.rmtree.avoids_symlink_attacks,'os_chflags':hasattr(os,'chflags'),'platform':sys.platform,'benign_cleanup':benign_cleanup}
+print(json.dumps({"schema_version":1,"python_version":".".join(map(str,sys.version_info[:3])),"poplib_sha256":poplib_sha,"poplib_rejected":rejected,"poplib_sent":[x.hex() for x in p.sock.sent],"apk_versions":versions,"runtime_files":runtime_files,"busybox_rejected":bb_rejected,"busybox_normal":{"returncode":normal.returncode,"stdout":normal.stdout,"stderr":normal.stderr,"server_finished":not t.is_alive()},"python_provenance":py,"python_provenance_sha256":pysha,"alpine_provenance":al,"alpine_provenance_sha256":alsha,"node_provenance":nd,"node_provenance_sha256":ndsha,"node_runtime":node_runtime,"component_scope_runtime":scope_runtime,"tempfile_runtime":tempfile_runtime},sort_keys=True,separators=(",",":")))'''
 
 
 def docker_runtime_probe(context: dict, *, root: Path, runner=subprocess.run) -> dict:
@@ -447,6 +505,7 @@ def docker_runtime_probe(context: dict, *, root: Path, runner=subprocess.run) ->
     name = f"cuaderno-security-proof-{uuid.uuid4().hex[:12]}"
     command = ["docker", "run", "--pull", "never", "--rm", "--name", name,
                "--network", "none", "--read-only", "--cap-drop", "ALL",
+               "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=8m,mode=1777",
                "--security-opt", "no-new-privileges", "--user", "10001:10001",
                "--entrypoint", "python", image, "-I", "-S", "-c", RUNTIME_SCRIPT]
     try:
@@ -485,7 +544,8 @@ def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path
     report, report_raw = _strict(report_path, "El informe Grype")
     summary, summary_raw = _strict(summary_path, "El resumen Grype")
     reported_input = report.get("source", {}).get("target", {}).get("userInput")
-    if reported_input != image_archive_audit.CONTAINER_ARCHIVE_INPUT:
+    if reported_input not in {image_archive_audit.CONTAINER_ARCHIVE_INPUT,
+                             image_archive_audit.CONTAINER_ARCHIVE_INPUT.removeprefix('docker-archive:')}:
         raise AssessmentFailure("El informe no conserva la entrada aislada exacta del archivo retenido.")
     matches, ignored, severities = image_archive_audit._validate_archive_report(
         report, binding=binding, source_input=reported_input)
@@ -599,6 +659,31 @@ def assess(*, context_path: Path, archive: Path, report_path: Path, summary_path
                                             "stderr": ""}
             or wrapper_value != expected_js):
         raise AssessmentFailure("La prueba runtime Node no demuestra enlace, zlib, crypto y wrapper exactos.")
+    scope_runtime = runtime.get('component_scope_runtime')
+    if (scope_runtime != image_component_scope.expected_runtime()
+            or not isinstance(scope_runtime, dict)
+            or scope_runtime.get('nghttpx_package_files_absent') is not True
+            or scope_runtime.get('proxy_packages_absent') is not True):
+        raise AssessmentFailure('La prueba runtime no demuestra el producto y componente exactos.')
+    tempfile_receipt = {**patch_tempfile_security.provenance(), 'status': 'patched',
+        'stdlib_path': '/usr/local/lib/python3.13',
+        'installed_files': {name: {'path': '/usr/local/lib/python3.13/' + name, 'sha256': digest}
+                            for name, digest in patch_tempfile_security.PATCHED_SHA256.items()}}
+    tempfile_runtime = runtime.get('tempfile_runtime')
+    expected_tempfile = {
+        'provenance': tempfile_receipt,
+        'provenance_sha256': _image_artifact_hash(context, 'security_tempfile_backport'),
+        'files': patch_tempfile_security.PATCHED_SHA256,
+        'license_sha256': patch_tempfile_security.LICENSE_SHA256,
+        'rmtree_use_dir_fd': True, 'rmtree_avoids_symlink_attacks': True,
+        'os_chflags': False, 'platform': 'linux', 'benign_cleanup': True,
+    }
+    if (tempfile_runtime != expected_tempfile or not isinstance(tempfile_runtime, dict)
+            or type(tempfile_runtime.get('provenance', {}).get('schema_version')) is not int
+            or any(tempfile_runtime.get(key) is not True for key in
+                   ('rmtree_use_dir_fd', 'rmtree_avoids_symlink_attacks', 'benign_cleanup'))
+            or tempfile_runtime.get('os_chflags') is not False):
+        raise AssessmentFailure('La prueba runtime tempfile no demuestra el par y capacidades seguros.')
     stable = {archive: archive_sha, report_path: hashlib.sha256(report_raw).hexdigest(),
               summary_path: hashlib.sha256(summary_raw).hexdigest(),
               **{root / value["path"]: value["sha256"] for value in proofs.values()}}

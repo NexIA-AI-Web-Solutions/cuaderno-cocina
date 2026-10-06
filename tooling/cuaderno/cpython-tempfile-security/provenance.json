@@ -1,0 +1,27 @@
+{
+  "cve": "CVE-2026-12345",
+  "files": {
+    "shutil.py": {
+      "original_sha256": "11c32fd568588e38463fdf281caa7ef0edbf3d64daf7961f0e7e68d779528731",
+      "original_url": "https://raw.githubusercontent.com/python/cpython/v3.13.16/Lib/shutil.py",
+      "patched_sha256": "7619899fbdf67c74d77537968dd8382033aa2f8a9436adba5cdd1e724e50e7e9",
+      "patched_url": "https://raw.githubusercontent.com/python/cpython/56caf8e0b89463e2e8465ce06f7aaa31847c1768/Lib/shutil.py"
+    },
+    "tempfile.py": {
+      "original_sha256": "7350d7f75ca8d6e4752c377777a315dc26eb4ecd3b6c9c0951bffddc576f030f",
+      "original_url": "https://raw.githubusercontent.com/python/cpython/v3.13.16/Lib/tempfile.py",
+      "patched_sha256": "05f12fd8e347c9ac71777e3a5b2811a8b9da5200999b3bea83f660599ae460da",
+      "patched_url": "https://raw.githubusercontent.com/python/cpython/56caf8e0b89463e2e8465ce06f7aaa31847c1768/Lib/tempfile.py"
+    }
+  },
+  "license": {
+    "sha256": "78b12c3a81360b357002334f0e70ea0e92eebf7a9b358805c03c48484945f3bb",
+    "url": "https://raw.githubusercontent.com/python/cpython/56caf8e0b89463e2e8465ce06f7aaa31847c1768/LICENSE"
+  },
+  "python": "3.13.16",
+  "schema_version": 1,
+  "upstream_commit": "56caf8e0b89463e2e8465ce06f7aaa31847c1768",
+  "upstream_commit_url": "https://github.com/python/cpython/commit/56caf8e0b89463e2e8465ce06f7aaa31847c1768",
+  "upstream_pull_request": "https://github.com/python/cpython/pull/158429",
+  "upstream_status": "open-unmerged-backport"
+}

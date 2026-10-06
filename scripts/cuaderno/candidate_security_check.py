@@ -21,7 +21,8 @@ except ImportError:
 
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_COUNTS = {"python-release": 6, "poplib-backport": 1, "alpine-backports": 4}
+EXPECTED_COUNTS = {"python-release": 0, "poplib-backport": 1, "alpine-backports": 4,
+                   "tempfile-backport": 1, "component-scope": 2}
 
 
 class CandidateSecurityFailure(ValueError):
@@ -39,7 +40,7 @@ def _write_new(path: Path, value: dict) -> None:
         raise CandidateSecurityFailure(f"No se pudo conservar {path.name}.") from exc
 
 
-def _proof_metadata(runtime: dict) -> dict[str, dict]:
+def _proof_metadata(runtime: dict, root: Path = ROOT) -> dict[str, dict]:
     alpine = runtime.get("alpine_provenance")
     if (not isinstance(alpine, dict) or alpine.get("schema_version") != 1
             or alpine.get("verified") is not True):
@@ -65,6 +66,8 @@ def _proof_metadata(runtime: dict) -> dict[str, dict]:
             "license_url": security.patch_runtime_security.LICENSE_URL,
         },
         "alpine-backports": alpine,
+        "tempfile-backport": security.patch_tempfile_security.provenance(),
+        "component-scope": security.image_component_scope.metadata(root),
     }
 
 
@@ -81,8 +84,8 @@ def _generate_proofs(*, report_path: Path, scan: dict, runtime: dict,
             report, binding=scan["archive_binding"], source_input=source_input)
     except (KeyError, TypeError, image_archive_audit.shared.ImageAuditFailure) as exc:
         raise CandidateSecurityFailure("El informe candidato no coincide con su archivo.") from exc
-    if ignored != [] or len(matches) != 11:
-        raise CandidateSecurityFailure("El informe debe conservar exactamente 11 hallazgos y ningún ignoredMatch.")
+    if ignored != [] or len(matches) != sum(EXPECTED_COUNTS.values()):
+        raise CandidateSecurityFailure("El informe debe conservar exactamente 8 hallazgos y ningún ignoredMatch.")
     grouped = {kind: [] for kind in security.PROOF_KINDS}
     seen = set()
     for match in matches:
@@ -93,8 +96,8 @@ def _generate_proofs(*, report_path: Path, scan: dict, runtime: dict,
         seen.add(digest)
         grouped[security._classify(fingerprint)].append(digest)
     if {kind: len(rows) for kind, rows in grouped.items()} != EXPECTED_COUNTS:
-        raise CandidateSecurityFailure("La composición de los 11 hallazgos no coincide con la política.")
-    metadata = _proof_metadata(runtime)
+        raise CandidateSecurityFailure("La composición de los 8 hallazgos no coincide con la política.")
+    metadata = _proof_metadata(runtime, root)
     evidence = (root / ".cuaderno-runs").resolve(strict=True)
     paths = []
     for kind in sorted(grouped):

@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch
 import subprocess
 import sys
+import stat
 
 if __package__:
     from . import release_runtime_check as subject
@@ -46,7 +47,8 @@ class RuntimeCheckTests(unittest.TestCase):
                      "sbom_python": "d" * 64, "sbom_frontend": "e" * 64,
                      "frontend_provenance": "f" * 64, "version_info": "1" * 64,
                      "security_python_backports": "3" * 64, "security_alpine_backports": "4" * 64,
-                     "security_node_runtime": "5" * 64}
+                     "security_node_runtime": "5" * 64,
+                     "security_tempfile_backport": "6" * 64}
         labels = {"io.cuaderno.source-identity": SOURCE}
         self.context = {"image_id": IMAGE, "source_identity": SOURCE,
                         "environment": {"image": {"labels": labels, "artifacts": artifacts,
@@ -59,6 +61,12 @@ class RuntimeCheckTests(unittest.TestCase):
     @staticmethod
     def valid(_context, _root):
         return None
+
+    def test_missing_new_tempfile_provenance_stops_before_runtime_operations(self):
+        subject.verify_declarations(self.context)
+        self.context['environment']['image']['artifacts'].pop('security_tempfile_backport')
+        with self.assertRaisesRegex(subject.RuntimeCheckFailure, 'Falta identidad'):
+            subject.verify_declarations(self.context)
 
     @staticmethod
     def preview(_root, _container):
@@ -89,6 +97,44 @@ class RuntimeCheckTests(unittest.TestCase):
         self.assertNotIn(self.password, joined)
         self.assertRegex(observed["env"], r"TEST_POSTGRES_DB=cuaderno_test_integration_[0-9a-f]{12}")
         self.assertNotIn(self.password, output)
+
+    def test_mounted_public_requirements_are_readable_by_runtime_uid_without_exposing_secrets(self):
+        def runner(argv, **_kwargs):
+            mount = next(item for item in argv if "target=/release-tests/dev-requirements.txt," in item)
+            source = Path(mount.split("source=", 1)[1].split(",target=", 1)[0])
+            environment = Path(argv[argv.index("--env-file") + 1])
+            self.assertTrue(mount.endswith(",readonly"))
+            expected = "pytest==9.0.3\npytest-django==4.11.1\n"
+            self.assertEqual(source.read_text(encoding="utf-8"), expected)
+            if os.name == "posix":
+                # A file bind exposes the inode directly, without exposing its
+                # private host staging parent. A hardlink models that same DAC.
+                if os.geteuid() == 0:
+                    with tempfile.TemporaryDirectory(prefix="cuaderno-runtime-read-probe-") as temporary:
+                        mounted_parent = Path(temporary)
+                        mounted_parent.chmod(0o755)
+                        mounted = mounted_parent / "dev-requirements.txt"
+                        os.link(source, mounted)
+                        result = subprocess.run(
+                            [sys.executable, "-c", "from pathlib import Path; import sys; print(Path(sys.argv[1]).read_text(), end='')", str(mounted)],
+                            user=10001, group=10001, extra_groups=[], cwd=mounted_parent,
+                            check=False, capture_output=True, text=True, encoding="utf-8", timeout=10,
+                        )
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(result.stdout, expected)
+                self.assertEqual(stat.S_IMODE(source.stat().st_mode), 0o444)
+                self.assertEqual(stat.S_IMODE(source.parent.stat().st_mode), 0o700)
+                self.assertEqual(stat.S_IMODE(environment.stat().st_mode), 0o600)
+            return 0, "readable public fixture; private staging and environment preserved\n"
+
+        for check in sorted(subject.TEST_CHECKS):
+            with self.subTest(check=check), patch.dict(os.environ, {"CUADERNO_ENV": "test"}, clear=False), \
+                 patch.object(subject, "ROOT", self.root):
+                code, _ = subject.execute(
+                    check, self.context_path, root=self.root, local_env=self.env_file,
+                    context_validator=self.valid, preview_inspector=self.preview, process_runner=runner,
+                )
+                self.assertEqual(code, 0)
 
     def test_preview_must_run_exact_candidate_and_labels_must_match(self):
         with patch.dict(os.environ, {"CUADERNO_ENV": "local"}, clear=False), \

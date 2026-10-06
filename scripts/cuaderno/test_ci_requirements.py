@@ -13,6 +13,12 @@ import yaml
 
 
 class CIRequirementsTests(unittest.TestCase):
+    def test_tempfile_patcher_is_available_in_the_dockerfile_specific_context(self):
+        root = Path(__file__).resolve().parents[2]
+        rules = (root / 'deploy/cuaderno/Dockerfile.dockerignore').read_text().splitlines()
+        self.assertIn('!scripts/cuaderno/patch_tempfile_security.py', rules)
+        self.assertTrue((root / 'scripts/cuaderno/patch_tempfile_security.py').is_file())
+
     def test_markdown_runtime_allows_its_exact_loopback_healthcheck_host(self):
         root = Path(__file__).resolve().parents[2]
         workflow = yaml.safe_load((root / ".github/workflows/cuaderno.yml").read_text(encoding="utf-8"))

@@ -13,7 +13,7 @@ COPY_FILES = {
     "PYTHON-PRODUCTION.constraints.txt": "tooling/cuaderno/python-production.constraints.txt",
     "PYTHON-TEST.constraints.txt": "tooling/cuaderno/python-test.constraints.txt",
     **{f"release-tools/{name}.py": f"scripts/cuaderno/{name}.py" for name in (
-        "release_runtime_check", "python_lock", "release_manifest", "process_supervisor", "runtime_application", "frontend_assets", "patch_runtime_security", "bind_system_node",
+        "release_runtime_check", "python_lock", "release_manifest", "process_supervisor", "runtime_application", "frontend_assets", "patch_runtime_security", "patch_tempfile_security", "bind_system_node",
     )},
 }
 

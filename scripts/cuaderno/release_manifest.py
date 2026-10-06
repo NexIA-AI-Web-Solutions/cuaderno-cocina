@@ -19,6 +19,7 @@ ARTIFACTS = {
     "security_python_backports": "SECURITY.python-backports.json",
     "security_alpine_backports": "SECURITY.alpine-backports.json",
     "security_node_runtime": "SECURITY.node-runtime.json",
+    "security_tempfile_backport": "SECURITY.tempfile-backport.json",
 }
 
 

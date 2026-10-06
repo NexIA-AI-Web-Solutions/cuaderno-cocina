@@ -5,6 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import shutil
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -39,7 +40,7 @@ def match(cve, name, version, kind, purl, locations):
         constraint = "<= 1.37.0 (unknown)" if vendor == "busybox" else ">= 1.3.1.2, <= 1.3.2 (unknown)"
         details = [{"type": "cpe-match", "matcher": "apk-matcher",
                     "searchedBy": {"namespace": "nvd:cpe", "cpes": [f"cpe:2.3:a:{vendor}:{vendor}:{version.split('-r')[0]}:*:*:*:*:*:*:*"],
-                                   "package": {"name": name, "version": version}},
+                                   "package": {"name": vendor, "version": version}},
                     "found": {"vulnerabilityID": cve, "versionConstraint": constraint,
                               "cpes": [f"cpe:2.3:a:{vendor}:{vendor}:*:*:*:*:*:*:*:*"]}}]
     return {
@@ -74,7 +75,21 @@ ALPINE_ROWS = [match(
     + ("&upstream=busybox" if name in {"busybox-binsh", "ssl_client"} else ""),
     ["/lib/apk/db/installed"],
 ) for name, (version, cve) in subject.ALPINE_PACKAGES.items()]
-FRESH_EXPECTED_MATCHES = [*PYTHON_RELEASE_ROWS, POPLIB, *ALPINE_ROWS]
+FRESH_EXPECTED_MATCHES = json.loads((subject.ROOT / 'tooling/cuaderno/fixtures/grype-20261006-reviewed-findings.json').read_text())['matches']
+
+
+def tempfile_receipt():
+    return {**subject.patch_tempfile_security.provenance(), 'status': 'patched',
+            'stdlib_path': '/usr/local/lib/python3.13',
+            'installed_files': {name: {'path': '/usr/local/lib/python3.13/' + name, 'sha256': digest}
+                                for name, digest in subject.patch_tempfile_security.PATCHED_SHA256.items()}}
+
+
+def scope_sources(root):
+    destination = root / 'tooling/cuaderno/component-scope'
+    destination.mkdir(parents=True)
+    for name in subject.image_component_scope.SOURCE_PINS:
+        shutil.copyfile(subject.ROOT / 'tooling/cuaderno/component-scope' / name, destination / name)
 
 
 def alpine_metadata(source_inputs_sha256="2" * 64):
@@ -103,6 +118,7 @@ def alpine_metadata(source_inputs_sha256="2" * 64):
 class Fixture:
     def __init__(self, root: Path, matches=None):
         self.root = root.resolve(); self.evidence = self.root / ".cuaderno-runs"; self.evidence.mkdir()
+        scope_sources(self.root)
         source_inputs = self.root / "docker/runtime-security/source-inputs.json"
         source_inputs.parent.mkdir(parents=True)
         source_inputs.write_text('{"fixture":"pinned"}\n', encoding="utf-8")
@@ -128,6 +144,8 @@ class Fixture:
                                 (json.dumps(alpine_provenance, sort_keys=True) + "\n").encode()).hexdigest(),
                             "security_node_runtime": hashlib.sha256(
                                 (json.dumps(self.node, sort_keys=True) + "\n").encode()).hexdigest(),
+                            "security_tempfile_backport": hashlib.sha256(
+                                (json.dumps(tempfile_receipt(), sort_keys=True) + "\n").encode()).hexdigest(),
                         }}}}
         self.node_artifact_sha = self.context["environment"]["image"]["artifacts"]["security_node_runtime"]
         self.context_path = self.evidence / "candidate.json"
@@ -152,6 +170,8 @@ class Fixture:
                 "license_url": subject.patch_runtime_security.LICENSE_URL,
             },
             "alpine-backports": self.alpine,
+            "tempfile-backport": subject.patch_tempfile_security.provenance(),
+            "component-scope": subject.image_component_scope.metadata(self.root),
         }
         for kind in sorted(subject.PROOF_KINDS):
             path = self.evidence / f"proof-{kind}.json"
@@ -229,6 +249,15 @@ class Fixture:
         provenance = {"schema_version": 1, **{k: v for k, v in alpine.items() if k != "license_urls"}, "verified": True}
         expected_js = [5, hashlib.sha256(b"cuaderno").hexdigest(), "1.3.2"]
         return {"schema_version": 1, "python_version": "3.13.16",
+                "component_scope_runtime": subject.image_component_scope.expected_runtime(),
+                "tempfile_runtime": {
+                    'provenance': tempfile_receipt(),
+                    'provenance_sha256': self.context['environment']['image']['artifacts']['security_tempfile_backport'],
+                    'files': subject.patch_tempfile_security.PATCHED_SHA256,
+                    'license_sha256': subject.patch_tempfile_security.LICENSE_SHA256,
+                    'rmtree_use_dir_fd': True, 'rmtree_avoids_symlink_attacks': True,
+                    'os_chflags': False, 'platform': 'linux', 'benign_cleanup': True,
+                },
                 "poplib_sha256": subject.patch_runtime_security.PATCHED_SHA256,
                 "poplib_rejected": ["CR", "LF", "NUL", "DEL"],
                 "poplib_sent": ["5553455220736166650d0a"],
@@ -292,7 +321,109 @@ class SecurityAssessmentTests(unittest.TestCase):
         self.assertEqual(result["raw_scanner_exit"], 2)
         self.assertEqual(result["raw_matches"], fixture.matches)
         self.assertEqual(result["ignored_matches"], [])
-        self.assertEqual(len(result["fingerprints"]), 11)
+        self.assertEqual(len(result["fingerprints"]), 8)
+
+    def test_real_grype_archive_path_is_bound_without_requiring_display_scheme(self):
+        fixture = self.fixture()
+        report = json.loads(fixture.report.read_text())
+        report['source']['target']['userInput'] = '/scan-input/image.tar'
+        fixture.report.write_text(json.dumps(report)); fixture.write_summary()
+        result = fixture.assess()
+        self.assertEqual(len(result['raw_matches']), 8)
+        fixture = self.fixture()
+        report = json.loads(fixture.report.read_text())
+        report['source']['target']['userInput'] = '/another-input/image.tar'
+        fixture.report.write_text(json.dumps(report)); fixture.write_summary()
+        with self.assertRaisesRegex(subject.AssessmentFailure, 'entrada'):
+            fixture.assess()
+
+    def test_component_scope_requires_actual_library_bytes_and_absent_proxy(self):
+        for key, value in (
+                ('proxy_packages_absent', False), ('nghttpx_package_files_absent', False),
+                ('nghttpx_absent_paths', []), ('package_blocks', {}), ('library_files', {}),
+                ('proxy_packages_absent', 1)):
+            fixture = self.fixture()
+            def runtime(context, *, root):
+                result = fixture.runtime(context, root=root)
+                result['component_scope_runtime'] = {**result['component_scope_runtime'], key: value}
+                return result
+            with self.subTest(key=key, value=value), self.assertRaisesRegex(subject.AssessmentFailure, 'componente'):
+                fixture.assess(runtime_probe=runtime)
+            self.assertFalse(fixture.output.exists())
+
+    def test_tempfile_requires_patched_pair_safe_platform_and_normal_cleanup(self):
+        for key, value in (('files', subject.patch_tempfile_security.ORIGINAL_SHA256),
+                           ('rmtree_use_dir_fd', False), ('rmtree_avoids_symlink_attacks', False),
+                           ('os_chflags', True), ('benign_cleanup', False),
+                           ('rmtree_use_dir_fd', 1), ('platform', 'darwin')):
+            fixture = self.fixture()
+            def runtime(context, *, root):
+                result = fixture.runtime(context, root=root)
+                result['tempfile_runtime'] = {**result['tempfile_runtime'], key: value}
+                return result
+            with self.subTest(key=key, value=value), self.assertRaisesRegex(subject.AssessmentFailure, 'tempfile'):
+                fixture.assess(runtime_probe=runtime)
+            self.assertFalse(fixture.output.exists())
+        fixture = self.fixture()
+        fixture.context['environment']['image']['artifacts']['security_tempfile_backport'] = '0' * 64
+        fixture.context_path.write_text(json.dumps(fixture.context))
+        def runtime(context, *, root):
+            result = fixture.runtime(context, root=root)
+            result['tempfile_runtime']['provenance_sha256'] = '1' * 64
+            return result
+        with self.assertRaisesRegex(subject.AssessmentFailure, 'tempfile'):
+            fixture.assess(runtime_probe=runtime)
+
+    def test_primary_component_record_tampering_cannot_certify_the_image(self):
+        fixture = self.fixture()
+        source = fixture.root / 'tooling/cuaderno/component-scope/ada-cve.json'
+        source.write_text('{}')
+        with self.assertRaisesRegex(subject.AssessmentFailure, 'fuentes primarias'):
+            fixture.assess()
+        self.assertFalse(fixture.output.exists())
+
+    def test_boolean_schema_versions_cannot_substitute_for_integer_contracts(self):
+        for location in ('envelope', 'tempfile-metadata', 'tempfile-runtime'):
+            fixture = self.fixture()
+            proof = next(p for p in fixture.proofs if 'tempfile' in p.name)
+            value = json.loads(proof.read_text())
+            if location == 'envelope': value['schema_version'] = True
+            elif location == 'tempfile-metadata': value['metadata']['schema_version'] = True
+            proof.write_text(json.dumps(value))
+            def runtime(context, *, root):
+                result = fixture.runtime(context, root=root)
+                if location == 'tempfile-runtime':
+                    result['tempfile_runtime']['provenance']['schema_version'] = True
+                return result
+            with self.subTest(location=location), self.assertRaises(subject.AssessmentFailure):
+                fixture.assess(runtime_probe=runtime)
+            self.assertFalse(fixture.output.exists())
+
+    def test_scope_source_read_is_bounded_and_rejects_linked_ancestors(self):
+        fixture = self.fixture()
+        file = fixture.root / 'tooling/cuaderno/component-scope/ada-cve.json'
+        file.write_bytes(b'x' * (64 * 1024 + 1))
+        with self.assertRaises((ValueError, subject.image_audit.ImageAuditFailure)):
+            subject.image_component_scope.metadata(fixture.root)
+        fixture = self.fixture()
+        directory = fixture.root / 'tooling/cuaderno/component-scope'
+        moved = fixture.root / 'linked-sources'
+        directory.rename(moved); directory.symlink_to(moved, target_is_directory=True)
+        with self.assertRaises((ValueError, subject.image_audit.ImageAuditFailure)):
+            subject.image_component_scope.metadata(fixture.root)
+
+    def test_component_match_details_and_library_identity_are_exact(self):
+        rows = [row for row in FRESH_EXPECTED_MATCHES if row['artifact']['name'] in ('ada-libs', 'nghttp2-libs')]
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            self.assertEqual(subject._classify(subject.match_fingerprint(row)), 'component-scope')
+            changed = json.loads(json.dumps(row))
+            changed['matchDetails'][0]['searchedBy']['package']['name'] = 'different-product'
+            with self.assertRaises(subject.AssessmentFailure):
+                subject._classify(subject.match_fingerprint(changed))
+            changed = json.loads(json.dumps(row)); changed['artifact']['version'] = '0.0.0'
+            with self.assertRaises(subject.AssessmentFailure):
+                subject._classify(subject.match_fingerprint(changed))
 
     def test_untrusted_database_provision_prevents_assessment(self):
         fixture = self.fixture()

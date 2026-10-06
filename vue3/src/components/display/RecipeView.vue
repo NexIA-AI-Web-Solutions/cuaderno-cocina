@@ -209,7 +209,7 @@ import RecipeContextMenu from "@/components/inputs/RecipeContextMenu.vue";
 import KeywordsComponent from "@/components/display/KeywordsBar.vue";
 import RecipeImage from "@/components/display/RecipeImage.vue";
 import ExternalRecipeViewer from "@/components/display/ExternalRecipeViewer.vue";
-import {useWakeLock} from "@vueuse/core";
+import {createRecipeWakeLock} from "@/utils/recipeWakeLock";
 import StepView from "@/components/display/StepView.vue";
 import {DateTime} from "luxon";
 import PropertyView from "@/components/display/PropertyView.vue";
@@ -222,7 +222,11 @@ import RecipeScalingDialog from "@/components/dialogs/RecipeScalingDialog.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 import {sourceImportRequest} from "@/utils/sourceImport.ts";
 
-const {request, release} = useWakeLock()
+const wakeLock = createRecipeWakeLock(
+    typeof navigator === 'undefined' ? undefined : navigator,
+    typeof document === 'undefined' ? undefined : document,
+    error => console.error('Recipe screen wake lock failed', error),
+)
 const {doAiImport, fileApiLoading} = useFileApi()
 
 const loading = ref(false)
@@ -258,12 +262,12 @@ if (props.servings === undefined) {
 
 onMounted(() => {
     //keep screen on while viewing a recipe
-    request("screen")
+    void wakeLock.request()
 })
 
 onBeforeUnmount(() => {
     // allow screen to turn off after leaving the recipe page
-    release()
+    void wakeLock.release()
 })
 
 /**

@@ -35,6 +35,7 @@ venv
 *.dump
 *.tar
 !scripts/cuaderno/patch_runtime_security.py
+!scripts/cuaderno/patch_tempfile_security.py
 !scripts/cuaderno/bind_system_node.py
 
 # Portable private runtime and evidence exclusions

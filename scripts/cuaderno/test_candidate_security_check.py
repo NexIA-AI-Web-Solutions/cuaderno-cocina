@@ -10,10 +10,10 @@ from unittest.mock import patch
 
 if __package__:
     from . import candidate_security_check as subject
-    from .test_image_security_assessment import FRESH_EXPECTED_MATCHES, alpine_metadata
+    from .test_image_security_assessment import FRESH_EXPECTED_MATCHES, alpine_metadata, scope_sources
 else:
     import candidate_security_check as subject
-    from test_image_security_assessment import FRESH_EXPECTED_MATCHES, alpine_metadata
+    from test_image_security_assessment import FRESH_EXPECTED_MATCHES, alpine_metadata, scope_sources
 
 
 IMAGE = "sha256:" + "c" * 64
@@ -26,6 +26,7 @@ BINDING = {"format": "oci", "config_digest": IMAGE,
 class Fixture:
     def __init__(self):
         self.temporary = tempfile.TemporaryDirectory(); self.root = Path(self.temporary.name).resolve()
+        scope_sources(self.root)
         self.evidence = self.root / ".cuaderno-runs"; self.evidence.mkdir()
         source_inputs = self.root / "docker/runtime-security/source-inputs.json"
         source_inputs.parent.mkdir(parents=True); source_inputs.write_text('{"fixture":1}\n')
@@ -101,7 +102,7 @@ class CandidateSecurityCheckTests(unittest.TestCase):
         self.assertEqual(result["raw_scanner_exit"], 2)
         self.assertEqual({row["kind"]: len(row["fingerprints"]) for row in fixture.proofs},
                          subject.EXPECTED_COUNTS)
-        self.assertEqual(len(result["proofs"]), 3)
+        self.assertEqual(len(result["proofs"]), 5)
         self.assertTrue((fixture.root / result["assessment"]).is_file())
         self.assertEqual((fixture.scan_calls, fixture.runtime_calls), (1, 1))
         self.assertIs(fixture.asserted_runtime, fixture.runtime)
@@ -114,7 +115,7 @@ class CandidateSecurityCheckTests(unittest.TestCase):
         result = fixture.run()
         self.assertEqual(result['status'], 'reviewed-no-unresolved')
         self.assertEqual(result['raw_scanner_exit'], 2)
-        self.assertEqual(len(result['proofs']), 3)
+        self.assertEqual(len(result['proofs']), 5)
 
     def test_clean_wrong_exit_or_missing_finding_is_never_accepted(self):
         fixture = self.fixture()
@@ -126,7 +127,7 @@ class CandidateSecurityCheckTests(unittest.TestCase):
         fixture = self.fixture()
         with patch.object(subject.image_archive_audit, "_validate_archive_report",
                           return_value=(FRESH_EXPECTED_MATCHES[:-1], [], {"High": 10})):
-            with self.assertRaisesRegex(subject.CandidateSecurityFailure, "11 hallazgos"):
+            with self.assertRaisesRegex(subject.CandidateSecurityFailure, "8 hallazgos"):
                 subject.run(fixture.context_path, root=fixture.root,
                             context_validator=lambda *_: None, scanner=fixture.scanner,
                             runtime_probe=lambda *_args, **_kwargs: fixture.runtime,

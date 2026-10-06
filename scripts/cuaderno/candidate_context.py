@@ -34,6 +34,7 @@ IMAGE_ARTIFACTS = {
     "security_python_backports": "/opt/recipes/SECURITY.python-backports.json",
     "security_alpine_backports": "/opt/recipes/SECURITY.alpine-backports.json",
     "security_node_runtime": "/opt/recipes/SECURITY.node-runtime.json",
+    "security_tempfile_backport": "/opt/recipes/SECURITY.tempfile-backport.json",
 }
 RELEASE_MANIFEST = "/opt/recipes/RELEASE-MANIFEST.json"
 

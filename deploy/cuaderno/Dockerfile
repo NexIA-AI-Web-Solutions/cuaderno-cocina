@@ -29,7 +29,7 @@ ARG SOURCE_COMMIT
 RUN venv/bin/python /tmp/python_sbom.py --constraints /tmp/production.constraints.txt --source-identity "$SOURCE_COMMIT" --output /opt/recipes/SBOM.python.cdx.json
 
 FROM python:3.13.16-alpine3.23@sha256:ddf0307d17965eaf98dc5e366bd41ba6e10e4b32164c2bfd258cd9e367b60146 AS runtime
-RUN apk add --no-cache postgresql-libs postgresql-client gettext zlib libjpeg libwebp libxml2 libxslt openldap libgcc libstdc++ nginx tini envsubst nodejs=24.18.1-r0 pax-utils
+RUN apk add --no-cache postgresql-libs postgresql-client gettext zlib libjpeg libwebp libxml2 libxslt openldap libgcc libstdc++ nginx tini envsubst nodejs=24.18.1-r0 ada-libs=3.3.0-r0 nghttp2-libs=1.69.0-r0 pax-utils
 WORKDIR /opt/recipes
 # This named context is built and verified from docker/runtime-security by
 # local_up.py and CI. Install the packages themselves before binding their proof.
@@ -55,11 +55,16 @@ COPY scripts/cuaderno/process_supervisor.py ./release-tools/
 COPY scripts/cuaderno/runtime_application.py ./release-tools/
 COPY scripts/cuaderno/frontend_assets.py ./release-tools/
 COPY scripts/cuaderno/patch_runtime_security.py ./release-tools/
+COPY scripts/cuaderno/patch_tempfile_security.py ./release-tools/
+COPY tooling/cuaderno/cpython-tempfile-security/ /tmp/cuaderno-tempfile-security/
 COPY scripts/cuaderno/bind_system_node.py ./release-tools/
 RUN venv/bin/python release-tools/bind_system_node.py --output /opt/recipes/SECURITY.node-runtime.json \
     && apk del pax-utils \
     && apk info -e 'nodejs=24.18.1-r0'
 RUN python -c "import sys,json; from pathlib import Path; sys.path.insert(0, 'release-tools'); from patch_runtime_security import patch_poplib; Path('SECURITY.python-backports.json').write_text(json.dumps(patch_poplib(Path('/usr/local/lib/python3.13/poplib.py')), sort_keys=True)+'\n')"
+RUN python -c "import sys,json; from pathlib import Path; sys.path.insert(0, 'release-tools'); from patch_tempfile_security import patch_stdlib_pair; Path('SECURITY.tempfile-backport.json').write_text(json.dumps(patch_stdlib_pair(Path('/usr/local/lib/python3.13'), source_directory=Path('/tmp/cuaderno-tempfile-security')), sort_keys=True)+'\n')" \
+    && cp /tmp/cuaderno-tempfile-security/LICENSE /opt/recipes/LICENSE.cpython-tempfile-backport \
+    && rm -r /tmp/cuaderno-tempfile-security
 COPY --from=frontend /build/cookbook/static/vue3/ ./cookbook/static/vue3/
 COPY --from=frontend /build/frontend-installed.cdx.json ./SBOM.frontend.cdx.json
 ARG SOURCE_COMMIT

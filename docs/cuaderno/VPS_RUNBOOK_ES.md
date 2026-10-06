@@ -52,6 +52,16 @@ su SHA se entrega desde el proceso de provisión, nunca desde el propio recibo.
 Auditoría y evaluación revalidan DB, metadata y recibo durante todas sus etapas.
 Sus índices y temporales hacen inadecuada esta operación para el VPS compartido.
 Repetir CI/scan completo.
+La composición del scan cambia con su DB fijada: la publicación del 6 de octubre
+devuelve ocho hallazgos, conservados sin ignoredMatches. La evaluación exige
+pruebas exactas del runtime para todos: cuatro backports Alpine, poplib, el par
+tempfile/shutil y dos coincidencias de producto/componente comprobadas contra
+fuentes primarias y bytes de bibliotecas. El backport tempfile de CPython 3.13
+está fijado a `56caf8e0b89463e2e8465ce06f7aaa31847c1768`; su PR 158429 sigue abierto.
+La imagen debe contener sus dos módulos verificados, licencia PSF y el noveno
+artefacto `SECURITY.tempfile-backport.json`; comprobar Linux con borrado por
+descriptores, sin file flags y limpieza funcional normal. No sustituir estas
+pruebas por aceptación genérica de CVEs ni atribuirle estado de fix publicado.
 Un informe histórico o desactivar la validación
 de edad no acredita el candidato nuevo.
 
@@ -108,6 +118,24 @@ Siempre reanuda el escritor en finally. La restauración usa red interna, BD y
 media nuevos, misma imagen y configuración de prefijo, sin puertos publicados;
 verifica contenido y readiness, detiene sus contenedores y conserva sus volúmenes.
 Registrar duración, fingerprint, informe y recursos exactos del ensayo.
+
+En este VPS, ejecutar el ensayo de recuperación después de cerrar y verificar el
+backup, deteniendo primero solo los servicios `web` y `db` de `cuaderno-prod`.
+El verificador no necesita los contenedores originales en marcha; así se evita
+sumar dos PostgreSQL y dos webs al pico de memoria. Exigir en su informe
+`passed=true`, `containers_stopped=true`, `published_ports=false` y
+`runtime_candidate.prefixed_manifest_assets_login_verified=true`. Resolver cualquier
+limpieza fallida de sus contenedores propios antes de reanudar producción con
+`up -d --no-build --pull never --wait --wait-timeout 600 web db`, conservando env,
+imagen y volúmenes originales. Repetir readiness y login por loopback; no volver
+a ejecutar el bootstrap de cuentas. No detener servicios de otros proyectos.
+
+El smoke HTTPS crea únicamente nueve cuentas temporales en tres Spaces sintéticos,
+con sesiones limitadas a dos horas y cookies propias del prefijo. Ejecutar los
+contextos serialmente, verificar las rutas físicas de cualquier upload de prueba
+y eliminar después solo sus recetas, Spaces, usuarios y sesiones identificados.
+El administrador productivo se conserva separado de esas cuentas y de las trazas.
+No publicar valores de contraseñas, cookies ni tokens en los informes browser.
 
 Activar un timer propio solo después del primer backup/restauración. El servicio
 debe usar estas rutas efectivas, `--include-env`, UMask=0077 y OnFailure para una

@@ -39,7 +39,7 @@ else:
     raise SystemExit("overlay launcher kind invalid")
 """
 DECLARED_ARTIFACTS = frozenset({
-    "runtime_application", "sbom_python", "sbom_frontend", "frontend_provenance", "version_info", "security_python_backports", "security_alpine_backports", "security_node_runtime",
+    "runtime_application", "sbom_python", "sbom_frontend", "frontend_provenance", "version_info", "security_python_backports", "security_alpine_backports", "security_node_runtime", "security_tempfile_backport",
 })
 
 RUNTIME_CHECKS = frozenset({
@@ -279,7 +279,9 @@ def execute(check: str, context_path: Path, *, root: Path = ROOT, preview: str =
         os.chmod(env_file, 0o600)
         dev_requirements = temporary_path / "dev-requirements.txt"
         dev_requirements.write_text(_dev_requirements(root), encoding="utf-8")
-        os.chmod(dev_requirements, 0o600)
+        # This public pins-only file is bound directly into the non-root runtime,
+        # whose UID differs from the host owner. Keep secrets and staging private.
+        os.chmod(dev_requirements, 0o444)
         argv = docker_argv(
             check, context, network, env_file, dev_requirements,
             root / "tooling/cuaderno/python-test.constraints.txt", container,
