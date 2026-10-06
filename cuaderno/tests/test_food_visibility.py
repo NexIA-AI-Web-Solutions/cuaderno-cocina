@@ -117,6 +117,27 @@ class OperationalFoodVisibilityTests(TestCase):
         self.assertIn(allowed.pk, identifiers)
         self.assertNotIn(denied.pk, identifiers)
 
+    def test_movement_projection_rechecks_private_recipe_share_revoked_at_dispatch(self):
+        client = self._client(self.observer)
+        with scopes_disabled():
+            self.private_recipe.shared.add(self.observer)
+            public = apply_movement(
+                entry_id=self.public_entry.pk, space=self.space, user=self.owner,
+                kind=StockMovement.RECEIPT, quantity="1",
+                idempotency_key="race-private-share-public",
+            )
+        baseline = client.get("/api/cuaderno/movements/")
+        self.assert_status(baseline, 200)
+        self.assertIn(self.private_movement.pk, {row["id"] for row in baseline.data})
+
+        response = self._read_after_dispatch_change(
+            client, "/api/cuaderno/movements/",
+            lambda: self.private_recipe.shared.remove(self.observer),
+        )
+        identifiers = {row["id"] for row in response.data}
+        self.assertIn(public.pk, identifiers)
+        self.assertNotIn(self.private_movement.pk, identifiers)
+
     def test_guest_native_inventory_reads_keep_household_and_space_boundaries(self):
         client = self._client(self.guest)
         with scopes_disabled():
