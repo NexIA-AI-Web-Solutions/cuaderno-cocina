@@ -326,6 +326,7 @@ jobs:
         working-directory: tests/cuaderno/e2e
         run: |
           npm ci
+          node --test *.test.mjs
           npx playwright install --with-deps chromium firefox webkit
           npm run typecheck
           npx playwright test --list

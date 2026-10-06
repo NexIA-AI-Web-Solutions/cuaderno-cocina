@@ -56,22 +56,52 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from "vue"
+import {onBeforeUnmount, onMounted, ref} from "vue"
 import {ApiApi} from "@/openapi"
 import HorizontalRecipeScroller from "@/components/display/HorizontalRecipeWindow.vue"
 import HorizontalMealPlanWindow from "@/components/display/HorizontalMealPlanWindow.vue"
-import SearchPage from "@/pages/SearchPage.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
-import {useRouter} from "vue-router";
+import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
+import {settleComponentRequest} from "@/utils/componentRequest";
 
 const totalRecipes = ref(-1)
+const messageStore = useMessageStore()
+let requestController: AbortController | undefined
+
+function abortPendingRequest() {
+    requestController?.abort()
+    requestController = undefined
+}
+
+function loadRecipeCount() {
+    abortPendingRequest()
+    const controller = new AbortController()
+    requestController = controller
+    const api = new ApiApi()
+    void settleComponentRequest(
+        api.apiRecipeList({pageSize: 1}, {signal: controller.signal}),
+        controller.signal,
+        response => { totalRecipes.value = response.count },
+        error => { messageStore.addError(ErrorMessageType.FETCH_ERROR, error) },
+    )
+}
+
+function restoreFromPageCache(event: PageTransitionEvent) {
+    if (event.persisted) {
+        loadRecipeCount()
+    }
+}
 
 onMounted(() => {
-    const api = new ApiApi()
+    window.addEventListener('pagehide', abortPendingRequest)
+    window.addEventListener('pageshow', restoreFromPageCache)
+    loadRecipeCount()
+})
 
-    api.apiRecipeList({pageSize: 1}).then((r) => {
-        totalRecipes.value = r.count
-    })
+onBeforeUnmount(() => {
+    window.removeEventListener('pagehide', abortPendingRequest)
+    window.removeEventListener('pageshow', restoreFromPageCache)
+    abortPendingRequest()
 })
 </script>
 

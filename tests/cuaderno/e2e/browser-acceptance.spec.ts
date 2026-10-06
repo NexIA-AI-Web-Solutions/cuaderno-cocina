@@ -1,7 +1,6 @@
-import {assertNoHorizontalOverflow, enterApp, expect, test} from './fixtures.js'
+import {assertNoHorizontalOverflow, expect, test} from './fixtures.js'
 
 test('mantiene la navegación por teclado en motores alternativos', async ({cleanPage, identity}, testInfo) => {
-  await enterApp(cleanPage)
   await cleanPage.goto('/cuaderno/precios')
   await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
   await expect(cleanPage.locator('main')).toHaveCount(1)
