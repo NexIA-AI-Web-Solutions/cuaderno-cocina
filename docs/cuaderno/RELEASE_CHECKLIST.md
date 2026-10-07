@@ -6,15 +6,20 @@
   preservando recetas, calendarios y listas nativos.
 - [x] Implementación y revisión de fuente; diez pruebas puras de planes/entradas
   y once de privacidad/activación del worker pasan. No equivalen a aceptación UI.
-- [ ] Migración aditiva y suite PostgreSQL con persistencia, permisos y concurrencia.
+- [x] CI 37691631344: migración aditiva y suite PostgreSQL con persistencia,
+  permisos y concurrencia; 609 tests Cuaderno y 1.296 nativos + 21 subtests PASS.
 - [ ] Contrato OpenAPI sin warnings, snapshot y SDK reproducibles del nuevo commit.
-- [ ] Pruebas Vue, TypeScript, build y comprobación del SVG realmente emitido.
+- [x] CI 37691631344: 324 tests frontend, TypeScript, build y un único SVG
+  propio realmente emitido en el precache pasan. Revalidar en el candidato final.
 - [ ] CI completa, G7 y artefactos de una misma fuente e imagen nueva.
 - [ ] Playwright real de funciones nuevas por edición, rol y anchura.
 - [ ] Despliegue y aceptación HTTPS completa del nuevo runtime, sin retries añadidos.
 - [ ] Backup, restauración y rollback aislados con las migraciones nuevas.
 - [ ] Limpieza de datos sintéticos, backup final y comprobación de otras apps.
-- [ ] Host recuperado y estable: persiste `user@1000.service` fallido tras dos OOM.
+- [ ] Admisión reciente de capacidad y estabilidad, con los seis procesos
+  víctimas OOM históricos conservados. El gestor de usuario ya se observó activo
+  con recuperación externa de disparador desconocido; no acredita estabilidad
+  durante las pruebas ni borra los controles fallidos anteriores.
 
 Runtime publicado anterior: `ff3b685`, CI 37651982834 con nueve jobs y G7 PASS.
 Su aceptación pública más reciente conserva 25 READ PASS, 1 FAIL de worker y

@@ -69,6 +69,12 @@ export interface EditionSchema {
      * @memberof EditionSchema
      */
     operationalRole: OperationalRoleSchema | null;
+    /**
+     * 
+     * @type {{ [key: string]: boolean; }}
+     * @memberof EditionSchema
+     */
+    features: { [key: string]: boolean; };
 }
 
 /**
@@ -81,6 +87,7 @@ export function instanceOfEditionSchema(value: object): value is EditionSchema {
     if (!('targetFoodCostRatio' in value) || value['targetFoodCostRatio'] === undefined) return false;
     if (!('netProfit' in value) || value['netProfit'] === undefined) return false;
     if (!('operationalRole' in value) || value['operationalRole'] === undefined) return false;
+    if (!('features' in value) || value['features'] === undefined) return false;
     return true;
 }
 
@@ -101,6 +108,7 @@ export function EditionSchemaFromJSONTyped(json: any, ignoreDiscriminator: boole
         'pricesAreMetadata': json['prices_are_metadata'] == null ? undefined : json['prices_are_metadata'],
         'netProfit': json['net_profit'],
         'operationalRole': OperationalRoleSchemaFromJSON(json['operational_role']),
+        'features': json['features'],
     };
 }
 
@@ -122,6 +130,7 @@ export function EditionSchemaToJSONTyped(value?: EditionSchema | null, ignoreDis
         'prices_are_metadata': value['pricesAreMetadata'],
         'net_profit': value['netProfit'],
         'operational_role': OperationalRoleSchemaToJSON(value['operationalRole']),
+        'features': value['features'],
     };
 }
 

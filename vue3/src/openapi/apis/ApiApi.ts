@@ -29,10 +29,16 @@ import type {
   AutomationRequest,
   BookmarkletImport,
   BookmarkletImportRequest,
+  CalendarEntrySchema,
+  CalendarUpdateSchemaRequest,
+  CalendarWriteSchemaRequest,
   ConnectorConfig,
   ConnectorConfigRequest,
   CookLog,
   CookLogRequest,
+  CourseSchema,
+  CourseUpdateSchemaRequest,
+  CourseWriteSchemaRequest,
   CuadernoProductionResponse,
   CuadernoRecipeFinanceResponse,
   CuadernoRecipeFinanceWriteRequest,
@@ -48,6 +54,9 @@ import type {
   ExportLog,
   ExportLogRequest,
   ExportRequestRequest,
+  FavoriteResultSchema,
+  FavoriteWriteSchemaRequest,
+  FavoritesSchema,
   FdcQuery,
   Food,
   FoodBatchUpdate,
@@ -82,10 +91,15 @@ import type {
   LegacyOrderResultSchema,
   LegacyOrderWriteSchemaRequest,
   Localization,
+  MealCourseWriteSchemaRequest,
   MealPlan,
   MealPlanRequest,
   MealType,
   MealTypeRequest,
+  MenuPrintSchema,
+  MenuPrintWriteSchemaRequest,
+  MenuTemplateSchema,
+  MenuTemplatesSchema,
   MinimumWriteRequest,
   MovementResultSchema,
   MovementSchema,
@@ -180,6 +194,8 @@ import type {
   PatchedUserRequest,
   PatchedUserSpaceRequest,
   PatchedViewLogRequest,
+  PlanningMealSchema,
+  PlanningSchema,
   PreparationSchema,
   PreparationWriteRequest,
   PriceHistorySchema,
@@ -202,6 +218,8 @@ import type {
   RecipeBookEntryRequest,
   RecipeBookRequest,
   RecipeCostSchema,
+  RecipeExtrasSchema,
+  RecipeExtrasWriteSchemaRequest,
   RecipeFlat,
   RecipeFromSourceRequest,
   RecipeFromSourceResponse,
@@ -251,6 +269,10 @@ import type {
   Sync,
   SyncLog,
   SyncRequest,
+  TemplateApplyResultSchema,
+  TemplateApplyWriteSchemaRequest,
+  TemplateUpdateSchemaRequest,
+  TemplateWriteSchemaRequest,
   Unit,
   UnitConversion,
   UnitConversionRequest,
@@ -294,6 +316,12 @@ import {
     BookmarkletImportToJSON,
     BookmarkletImportRequestFromJSON,
     BookmarkletImportRequestToJSON,
+    CalendarEntrySchemaFromJSON,
+    CalendarEntrySchemaToJSON,
+    CalendarUpdateSchemaRequestFromJSON,
+    CalendarUpdateSchemaRequestToJSON,
+    CalendarWriteSchemaRequestFromJSON,
+    CalendarWriteSchemaRequestToJSON,
     ConnectorConfigFromJSON,
     ConnectorConfigToJSON,
     ConnectorConfigRequestFromJSON,
@@ -302,6 +330,12 @@ import {
     CookLogToJSON,
     CookLogRequestFromJSON,
     CookLogRequestToJSON,
+    CourseSchemaFromJSON,
+    CourseSchemaToJSON,
+    CourseUpdateSchemaRequestFromJSON,
+    CourseUpdateSchemaRequestToJSON,
+    CourseWriteSchemaRequestFromJSON,
+    CourseWriteSchemaRequestToJSON,
     CuadernoProductionResponseFromJSON,
     CuadernoProductionResponseToJSON,
     CuadernoRecipeFinanceResponseFromJSON,
@@ -332,6 +366,12 @@ import {
     ExportLogRequestToJSON,
     ExportRequestRequestFromJSON,
     ExportRequestRequestToJSON,
+    FavoriteResultSchemaFromJSON,
+    FavoriteResultSchemaToJSON,
+    FavoriteWriteSchemaRequestFromJSON,
+    FavoriteWriteSchemaRequestToJSON,
+    FavoritesSchemaFromJSON,
+    FavoritesSchemaToJSON,
     FdcQueryFromJSON,
     FdcQueryToJSON,
     FoodFromJSON,
@@ -400,6 +440,8 @@ import {
     LegacyOrderWriteSchemaRequestToJSON,
     LocalizationFromJSON,
     LocalizationToJSON,
+    MealCourseWriteSchemaRequestFromJSON,
+    MealCourseWriteSchemaRequestToJSON,
     MealPlanFromJSON,
     MealPlanToJSON,
     MealPlanRequestFromJSON,
@@ -408,6 +450,14 @@ import {
     MealTypeToJSON,
     MealTypeRequestFromJSON,
     MealTypeRequestToJSON,
+    MenuPrintSchemaFromJSON,
+    MenuPrintSchemaToJSON,
+    MenuPrintWriteSchemaRequestFromJSON,
+    MenuPrintWriteSchemaRequestToJSON,
+    MenuTemplateSchemaFromJSON,
+    MenuTemplateSchemaToJSON,
+    MenuTemplatesSchemaFromJSON,
+    MenuTemplatesSchemaToJSON,
     MinimumWriteRequestFromJSON,
     MinimumWriteRequestToJSON,
     MovementResultSchemaFromJSON,
@@ -596,6 +646,10 @@ import {
     PatchedUserSpaceRequestToJSON,
     PatchedViewLogRequestFromJSON,
     PatchedViewLogRequestToJSON,
+    PlanningMealSchemaFromJSON,
+    PlanningMealSchemaToJSON,
+    PlanningSchemaFromJSON,
+    PlanningSchemaToJSON,
     PreparationSchemaFromJSON,
     PreparationSchemaToJSON,
     PreparationWriteRequestFromJSON,
@@ -640,6 +694,10 @@ import {
     RecipeBookRequestToJSON,
     RecipeCostSchemaFromJSON,
     RecipeCostSchemaToJSON,
+    RecipeExtrasSchemaFromJSON,
+    RecipeExtrasSchemaToJSON,
+    RecipeExtrasWriteSchemaRequestFromJSON,
+    RecipeExtrasWriteSchemaRequestToJSON,
     RecipeFlatFromJSON,
     RecipeFlatToJSON,
     RecipeFromSourceRequestFromJSON,
@@ -738,6 +796,14 @@ import {
     SyncLogToJSON,
     SyncRequestFromJSON,
     SyncRequestToJSON,
+    TemplateApplyResultSchemaFromJSON,
+    TemplateApplyResultSchemaToJSON,
+    TemplateApplyWriteSchemaRequestFromJSON,
+    TemplateApplyWriteSchemaRequestToJSON,
+    TemplateUpdateSchemaRequestFromJSON,
+    TemplateUpdateSchemaRequestToJSON,
+    TemplateWriteSchemaRequestFromJSON,
+    TemplateWriteSchemaRequestToJSON,
     UnitFromJSON,
     UnitToJSON,
     UnitConversionFromJSON,
@@ -2577,6 +2643,20 @@ export interface CuadernoAllergensDeclareRequest {
     allergenWriteSchema: AllergenWriteSchemaRequest;
 }
 
+export interface CuadernoCalendarEntriesCreateRequest {
+    calendarWriteSchema: CalendarWriteSchemaRequest;
+}
+
+export interface CuadernoCalendarEntryDestroyRequest {
+    entryId: number;
+    revision: string;
+}
+
+export interface CuadernoCalendarEntryUpdateRequest {
+    entryId: number;
+    calendarUpdateSchema: CalendarUpdateSchemaRequest;
+}
+
 export interface CuadernoEditionUpdateRequest {
     editionWriteSchema?: EditionWriteSchemaRequest;
 }
@@ -2586,8 +2666,52 @@ export interface CuadernoExchangeImportRequest {
     preview?: CuadernoExchangeImportPreviewEnum;
 }
 
+export interface CuadernoFavoritesListRequest {
+    limit?: string;
+    offset?: string;
+}
+
 export interface CuadernoLegacyOrderCreateRequest {
     legacyOrderWriteSchema: LegacyOrderWriteSchemaRequest;
+}
+
+export interface CuadernoMealPlanCourseUpdateRequest {
+    mealPlanId: number;
+    mealCourseWriteSchema: MealCourseWriteSchemaRequest;
+}
+
+export interface CuadernoMenuPrintRequest {
+    menuPrintWriteSchema: MenuPrintWriteSchemaRequest;
+}
+
+export interface CuadernoMenuTemplateApplyRequest {
+    templateId: number;
+    templateApplyWriteSchema: TemplateApplyWriteSchemaRequest;
+}
+
+export interface CuadernoMenuTemplateDestroyRequest {
+    revision: string;
+    templateId: number;
+}
+
+export interface CuadernoMenuTemplateRetrieveRequest {
+    templateId: number;
+    limit?: string;
+    offset?: string;
+}
+
+export interface CuadernoMenuTemplateUpdateRequest {
+    templateId: number;
+    templateUpdateSchema: TemplateUpdateSchemaRequest;
+}
+
+export interface CuadernoMenuTemplatesCreateRequest {
+    templateWriteSchema: TemplateWriteSchemaRequest;
+}
+
+export interface CuadernoMenuTemplatesListRequest {
+    limit?: string;
+    offset?: string;
 }
 
 export interface CuadernoMovementsCreateRequest {
@@ -2607,6 +2731,27 @@ export interface CuadernoPackagePricesListRequest {
 
 export interface CuadernoPackagesCreateRequest {
     packageWrite: PackageWriteRequest;
+}
+
+export interface CuadernoPlanningCoursesCreateRequest {
+    courseWriteSchema: CourseWriteSchemaRequest;
+}
+
+export interface CuadernoPlanningCoursesDestroyRequest {
+    courseId: number;
+    revision: string;
+}
+
+export interface CuadernoPlanningCoursesUpdateRequest {
+    courseId: number;
+    courseUpdateSchema: CourseUpdateSchemaRequest;
+}
+
+export interface CuadernoPlanningRetrieveRequest {
+    fromDate: Date;
+    toDate: Date;
+    diet?: CuadernoPlanningRetrieveDietEnum;
+    dietStatus?: CuadernoPlanningRetrieveDietStatusEnum;
 }
 
 export interface CuadernoProductionCalculateRequest {
@@ -2649,6 +2794,20 @@ export interface CuadernoRecipeCostRetrieveRequest {
     servings?: string;
 }
 
+export interface CuadernoRecipeExtrasRetrieveRequest {
+    recipeId: number;
+}
+
+export interface CuadernoRecipeExtrasUpdateRequest {
+    recipeId: number;
+    recipeExtrasWriteSchema: RecipeExtrasWriteSchemaRequest;
+}
+
+export interface CuadernoRecipeFavoriteUpdateRequest {
+    recipeId: number;
+    favoriteWriteSchema: FavoriteWriteSchemaRequest;
+}
+
 export interface CuadernoRecipeFinanceRetrieveRequest {
     recipeId: number;
     servings?: string;
@@ -2658,6 +2817,17 @@ export interface CuadernoRecipeFinanceUpdateRequest {
     recipeId: number;
     servings?: string;
     cuadernoRecipeFinanceWrite?: CuadernoRecipeFinanceWriteRequest;
+}
+
+export interface CuadernoRecipeGalleryCreateRequest {
+    recipeId: number;
+    image: Blob;
+    caption?: string;
+}
+
+export interface CuadernoRecipeGalleryDestroyRequest {
+    imageId: number;
+    recipeId: number;
 }
 
 export interface CuadernoRecipeIngredientYieldsRetrieveRequest {
@@ -19175,6 +19345,145 @@ export class ApiApi extends runtime.BaseAPI {
 
     /**
      */
+    async cuadernoCalendarEntriesCreateRaw(requestParameters: CuadernoCalendarEntriesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CalendarEntrySchema>> {
+        if (requestParameters['calendarWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'calendarWriteSchema',
+                'Required parameter "calendarWriteSchema" was null or undefined when calling cuadernoCalendarEntriesCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/events/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CalendarWriteSchemaRequestToJSON(requestParameters['calendarWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CalendarEntrySchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoCalendarEntriesCreate(requestParameters: CuadernoCalendarEntriesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CalendarEntrySchema> {
+        const response = await this.cuadernoCalendarEntriesCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoCalendarEntryDestroyRaw(requestParameters: CuadernoCalendarEntryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['entryId'] == null) {
+            throw new runtime.RequiredError(
+                'entryId',
+                'Required parameter "entryId" was null or undefined when calling cuadernoCalendarEntryDestroy().'
+            );
+        }
+
+        if (requestParameters['revision'] == null) {
+            throw new runtime.RequiredError(
+                'revision',
+                'Required parameter "revision" was null or undefined when calling cuadernoCalendarEntryDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['revision'] != null) {
+            queryParameters['revision'] = requestParameters['revision'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/events/{entryId}/`;
+        urlPath = urlPath.replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoCalendarEntryDestroy(requestParameters: CuadernoCalendarEntryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cuadernoCalendarEntryDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async cuadernoCalendarEntryUpdateRaw(requestParameters: CuadernoCalendarEntryUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CalendarEntrySchema>> {
+        if (requestParameters['entryId'] == null) {
+            throw new runtime.RequiredError(
+                'entryId',
+                'Required parameter "entryId" was null or undefined when calling cuadernoCalendarEntryUpdate().'
+            );
+        }
+
+        if (requestParameters['calendarUpdateSchema'] == null) {
+            throw new runtime.RequiredError(
+                'calendarUpdateSchema',
+                'Required parameter "calendarUpdateSchema" was null or undefined when calling cuadernoCalendarEntryUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/events/{entryId}/`;
+        urlPath = urlPath.replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CalendarUpdateSchemaRequestToJSON(requestParameters['calendarUpdateSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CalendarEntrySchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoCalendarEntryUpdate(requestParameters: CuadernoCalendarEntryUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CalendarEntrySchema> {
+        const response = await this.cuadernoCalendarEntryUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
     async cuadernoEditionRetrieveRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EditionSchema>> {
         const queryParameters: any = {};
 
@@ -19316,6 +19625,45 @@ export class ApiApi extends runtime.BaseAPI {
 
     /**
      */
+    async cuadernoFavoritesListRaw(requestParameters: CuadernoFavoritesListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FavoritesSchema>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['offset'] != null) {
+            queryParameters['offset'] = requestParameters['offset'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/favorites/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FavoritesSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoFavoritesList(requestParameters: CuadernoFavoritesListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FavoritesSchema> {
+        const response = await this.cuadernoFavoritesListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
     async cuadernoLegacyOrderCreateRaw(requestParameters: CuadernoLegacyOrderCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LegacyOrderResultSchema>> {
         if (requestParameters['legacyOrderWriteSchema'] == null) {
             throw new runtime.RequiredError(
@@ -19352,6 +19700,370 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async cuadernoLegacyOrderCreate(requestParameters: CuadernoLegacyOrderCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LegacyOrderResultSchema> {
         const response = await this.cuadernoLegacyOrderCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMealPlanCourseUpdateRaw(requestParameters: CuadernoMealPlanCourseUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlanningMealSchema>> {
+        if (requestParameters['mealPlanId'] == null) {
+            throw new runtime.RequiredError(
+                'mealPlanId',
+                'Required parameter "mealPlanId" was null or undefined when calling cuadernoMealPlanCourseUpdate().'
+            );
+        }
+
+        if (requestParameters['mealCourseWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'mealCourseWriteSchema',
+                'Required parameter "mealCourseWriteSchema" was null or undefined when calling cuadernoMealPlanCourseUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/meal-plans/{mealPlanId}/`;
+        urlPath = urlPath.replace(`{${"mealPlanId"}}`, encodeURIComponent(String(requestParameters['mealPlanId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: MealCourseWriteSchemaRequestToJSON(requestParameters['mealCourseWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlanningMealSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMealPlanCourseUpdate(requestParameters: CuadernoMealPlanCourseUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlanningMealSchema> {
+        const response = await this.cuadernoMealPlanCourseUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMenuPrintRaw(requestParameters: CuadernoMenuPrintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MenuPrintSchema>> {
+        if (requestParameters['menuPrintWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'menuPrintWriteSchema',
+                'Required parameter "menuPrintWriteSchema" was null or undefined when calling cuadernoMenuPrint().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/print/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: MenuPrintWriteSchemaRequestToJSON(requestParameters['menuPrintWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MenuPrintSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMenuPrint(requestParameters: CuadernoMenuPrintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MenuPrintSchema> {
+        const response = await this.cuadernoMenuPrintRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateApplyRaw(requestParameters: CuadernoMenuTemplateApplyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TemplateApplyResultSchema>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoMenuTemplateApply().'
+            );
+        }
+
+        if (requestParameters['templateApplyWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'templateApplyWriteSchema',
+                'Required parameter "templateApplyWriteSchema" was null or undefined when calling cuadernoMenuTemplateApply().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/apply/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TemplateApplyWriteSchemaRequestToJSON(requestParameters['templateApplyWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TemplateApplyResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateApply(requestParameters: CuadernoMenuTemplateApplyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TemplateApplyResultSchema> {
+        const response = await this.cuadernoMenuTemplateApplyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateDestroyRaw(requestParameters: CuadernoMenuTemplateDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['revision'] == null) {
+            throw new runtime.RequiredError(
+                'revision',
+                'Required parameter "revision" was null or undefined when calling cuadernoMenuTemplateDestroy().'
+            );
+        }
+
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoMenuTemplateDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['revision'] != null) {
+            queryParameters['revision'] = requestParameters['revision'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateDestroy(requestParameters: CuadernoMenuTemplateDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cuadernoMenuTemplateDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateRetrieveRaw(requestParameters: CuadernoMenuTemplateRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MenuTemplateSchema>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoMenuTemplateRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['offset'] != null) {
+            queryParameters['offset'] = requestParameters['offset'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MenuTemplateSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateRetrieve(requestParameters: CuadernoMenuTemplateRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MenuTemplateSchema> {
+        const response = await this.cuadernoMenuTemplateRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateUpdateRaw(requestParameters: CuadernoMenuTemplateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MenuTemplateSchema>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoMenuTemplateUpdate().'
+            );
+        }
+
+        if (requestParameters['templateUpdateSchema'] == null) {
+            throw new runtime.RequiredError(
+                'templateUpdateSchema',
+                'Required parameter "templateUpdateSchema" was null or undefined when calling cuadernoMenuTemplateUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TemplateUpdateSchemaRequestToJSON(requestParameters['templateUpdateSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MenuTemplateSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplateUpdate(requestParameters: CuadernoMenuTemplateUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MenuTemplateSchema> {
+        const response = await this.cuadernoMenuTemplateUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplatesCreateRaw(requestParameters: CuadernoMenuTemplatesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MenuTemplateSchema>> {
+        if (requestParameters['templateWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'templateWriteSchema',
+                'Required parameter "templateWriteSchema" was null or undefined when calling cuadernoMenuTemplatesCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TemplateWriteSchemaRequestToJSON(requestParameters['templateWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MenuTemplateSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplatesCreate(requestParameters: CuadernoMenuTemplatesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MenuTemplateSchema> {
+        const response = await this.cuadernoMenuTemplatesCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplatesListRaw(requestParameters: CuadernoMenuTemplatesListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MenuTemplatesSchema>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['offset'] != null) {
+            queryParameters['offset'] = requestParameters['offset'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MenuTemplatesSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoMenuTemplatesList(requestParameters: CuadernoMenuTemplatesListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MenuTemplatesSchema> {
+        const response = await this.cuadernoMenuTemplatesListRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -19587,6 +20299,206 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async cuadernoPackagesList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PackageSchema>> {
         const response = await this.cuadernoPackagesListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPlanningCoursesCreateRaw(requestParameters: CuadernoPlanningCoursesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CourseSchema>> {
+        if (requestParameters['courseWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'courseWriteSchema',
+                'Required parameter "courseWriteSchema" was null or undefined when calling cuadernoPlanningCoursesCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/courses/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CourseWriteSchemaRequestToJSON(requestParameters['courseWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CourseSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPlanningCoursesCreate(requestParameters: CuadernoPlanningCoursesCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CourseSchema> {
+        const response = await this.cuadernoPlanningCoursesCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPlanningCoursesDestroyRaw(requestParameters: CuadernoPlanningCoursesDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['courseId'] == null) {
+            throw new runtime.RequiredError(
+                'courseId',
+                'Required parameter "courseId" was null or undefined when calling cuadernoPlanningCoursesDestroy().'
+            );
+        }
+
+        if (requestParameters['revision'] == null) {
+            throw new runtime.RequiredError(
+                'revision',
+                'Required parameter "revision" was null or undefined when calling cuadernoPlanningCoursesDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['revision'] != null) {
+            queryParameters['revision'] = requestParameters['revision'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/courses/{courseId}/`;
+        urlPath = urlPath.replace(`{${"courseId"}}`, encodeURIComponent(String(requestParameters['courseId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoPlanningCoursesDestroy(requestParameters: CuadernoPlanningCoursesDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cuadernoPlanningCoursesDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async cuadernoPlanningCoursesUpdateRaw(requestParameters: CuadernoPlanningCoursesUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CourseSchema>> {
+        if (requestParameters['courseId'] == null) {
+            throw new runtime.RequiredError(
+                'courseId',
+                'Required parameter "courseId" was null or undefined when calling cuadernoPlanningCoursesUpdate().'
+            );
+        }
+
+        if (requestParameters['courseUpdateSchema'] == null) {
+            throw new runtime.RequiredError(
+                'courseUpdateSchema',
+                'Required parameter "courseUpdateSchema" was null or undefined when calling cuadernoPlanningCoursesUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/courses/{courseId}/`;
+        urlPath = urlPath.replace(`{${"courseId"}}`, encodeURIComponent(String(requestParameters['courseId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CourseUpdateSchemaRequestToJSON(requestParameters['courseUpdateSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CourseSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPlanningCoursesUpdate(requestParameters: CuadernoPlanningCoursesUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CourseSchema> {
+        const response = await this.cuadernoPlanningCoursesUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoPlanningRetrieveRaw(requestParameters: CuadernoPlanningRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PlanningSchema>> {
+        if (requestParameters['fromDate'] == null) {
+            throw new runtime.RequiredError(
+                'fromDate',
+                'Required parameter "fromDate" was null or undefined when calling cuadernoPlanningRetrieve().'
+            );
+        }
+
+        if (requestParameters['toDate'] == null) {
+            throw new runtime.RequiredError(
+                'toDate',
+                'Required parameter "toDate" was null or undefined when calling cuadernoPlanningRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['diet'] != null) {
+            queryParameters['diet'] = requestParameters['diet'];
+        }
+
+        if (requestParameters['dietStatus'] != null) {
+            queryParameters['diet_status'] = requestParameters['dietStatus'];
+        }
+
+        if (requestParameters['fromDate'] != null) {
+            queryParameters['from_date'] = (requestParameters['fromDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['toDate'] != null) {
+            queryParameters['to_date'] = (requestParameters['toDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PlanningSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoPlanningRetrieve(requestParameters: CuadernoPlanningRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PlanningSchema> {
+        const response = await this.cuadernoPlanningRetrieveRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -20042,6 +20954,143 @@ export class ApiApi extends runtime.BaseAPI {
 
     /**
      */
+    async cuadernoRecipeExtrasRetrieveRaw(requestParameters: CuadernoRecipeExtrasRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeExtrasSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeExtrasRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/extras/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeExtrasSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeExtrasRetrieve(requestParameters: CuadernoRecipeExtrasRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeExtrasSchema> {
+        const response = await this.cuadernoRecipeExtrasRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeExtrasUpdateRaw(requestParameters: CuadernoRecipeExtrasUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeExtrasSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeExtrasUpdate().'
+            );
+        }
+
+        if (requestParameters['recipeExtrasWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'recipeExtrasWriteSchema',
+                'Required parameter "recipeExtrasWriteSchema" was null or undefined when calling cuadernoRecipeExtrasUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/extras/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RecipeExtrasWriteSchemaRequestToJSON(requestParameters['recipeExtrasWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeExtrasSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeExtrasUpdate(requestParameters: CuadernoRecipeExtrasUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeExtrasSchema> {
+        const response = await this.cuadernoRecipeExtrasUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeFavoriteUpdateRaw(requestParameters: CuadernoRecipeFavoriteUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FavoriteResultSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeFavoriteUpdate().'
+            );
+        }
+
+        if (requestParameters['favoriteWriteSchema'] == null) {
+            throw new runtime.RequiredError(
+                'favoriteWriteSchema',
+                'Required parameter "favoriteWriteSchema" was null or undefined when calling cuadernoRecipeFavoriteUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/favorite/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FavoriteWriteSchemaRequestToJSON(requestParameters['favoriteWriteSchema']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FavoriteResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeFavoriteUpdate(requestParameters: CuadernoRecipeFavoriteUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FavoriteResultSchema> {
+        const response = await this.cuadernoRecipeFavoriteUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
     async cuadernoRecipeFinanceRetrieveRaw(requestParameters: CuadernoRecipeFinanceRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CuadernoRecipeFinanceResponse>> {
         if (requestParameters['recipeId'] == null) {
             throw new runtime.RequiredError(
@@ -20127,6 +21176,123 @@ export class ApiApi extends runtime.BaseAPI {
     async cuadernoRecipeFinanceUpdate(requestParameters: CuadernoRecipeFinanceUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CuadernoRecipeFinanceResponse> {
         const response = await this.cuadernoRecipeFinanceUpdateRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeGalleryCreateRaw(requestParameters: CuadernoRecipeGalleryCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RecipeExtrasSchema>> {
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeGalleryCreate().'
+            );
+        }
+
+        if (requestParameters['image'] == null) {
+            throw new runtime.RequiredError(
+                'image',
+                'Required parameter "image" was null or undefined when calling cuadernoRecipeGalleryCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['image'] != null) {
+            formParams.append('image', requestParameters['image'] as any);
+        }
+
+        if (requestParameters['caption'] != null) {
+            formParams.append('caption', requestParameters['caption'] as any);
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/gallery/`;
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RecipeExtrasSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoRecipeGalleryCreate(requestParameters: CuadernoRecipeGalleryCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RecipeExtrasSchema> {
+        const response = await this.cuadernoRecipeGalleryCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoRecipeGalleryDestroyRaw(requestParameters: CuadernoRecipeGalleryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['imageId'] == null) {
+            throw new runtime.RequiredError(
+                'imageId',
+                'Required parameter "imageId" was null or undefined when calling cuadernoRecipeGalleryDestroy().'
+            );
+        }
+
+        if (requestParameters['recipeId'] == null) {
+            throw new runtime.RequiredError(
+                'recipeId',
+                'Required parameter "recipeId" was null or undefined when calling cuadernoRecipeGalleryDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/recipes/{recipeId}/gallery/{imageId}/`;
+        urlPath = urlPath.replace(`{${"imageId"}}`, encodeURIComponent(String(requestParameters['imageId'])));
+        urlPath = urlPath.replace(`{${"recipeId"}}`, encodeURIComponent(String(requestParameters['recipeId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoRecipeGalleryDestroy(requestParameters: CuadernoRecipeGalleryDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cuadernoRecipeGalleryDestroyRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -20783,3 +21949,26 @@ export const CuadernoExchangeImportPreviewEnum = {
     _1: '1'
 } as const;
 export type CuadernoExchangeImportPreviewEnum = typeof CuadernoExchangeImportPreviewEnum[keyof typeof CuadernoExchangeImportPreviewEnum];
+/**
+ * @export
+ */
+export const CuadernoPlanningRetrieveDietEnum = {
+    Celiacos: 'celiacos',
+    Colesterol: 'colesterol',
+    Diabetes: 'diabetes',
+    Fibra: 'fibra',
+    Gastrica: 'gastrica',
+    Hiposodica: 'hiposodica',
+    Sinfructosa: 'sinfructosa',
+    Sinlactosa: 'sinlactosa'
+} as const;
+export type CuadernoPlanningRetrieveDietEnum = typeof CuadernoPlanningRetrieveDietEnum[keyof typeof CuadernoPlanningRetrieveDietEnum];
+/**
+ * @export
+ */
+export const CuadernoPlanningRetrieveDietStatusEnum = {
+    Suitable: 'suitable',
+    Unknown: 'unknown',
+    Unsuitable: 'unsuitable'
+} as const;
+export type CuadernoPlanningRetrieveDietStatusEnum = typeof CuadernoPlanningRetrieveDietStatusEnum[keyof typeof CuadernoPlanningRetrieveDietStatusEnum];

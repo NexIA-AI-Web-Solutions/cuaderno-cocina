@@ -2541,6 +2541,49 @@
                 }
             }
         },
+        "/api/cuaderno/favorites/": {
+            "get": {
+                "operationId": "cuadernoFavoritesList",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Entero ASCII de 1 a 100."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Entero ASCII no negativo."
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FavoritesSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/cuaderno/movements/": {
             "get": {
                 "operationId": "cuadernoMovementsList",
@@ -2828,6 +2871,739 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/PriceSummarySchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/": {
+            "get": {
+                "operationId": "cuadernoPlanningRetrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "diet",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "celiacos",
+                                "colesterol",
+                                "diabetes",
+                                "fibra",
+                                "gastrica",
+                                "hiposodica",
+                                "sinfructosa",
+                                "sinlactosa"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "diet_status",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "suitable",
+                                "unknown",
+                                "unsuitable"
+                            ]
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "from_date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "to_date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanningSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/courses/": {
+            "post": {
+                "operationId": "cuadernoPlanningCoursesCreate",
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CourseWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CourseWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CourseWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "courseWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CourseSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/courses/{courseId}/": {
+            "put": {
+                "operationId": "cuadernoPlanningCoursesUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "courseId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CourseUpdateSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CourseUpdateSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CourseUpdateSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "courseUpdateSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CourseSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cuadernoPlanningCoursesDestroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "courseId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "revision",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Revisión SHA256 de la última respuesta leída.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/events/": {
+            "post": {
+                "operationId": "cuadernoCalendarEntriesCreate",
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "calendarWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEntrySchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/events/{entryId}/": {
+            "put": {
+                "operationId": "cuadernoCalendarEntryUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "entryId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarUpdateSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarUpdateSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarUpdateSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "calendarUpdateSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEntrySchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cuadernoCalendarEntryDestroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "entryId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "revision",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Revisión SHA256 de la última respuesta leída.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/meal-plans/{mealPlanId}/": {
+            "put": {
+                "operationId": "cuadernoMealPlanCourseUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "mealPlanId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MealCourseWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MealCourseWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MealCourseWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "mealCourseWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlanningMealSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/print/": {
+            "post": {
+                "operationId": "cuadernoMenuPrint",
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuPrintWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuPrintWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuPrintWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "menuPrintWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MenuPrintSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/templates/": {
+            "get": {
+                "operationId": "cuadernoMenuTemplatesList",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Entero ASCII de 1 a 100."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Entero ASCII no negativo."
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MenuTemplatesSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "cuadernoMenuTemplatesCreate",
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "templateWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MenuTemplateSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/templates/{templateId}/": {
+            "get": {
+                "operationId": "cuadernoMenuTemplateRetrieve",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Entero ASCII de 1 a 100."
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Entero ASCII no negativo."
+                    },
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MenuTemplateSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "cuadernoMenuTemplateUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateUpdateSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateUpdateSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateUpdateSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "templateUpdateSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MenuTemplateSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cuadernoMenuTemplateDestroy",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "revision",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Revisión SHA256 de la última respuesta leída.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/templates/{templateId}/apply/": {
+            "post": {
+                "operationId": "cuadernoMenuTemplateApply",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateApplyWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateApplyWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateApplyWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "templateApplyWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemplateApplyResultSchema"
                                 }
                             }
                         },
@@ -3327,6 +4103,151 @@
                 }
             }
         },
+        "/api/cuaderno/recipes/{recipeId}/extras/": {
+            "get": {
+                "operationId": "cuadernoRecipeExtrasRetrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "recipeId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecipeExtrasSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "cuadernoRecipeExtrasUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "recipeId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecipeExtrasWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecipeExtrasWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RecipeExtrasWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "recipeExtrasWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecipeExtrasSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/recipes/{recipeId}/favorite/": {
+            "put": {
+                "operationId": "cuadernoRecipeFavoriteUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "recipeId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteWriteSchemaRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteWriteSchemaRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FavoriteWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "favoriteWriteSchema"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FavoriteResultSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/cuaderno/recipes/{recipeId}/finance/": {
             "get": {
                 "operationId": "cuadernoRecipeFinanceRetrieve",
@@ -3427,6 +4348,87 @@
                             }
                         },
                         "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/recipes/{recipeId}/gallery/": {
+            "post": {
+                "operationId": "cuadernoRecipeGalleryCreate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "recipeId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GalleryWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RecipeExtrasSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/recipes/{recipeId}/gallery/{imageId}/": {
+            "delete": {
+                "operationId": "cuadernoRecipeGalleryDestroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "imageId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "recipeId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
                     }
                 }
             }
@@ -20464,6 +21466,133 @@
                     "html"
                 ]
             },
+            "CalendarEntryKindEnum": {
+                "enum": [
+                    "event",
+                    "absence"
+                ],
+                "type": "string",
+                "description": "* `event` - event\n* `absence` - absence"
+            },
+            "CalendarEntrySchema": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/CalendarEntryKindEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "member_name": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "end_date",
+                    "id",
+                    "kind",
+                    "revision",
+                    "start_date",
+                    "title"
+                ]
+            },
+            "CalendarUpdateSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/CalendarEntryKindEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "member_name": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "revision": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "end_date",
+                    "kind",
+                    "revision",
+                    "start_date",
+                    "title"
+                ]
+            },
+            "CalendarWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "$ref": "#/components/schemas/CalendarEntryKindEnum"
+                    },
+                    "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "member_name": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "end_date",
+                    "kind",
+                    "start_date",
+                    "title"
+                ]
+            },
             "CodeEnum": {
                 "enum": [
                     "guest",
@@ -20840,6 +21969,86 @@
                     "warnings"
                 ]
             },
+            "CourseSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "position": {
+                        "type": "integer",
+                        "maximum": 199,
+                        "minimum": 0
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "id",
+                    "meal_type",
+                    "name",
+                    "revision"
+                ]
+            },
+            "CourseUpdateSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "position": {
+                        "type": "integer",
+                        "maximum": 199,
+                        "minimum": 0
+                    },
+                    "revision": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "meal_type",
+                    "name",
+                    "revision"
+                ]
+            },
+            "CourseWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "position": {
+                        "type": "integer",
+                        "maximum": 199,
+                        "minimum": 0
+                    }
+                },
+                "required": [
+                    "meal_type",
+                    "name"
+                ]
+            },
             "CuadernoProductionResponse": {
                 "oneOf": [
                     {
@@ -21019,6 +22228,54 @@
                 "type": "string",
                 "description": "* `true` - true"
             },
+            "DietDeclarationSchema": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "$ref": "#/components/schemas/RecipeDietEnum"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/RecipeDietStatusEnum"
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 1000
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "label",
+                    "slug",
+                    "status",
+                    "updated_at"
+                ]
+            },
+            "DietWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "$ref": "#/components/schemas/RecipeDietEnum"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/RecipeDietStatusEnum"
+                    },
+                    "note": {
+                        "type": "string",
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "slug",
+                    "status"
+                ]
+            },
             "EditionEnum": {
                 "enum": [
                     "esencial",
@@ -21059,11 +22316,18 @@
                             }
                         ],
                         "nullable": true
+                    },
+                    "features": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
                     }
                 },
                 "required": [
                     "currency",
                     "edition",
+                    "features",
                     "net_profit",
                     "operational_role",
                     "price_policy",
@@ -22261,6 +23525,70 @@
                     "type"
                 ]
             },
+            "FavoriteRecipeSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "image": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "id",
+                    "image",
+                    "name"
+                ]
+            },
+            "FavoriteResultSchema": {
+                "type": "object",
+                "properties": {
+                    "recipe_id": {
+                        "type": "integer"
+                    },
+                    "is_favorite": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "is_favorite",
+                    "recipe_id"
+                ]
+            },
+            "FavoriteWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "favorite": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "favorite"
+                ]
+            },
+            "FavoritesSchema": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FavoriteRecipeSchema"
+                        }
+                    }
+                },
+                "required": [
+                    "count",
+                    "results"
+                ]
+            },
             "FdcQuery": {
                 "type": "object",
                 "properties": {
@@ -23000,6 +24328,45 @@
                 ],
                 "type": "string",
                 "description": "* `cuaderno-recipes-v1` - cuaderno-recipes-v1\n* `cuaderno-recipes-v2` - cuaderno-recipes-v2"
+            },
+            "GalleryImageSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "caption": {
+                        "type": "string"
+                    },
+                    "position": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "caption",
+                    "id",
+                    "position",
+                    "url"
+                ]
+            },
+            "GalleryWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "image": {
+                        "type": "string",
+                        "format": "binary"
+                    },
+                    "caption": {
+                        "type": "string",
+                        "maxLength": 256
+                    }
+                },
+                "required": [
+                    "image"
+                ]
             },
             "GenericModelReference": {
                 "type": "object",
@@ -24375,6 +25742,18 @@
                     "warnings"
                 ]
             },
+            "MealCourseWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "course": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "course"
+                ]
+            },
             "MealPlan": {
                 "type": "object",
                 "description": "Adds nested create feature",
@@ -24564,6 +25943,120 @@
                     "name"
                 ]
             },
+            "MenuPrintSchema": {
+                "type": "object",
+                "properties": {
+                    "orientation": {
+                        "$ref": "#/components/schemas/OrientationEnum"
+                    },
+                    "merged": {
+                        "type": "boolean"
+                    },
+                    "menus": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PrintedMenuSchema"
+                        }
+                    },
+                    "diet": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "diet_label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "declaration": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "declaration",
+                    "diet",
+                    "diet_label",
+                    "menus",
+                    "merged",
+                    "orientation"
+                ]
+            },
+            "MenuPrintWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "orientation": {
+                        "$ref": "#/components/schemas/OrientationEnum"
+                    },
+                    "menus": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PrintMenuWriteSchemaRequest"
+                        }
+                    },
+                    "diet": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RecipeDietEnum"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "menus",
+                    "orientation"
+                ]
+            },
+            "MenuTemplateSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "weeks": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "entries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TemplateEntrySchema"
+                        }
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "entries",
+                    "id",
+                    "name",
+                    "revision",
+                    "weeks"
+                ]
+            },
+            "MenuTemplatesSchema": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MenuTemplateSchema"
+                        }
+                    }
+                },
+                "required": [
+                    "count",
+                    "results"
+                ]
+            },
             "MethodEnum": {
                 "enum": [
                     "DB",
@@ -24571,7 +26064,7 @@
                     "LOCAL"
                 ],
                 "type": "string",
-                "description": "* `DB` - Archivos remotos \u00b7 token\n* `NEXTCLOUD` - Archivos remotos \u00b7 usuario y contrase\u00f1a\n* `LOCAL` - Archivos locales"
+                "description": "* `DB` - Archivos remotos · token\n* `NEXTCLOUD` - Archivos remotos · usuario y contraseña\n* `LOCAL` - Archivos locales"
             },
             "MinimumWriteRequest": {
                 "type": "object",
@@ -25066,6 +26559,14 @@
                 "required": [
                     "quantity"
                 ]
+            },
+            "OrientationEnum": {
+                "enum": [
+                    "portrait",
+                    "landscape"
+                ],
+                "type": "string",
+                "description": "* `portrait` - portrait\n* `landscape` - landscape"
             },
             "PackageSchema": {
                 "type": "object",
@@ -28270,6 +29771,115 @@
                     }
                 }
             },
+            "PlanningMealSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "recipe": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RecipeReferenceSchema"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "meal_type": {
+                        "$ref": "#/components/schemas/RecipeReferenceSchema"
+                    },
+                    "course": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "course_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "servings": {
+                        "type": "string",
+                        "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"
+                    },
+                    "from_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "to_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "source_url": {
+                        "type": "string"
+                    },
+                    "diet_status": {
+                        "$ref": "#/components/schemas/RecipeDietStatusEnum"
+                    }
+                },
+                "required": [
+                    "course",
+                    "course_name",
+                    "diet_status",
+                    "from_date",
+                    "id",
+                    "meal_type",
+                    "note",
+                    "recipe",
+                    "servings",
+                    "source_url",
+                    "title",
+                    "to_date"
+                ]
+            },
+            "PlanningSchema": {
+                "type": "object",
+                "properties": {
+                    "courses": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CourseSchema"
+                        }
+                    },
+                    "meal_plans": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlanningMealSchema"
+                        }
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarEntrySchema"
+                        }
+                    },
+                    "can_edit": {
+                        "type": "boolean"
+                    },
+                    "can_manage_absences": {
+                        "type": "boolean"
+                    },
+                    "can_merge_print": {
+                        "type": "boolean"
+                    },
+                    "declaration": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "can_edit",
+                    "can_manage_absences",
+                    "can_merge_print",
+                    "courses",
+                    "declaration",
+                    "events",
+                    "meal_plans"
+                ]
+            },
             "PreparationItemSchema": {
                 "type": "object",
                 "properties": {
@@ -28561,6 +30171,46 @@
                 },
                 "required": [
                     "amount"
+                ]
+            },
+            "PrintMenuWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "meal_plan_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "maxItems": 100,
+                        "minItems": 1
+                    }
+                },
+                "required": [
+                    "meal_plan_ids",
+                    "name"
+                ]
+            },
+            "PrintedMenuSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "entries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlanningMealSchema"
+                        }
+                    }
+                },
+                "required": [
+                    "entries",
+                    "name"
                 ]
             },
             "ProductionNeedSchema": {
@@ -29514,6 +31164,114 @@
                     "warnings"
                 ]
             },
+            "RecipeDietEnum": {
+                "enum": [
+                    "celiacos",
+                    "colesterol",
+                    "diabetes",
+                    "hiposodica",
+                    "gastrica",
+                    "fibra",
+                    "sinfructosa",
+                    "sinlactosa"
+                ],
+                "type": "string",
+                "description": "* `celiacos` - celiacos\n* `colesterol` - colesterol\n* `diabetes` - diabetes\n* `hiposodica` - hiposodica\n* `gastrica` - gastrica\n* `fibra` - fibra\n* `sinfructosa` - sinfructosa\n* `sinlactosa` - sinlactosa"
+            },
+            "RecipeDietStatusEnum": {
+                "enum": [
+                    "unknown",
+                    "suitable",
+                    "unsuitable"
+                ],
+                "type": "string",
+                "description": "* `unknown` - unknown\n* `suitable` - suitable\n* `unsuitable` - unsuitable"
+            },
+            "RecipeExtrasSchema": {
+                "type": "object",
+                "properties": {
+                    "recipe_id": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "can_edit": {
+                        "type": "boolean"
+                    },
+                    "is_favorite": {
+                        "type": "boolean"
+                    },
+                    "gallery": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GalleryImageSchema"
+                        }
+                    },
+                    "diets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DietDeclarationSchema"
+                        }
+                    },
+                    "variant_of": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/RecipeReferenceSchema"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "variants": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RecipeReferenceSchema"
+                        }
+                    },
+                    "variants_truncated": {
+                        "type": "boolean"
+                    },
+                    "declaration": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "can_edit",
+                    "declaration",
+                    "diets",
+                    "gallery",
+                    "is_favorite",
+                    "recipe_id",
+                    "revision",
+                    "variant_of",
+                    "variants",
+                    "variants_truncated"
+                ]
+            },
+            "RecipeExtrasWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "revision": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "diets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DietWriteSchemaRequest"
+                        }
+                    },
+                    "variant_of": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "revision"
+                ]
+            },
             "RecipeFlat": {
                 "type": "object",
                 "description": "Adds nested create feature",
@@ -29816,6 +31574,21 @@
                     }
                 },
                 "required": [
+                    "name"
+                ]
+            },
+            "RecipeReferenceSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
                     "name"
                 ]
             },
@@ -31797,7 +33570,7 @@
                     "TANDOOR_DARK"
                 ],
                 "type": "string",
-                "description": "* `BLANK` - -------\n* `TANDOOR` - Cuaderno Cocina\n* `BOOTSTRAP` - Cuaderno cl\u00e1sico claro\n* `DARKLY` - Cuaderno cl\u00e1sico oscuro\n* `FLATLY` - Cuaderno plano\n* `SUPERHERO` - Cuaderno contraste\n* `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)"
+                "description": "* `BLANK` - -------\n* `TANDOOR` - Cuaderno Cocina\n* `BOOTSTRAP` - Cuaderno clásico claro\n* `DARKLY` - Cuaderno clásico oscuro\n* `FLATLY` - Cuaderno plano\n* `SUPERHERO` - Cuaderno contraste\n* `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)"
             },
             "StatusEnum": {
                 "enum": [
@@ -32401,6 +34174,208 @@
                     "storage"
                 ]
             },
+            "TemplateApplyResultSchema": {
+                "type": "object",
+                "properties": {
+                    "created_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "replaced_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "required": [
+                    "created_ids",
+                    "replaced_ids"
+                ]
+            },
+            "TemplateApplyWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "revision": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "overwrite": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "revision",
+                    "start_date"
+                ]
+            },
+            "TemplateEntrySchema": {
+                "type": "object",
+                "properties": {
+                    "day_index": {
+                        "type": "integer",
+                        "maximum": 34,
+                        "minimum": 0
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "course": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "recipe": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "source_url": {
+                        "type": "string",
+                        "maxLength": 1024
+                    },
+                    "servings": {
+                        "type": "string",
+                        "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "meal_type_name": {
+                        "type": "string"
+                    },
+                    "course_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "recipe_name": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "course_name",
+                    "day_index",
+                    "id",
+                    "meal_type",
+                    "meal_type_name",
+                    "recipe_name",
+                    "servings"
+                ]
+            },
+            "TemplateEntryWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "day_index": {
+                        "type": "integer",
+                        "maximum": 34,
+                        "minimum": 0
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "course": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "recipe": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "source_url": {
+                        "type": "string",
+                        "maxLength": 1024
+                    },
+                    "servings": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "description": "Exact finite decimal text; point or comma, without thousands grouping. Binary floating point is rejected."
+                            },
+                            {
+                                "type": "integer",
+                                "description": "Exact integer JSON input."
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "day_index",
+                    "meal_type",
+                    "servings"
+                ]
+            },
+            "TemplateUpdateSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "weeks": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "entries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TemplateEntryWriteSchemaRequest"
+                        }
+                    },
+                    "revision": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "entries",
+                    "name",
+                    "revision",
+                    "weeks"
+                ]
+            },
+            "TemplateWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                    },
+                    "weeks": {
+                        "type": "integer",
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "entries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TemplateEntryWriteSchemaRequest"
+                        }
+                    }
+                },
+                "required": [
+                    "entries",
+                    "name",
+                    "weeks"
+                ]
+            },
             "ThemeEnum": {
                 "enum": [
                     "TANDOOR",
@@ -32411,7 +34386,7 @@
                     "TANDOOR_DARK"
                 ],
                 "type": "string",
-                "description": "* `TANDOOR` - Cuaderno Cocina\n* `BOOTSTRAP` - Cuaderno cl\u00e1sico claro\n* `DARKLY` - Cuaderno cl\u00e1sico oscuro\n* `FLATLY` - Cuaderno plano\n* `SUPERHERO` - Cuaderno contraste\n* `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)"
+                "description": "* `TANDOOR` - Cuaderno Cocina\n* `BOOTSTRAP` - Cuaderno clásico claro\n* `DARKLY` - Cuaderno clásico oscuro\n* `FLATLY` - Cuaderno plano\n* `SUPERHERO` - Cuaderno contraste\n* `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)"
             },
             "Unit": {
                 "type": "object",

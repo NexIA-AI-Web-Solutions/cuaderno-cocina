@@ -10,11 +10,29 @@ la ampliación funcional de esta fuente, cuya CI y despliegue están pendientes.
 La [distribución de funciones](09-FUNCTIONAL-PLANS.md) define Esencial,
 Profesional e Integral sin eliminar funciones nativas básicas.
 
+El CI 37691631344 de `d50b75a` comprobó 609 tests de Cuaderno,
+1.296 tests nativos y 21 subtests PostgreSQL, y 324 tests frontend. TypeScript,
+build y comprobación del worker compilado pasaron: un único SVG propio en
+precache, 1,05 KiB. El job backend conserva su FAIL por diferencia del snapshot
+OpenAPI; la generación sin warnings y el SDK quedaron en el artefacto oficial
+11513179190 para revisión. La fuente incorpora ese contrato generado sin
+cambiar el runtime CSRF ni los 25 enums anteriores; una nueva CI debe comprobar
+su reproducción y los jobs de imagen, navegador y G7 todavía no ejecutados.
+
 La aceptación pública más reciente del runtime anterior conserva un fallo:
 READ obtuvo 25 PASS y 1 FAIL de alcance del service worker; el último caso no
 se ejecutó. WRITE posterior no abrió el navegador porque el control del host
 detectó dos OOM y `user@1000.service` fallido durante otro despliegue comunicado
 por el propietario. No se declara completada la aceptación final de esa versión.
+La lectura completa posterior del kernel conserva seis procesos víctimas y 18
+mensajes OOM del mismo boot, con último incidente a las 20:32:53 UTC. La causa
+no está establecida. A las 21:36 UTC se observó el gestor de usuario activo con
+otra invocación; esta tarea no ejecutó su arranque y desconoce el disparador.
+Se cerró con SIGTERM la terminal Codex 5128, identificada por el propietario
+como terminada; la sesión 325136 se preservó. A las 22:02 UTC se midieron
+3.203.664 KiB de RAM disponible y 940.880 KiB de swap libre. La admisión de
+operaciones posteriores requiere medidas nuevas y control del historial;
+la observación no convierte en PASS los controles fallidos anteriores.
 Esta fuente incluye una corrección de vida de activación y precache acotado que
 requiere su propia validación en navegador; no se han ampliado los plazos ni retries.
 
