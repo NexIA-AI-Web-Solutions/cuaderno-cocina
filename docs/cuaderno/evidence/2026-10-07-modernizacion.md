@@ -1,5 +1,29 @@
 # Modernización del 7 de octubre de 2026
 
+## Estado posterior a la CI y ampliación funcional
+
+El runtime publicado es `ff3b685`, con CI 37651982834: nueve jobs PASS,
+Playwright de raíz 367 y prefijo 483, incluidos 348 casos de modernización,
+sin retries, skips ni flaky; G7 17/17 del mismo candidato. GPT-6 Astra revisó
+independientemente las 80 clasificaciones, veinte distintas por categoría.
+Los resultados no significan que cada una se haya reproducido personalmente
+en el VPS. Un recorrido personal Astra abrió diez rutas distintas en 22 casos
+y revisó sus 22 capturas; es anterior al ajuste de keepalive propio de Caddy.
+
+La aceptación pública posterior conserva READ 25 PASS/1 FAIL y un caso sin
+ejecutar por fallo de control exacto del worker. La fase WRITE no abrió navegador
+al detectar dos OOM y el gestor de usuario fallido durante otro despliegue
+comunicado por el propietario. No hay cierre final de aceptación de `ff3b685`.
+La nueva fuente reduce el precache inicial al SVG propio y liga `clients.claim()`
+a `activate.waitUntil`; once pruebas unitarias pasan tras tres fallos de aserción
+significativos previos. La causa exacta del fallo de navegador no está demostrada.
+Plazos, collectors y retries de Playwright se conservan.
+
+Las funciones adicionales se distribuyen según
+[recetas y planificación por edición](../09-FUNCTIONAL-PLANS.md). Su persistencia,
+UI, compilación y aceptación deben verificarse con una nueva CI/imagen. Los
+apartados siguientes conservan las clasificaciones y evidencias históricas.
+
 Estado preparatorio: las nuevas fuentes todavía no están publicadas en producción. El runtime vigente continúa en `60aca2d`; sus pruebas históricas no certifican estos cambios.
 
 Se exige una categoría primaria por resultado distinto: bug funcional en una operación normal, gestión de errores ante un fallo, UX para facilitar una tarea, o UI para mejorar la presentación. GPT-6 Astra revisa las clasificaciones y evidencias. El cliente admitió un agente Astra; dos intentos adicionales alcanzaron el límite de threads. Los escritores heredados no se atribuyen a Astra.

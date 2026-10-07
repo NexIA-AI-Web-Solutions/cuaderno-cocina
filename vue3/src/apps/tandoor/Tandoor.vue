@@ -128,7 +128,7 @@
 </template>
 
 <script lang="ts" setup>
-import brandLogo from "@/assets/cuaderno-logo.svg";
+import brandLogo from "@/assets/cuaderno-logo.svg?no-inline";
 import GlobalSearchDialog from "@/components/inputs/GlobalSearchDialog.vue"
 
 import {useDisplay, useLocale} from "vuetify"

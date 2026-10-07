@@ -17,6 +17,7 @@ from cuaderno.api.purchasing import (
 from cuaderno.api.stock_minimums import MinimumWriteSerializer
 from cuaderno.health import readiness
 from cuaderno.api import schema as s
+from cuaderno.api import functional_schema as fs, planning, recipe_extras
 
 
 SERVINGS = OpenApiParameter("servings", OpenApiTypes.STR, description="Decimal objetivo enviado como texto.")
@@ -43,6 +44,53 @@ def _many(serializer):
 
 def apply_schema_annotations():
     """Attach exact contracts to collection views; call once from cuaderno.urls."""
+    revision = OpenApiParameter("revision", OpenApiTypes.STR, required=True,
+                                description="Revisión SHA256 de la última respuesta leída.")
+    operations = [
+        (recipe_extras.RecipeExtrasView, dict(
+            get=extend_schema(operation_id="cuaderno_recipe_extras_retrieve", responses=fs.RecipeExtrasSchema),
+            put=extend_schema(operation_id="cuaderno_recipe_extras_update", request=fs.RecipeExtrasWriteSchema, responses=fs.RecipeExtrasSchema))),
+        (recipe_extras.RecipeFavoriteView, dict(put=extend_schema(
+            operation_id="cuaderno_recipe_favorite_update", request=fs.FavoriteWriteSchema, responses=fs.FavoriteResultSchema))),
+        (recipe_extras.FavoriteListView, dict(get=extend_schema(
+            operation_id="cuaderno_favorites_list", parameters=[LIMIT, OFFSET], responses=fs.FavoritesSchema))),
+        (recipe_extras.RecipeGalleryView, dict(post=extend_schema(
+            operation_id="cuaderno_recipe_gallery_create", request={"multipart/form-data": fs.GalleryWriteSchema},
+            responses={201: fs.RecipeExtrasSchema}))),
+        (recipe_extras.RecipeGalleryDetailView, dict(delete=extend_schema(
+            operation_id="cuaderno_recipe_gallery_destroy", responses=fs.RecipeExtrasSchema))),
+        (planning.PlanningView, dict(get=extend_schema(
+            operation_id="cuaderno_planning_retrieve", responses=fs.PlanningSchema,
+            parameters=[OpenApiParameter("from_date", OpenApiTypes.DATE, required=True),
+                        OpenApiParameter("to_date", OpenApiTypes.DATE, required=True),
+                        OpenApiParameter("diet", OpenApiTypes.STR, enum=[slug for slug, _ in fs.DIETS]),
+                        OpenApiParameter("diet_status", OpenApiTypes.STR, enum=fs.STATUSES)]))),
+        (planning.CourseView, dict(post=extend_schema(
+            operation_id="cuaderno_planning_courses_create", request=fs.CourseWriteSchema, responses={201: fs.CourseSchema}))),
+        (planning.CourseDetailView, dict(
+            put=extend_schema(operation_id="cuaderno_planning_courses_update", request=fs.CourseUpdateSchema, responses=fs.CourseSchema),
+            delete=extend_schema(operation_id="cuaderno_planning_courses_destroy", parameters=[revision], responses={204: None}))),
+        (planning.MealPlanCourseView, dict(put=extend_schema(
+            operation_id="cuaderno_meal_plan_course_update", request=fs.MealCourseWriteSchema, responses=fs.PlanningMealSchema))),
+        (planning.MenuTemplateView, dict(
+            get=extend_schema(operation_id="cuaderno_menu_templates_list", parameters=[LIMIT, OFFSET], responses=fs.MenuTemplatesSchema),
+            post=extend_schema(operation_id="cuaderno_menu_templates_create", request=fs.TemplateWriteSchema, responses={201: fs.MenuTemplateSchema}))),
+        (planning.MenuTemplateDetailView, dict(
+            get=extend_schema(operation_id="cuaderno_menu_template_retrieve", responses=fs.MenuTemplateSchema),
+            put=extend_schema(operation_id="cuaderno_menu_template_update", request=fs.TemplateUpdateSchema, responses=fs.MenuTemplateSchema),
+            delete=extend_schema(operation_id="cuaderno_menu_template_destroy", parameters=[revision], responses={204: None}))),
+        (planning.MenuTemplateApplyView, dict(post=extend_schema(
+            operation_id="cuaderno_menu_template_apply", request=fs.TemplateApplyWriteSchema, responses={201: fs.TemplateApplyResultSchema}))),
+        (planning.CalendarEntryView, dict(post=extend_schema(
+            operation_id="cuaderno_calendar_entries_create", request=fs.CalendarWriteSchema, responses={201: fs.CalendarEntrySchema}))),
+        (planning.CalendarEntryDetailView, dict(
+            put=extend_schema(operation_id="cuaderno_calendar_entry_update", request=fs.CalendarUpdateSchema, responses=fs.CalendarEntrySchema),
+            delete=extend_schema(operation_id="cuaderno_calendar_entry_destroy", parameters=[revision], responses={204: None}))),
+        (planning.MenuPrintView, dict(post=extend_schema(
+            operation_id="cuaderno_menu_print", request=fs.MenuPrintWriteSchema, responses=fs.MenuPrintSchema))),
+    ]
+    for view, methods in operations:
+        extend_schema_view(**methods)(view)
     extend_schema_view(
         get=extend_schema(operation_id="cuaderno_edition_retrieve", responses=s.EditionSchema),
         put=extend_schema(operation_id="cuaderno_edition_update", request=s.EditionWriteSchema, responses=s.EditionSchema),

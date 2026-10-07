@@ -29,6 +29,7 @@
                         <v-progress-circular v-if="duplicateLoading" indeterminate size="small"></v-progress-circular>
                     </template>
                 </v-list-item>
+                <v-list-item v-if="canCreateVariant" @click.stop="duplicateRecipe(true)" prepend-icon="fa-solid fa-code-branch" :disabled="duplicateLoading">Crear variante vinculada</v-list-item>
                 <v-list-item :to="{ name: 'RecipeViewPage', params: { id: recipe.id}, query: {print: 'true', servings: props.servings} }" :active="false" target="_blank"
                              prepend-icon="fa-solid fa-print">
                     {{ $t('Print') }}
@@ -41,6 +42,12 @@
                        v-model="mealPlanDialog"></model-edit-dialog>
 
     <pantry-booking-dialog booking-mode="add" v-model="pantryDialog" :food-id="pantryFoodId"></pantry-booking-dialog>
+    <v-dialog :model-value="variantCopy !== null" max-width="560" persistent>
+        <v-card title="La copia ya está creada">
+            <v-card-text><p>No se pudo guardar el vínculo con la receta de origen. Puedes volver a guardar solo el vínculo o abrir la copia; no se creará otra receta.</p><v-alert v-if="variantError" type="error" role="alert" class="mt-3">{{ variantError }}</v-alert></v-card-text>
+            <v-card-actions class="flex-wrap"><v-btn :disabled="duplicateLoading" @click="openVariantCopy">Abrir copia sin vínculo</v-btn><v-btn color="primary" :loading="duplicateLoading" @click="retryVariantLink">Guardar vínculo</v-btn></v-card-actions>
+        </v-card>
+    </v-dialog>
 
 </template>
 
@@ -55,6 +62,7 @@ import {useRouter} from "vue-router";
 import {useFileApi} from "@/composables/useFileApi.ts";
 import {useI18n} from "vue-i18n";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
+import {planningRequest, type RecipeExtras} from '@/cuaderno/planningApi';
 
 const router = useRouter()
 const {t} = useI18n()
@@ -64,6 +72,7 @@ const props = defineProps({
     recipe: {type: Object as PropType<Recipe | RecipeOverview>, required: true},
     servings: {type: Number, default: undefined},
     size: {type: String, default: 'medium'},
+    canCreateVariant: {type: Boolean, default: false},
 })
 
 const mealPlanDialog = ref(false)
@@ -71,11 +80,31 @@ const duplicateLoading = ref(false)
 const pantryDialog = ref(false)
 const pantryLoading = ref(false)
 const pantryFoodId = ref<number | undefined>(undefined)
+const variantCopy = ref<number | null>(null)
+const variantOrigin = ref<number | null>(null)
+const variantError = ref('')
+async function linkVariant(id: number, origin: number) {
+    const extras = await planningRequest<RecipeExtras>(`recipes/${id}/extras/`)
+    await planningRequest(`recipes/${id}/extras/`, 'PUT', {revision: extras.revision, variant_of: origin})
+}
+function openVariantCopy() {
+    const id = variantCopy.value; variantCopy.value = null
+    if (id !== null) router.push({name: 'RecipeViewPage', params: {id}})
+}
+async function retryVariantLink() {
+    if (variantCopy.value === null || variantOrigin.value === null || duplicateLoading.value) return
+    duplicateLoading.value = true; variantError.value = ''
+    try {await linkVariant(variantCopy.value, variantOrigin.value); openVariantCopy()}
+    catch (error) {variantError.value = (error as Error).message}
+    finally {duplicateLoading.value = false}
+}
 
 /**
  * create a duplicate of the recipe by pulling its current data and creating a new recipe with the same data
  */
-function duplicateRecipe() {
+function duplicateRecipe(linkedVariant = false) {
+    if (duplicateLoading.value || (linkedVariant && !props.canCreateVariant)) return
+    const originId = props.recipe.id!
     let api = new ApiApi()
     duplicateLoading.value = true
     api.apiRecipeRetrieve({id: props.recipe.id!}).then(originalRecipe => {
@@ -91,7 +120,14 @@ function duplicateRecipe() {
             properties: originalRecipe.properties?.map(({id: _propertyId, ...property}) => property),
         }
 
-        api.apiRecipeCreate({recipe: recipe}).then(newRecipe => {
+        api.apiRecipeCreate({recipe: recipe}).then(async newRecipe => {
+            if (linkedVariant) {
+                try {await linkVariant(newRecipe.id!, originId)}
+                catch (error) {
+                    variantCopy.value = newRecipe.id!; variantOrigin.value = originId; variantError.value = (error as Error).message; duplicateLoading.value = false
+                    return
+                }
+            }
 
             if (originalRecipe.image) {
                 updateRecipeImage(newRecipe.id!, null, originalRecipe.image).then(r => {

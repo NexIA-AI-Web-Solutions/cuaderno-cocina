@@ -1,10 +1,10 @@
 <template>
     <v-card class="card cv-item pa-0" hover
             :style="{'top': itemTop, 'height': itemHeight, 'border-color': mealPlan.mealType.color ?? undefined}"
-            :draggable="true"
+            :draggable="canEdit"
             :key="value.id"
             @dragstart="emit('onDragStart', value, $event)"
-            :class="value.classes">
+            :class="[value.classes, {'diet-unsuitable': dietStatus === 'unsuitable'}]">
         <v-card-text class="pa-0">
             <div class="d-flex flex-row align-items-center">
                 <div class="flex-column" v-if="detailedItems">
@@ -15,9 +15,10 @@
                        <i class="fas fa-shopping-cart fa-xs float-left" v-if="mealPlan.shopping"/>
                         {{ itemTitle }}
                     </span>
+                    <span v-if="courseLabel || dietStatus" class="text-caption d-block one-line-text" :title="[courseLabel, dietStatus ? dietPresentation(dietStatus).label : ''].filter(Boolean).join(' · ')">{{ courseLabel }}<span v-if="courseLabel && dietStatus"> · </span>{{ dietStatus ? dietPresentation(dietStatus).label : '' }}</span>
                 </div>
             </div>
-            <model-edit-dialog model="MealPlan" :item="mealPlan" @delete="(args: MealPlan) => emit('delete', args)"></model-edit-dialog>
+            <model-edit-dialog v-if="canEdit" model="MealPlan" :item="mealPlan" @delete="(args: MealPlan) => emit('delete', args)"></model-edit-dialog>
         </v-card-text>
     </v-card>
 </template>
@@ -29,6 +30,7 @@ import {IMealPlanNormalizedCalendarItem} from "@/types/MealPlan";
 import RecipeImage from "@/components/display/RecipeImage.vue";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import {MealPlan} from "@/openapi";
+import {dietPresentation} from '@/cuaderno/planningUi.mjs';
 
 const emit = defineEmits({
     onDragStart: (value: IMealPlanNormalizedCalendarItem, event: DragEvent) => {
@@ -43,7 +45,10 @@ let props = defineProps({
     value: {type: {} as PropType<IMealPlanNormalizedCalendarItem>, required: true},
     itemHeight: {type: String,},
     itemTop: {type: String,},
-    detailedItems: {type: Boolean, default: true}
+    detailedItems: {type: Boolean, default: true},
+    canEdit: {type: Boolean, default: true},
+    courseLabel: {type: String, default: ''},
+    dietStatus: {type: String, default: ''},
 })
 
 const mealPlan = computed(() => {
@@ -64,6 +69,7 @@ const itemTitle = computed(() => {
 </script>
 
 <style scoped>
+.diet-unsuitable {background: rgba(var(--v-theme-error), .13); border: 2px solid rgb(var(--v-theme-error)) !important;}
 
 .two-line-text {
     display: -webkit-box;

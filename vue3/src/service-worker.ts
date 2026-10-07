@@ -5,7 +5,7 @@ import {registerRoute, setCatchHandler} from 'workbox-routing';
 import {CacheFirst, NetworkFirst, NetworkOnly} from 'workbox-strategies';
 import {ExpirationPlugin} from 'workbox-expiration';
 import {Queue} from 'workbox-background-sync';
-import {clientsClaim, setCacheNameDetails} from 'workbox-core';
+import {setCacheNameDetails} from 'workbox-core';
 
 declare let self: ServiceWorkerGlobalScope
 const scope = new URL(self.registration.scope)
@@ -17,15 +17,18 @@ const staticPath = `${scope.pathname}static/`
 const builtAssets = new URL('static/vue3/', scope)
 setCacheNameDetails({prefix: namespace, suffix: 'v1', precache: 'precache', runtime: 'runtime'})
 // The worker is served beside the application, while Vite emits build-relative URLs.
-// Reject any manifest entry outside this application's public static directory.
+// Install one small public identity asset. Lazy pages and translations are cached
+// on demand below: an authenticated, network-only app needs no eager page bundle.
+// Vite emits this original SVG with a content hash and without data-URL inlining.
 const publicManifest = self.__WB_MANIFEST.flatMap(entry => {
     const url = new URL(typeof entry === 'string' ? entry : entry.url, builtAssets)
-    if (url.origin !== scope.origin || !url.pathname.startsWith(staticPath)) return []
+    if (url.origin !== scope.origin || !url.pathname.startsWith(staticPath) ||
+        !/^cuaderno-logo-[A-Za-z0-9_-]+\.svg$/.test(url.pathname.split('/').at(-1) || '') ||
+        url.search || url.hash) return []
     return [typeof entry === 'string' ? url.href : {...entry, url: url.href}]
 })
 precacheAndRoute(publicManifest)
 self.skipWaiting()
-clientsClaim()
 
 // Pending writes belong only to this deployment and are discarded, never replayed.
 async function discardQueuedWrites({queue}: {queue: Queue}) {
@@ -33,7 +36,9 @@ async function discardQueuedWrites({queue}: {queue: Queue}) {
 }
 const queue = new Queue(`${namespace}-shopping-sync-queue`, {onSync: discardQueuedWrites})
 self.addEventListener('activate', event => {
-    event.waitUntil(discardQueuedWrites({queue}))
+    // Keep the activation event alive through both operations. A listener's
+    // returned promise alone does not extend the service worker lifetime.
+    event.waitUntil(Promise.all([self.clients.claim(), discardQueuedWrites({queue})]))
 })
 
 setCatchHandler(async ({request}) => {

@@ -53,6 +53,7 @@ class EditionSchema(serializers.Serializer):
     prices_are_metadata = serializers.BooleanField(required=False)
     net_profit = serializers.CharField(allow_null=True)
     operational_role = OperationalRoleSchema(allow_null=True)
+    features = serializers.DictField(child=serializers.BooleanField())
 
 
 class PriceSummarySchema(serializers.Serializer):

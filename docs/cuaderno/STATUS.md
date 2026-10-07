@@ -1,5 +1,36 @@
 # Estado del producto
 
+## Estado actual — ampliación funcional del 7 de octubre de 2026
+
+La URL HTTPS publicada es <https://gex-dashboard.hopto.org/cuaderno-cocina/>.
+El runtime actual es `ff3b685fb85a546d6f8e5c4efa305c47c9e94e86`, imagen local
+`sha256:89bf20d9bcfd280d6403c3894f68aab18e14a1e43d5c8798ab8e960f39855020`.
+Su CI 37651982834 pasó nueve jobs y G7 17/17; esos resultados no certifican
+la ampliación funcional de esta fuente, cuya CI y despliegue están pendientes.
+La [distribución de funciones](09-FUNCTIONAL-PLANS.md) define Esencial,
+Profesional e Integral sin eliminar funciones nativas básicas.
+
+La aceptación pública más reciente del runtime anterior conserva un fallo:
+READ obtuvo 25 PASS y 1 FAIL de alcance del service worker; el último caso no
+se ejecutó. WRITE posterior no abrió el navegador porque el control del host
+detectó dos OOM y `user@1000.service` fallido durante otro despliegue comunicado
+por el propietario. No se declara completada la aceptación final de esa versión.
+Esta fuente incluye una corrección de vida de activación y precache acotado que
+requiere su propia validación en navegador; no se han ampliado los plazos ni retries.
+
+Webmail y J-Automation se comprobaron por autorización expresa: sus páginas
+públicas de acceso y los recursos inspeccionados devolvieron HTTP 200. Stalwart
+y Caddy siguen activos, sin reinicios realizados por esta tarea. No se inició
+sesión ni se probó envío/recepción de correo. No se reinician servicios ajenos.
+Los backups cifrados son locales en una subcarpeta del proyecto elegida por el
+propietario; no existe copia externa configurada. La restauración y rollback
+aislados del runtime `ff3b685` se comprobaron, pero deben repetirse para el nuevo.
+
+## Referencias históricas de versiones anteriores
+
+Los apartados siguientes conservan sus hechos y estados en la fecha original;
+no sustituyen el estado actual indicado arriba.
+
 ## Modernización en curso — 7 de octubre, posterior al reboot programado
 
 La URL publicada sigue funcionando con el runtime `60aca2d`; las fuentes nuevas

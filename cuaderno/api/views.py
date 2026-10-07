@@ -14,6 +14,7 @@ from cuaderno.api.base import CuadernoAPIView as APIView, CuadernoIsOperator
 from cookbook.helper.permission_helper import CustomIsAdmin, CustomIsGuest, CustomIsUser, CustomRecipePermission, CustomTokenHasReadWriteScope
 from cookbook.models import Unit
 from cuaderno.domain.errors import DomainError
+from cuaderno.domain.features import feature_flags
 from cuaderno.domain.money import parse_decimal
 from cuaderno.models import PackageFormat, PriceVersion, SpaceProfile
 from cuaderno.services.costing import cost_recipe, visible_recipes
@@ -41,6 +42,7 @@ class EditionView(APIView):
         return Response(
             {
                 "edition": profile.edition,
+                "features": feature_flags(profile.edition),
                 "currency": profile.currency,
                 "price_policy": profile.price_policy,
                 "target_food_cost_ratio": None if profile.target_food_cost_ratio is None else format(profile.target_food_cost_ratio, "f"),
@@ -78,6 +80,7 @@ class EditionView(APIView):
         return Response(
             {
                 "edition": profile.edition,
+                "features": feature_flags(profile.edition),
                 "currency": profile.currency,
                 "price_policy": profile.price_policy,
                 "target_food_cost_ratio": None if profile.target_food_cost_ratio is None else format(profile.target_food_cost_ratio, "f"),

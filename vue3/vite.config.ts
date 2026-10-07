@@ -38,7 +38,10 @@ export default defineConfig(async ({command, mode, isSsrBuild, isPreview}) => {
                 strategies: 'injectManifest',
                 srcDir: 'src',
                 filename: 'service-worker.ts',
-                injectManifest: {buildPlugins: {rollup: provenance ? [provenance.serviceWorkerPlugin] : []}},
+                injectManifest: {
+                    globPatterns: ['**/cuaderno-logo-*.svg'],
+                    buildPlugins: {rollup: provenance ? [provenance.serviceWorkerPlugin] : []},
+                },
             }),
             ...(provenance ? [provenance.finalizePlugin] : []),
         ],
@@ -210,5 +213,4 @@ async function collectBuildInputs() {
         return []
     }
 }
-
 

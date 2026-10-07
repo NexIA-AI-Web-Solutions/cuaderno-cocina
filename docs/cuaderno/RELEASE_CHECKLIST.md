@@ -1,5 +1,28 @@
 # Aceptación final
 
+## Candidato con recetas y planificación ampliadas — pendiente
+
+- [x] Distribución de funciones entre Esencial, Profesional e Integral,
+  preservando recetas, calendarios y listas nativos.
+- [x] Implementación y revisión de fuente; diez pruebas puras de planes/entradas
+  y once de privacidad/activación del worker pasan. No equivalen a aceptación UI.
+- [ ] Migración aditiva y suite PostgreSQL con persistencia, permisos y concurrencia.
+- [ ] Contrato OpenAPI sin warnings, snapshot y SDK reproducibles del nuevo commit.
+- [ ] Pruebas Vue, TypeScript, build y comprobación del SVG realmente emitido.
+- [ ] CI completa, G7 y artefactos de una misma fuente e imagen nueva.
+- [ ] Playwright real de funciones nuevas por edición, rol y anchura.
+- [ ] Despliegue y aceptación HTTPS completa del nuevo runtime, sin retries añadidos.
+- [ ] Backup, restauración y rollback aislados con las migraciones nuevas.
+- [ ] Limpieza de datos sintéticos, backup final y comprobación de otras apps.
+- [ ] Host recuperado y estable: persiste `user@1000.service` fallido tras dos OOM.
+
+Runtime publicado anterior: `ff3b685`, CI 37651982834 con nueve jobs y G7 PASS.
+Su aceptación pública más reciente conserva 25 READ PASS, 1 FAIL de worker y
+un caso no ejecutado; WRITE no arrancó por el control del host. Los resultados
+antiguos no certifican esta ampliación. Backups locales cifrados; sin offsite.
+
+## Referencias históricas; estados en su fecha original
+
 ## Aceptación pendiente de la modernización
 
 - [x] 20 bugs y 20 errores distintos revisados por Astra a nivel de fuente y

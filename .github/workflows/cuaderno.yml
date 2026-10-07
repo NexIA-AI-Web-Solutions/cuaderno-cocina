@@ -72,6 +72,9 @@ jobs:
       - name: Build Vue/PWA con procedencia
         working-directory: vue3
         run: yarn build
+      - name: SVG propio emitido y precache instalado acotado
+        working-directory: vue3
+        run: node src/cuaderno/workerBuildProof.mjs
 
   backend-cuaderno-postgresql:
     runs-on: ubuntu-latest
@@ -121,6 +124,7 @@ jobs:
       - name: Suite Cuaderno completa en PostgreSQL
         run: python manage.py test cuaderno.tests --noinput --verbosity 2
       - name: OpenAPI sin warnings, snapshot exacto y SDK reproducible
+        id: openapi_check
         shell: bash
         run: |
           mkdir -p .cuaderno-runs
@@ -134,6 +138,25 @@ jobs:
               raise SystemExit('El OpenAPI generado no coincide con tooling/cuaderno/openapi.json')
           PY
           python scripts/generate_api_client.py --schema .cuaderno-runs/openapi.generated.json --check
+      - name: Preparar contrato y SDK para revisar si el snapshot difiere
+        if: failure() && steps.openapi_check.outcome == 'failure'
+        shell: bash
+        run: |
+          test -s .cuaderno-runs/openapi.generated.json
+          python scripts/generate_api_client.py --schema .cuaderno-runs/openapi.generated.json
+          mkdir -p .cuaderno-runs/contract-preparation/tooling/cuaderno
+          cp .cuaderno-runs/openapi.generated.json .cuaderno-runs/contract-preparation/tooling/cuaderno/openapi.json
+          mkdir -p .cuaderno-runs/contract-preparation/vue3/src
+          cp -a vue3/src/openapi .cuaderno-runs/contract-preparation/vue3/src/openapi
+          git rev-parse HEAD > .cuaderno-runs/contract-preparation/source-commit.txt
+      - name: Conservar propuesta de contrato sin convertir el fallo en PASS
+        if: failure() && steps.openapi_check.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cuaderno-contract-preparation
+          path: .cuaderno-runs/contract-preparation/
+          if-no-files-found: error
+          retention-days: 3
 
   backend-native-postgresql:
     runs-on: ubuntu-latest

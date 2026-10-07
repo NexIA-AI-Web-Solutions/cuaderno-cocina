@@ -71,7 +71,9 @@ export function useNavigation() {
             {component: VListItem, prependIcon: '$recipes', title: t('Home'), to: {name: 'StartPage', params: {}}},
             ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}}] : []),
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},
+            ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-heart', title: 'Favoritas', to: {name: 'CuadernoFavoritasPage', params: {}}}] : []),
             {component: VListItem, prependIcon: '$mealplan', title: t('Meal_Plan'), to: {name: 'MealPlanPage', params: {}}},
+            ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-calendar-days', title: 'Planificación', to: {name: 'CuadernoPlanificacionPage', params: {}}}] : []),
             ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-clipboard-list', title: 'Producción', to: {name: 'CuadernoProduccionPage', params: {}}}] : []),
             ...(cuaderno.warehouse ? [{component: VListItem, prependIcon: 'fa-solid fa-warehouse', title: 'Almacén', to: {name: 'CuadernoAlmacenPage', params: {}}}] : []),
             {component: VListItem, prependIcon: '$shopping', title: t('Shopping'), to: {name: 'ShoppingListPage', params: {}}},
@@ -100,6 +102,8 @@ export function useNavigation() {
         const cuaderno = cuadernoNavigationCapabilities({edition: navigationEdition.value})
         let navigation = [
             {component: VListItem, prependIcon: 'fa-solid fa-sliders', title: t('Settings'), to: {name: 'SettingsPage', params: {}}},
+            ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-heart', title: 'Favoritas', to: {name: 'CuadernoFavoritasPage', params: {}}}] : []),
+            ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-calendar-days', title: 'Planificación', to: {name: 'CuadernoPlanificacionPage', params: {}}}] : []),
             ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-euro-sign', title: 'Costes', to: {name: 'CuadernoPreciosPage', params: {}}}] : []),
             ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-clipboard-list', title: 'Producción', to: {name: 'CuadernoProduccionPage', params: {}}}] : []),
             ...(cuaderno.warehouse ? [{component: VListItem, prependIcon: 'fa-solid fa-warehouse', title: 'Almacén', to: {name: 'CuadernoAlmacenPage', params: {}}}] : []),

@@ -345,10 +345,17 @@ class Space(ExportModelOperationsMixin('space'), models.Model):
 
     internal_note = models.TextField(blank=True, null=True)
 
+    @transaction.atomic
     def safe_delete(self):
         """
         Safely deletes a space by deleting all objects belonging to the space first and then deleting the space itself
         """
+        # Template entries protect their native recipes/meal types. Remove only
+        # this Space's planning extensions before the native deletion sequence.
+        from cuaderno.models import MealCourse, MealPlanCourse, MenuTemplate
+        MenuTemplate.objects.filter(space=self).delete()
+        MealPlanCourse.objects.filter(space=self).delete()
+        MealCourse.objects.filter(space=self).delete()
         CookLog.objects.filter(space=self).delete()
         ViewLog.objects.filter(space=self).delete()
         ImportLog.objects.filter(space=self).delete()

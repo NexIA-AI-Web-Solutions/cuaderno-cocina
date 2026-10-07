@@ -25,7 +25,7 @@
                     <span class="ps-2 text-h5  flex-grow-1 pa-1" :class="{'text-truncate': !showFullRecipeName}" @click="showFullRecipeName = !showFullRecipeName">
                         {{ recipe.name }}
                     </span>
-                        <recipe-context-menu :recipe="recipe" :servings="servings" v-if="useUserPreferenceStore().isAuthenticated"></recipe-context-menu>
+                        <recipe-context-menu :recipe="recipe" :servings="servings" :can-create-variant="canCreateVariant" v-if="useUserPreferenceStore().isAuthenticated"></recipe-context-menu>
                     </v-sheet>
                     <keywords-component variant="flat" class="ms-1" :keywords="recipe.keywords"></keywords-component>
                     <private-recipe-badge :users="recipe.shared" v-if="recipe._private"></private-recipe-badge>
@@ -75,7 +75,7 @@
                         <v-card-text class="flex-grow-1">
                             <div class="d-flex">
                                 <h1 class="flex-column flex-grow-1">{{ recipe.name }}</h1>
-                                <recipe-context-menu :recipe="recipe" :servings="servings" v-if="useUserPreferenceStore().isAuthenticated"
+                                <recipe-context-menu :recipe="recipe" :servings="servings" :can-create-variant="canCreateVariant" v-if="useUserPreferenceStore().isAuthenticated"
                                                      class="flex-column mb-auto mt-2 float-right"></recipe-context-menu>
                             </div>
                             <p>
@@ -146,6 +146,7 @@
         </v-card>
 
         <property-view v-model="recipe" :ingredientFactor="ingredientFactor"></property-view>
+        <recipe-extras-panel v-if="recipe.id && useUserPreferenceStore().isAuthenticated" :key="recipe.id" :recipe-id="recipe.id" @permissions="canCreateVariant = $event" />
 
         <v-card class="mt-2">
             <v-card-text>
@@ -213,6 +214,7 @@ import {createRecipeWakeLock} from "@/utils/recipeWakeLock";
 import StepView from "@/components/display/StepView.vue";
 import {DateTime} from "luxon";
 import PropertyView from "@/components/display/PropertyView.vue";
+import RecipeExtrasPanel from '@/cuaderno/components/RecipeExtrasPanel.vue';
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {useFileApi} from "@/composables/useFileApi.ts";
@@ -230,6 +232,7 @@ const wakeLock = createRecipeWakeLock(
 const {doAiImport, fileApiLoading} = useFileApi()
 
 const loading = ref(false)
+const canCreateVariant = ref(false)
 const recipe = defineModel<Recipe>({required: true})
 const props = defineProps<{servings?: number}>()
 

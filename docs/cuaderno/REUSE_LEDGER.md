@@ -1,5 +1,20 @@
 # Registro de reutilización
 
+## Ampliación funcional — 7 de octubre de 2026
+
+La inspección de `ff3b685` confirmó las funciones existentes de raciones, notas,
+categorías, compartir, calendario, lista de compra y producción. Las galerías,
+favoritas personales y variantes se extienden sobre Recipe; los tipos de plato,
+plantillas, eventos e impresión se extienden sobre MealPlan/MealType. El menú y
+la compra conservan su único almacenamiento nativo y sus permisos de Space.
+Las declaraciones dietéticas son datos manuales, no un motor nutricional.
+
+No se incorpora código de otro repositorio ni otro runtime para estas funciones.
+La implementación propia añade nueve modelos auxiliares y una migración aditiva.
+Las licencias y procedencias anteriores se conservan. Estado: revisión de fuente
+completada; ejecución PostgreSQL, Vue, build y Playwright del nuevo candidato
+pendiente. La distribución de planes está en `09-FUNCTIONAL-PLANS.md`.
+
 | ID | Feature | Base/donante + SHA | Archivo/símbolo | Reuse/extend/port | Cambios | Tests | Avisos/permiso | Estado |
 |---|---|---|---|---|---|---|---|---|
 | R001 | Escandallo | Tandoor `7e1c427a` `Food`/`Unit`/`Recipe`/`Ingredient` | `cuaderno/services/costing.py` | extend | Precio en `PackageFormat`/`PriceVersion`, no en `PropertyType.PRICE` | `cuaderno/tests/test_domain_costing.py` y API 2.56/2.80 | Sin código de Grocy | en curso |

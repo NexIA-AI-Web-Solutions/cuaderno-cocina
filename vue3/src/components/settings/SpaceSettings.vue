@@ -5,6 +5,7 @@
 
         <space-editor :item-id="useUserPreferenceStore().activeSpace.id!"></space-editor>
     </v-form>
+    <plan-features :key="useUserPreferenceStore().activeSpace.id" :authenticated="useUserPreferenceStore().isAuthenticated" />
 </template>
 
 
@@ -14,6 +15,7 @@
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import SpaceLimitsInfo from "@/components/display/SpaceLimitsInfo.vue";
 import SpaceEditor from "@/components/model_editors/SpaceEditor.vue";
+import PlanFeatures from "@/cuaderno/components/PlanFeatures.vue";
 </script>
 
 <style scoped>

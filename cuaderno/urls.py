@@ -26,10 +26,31 @@ from cuaderno.api.preparation import ServicePreparationView
 from cuaderno.api.schema_annotations import (
     PurchaseOrderDetailView, ServicePlanDetailView, apply_schema_annotations,
 )
+from cuaderno.api.recipe_extras import FavoriteListView, RecipeExtrasView, RecipeFavoriteView, RecipeGalleryView, RecipeGalleryDetailView
+from cuaderno.api.planning import (
+    CalendarEntryView, CourseView, MealPlanCourseView, MenuPrintView,
+    MenuTemplateApplyView, MenuTemplateView, PlanningView,
+    CalendarEntryDetailView, CourseDetailView, MenuTemplateDetailView,
+)
 
 apply_schema_annotations()
 
 urlpatterns = [
+    path("api/cuaderno/recipes/<int:recipe_id>/extras/", RecipeExtrasView.as_view()),
+    path("api/cuaderno/recipes/<int:recipe_id>/favorite/", RecipeFavoriteView.as_view()),
+    path("api/cuaderno/recipes/<int:recipe_id>/gallery/", RecipeGalleryView.as_view()),
+    path("api/cuaderno/recipes/<int:recipe_id>/gallery/<int:image_id>/", RecipeGalleryDetailView.as_view()),
+    path("api/cuaderno/favorites/", FavoriteListView.as_view()),
+    path("api/cuaderno/planning/", PlanningView.as_view()),
+    path("api/cuaderno/planning/courses/", CourseView.as_view()),
+    path("api/cuaderno/planning/courses/<int:course_id>/", CourseDetailView.as_view()),
+    path("api/cuaderno/planning/meal-plans/<int:meal_plan_id>/", MealPlanCourseView.as_view()),
+    path("api/cuaderno/planning/templates/", MenuTemplateView.as_view()),
+    path("api/cuaderno/planning/templates/<int:template_id>/", MenuTemplateDetailView.as_view()),
+    path("api/cuaderno/planning/templates/<int:template_id>/apply/", MenuTemplateApplyView.as_view()),
+    path("api/cuaderno/planning/events/", CalendarEntryView.as_view()),
+    path("api/cuaderno/planning/events/<int:entry_id>/", CalendarEntryDetailView.as_view()),
+    path("api/cuaderno/planning/print/", MenuPrintView.as_view()),
     path("health/ready/", readiness),
     path("api/cuaderno/edition/", EditionView.as_view()),
     path("api/cuaderno/packages/", PackageListView.as_view()),

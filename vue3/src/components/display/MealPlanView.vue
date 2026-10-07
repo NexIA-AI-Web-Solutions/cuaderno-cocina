@@ -1,6 +1,15 @@
 <template>
     <v-row class="h-100">
         <v-col class="pb-0">
+            <div class="d-flex flex-wrap align-center ga-3 mb-3 d-print-none">
+                <v-select :model-value="weekMode ? weekCount : null" :items="[1,2,3,4,5]" label="Vista de 1 a 5 semanas" style="max-width: 220px" density="compact" hide-details @update:model-value="setWeeks" />
+                <v-btn v-if="professional" :to="{path: '/cuaderno/planificacion'}" variant="tonal" prepend-icon="fa-solid fa-layer-group">Plantillas y organización</v-btn>
+                <v-select v-if="professional && weekMode" v-model="selectedDiet" :items="dietOptions" item-title="label" item-value="slug" label="Consultar dieta" clearable style="max-width: 260px" density="compact" hide-details />
+                <v-checkbox v-if="professional && weekMode && selectedDiet" v-model="onlySuitable" label="Solo aptos declarados" hide-details />
+            </div>
+            <p v-if="professional && !weekMode" class="text-body-2 mb-3">La vista actual conserva el calendario nativo. Elige una vista de 1 a 5 semanas para consultar tipos de plato, dietas y eventos del mismo periodo.</p>
+            <v-alert v-if="planningError" type="warning" variant="tonal" role="alert" class="mb-3">{{ planningError }} <v-btn variant="text" @click="loadPlanning">Volver a cargar anotaciones</v-btn></v-alert>
+            <p v-if="professional && weekMode && selectedDiet" class="text-body-2 mb-3">Rojo: no apto según declaración manual. «No declarado» no significa apto. Revisa ingredientes y preparación.</p>
             <v-card class="h-100 cuaderno-calendar" :loading="useMealPlanStore().loading">
                 <!-- TODO add hint about CTRL key while drag/drop -->
                 <!-- TODO multi selection? date range selection ? -->
@@ -10,26 +19,33 @@
                     :items="planItems"
                     class="theme-default"
                     :item-content-height="calendarItemHeight"
-                    :enable-drag-drop="true"
+                    :enable-drag-drop="canOperate"
                     @dropOnDate="dropCalendarItemOnDate"
                     :display-period-uom="useUserPreferenceStore().deviceSettings.mealplan_displayPeriod"
                     :display-period-count="useUserPreferenceStore().deviceSettings.mealplan_displayPeriodCount"
                     :starting-day-of-week="useUserPreferenceStore().deviceSettings.mealplan_startingDayOfWeek"
                     :display-week-numbers="useUserPreferenceStore().deviceSettings.mealplan_displayWeekNumbers"
                     :current-period-label="$t('Today')"
-                    @click-date="(date : Date, calendarItems: [], windowEvent: any) => { newPlanDialogDefaultItem.fromDate = date; newPlanDialogDefaultItem.toDate = date; newPlanDialog = true }">
+                    @click-date="(date : Date, calendarItems: [], windowEvent: any) => { if (canOperate) {newPlanDialogDefaultItem.fromDate = date; newPlanDialogDefaultItem.toDate = date; newPlanDialog = true} }">
                     <template #header="{ headerProps }">
                         <!--                        <calendar-view-header :header-props="headerProps" @input="(d:Date) => calendarDate = d"></calendar-view-header>-->
                         <meal-plan-calendar-header :header-props="headerProps" @input="(d:Date) => calendarDate = d"></meal-plan-calendar-header>
                     </template>
                     <template #item="{ value, weekStartDate, top }">
+                        <v-card v-if="value.originalItem.planningEvent" class="cv-item pa-1 planning-event" :class="value.classes" :style="{top, height: calendarItemHeight}" :title="eventTitle(value.originalItem.planningEvent)" :draggable="false">
+                            <span class="text-caption">{{ eventTitle(value.originalItem.planningEvent) }}</span>
+                        </v-card>
                         <meal-plan-calendar-item
+                            v-else
                             :item-height="calendarItemHeight"
                             :value="value"
                             :item-top="top"
                             @onDragStart="currentlyDraggedMealplan = value"
                             @delete="(arg: MealPlan) => {useMealPlanStore().plans.delete(arg.id)}"
                             :detailed-items="lgAndUp"
+                            :can-edit="canOperate"
+                            :course-label="courseLabel(value.originalItem.mealPlan.id)"
+                            :diet-status="weekMode && selectedDiet ? mealStatus(value.originalItem.mealPlan.id) : ''"
                         ></meal-plan-calendar-item>
                     </template>
                 </calendar-view>
@@ -59,11 +75,41 @@ import {MealPlan} from "@/openapi";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import MealPlanCalendarHeader from "@/components/display/MealPlanCalendarHeader.vue";
 import {useI18n} from "vue-i18n";
+import {dietOptions, planningRequest, type PlanningData, type PlanningEvent} from '@/cuaderno/planningApi';
+import {planningEndDate} from '@/cuaderno/planningUi.mjs';
 
 const {lgAndUp} = useDisplay()
 const {locale} = useI18n()
 
 const calendarDate = ref(new Date())
+const professional = ref(false), canOperate = ref(false), selectedDiet = ref<string | null>(null), onlySuitable = ref(false)
+const planning = ref<PlanningData | null>(null), planningError = ref('')
+const weekMode = computed(() => {const settings = useUserPreferenceStore().deviceSettings; return settings.mealplan_displayPeriod === 'week' && Number.isInteger(settings.mealplan_displayPeriodCount) && settings.mealplan_displayPeriodCount >= 1 && settings.mealplan_displayPeriodCount <= 5})
+const weekCount = computed(() => {const count = useUserPreferenceStore().deviceSettings.mealplan_displayPeriodCount; return Number.isInteger(count) && count >= 1 && count <= 5 ? count : 1})
+let planningGeneration = 0
+function setWeeks(count: number) {
+    if (!Number.isInteger(count) || count < 1 || count > 5) return
+    useUserPreferenceStore().deviceSettings.mealplan_displayPeriod = 'week'
+    useUserPreferenceStore().deviceSettings.mealplan_displayPeriodCount = count
+}
+function eventTitle(event: PlanningEvent) {return `${event.kind === 'absence' ? 'Ausencia' : 'Evento'} · ${event.title}${event.member_name ? ' · ' + event.member_name : ''}`}
+function mealStatus(id: number) {return planning.value?.meal_plans.find(meal => meal.id === id)?.diet_status || 'unknown'}
+function courseLabel(id: number) {
+    const course = planning.value?.meal_plans.find(meal => meal.id === id)?.course
+    return planning.value?.courses.find(row => row.id === course)?.name || ''
+}
+async function loadPlanning() {
+    if (!professional.value) return
+    const generation = ++planningGeneration; planningError.value = ''; planning.value = null
+    if (!weekMode.value) return
+    const day = calendarDate.value.getDay(), first = useUserPreferenceStore().deviceSettings.mealplan_startingDayOfWeek
+    const start = DateTime.fromJSDate(calendarDate.value).minus({days: (day - first + 7) % 7}).toISODate()!
+    const end = planningEndDate(start, weekCount.value)
+    try {
+        const result = await planningRequest<PlanningData>(`planning/?from_date=${start}&to_date=${end}${selectedDiet.value ? '&diet=' + encodeURIComponent(selectedDiet.value) : ''}`)
+        if (generation === planningGeneration) planning.value = result
+    } catch (error) {if (generation === planningGeneration) planningError.value = 'No se pudieron cargar tipos, dietas y eventos. El calendario nativo sigue disponible. ' + (error as Error).message}
+}
 
 const currentlyDraggedMealplan = ref({} as IMealPlanNormalizedCalendarItem)
 
@@ -75,8 +121,9 @@ const newPlanDialogDefaultItem = ref({} as MealPlan)
  * array of CalendarItems (format required/extended from vue-simple-calendar)
  */
 const planItems = computed(() => {
-    let items = [] as IMealPlanCalendarItem[]
+    let items = [] as Array<IMealPlanCalendarItem | {id: string; startDate: Date; endDate: Date; planningEvent: PlanningEvent}>
     useMealPlanStore().planList.forEach(mp => {
+        if (professional.value && weekMode.value && selectedDiet.value && onlySuitable.value && mealStatus(mp.id!) !== 'suitable') return
         items.push({
             startDate: mp.fromDate,
             endDate: mp.toDate ? mp.toDate : mp.fromDate,
@@ -84,6 +131,7 @@ const planItems = computed(() => {
             mealPlan: mp,
         } as IMealPlanCalendarItem)
     })
+    for (const event of planning.value?.events || []) items.push({id: `cuaderno-event-${event.id}`, startDate: DateTime.fromISO(event.start_date).toJSDate(), endDate: DateTime.fromISO(event.end_date).endOf('day').toJSDate(), planningEvent: event})
     return items
 })
 
@@ -91,6 +139,7 @@ const planItems = computed(() => {
  * determine item height (one or two rows) based on how much space is available and how many days are shown
  */
 const calendarItemHeight = computed(() => {
+    if (professional.value && weekMode.value) return lgAndUp.value ? '4.5rem' : '3rem'
     if (lgAndUp.value && useUserPreferenceStore().deviceSettings.mealplan_displayPeriod == 'week') {
         return '3.5rem'
     } else {
@@ -103,10 +152,19 @@ const calendarItemHeight = computed(() => {
  */
 watch(calendarDate, () => {
     refreshVisiblePeriod(false)
+    void loadPlanning()
 })
+watch(() => [useUserPreferenceStore().deviceSettings.mealplan_displayPeriod, useUserPreferenceStore().deviceSettings.mealplan_displayPeriodCount, useUserPreferenceStore().deviceSettings.mealplan_startingDayOfWeek], () => {refreshVisiblePeriod(true); void loadPlanning()})
+watch(selectedDiet, () => {onlySuitable.value = false; void loadPlanning()})
+watch(() => useMealPlanStore().loading, loading => {if (!loading) void loadPlanning()})
 
 onMounted(() => {
     refreshVisiblePeriod(true)
+    planningRequest<{edition: string; operational_role: {can_operate_cuaderno: boolean}}>('edition/').then(edition => {
+        professional.value = ['profesional', 'integral'].includes(edition.edition)
+        canOperate.value = edition.operational_role?.can_operate_cuaderno === true
+        if (professional.value) void loadPlanning()
+    }).catch(() => {planningError.value = 'No se pudieron comprobar los permisos. El calendario permanece en modo lectura.'})
 })
 
 /**
@@ -138,6 +196,7 @@ function refreshVisiblePeriod(startDateUnknown: boolean) {
  * @param event
  */
 function dropCalendarItemOnDate(undefinedItem: IMealPlanNormalizedCalendarItem, targetDate: Date, event: DragEvent) {
+    if (!canOperate.value) return
     //The item argument (first) is undefined because our custom calendar item cannot manipulate the calendar state so the item is unknown to the calendar (probably fixable by somehow binding state to the item)
     if (currentlyDraggedMealplan.value.originalItem.mealPlan.id != undefined) {
         let mealPlan = useMealPlanStore().plans.get(currentlyDraggedMealplan.value.originalItem.mealPlan.id)
@@ -176,6 +235,7 @@ function dropCalendarItemOnDate(undefinedItem: IMealPlanNormalizedCalendarItem, 
 
 
 <style scoped>
+.planning-event {background: rgba(var(--v-theme-secondary), .13); border-left: 3px solid rgb(var(--v-theme-secondary)); white-space: normal; overflow: hidden;}
 .cuaderno-calendar :deep(.cv-header-day) { background: rgb(var(--v-theme-surface)); color: rgb(var(--v-theme-on-surface)); padding-block: 8px; font-weight: 600; }
 .cuaderno-calendar :deep(.cv-day) { border-color: rgba(var(--v-theme-on-surface), .14); }
 .cuaderno-calendar :deep(.cv-day.today) { background: rgba(var(--v-theme-primary), .12); color: rgb(var(--v-theme-on-surface)); }

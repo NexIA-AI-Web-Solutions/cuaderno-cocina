@@ -1,5 +1,26 @@
 # Parches al núcleo Tandoor
 
+## Ampliación de recetas y menús — 7 de octubre de 2026
+
+`Space.safe_delete` elimina las extensiones de planificación propias antes de
+sus referencias nativas y ejecuta toda la secuencia de forma atómica. Los
+escritores de calendario y vínculos de compra adquieren el mismo bloqueo del
+Space que la aplicación de plantillas. Las recetas/comidas con referencias
+protegidas responden con un conflicto explícito. Mover un menú a otra comida
+retira únicamente el tipo de plato incompatible y conserva la procedencia.
+
+Los componentes de receta, calendario y Ajustes integran galería, favoritas,
+variantes, dietas, cursos, eventos y comparación de planes. Se reutilizan los
+modelos y permisos de Recipe, MealPlan, MealType, Space y ShoppingList.
+Las rutas nuevas se añaden al router existente, con navegación por edición.
+
+El worker vincula `clients.claim()` al tiempo de vida de la activación y solo
+precarga el SVG propio, emitido como archivo. API, documentos y media siguen
+fuera del cache; se conservan los namespaces y la prohibición de replay.
+Once pruebas puras pasan. La revisión independiente de fuente está cerrada;
+42 casos PostgreSQL y la compilación/aceptación real del nuevo candidato siguen
+pendientes. Esos resultados deben repetirse al actualizar los escritores nativos.
+
 | ID | Archivo/símbolo | Motivo | Alternativa descartada | Test regresión | Riesgo al actualizar | Commit |
 |---|---|---|---|---|---|---|
 | P001 | `recipes/settings.py` `INSTALLED_APPS` | Registrar `cuaderno` | Plugin loader frágil (`dir()[1]`) | Arranque y migración `cuaderno.0001` | Conflicto de lista al mezclar upstream | 61f859c92 |

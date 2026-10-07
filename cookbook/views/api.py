@@ -1628,6 +1628,34 @@ class MealPlanViewSet(LoggingMixin, viewsets.ModelViewSet):
     pagination_class = DefaultPagination
     required_scopes = ['mealplan']
 
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().create(request, *args, **kwargs)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        super().perform_update(serializer)
+        # Moving a native calendar entry to another meal keeps the entry and its
+        # template provenance; a course from the former meal no longer applies.
+        from cuaderno.models import MealPlanCourse
+        MealPlanCourse.objects.filter(space=self.request.space, meal_plan=serializer.instance,
+                                      course__isnull=False).exclude(
+            course__meal_type_id=serializer.instance.meal_type_id,
+        ).update(course=None)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().destroy(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = self.queryset.filter(Q(created_by=self.request.user) |
                                         Q(created_by_id__in=get_household_user_ids(self.request.user_space))).filter(
@@ -1676,7 +1704,10 @@ class AutoPlanViewSet(LoggingMixin, mixins.CreateModelMixin, viewsets.GenericVie
     permission_classes = [CustomIsOwner & CustomTokenHasReadWriteScope]
     http_method_names = ['post', 'options']
 
+    @transaction.atomic
     def create(self, request):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
         serializer = AutoMealPlanSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -1758,6 +1789,15 @@ class MealTypeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing)
     serializer_class = MealTypeSerializer
     permission_classes = [CustomIsUser & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import Conflict, lock_space
+        lock_space(request)
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError as exc:
+            raise Conflict('Esta comida tiene platos o plantillas vinculados. Retira esos vínculos antes de eliminarla.') from exc
 
     def get_queryset(self):
         queryset = self.queryset.order_by('time', 'id').filter(
@@ -1922,6 +1962,15 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     permission_classes = [CustomRecipePermission & CustomTokenHasReadWriteScope]
     pagination_class = RecipePagination
 
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import Conflict, lock_space
+        lock_space(request)
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError as exc:
+            raise Conflict('Esta receta tiene menús o plantillas vinculados. Retira esos vínculos antes de eliminarla.') from exc
+
     def retrieve(self, request, *args, **kwargs):
         from cuaderno.services.visibility import native_recipe_read_policy
         instance = self.get_object()
@@ -2056,7 +2105,10 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     # TODO: refactor API to use post/put/delete or leave as put and change VUE to use list_recipe after creating
     # DRF only allows one action in a decorator action without overriding get_operation_id_base()
     @decorators.action(detail=True, methods=['PUT'], serializer_class=RecipeShoppingUpdateSerializer, )
+    @transaction.atomic
     def shopping(self, request, pk):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
         if self.request.space.demo:
             raise PermissionDenied(detail='Not available in demo', code=None)
         obj = self.get_object()
@@ -2065,6 +2117,15 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         servings = request.data.get('servings', None)
         list_recipe = request.data.get('list_recipe', None)
         mealplan = request.data.get('mealplan', None)
+        if mealplan is not None:
+            raw_id = mealplan.get('id') if isinstance(mealplan, dict) else mealplan
+            if type(raw_id) is not int or raw_id <= 0:
+                from rest_framework.exceptions import ValidationError as ApiValidationError
+                raise ApiValidationError({'mealplan': 'Selecciona una entrada válida del calendario.'})
+            # Resolve after the Space lock: a replaced template application must
+            # not silently become an unrelated recipe-only shopping entry.
+            from cuaderno.services.planning import visible_plans
+            mealplan = get_object_or_404(visible_plans(request), pk=raw_id)
         SLR = RecipeShoppingEditor(request ,id=list_recipe, recipe=obj, mealplan=mealplan,
                                    servings=servings)
 
@@ -2393,6 +2454,38 @@ class ShoppingListRecipeViewSet(LoggingMixin, viewsets.ModelViewSet):
     permission_classes = [(CustomIsOwner | CustomIsShared) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
 
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().create(request, *args, **kwargs)
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().update(request, *args, **kwargs)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().destroy(request, *args, **kwargs)
+
+    def _validate_meal_plan(self, serializer):
+        meal_plan = serializer.validated_data.get('mealplan')
+        if meal_plan is not None:
+            from cuaderno.services.planning import visible_plans
+            get_object_or_404(visible_plans(self.request), pk=meal_plan.pk)
+
+    def perform_create(self, serializer):
+        self._validate_meal_plan(serializer)
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        self._validate_meal_plan(serializer)
+        super().perform_update(serializer)
+
     def get_queryset(self):
         self.queryset = self.queryset.filter(Q(entries__space=self.request.space) | Q(recipe__space=self.request.space) | Q(mealplan__space=self.request.space))
 
@@ -2483,6 +2576,21 @@ class ShoppingListEntryViewSet(LoggingMixin, viewsets.ModelViewSet):
     serializer_class = ShoppingListEntrySerializer
     permission_classes = [(CustomIsOwner | CustomIsHousehold) & CustomTokenHasReadWriteScope]
     pagination_class = DefaultPagination
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        # The native serializer can attach a new ShoppingListRecipe to a menu.
+        # Validate/save after the same lock used for replacing a template menu.
+        from cuaderno.services.functional_access import lock_space
+        lock_space(request)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        meal_plan_id = serializer.validated_data.get('mealplan_id')
+        if meal_plan_id is not None:
+            from cuaderno.services.planning import visible_plans
+            get_object_or_404(visible_plans(self.request), pk=meal_plan_id)
+        super().perform_create(serializer)
 
     def update(self, request, *args, **kwargs):
         revision = request.headers.get('If-Match')

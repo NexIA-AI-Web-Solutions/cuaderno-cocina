@@ -3,9 +3,11 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
 
-function worker(scope = 'https://cocina.example/cuaderno-cocina/') {
+function worker(scope = 'https://cocina.example/cuaderno-cocina/', deferClaim = false, manifest) {
     const routes = [], events = {}, deleted = [], pending = [], shifted = []
     let fallback, precached, cacheDetails
+    let claims = 0, releaseClaim
+    const claim = deferClaim ? new Promise(resolve => { releaseClaim = resolve }) : Promise.resolve()
     class Strategy {
         constructor(options = {}) { this.options = options; this.kind = this.constructor.name }
     }
@@ -27,8 +29,9 @@ function worker(scope = 'https://cocina.example/cuaderno-cocina/') {
         addEventListener: (name, fn) => { (events[name] ??= []).push(fn) },
     }
     context.self = {
-        __WB_MANIFEST: [{url: 'assets/main.js', revision: '1'}, {url: '/cuaderno-cocina/static/vue3/logo.png', revision: '2'}, {url: '/static/foreign.js', revision: '3'}, {url: '/cuaderno-cocina/api/private/', revision: '4'}, {url: 'https://other.example/static/foreign.js', revision: '5'}, {url: '/cuaderno-cocina/media/private.jpg', revision: '6'}], location: {origin: 'https://cocina.example'},
+        __WB_MANIFEST: manifest ?? [{url: 'assets/main.js', revision: '1'}, {url: 'assets/cuaderno-logo-123abc.svg', revision: '2'}, {url: '/static/foreign.js', revision: '3'}, {url: '/cuaderno-cocina/api/private/', revision: '4'}, {url: 'https://other.example/static/foreign.js', revision: '5'}, {url: '/cuaderno-cocina/media/private.jpg', revision: '6'}], location: {origin: 'https://cocina.example'},
         registration: {scope}, skipWaiting: () => {},
+        clients: {claim: () => { claims++; return claim }},
         addEventListener: context.addEventListener,
     }
     const source = readFileSync(new URL('../service-worker.ts', import.meta.url), 'utf8').replace(/^import .*?from .*?;?\r?$/gm, '')
@@ -40,7 +43,7 @@ function worker(scope = 'https://cocina.example/cuaderno-cocina/') {
         const request = {url: url.href, destination, method}
         return routes.find(r => r.method === method && (typeof r.match === 'function' ? r.match({request, url, sameOrigin: url.origin === context.self.location.origin}) : r.match.test(url.href)))
     }
-    return {route, routes, events, deleted, pending, shifted, fallback, precached, cacheDetails}
+    return {route, routes, events, deleted, pending, shifted, fallback, precached, cacheDetails, claims: () => claims, releaseClaim}
 }
 
 test('authenticated API, media and HTML never enter a runtime cache', () => {
@@ -82,18 +85,39 @@ test('offline fallback is a public Spanish document without rendering a session'
 })
 
 
-test('precache contains only public assets belonging to the registration prefix', () => {
+test('precache contains the own public logo while lazy scripts keep their runtime route', () => {
     const w = worker()
     assert.deepEqual(Array.from(w.precached, entry => entry.url), [
-        'https://cocina.example/cuaderno-cocina/static/vue3/assets/main.js',
-        'https://cocina.example/cuaderno-cocina/static/vue3/logo.png',
+        'https://cocina.example/cuaderno-cocina/static/vue3/assets/cuaderno-logo-123abc.svg',
     ])
+    assert.equal(w.route('/cuaderno-cocina/static/vue3/assets/main.js', 'script')?.handler.kind, 'NetworkFirst')
     assert.equal(w.cacheDetails.prefix, 'cuaderno-%2Fcuaderno-cocina%2F')
     for (const route of w.routes) {
         if (route.handler.kind !== 'NetworkOnly') {
             assert.ok(route.handler.options.cacheName.startsWith(w.cacheDetails.prefix + '-'))
         }
     }
+})
+
+test('activation stays alive until the scoped client claim completes', async () => {
+    const w = worker(undefined, true), promises = []
+    for (const fn of w.events.activate ?? []) fn({waitUntil: p => promises.push(p)})
+    assert.equal(w.claims(), 1)
+    let settled = false
+    const activation = Promise.all(promises).then(() => { settled = true })
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(settled, false, 'claim must belong to the activation lifetime')
+    w.releaseClaim()
+    await activation
+    assert.equal(settled, true)
+})
+
+test('first installation does not fetch unused language and lazy page chunks', () => {
+    const manifest = Array.from({length: 277}, (_, i) => ({url: `assets/page-${i}.js`, revision: String(i)}))
+    manifest.push({url: 'assets/cuaderno-logo-candidate.svg', revision: 'logo'})
+    const w = worker(undefined, false, manifest)
+    assert.equal(w.precached.length, 1)
+    assert.match(w.precached[0].url, /\/assets\/cuaderno-logo-candidate\.svg$/)
 })
 
 test('foreign root and sibling assets cannot match a Cuaderno cache route', () => {

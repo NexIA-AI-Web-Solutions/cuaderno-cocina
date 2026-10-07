@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+import uuid
+from pathlib import PurePosixPath
 
 
 class SpaceProfile(models.Model):
@@ -354,3 +356,158 @@ class StockMinimum(models.Model):
                 name="cuaderno_minimum_scope_unique",
             ),
         ]
+
+
+def recipe_gallery_path(instance, filename):
+    """Only validated raster uploads reach this UUID namespace."""
+    return f"recipes/gallery/{uuid.uuid4().hex}{PurePosixPath(filename).suffix.lower()}"
+
+
+class RecipeGalleryImage(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    recipe = models.ForeignKey("cookbook.Recipe", on_delete=models.CASCADE, related_name="cuaderno_gallery")
+    image = models.ImageField(upload_to=recipe_gallery_path)
+    caption = models.CharField(max_length=256, blank=True, default="")
+    position = models.PositiveSmallIntegerField(default=0)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("position", "pk")
+        constraints = [
+            models.CheckConstraint(condition=models.Q(position__lte=19), name="cuaderno_gallery_position"),
+            models.UniqueConstraint(fields=["recipe", "position"], name="cuaderno_gallery_slot"),
+        ]
+
+
+class RecipeFavorite(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    recipe = models.ForeignKey("cookbook.Recipe", on_delete=models.CASCADE, related_name="cuaderno_favorites")
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "recipe"], name="cuaderno_favorite_unique")]
+
+
+class RecipeVariant(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    recipe = models.OneToOneField("cookbook.Recipe", on_delete=models.CASCADE, related_name="cuaderno_variant")
+    source_recipe = models.ForeignKey("cookbook.Recipe", on_delete=models.CASCADE, related_name="cuaderno_variants")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=~models.Q(recipe=models.F("source_recipe")), name="cuaderno_variant_not_self")]
+
+
+class RecipeDietDeclaration(models.Model):
+    """User assertions only; no clinical or missing-allergen inference."""
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    recipe = models.ForeignKey("cookbook.Recipe", on_delete=models.CASCADE, related_name="cuaderno_diets")
+    slug = models.CharField(max_length=16)
+    status = models.CharField(max_length=16, default="unknown")
+    note = models.CharField(max_length=1000, blank=True, default="")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["recipe", "slug"], name="cuaderno_diet_unique"),
+            models.CheckConstraint(condition=models.Q(slug__in=["celiacos", "colesterol", "diabetes", "hiposodica", "gastrica", "fibra", "sinfructosa", "sinlactosa"]), name="cuaderno_diet_slug"),
+            models.CheckConstraint(condition=models.Q(status__in=["unknown", "suitable", "unsuitable"]), name="cuaderno_diet_status"),
+        ]
+
+
+class MealCourse(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    meal_type = models.ForeignKey("cookbook.MealType", on_delete=models.CASCADE, related_name="cuaderno_courses")
+    name = models.CharField(max_length=128)
+    position = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ("position", "pk")
+        constraints = [models.UniqueConstraint(fields=["meal_type", "name"], name="cuaderno_course_name")]
+
+
+class MenuTemplate(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    name = models.CharField(max_length=128)
+    weeks = models.PositiveSmallIntegerField(default=1)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=models.Q(weeks__gte=1, weeks__lte=5), name="cuaderno_template_weeks")]
+
+
+class MenuTemplateEntry(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    template = models.ForeignKey(MenuTemplate, on_delete=models.CASCADE, related_name="entries")
+    day_index = models.PositiveSmallIntegerField()
+    meal_type = models.ForeignKey("cookbook.MealType", on_delete=models.PROTECT)
+    course = models.ForeignKey(MealCourse, on_delete=models.PROTECT, null=True, blank=True)
+    recipe = models.ForeignKey("cookbook.Recipe", on_delete=models.PROTECT, null=True, blank=True)
+    title = models.CharField(max_length=64, blank=True, default="")
+    source_url = models.URLField(max_length=1024, blank=True, default="")
+    servings = models.DecimalField(max_digits=8, decimal_places=4, default=1)
+
+    class Meta:
+        ordering = ("day_index", "meal_type_id", "course_id", "pk")
+        constraints = [
+            models.CheckConstraint(condition=models.Q(day_index__lte=34), name="cuaderno_template_day"),
+            models.CheckConstraint(condition=models.Q(servings__gt=0), name="cuaderno_template_servings"),
+            models.UniqueConstraint(fields=["template", "day_index", "meal_type", "course"], nulls_distinct=False, name="cuaderno_template_slot"),
+        ]
+
+
+class MealPlanCourse(models.Model):
+    """Extend the native calendar; do not copy its recipes or shopping rows."""
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    meal_plan = models.OneToOneField("cookbook.MealPlan", on_delete=models.CASCADE, related_name="cuaderno_course")
+    course = models.ForeignKey(MealCourse, on_delete=models.PROTECT, null=True, blank=True)
+    source_template = models.ForeignKey(MenuTemplate, on_delete=models.SET_NULL, null=True, blank=True)
+    application_date = models.DateField(null=True, blank=True)
+    source_url = models.URLField(max_length=1024, blank=True, default="")
+
+
+class CalendarEntry(models.Model):
+    """Events and administrator-only absence annotations on the same calendar."""
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    kind = models.CharField(max_length=16, default="event")
+    title = models.CharField(max_length=128)
+    member_name = models.CharField(max_length=128, blank=True, default="")
+    start_date = models.DateField()
+    end_date = models.DateField()
+    note = models.CharField(max_length=1000, blank=True, default="")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("start_date", "pk")
+        constraints = [
+            models.CheckConstraint(condition=models.Q(kind__in=["event", "absence"]), name="cuaderno_calendar_kind"),
+            models.CheckConstraint(condition=models.Q(end_date__gte=models.F("start_date")), name="cuaderno_calendar_dates"),
+        ]
+
+
+def _gallery_file_deleted(sender, instance, using, **kwargs):
+    """Native Recipe/Space cascades revoke and remove only committed own images."""
+    import re
+    from django.db import transaction
+    name, storage = instance.image.name, instance.image.storage
+    if not name or not re.fullmatch(r"recipes/gallery/[a-f0-9]{32}\.(jpg|png|webp|gif)", name):
+        return
+
+    def remove_unreferenced():
+        from cookbook.models import Recipe, UserFile
+        if (RecipeGalleryImage._base_manager.using(using).filter(image=name).exists()
+                or Recipe._base_manager.using(using).filter(image=name).exists()
+                or UserFile._base_manager.using(using).filter(file=name).exists()):
+            return
+        storage.delete(name)
+
+    transaction.on_commit(remove_unreferenced, using=using)
+
+
+from django.db.models.signals import post_delete
+post_delete.connect(_gallery_file_deleted, sender=RecipeGalleryImage, weak=False,
+                    dispatch_uid="cuaderno.gallery.committed-file-delete")

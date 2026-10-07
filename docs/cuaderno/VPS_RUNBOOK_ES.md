@@ -1,5 +1,40 @@
 # Operación de Cuaderno en el VPS compartido
 
+## Operación actual y límite de esta ampliación
+
+URL: <https://gex-dashboard.hopto.org/cuaderno-cocina/>. Proyecto propio
+`cuaderno-prod`, web en `127.0.0.1:18081`, PostgreSQL sin puerto publicado.
+Runtime actual `ff3b685fb85a546d6f8e5c4efa305c47c9e94e86`, imagen local
+`sha256:89bf20d9bcfd280d6403c3894f68aab18e14a1e43d5c8798ab8e960f39855020`.
+Fuente congelada: `source-runtime-ff3b685` dentro del paquete de entrega.
+Configuración privada: `/etc/cuaderno-cocina/production.env`; no imprimir sus valores.
+La web limita memoria a 768 MiB y PostgreSQL a 512 MiB, con 0,5 CPU cada uno.
+El proxy propio configura `transport http { keepalive 60s }`; el resto de Caddy
+se conserva. Los imports y la configuración activa deben comprobarse antes de
+cualquier modificación posterior porque también hay otros despliegues en el VPS.
+
+La ampliación de recetas/menús todavía requiere nueva imagen, migraciones,
+CI y aceptación. No cambiar el runtime a una imagen sin sus propios artefactos.
+Los controladores de recuperación antiguos fijan fuente, imagen, tablas y
+referencia del host: no se pueden reutilizar como certificación de la ampliación.
+La compatibilidad de imagen anterior no revierte automáticamente el esquema.
+
+El timer propio realiza copias cifradas locales en la subcarpeta de backups del
+proyecto. El propietario eligió ese destino; no hay copia externa configurada.
+Restauración y rollback del runtime anterior se ensayaron en recursos aislados;
+sus clones temporales se retiraron tras verificar el resultado.
+
+El host registró dos OOM durante otro despliegue comunicado por el propietario.
+`user@1000.service` sigue fallido; Caddy y Stalwart siguen activos. No reiniciar
+ese gestor ni otros servicios ajenos desde este runbook. Los controles de
+capacidad/estado deben conservar los fallos y esperar a la recuperación real.
+No cambiar swap, reboot programado, Docker global ni las aplicaciones ajenas.
+
+## Historial de instalación y procedimientos de versiones anteriores
+
+Las identidades, resultados y comandos siguientes pertenecen a sus versiones
+originales. Validar un contexto nuevo antes de aplicarlos a una actualización.
+
 ## Instalación real — 7 de octubre de 2026
 
 URL: `https://gex-dashboard.hopto.org/cuaderno-cocina/`.

@@ -2,7 +2,7 @@
 from pathlib import PurePosixPath
 
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import Http404
 from django.views.static import serve
 
@@ -32,6 +32,8 @@ def authorized_media(request, path):
         visible = visible_recipes(request.user, request.space)
         allowed = visible.filter(image=path).exists()
         if not allowed:
+            allowed = visible.filter(cuaderno_gallery__space=request.space, cuaderno_gallery__image=path).exists()
+        if not allowed:
             uploaded = UserFile.objects.filter(space=request.space, file=path).first()
             if uploaded:
                 allowed = can_download_user_file(request.user, request.space, uploaded)
@@ -39,7 +41,10 @@ def authorized_media(request, path):
         from cookbook.helper.permission_helper import share_link_valid
         from django_scopes import scopes_disabled
         with scopes_disabled():
-            candidates = Recipe.objects.filter(Q(image=path) | Q(steps__file__file=path)).distinct()
+            candidates = Recipe.objects.filter(
+                Q(image=path) | Q(steps__file__file=path)
+                | Q(cuaderno_gallery__image=path, cuaderno_gallery__space_id=F("space_id")),
+            ).distinct()
             allowed = any(share_link_valid(recipe, request.GET["share"]) for recipe in candidates)
     if not allowed:
         raise Http404
