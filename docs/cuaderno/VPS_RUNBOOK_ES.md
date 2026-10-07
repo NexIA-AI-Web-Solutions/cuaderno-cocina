@@ -1,8 +1,197 @@
 # Operación de Cuaderno en el VPS compartido
 
+## Instalación real — 7 de octubre de 2026
+
+URL: `https://gex-dashboard.hopto.org/cuaderno-cocina/`.
+Proyecto exclusivo: `cuaderno-prod`; único puerto publicado
+`127.0.0.1:18081`, sin puerto PostgreSQL. Caddy existente actúa como proxy.
+La referencia de esta instalación es el commit
+`60aca2d0aa7776137f507699be7f111dcf758e18`, source SHA256
+`c8e1848750193af6a7377e521195b4295a10ab3da59c16fa40589fba4444f229`.
+ImageID local OCI:
+`sha256:93854211cee63e58ca2bd4b066f06af6a5aba17ae150a8acaf33a0a3d7b1d0ce`.
+Config digest de CI:
+`sha256:aa9fdc7aacfd5d03e3c5cd00071d4daae71f78aa258221023735d713a44f9732`.
+El CI completo es [37532317372](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37532317372).
+
+Rutas actuales, todas bajo el paquete
+`/home/kripta/cuaderno-cocina-deploy-20261006-f2e3f3ca6` cuando son relativas:
+
+| Recurso | Ruta o identidad |
+| --- | --- |
+| Fuente operativa congelada y Compose | `source-runtime-60aca2d/` |
+| Desarrollo y documentación publicada | `source-checkout/` |
+| Configuración privada | `/etc/cuaderno-cocina/production.env`, root 0600 |
+| Administrador | `/etc/cuaderno-cocina/admin-credentials.json`, root 0600 |
+| Herramientas operativas propias | `/opt/cuaderno-cocina/bin/` |
+| Base de datos | volumen `cuaderno-prod_database`, `/var/lib/docker/volumes/cuaderno-prod_database/_data` |
+| Media | volumen `cuaderno-prod_media`, `/var/lib/docker/volumes/cuaderno-prod_media/_data` |
+| Copias locales | `backups/`, root 0700; bundles y `encrypted/` privados |
+| Clave de cifrado | `/etc/cuaderno-cocina/backup-encryption.key`, root 0600 |
+| Evidencias y harness privados | `agent-evidence/`, root 0700, informes 0600 |
+
+El directorio reservado `/var/lib/cuaderno-cocina` no contiene la BD productiva.
+No borrar el worktree operativo ni su repositorio Git común: el backup registra
+su HEAD congelado, aunque `source-checkout` avance con documentación. Git sólo
+confía en esa ruta exacta dentro de la unidad de backup; no hay wildcard global.
+No imprimir el env, la clave, passwords, cookies o JSON de credenciales.
+
+Web: usuario 10001:10001, 768 MiB, 0,5 CPU, PIDs 256, un worker y dos threads.
+BD: 512 MiB, 0,5 CPU, PIDs 128, shared_buffers 64 MiB y max_connections 30.
+Ambos eliminan capacidades, usan NoNewPrivileges y restart `unless-stopped`.
+DEBUG, signup, conectores, plugins e IA desactivados; espacio principal sin
+sharing. Los límites deben conservarse salvo nueva medición y justificación.
+
+### Operaciones propias reproducibles
+
+Comprobar estado sin mostrar secretos:
+
+```bash
+cd /home/kripta/cuaderno-cocina-deploy-20261006-f2e3f3ca6/source-runtime-60aca2d
+docker compose --project-name cuaderno-prod --env-file /etc/cuaderno-cocina/production.env -f deploy/cuaderno/compose.production.yml ps
+curl --fail --silent --show-error https://gex-dashboard.hopto.org/cuaderno-cocina/health/ready/
+systemctl status cuaderno-cocina-backup.timer --no-pager
+```
+
+Backup coherente y cifrado usando la unidad ya instalada:
+
+```bash
+systemctl start cuaderno-cocina-backup.service
+systemctl show cuaderno-cocina-backup.service --property=Result --property=ExecMainStatus
+journalctl -u cuaderno-cocina-backup.service -n 10 --no-pager
+```
+
+El wrapper detiene sólo web propia, rechaza escritores/clients DB ajenos,
+incluye dump + media + env privado + manifiesto schema 3 y reanuda web en
+`finally`. Cifra AES256 con integridad, verifica el descifrado completo y sus
+cuatro miembros/hashes antes de retener los siete puntos completos más recientes.
+No cuenta el directorio incompleto del primer intento. Un backup hace una pausa
+breve de Cuaderno; ejecutarlo sin pruebas browser simultáneas. Timer:
+03:17 Europe/Madrid con retraso aleatorio de hasta 15 minutos, Persistent=true.
+La alarma escribe en journal, sin enviar correo; el test manual pasó tras añadir
+`--` al mensaje de logger. La ruta automática `OnFailure` está configurada y
+no se ha provocado deliberadamente.
+
+Para un ensayo de recuperación, verificar antes el bundle, imagen exacta,
+capacidad y recursos propios libres. Detener **sólo** web/BD de `cuaderno-prod`
+para evitar dos runtimes simultáneos en este host; reanudarlos aunque falle el
+ensayo. Desde la fuente congelada, ejecutar con un nombre de informe nuevo:
+
+```bash
+python3 -B scripts/cuaderno/production_restore_verify.py ../backups/20261006T223348Z-3f404737d56a --runtime-image sha256:93854211cee63e58ca2bd4b066f06af6a5aba17ae150a8acaf33a0a3d7b1d0ce --report ../agent-evidence/restore-nuevo.json
+```
+
+El comando crea un namespace aleatorio `cuaderno-restore-*`, red interna y
+volúmenes separados; verifica datos/media/configuración/imagen y páginas nativas
+prefijadas. Detiene sus contenedores al finalizar y conserva sus recursos para
+revisión. No promueve volúmenes ni cambia la imagen productiva. El ensayo real
+`cuaderno-restore-90e837bbecd9` pasó, y los contenedores originales volvieron
+healthy conservando IDs y volúmenes. No se ensayó login autenticado en el clon.
+
+### Rollback y actualizaciones
+
+En esta primera instalación, el rollback probado recupera el punto de datos en
+un clon con la misma imagen y demuestra la reanudación de producción original.
+También se retiró realmente el bloque propio de Caddy y se verificó la
+configuración anterior antes de volver a publicar. No existe una release
+productiva previa cuyo downgrade se haya probado. Para una actualización futura,
+exigir nuevo CI/imagen, backup cerrado previo y ensayo del esquema restaurado.
+Volver a un tag anterior no deshace migraciones; conservar la pareja imagen +
+backup compatible y restaurarla aisladamente antes de cualquier promoción.
+
+Caddyfile actual SHA256:
+`f20a5788a5a98e2a80d8572b5e129c3f3e35c8efe077bdf376bec12a606a1420`.
+Bloque propio: 439 bytes, SHA256
+`15d9b7992d34950be0f82a41ac38c100d57f424a9fbca508ea2c72220c35f1c1`.
+Sus bytes y la referencia inicial están en las copias/evidencias privadas.
+Para retirar la ruta, leer el Caddyfile **actual**, exigir una única coincidencia
+exacta del bloque, eliminar sólo esos bytes y conservar toda edición concurrente.
+Validar los imports y el entorno efectivo del proceso Caddy antes de reemplazar
+atómicamente el archivo propio, conservando root:root 0644, y recargar por CLI.
+Comparar después el JSON activo, estado, PID y endpoints. Si la ruta no coincide
+exactamente, detenerse y revisar; nunca restaurar sobre el archivo completo una
+copia histórica. No cambiar rutas raíz `/api`, `/static`, `/media` ni workers.
+La validación adaptada normaliza exclusivamente la ruta temporal generada en
+`file_server.hide`; el JSON activo se compara sin normalizarlo.
+
+Docker, Caddy y el timer propio tienen arranque habilitado; los contenedores usan
+restart `unless-stopped`. El reboot preexistente de las 08:30 Europe/Madrid
+permanece programado. Se comprueba configuración y readiness; no se ejecuta un
+reboot real para ensayar esta aplicación. Tras un reboot, repetir `ps`, HTTPS
+ready y comparación de servicios/endpoints, sin reiniciar globalmente Docker,
+Caddy, correo u otras aplicaciones.
+
+### Evidencias y límites de esta instalación
+
+CI: `eighth-ci-completed-verification.json`; identidad:
+`candidate-60aca2d-local-attestation-actual-image.json`; backup inicial:
+`eighth-production-initial-backup-verification.json`; recuperación:
+`eighth-production-isolated-recovery-and-rollback-verification.json`; Caddy:
+`eighth-caddy-second-cutover.json`. Todas dentro de `agent-evidence/`.
+Aceptación pública final: **54/54 PASS** de tres ediciones y tres roles. READ V4
+27 casos a 390/768/1440 px; WRITE V5, WORKER V5 y LOGIN/LOGOUT V6, nueve cada
+una a 1440 px. Sin retries; fases completas con namespaces explícitos. El collector
+conserva fallos por destinos externos, cabeceras con credenciales, consola, red y
+5xx; V6 omite solamente el RPC de cabeceras dentro del ámbito cuyo predicado de
+fuga siempre era falso. Los fallos anteriores permanecen documentados en STATUS.
+
+Informes privados del cierre:
+
+- `eighth-public-vps-final-54-verification.json`: hashes de los 54 casos.
+- `eighth-production-physical-media-verification.json`: seis imágenes/recetas
+  propias ausentes y cero archivos en el volumen, sin borrados por el verificador.
+- `eighth-production-synthetic-cleanup.json`: nueve usuarios/tres Spaces retirados.
+- `eighth-production-final-backend-verification.json`: administrador validado,
+  un Space sin sharing, cero recetas/media, DEBUG desactivado.
+- `eighth-production-final-session-verification.json`: nueve sesiones originales
+  y nueve sustitutas ausentes.
+- `eighth-production-final-backup-verification.json`: backup final
+  `20261007T004418Z-7c827cdf7a24`, cifrado/descifrado independiente, cuatro miembros
+  y hashes comprobados. Manifiesto SHA256
+  `92ddc7b0ad916f644f2a4fbdbac0c41169f8345140934f00bed551da798c2953`;
+  cifrado en `backups/encrypted/20261007T004418Z-7c827cdf7a24.tar.gpg`, SHA256
+  `1a0e0f22afb526245b4a7a5b9b380b986ac0d09217e909307da6c2e93e75d4fe`.
+- `eighth-production-final-runtime-verification.json`: identidad/health/puertos,
+  privilegios/límites, Caddy y timers, listeners de correo y recursos.
+- `eighth-production-final-shared-services-verification.json`: comparación real
+  de 16 contenedores, 46 servicios y ocho endpoints; sin cambios ni OOM nuevos.
+
+La restauración aislada anterior corresponde al punto inicial; el bundle final
+posterior a la limpieza tiene verificación de backup/descifrado, sin otro ensayo
+de restauración. No se transfiere el resultado de una imagen anterior.
+La comprobación inmediata después del backup final falló; el snapshot posterior
+mostró web `starting`. El predicado original no conservó el estado del contenedor.
+Ese FAIL se conserva en `eighth-final-runtime-immediate-check-failure.json`.
+El registro posterior muestra HTTPS 200 y luego healthcheck healthy, dentro del
+start period nativo de 120 s. Se repitió la verificación final sin cambiarlo.
+
+Muestra final del 7 de octubre, 00:46 UTC (sin browser activo):
+
+| Recurso | Medición | Límite |
+| --- | --- | --- |
+| Web | 327,1 MiB; 0,14 % CPU | 768 MiB; 0,5 CPU |
+| PostgreSQL | 29,99 MiB; 7,04 % CPU | 512 MiB; 0,5 CPU |
+| Host | 3.048.004 KiB RAM disponible; 987.556 KiB swap libre | sin cambios globales |
+| Disco | 12.568.444.928 bytes disponibles | sin limpieza global |
+| HTTPS ready | 200, 77 ms | sin redirección |
+
+Son muestras puntuales, no una prueba de carga ni una garantía de capacidad
+futura. El pico del browser READ fue 760,2 MiB; LOGIN V6, 505,7M según systemd,
+ambos dentro del límite y con swap del cgroup 0. La emulación no acredita hardware.
+
+No hay destino offsite: las copias autorizadas están en el mismo VPS, incluso
+cuando están cifradas. No se acredita iPad físico ni envío/recepción SMTP.
+Las pruebas seriales de Chromium instalado emulan anchuras 390/768/1440; las
+pruebas Firefox/WebKit pertenecen a CI. Los incidentes históricos del host están
+en STATUS; los 404 y el error preexistente de `webmail-new` no se presentan como
+endpoints sanos. Comparar con el baseline, sin hacer CRUD/carga en otras apps.
+
+## Procedimiento general y antecedentes
+
 Destino autorizado: `https://gex-dashboard.hopto.org/cuaderno-cocina/`. Esta guía
-describe el procedimiento; STATUS y RELEASE_CHECKLIST registran cuáles de estos
-pasos se han ejecutado realmente. No constituye un informe PASS.
+describe a continuación el procedimiento general. La instalación y los ensayos
+realmente ejecutados están en el apartado vigente anterior, STATUS y
+RELEASE_CHECKLIST; un comando preparatorio no constituye por sí solo un PASS.
 
 ## Identidad y aislamiento
 
@@ -86,7 +275,7 @@ Con la imagen nueva verificada y `CUADERNO_IMAGE=sha256:ID_LOCAL` en el env file
 ```bash
 python3 -B scripts/cuaderno/production_config_check.py
 docker compose --project-name cuaderno-prod --env-file /etc/cuaderno-cocina/production.env -f deploy/cuaderno/compose.production.yml config --quiet
-docker compose --project-name cuaderno-prod --env-file /etc/cuaderno-cocina/production.env -f deploy/cuaderno/compose.production.yml up -d --wait --wait-timeout 600
+docker compose --project-name cuaderno-prod --env-file /etc/cuaderno-cocina/production.env -f deploy/cuaderno/compose.production.yml up -d --no-build --pull never --wait --wait-timeout 600
 ```
 
 Este arranque aplica migraciones solamente en la BD nueva de Cuaderno. Crear el

@@ -1,5 +1,112 @@
 # Estado del producto
 
+## Estado vigente del despliegue — 7 de octubre de 2026
+
+Cuaderno responde por HTTPS en `https://gex-dashboard.hopto.org/cuaderno-cocina/`.
+El runtime corresponde a `60aca2d0aa7776137f507699be7f111dcf758e18`, fuente
+`c8e1848750193af6a7377e521195b4295a10ab3da59c16fa40589fba4444f229` (2.402 archivos).
+El [CI 37532317372](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37532317372)
+terminó con nueve jobs PASS: Playwright raíz 193/193 y prefijo 309/309,
+sin retries, skips ni flaky; G7 17/17 y ensayo productivo adicional de
+backup/restauración/limpieza PASS. Chromium, Firefox y WebKit se ejecutaron en CI.
+La imagen local Docker 29 es
+`sha256:93854211cee63e58ca2bd4b066f06af6a5aba17ae150a8acaf33a0a3d7b1d0ce`;
+su configuración CI es
+`sha256:aa9fdc7aacfd5d03e3c5cd00071d4daae71f78aa258221023735d713a44f9732`.
+La relación entre ambos identificadores y los nueve artefactos se verificó antes del arranque.
+
+El proyecto exclusivo `cuaderno-prod` publica solamente `127.0.0.1:18081`.
+Web y PostgreSQL están healthy; se aplicaron 328 migraciones y se comprobaron
+114 tablas. Caddy conserva PID 916 y cero reinicios: se realizaron tres recargas,
+incluida una retirada efectiva del bloque propio después del primer intento.
+El cambio final añade exclusivamente 439 bytes al Caddyfile, con la redirección
+308 y el handler del prefijo. Los cuatro imports permanecen idénticos.
+Los fallos de comprobación inicial del `<base>` en login nativo y de URLs
+relativas del manifiesto se conservaron; se corrigieron las expectativas de las
+pruebas, sin alterar la aplicación. La comparación de configuración Caddy
+normaliza únicamente los nombres temporales de `file_server.hide`, comprobados
+contra el comportamiento real de Caddy 2.11.4.
+
+Aceptación pública VPS: **54/54 PASS**, tres ediciones y tres roles. Fases
+completas: READ V4 27/27 a 390/768/1440 px; WRITE V5, WORKER V5 y LOGIN/LOGOUT
+V6 9/9 cada una a 1440 px. Se usaron Chromium 151 y Playwright 1.63 existentes,
+con casos seriales y límites de 768 MiB/0,5 CPU; sin instalación ni retries.
+El cierre verifica hashes de los 54 informes y la misma identidad del runtime.
+Los intentos previos conservan sus FAIL: título móvil oculto a 1440 px,
+activación de worker no observada en un caso y cierre prematuro de las auditorías
+de cabeceras. El harness privado ahora selecciona el título visible, espera el
+`load` nativo inicial y drena auditorías dentro del mismo plazo de 55 segundos.
+El collector sigue estricto. El diagnóstico pasivo del worker pasó, pero no
+demuestra la causa del fallo previo. No hubo modificaciones adicionales del runtime.
+
+READ V4 completó 27/27 PASS. WRITE V4 se detuvo con 1 PASS y 1 FAIL por exigir
+404 para una receta privada de otro usuario del mismo Space. El contrato nativo
+documentado exige 403; un diagnóstico real mediante el router confirmó 403 y
+JSON con sólo `detail`, sin identidad de receta, para Consulta y Responsable.
+Su fila sintética se revirtió mediante transacción; la secuencia PostgreSQL
+puede avanzar. El primer adaptador diagnóstico falló sin retener su status:
+se encontró la omisión de `detail=True` y se sustituyó por el callback real del
+router. No se atribuye un status observado a ese primer intento. WRITE V5 exige
+403 exacto y ausencia de datos de receta; la media sigue exigiendo 404.
+En V5, READ y collector permanecen byte a byte iguales. WRITE V5 completó
+9/9 PASS y WORKER V5 9/9 PASS. LOGIN V5 se detuvo en la primera cuenta: sus
+cuatro checks funcionales pasaron, pero el collector agotó los 55 segundos y
+cuatro llamadas `allHeaders` acabaron con contexto cerrado. Las otras ocho
+cuentas no se ejecutaron; el FAIL se conserva. No se atribuye una causa concreta
+de cancelación que no fue observada.
+
+V6 calcula el mismo predicado exacto de origen/prefijo y consulta cabeceras sólo
+fuera de ese ámbito: dentro, la condición original de fuga siempre era falsa.
+Toda URL externa sigue fallando inmediatamente; sus auditorías de credenciales,
+rechazos y bloqueos siguen fallando. Consola, red, 5xx, drain, plazo de 55 segundos
+y recursos se conservan. Doce tests focales y revisión independiente PASS; las
+cuatro funciones de fases siguen idénticas. Los resultados se vinculan por fase
+a namespaces explícitos, sin escoger casos PASS de intentos fallidos.
+
+La comprobación física acredita cero archivos de media y ausencia de las seis
+imágenes/recetas subidas. Se retiraron nueve usuarios y tres Spaces sintéticos;
+las nueve sesiones originales y nueve sustitutas están ausentes. Quedan un
+administrador validado, un Space sin sharing, cero recetas y cero media.
+El backup final coherente `20261007T004418Z-7c827cdf7a24` pasa cifrado AES256,
+descifrado independiente y hashes de sus cuatro miembros; conserva schema 3,
+114 tablas, 328 migraciones y el commit/imagen del runtime.
+
+El ensayo inicial usó el backup coherente local cifrado y descifrado comprobado
+`20261006T223348Z-3f404737d56a`. La restauración real se ejecutó en
+`cuaderno-restore-90e837bbecd9`, con red interna y cero puertos publicados;
+datos, media, configuración, imagen y assets/login nativo coinciden. Los
+contenedores restaurados están detenidos. Durante el ensayo se detuvieron
+solamente web/BD propios y se reanudaron los mismos contenedores y volúmenes.
+Es una recuperación del punto de datos con la misma imagen de esta primera
+instalación; no acredita un downgrade a una release productiva anterior ni un
+login autenticado en el clon. El timer diario y la alarma local están instalados;
+la prueba manual de alarma PASS no equivale a haber provocado `OnFailure`.
+
+Los backups usan la fuente operativa congelada `source-runtime-60aca2d` para
+conservar el commit del runtime cuando este checkout avance con documentación.
+Las credenciales y evidencias operativas permanecen privadas, fuera de Git.
+La copia offsite sigue pendiente: el propietario eligió `backups/` dentro del
+proyecto, en este mismo VPS. Tampoco se acredita un iPad físico ni envío SMTP.
+
+La comparación final de las 00:46 UTC con el baseline de las 22:20 UTC no
+muestra cambios en los 16 contenedores y 46 servicios ajenos ni nuevos OOM.
+Los ocho endpoints conservan sus status/error/redirección anteriores. Web:
+327,1 MiB y 0,14 % CPU; BD: 29,99 MiB y 7,04 % CPU en la muestra, dentro de
+sus límites. RAM disponible: 3.048.004 KiB; swap libre: 987.556 KiB; disco libre:
+12.568.444.928 bytes. Readiness HTTPS 200 en 77 ms; ambos contenedores healthy.
+La comprobación inmediata tras el backup falló; el snapshot posterior mostró
+web `starting`. El predicado original no conservó el estado del contenedor.
+Se conservan el FAIL y el registro de probes. La siguiente verificación completa
+pasó, sin cambiar healthcheck ni runtime (start period nativo 120 s).
+Se conservan los incidentes históricos: OOM/reboot de las 14:57–15:02 UTC,
+temporales del diagnóstico local que agotaron disco, OOM durante mantenimiento
+ajeno a las 17:54–17:55 y reinicios automáticos de cuatro bots a las 21:02.
+No se afirma continuidad ininterrumpida de todos los servicios. Los 404 y el
+error del portal `webmail-new` ya existían antes de este despliegue.
+Procedimiento, recursos y pruebas finales en [runbook VPS](VPS_RUNBOOK_ES.md).
+
+## Historial de preparación y candidatos anteriores
+
 ## Despliegue autorizado bajo prefijo — 6 de octubre de 2026
 
 El propietario autoriza corregir, publicar en su fork y desplegar en `https://gex-dashboard.hopto.org/cuaderno-cocina/`. Se verificaron paquete, HEAD limpio inicial y los 2.350 archivos: `f2e3f3ca6da66848fd1234c6189a342184316d52+worktree.d793040fafe38d541b0a69356ce7ba2b91ba8fcbb6f7b3b8e88205fe98604725`. La autorización actual sustituye las restricciones históricas de publicación de este documento.

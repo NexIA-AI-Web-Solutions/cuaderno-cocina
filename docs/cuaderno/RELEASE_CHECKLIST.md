@@ -1,5 +1,41 @@
 # Aceptación final
 
+## Cierre vigente del despliegue — 7 de octubre de 2026
+
+Runtime `60aca2d0aa7776137f507699be7f111dcf758e18`; imagen local OCI
+`sha256:93854211cee63e58ca2bd4b066f06af6a5aba17ae150a8acaf33a0a3d7b1d0ce`.
+Los resultados siguientes pertenecen a ese runtime; el commit posterior de
+documentación no representa una nueva imagen ni una nueva ejecución de CI.
+
+- [x] CI 37532317372: nueve jobs PASS; raíz 193/193, prefijo 309/309,
+  G7 17/17 y backup/restauración/limpieza adicionales PASS.
+- [x] Identidad de 2.402 archivos, nueve artefactos y relación entre config
+  digest CI y manifiesto OCI Docker 29 local verificadas.
+- [x] Producción propia healthy, PostgreSQL privado, web 127.0.0.1:18081;
+  migraciones reales, cookies/prefijo, healthcheck y HTTPS comprobados.
+- [x] Caddy: bloque propio de 439 bytes; retirada real del primer intento y
+  publicación final verificada; tres recargas, PID 916, cero reinicios.
+- [x] Backup local coherente, cifrado AES256 e integridad/descifrado comprobados;
+  recuperación aislada real, misma imagen/punto de datos, sin puertos ni promoción.
+- [x] Timer diario y retención de siete bundles completos verificados; alarma
+  local probada manualmente. `OnFailure` no se provocó artificialmente.
+- [x] Matriz pública VPS 54/54: READ V4 27, WRITE V5 9, WORKER V5 9 y
+  LOGIN/LOGOUT V6 9; tres ediciones/roles, fases completas, cero retries.
+- [x] Media físicamente vacía; nueve usuarios/tres Spaces sintéticos eliminados
+  y 18 sesiones ausentes. Backup final `20261007T004418Z-7c827cdf7a24`,
+  un administrador/un Space/cero recetas, cuatro miembros descifrados y verificados.
+- [x] Comparación final: 16 contenedores/46 servicios sin cambios, ocho endpoints
+  con el mismo status/error/redirección, ningún OOM nuevo; recursos documentados.
+- [ ] Copia cifrada offsite: sin destino configurado. `backups/` está en este VPS.
+- [ ] iPad físico; la emulación de 768 px no lo acredita. SMTP real no ensayado.
+
+Las evidencias operativas privadas están en `agent-evidence/` del paquete;
+ver [STATUS](STATUS.md) y [runbook](VPS_RUNBOOK_ES.md). Los FAIL previos, incidentes
+del host y resultados históricos siguen conservados debajo y no sustituyen
+ninguna casilla vigente.
+
+## Historial de aceptación y candidatos anteriores
+
 ## Candidato para prefijo — 6 de octubre de 2026
 
 - [x] Paquete y fuente inicial comprobados; autorización de fork/VPS vigente.
