@@ -40,7 +40,7 @@ import {DateTime} from "luxon";
 import {useI18n} from "vue-i18n";
 
 const {locale} = useI18n()
-const dateLocale = computed(() => locale.value.replaceAll('_', '-'))
+const dateLocale = computed(() => locale.value.replace(/_/g, '-'))
 
 const emit = defineEmits(['input'])
 
