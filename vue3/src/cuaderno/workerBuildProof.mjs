@@ -33,7 +33,7 @@ export function verifyWorkerBuild(directory) {
     }
     visit(ast)
     assert.equal(manifests.length, 1, 'Actual injected manifest must contain the emitted logo once')
-    assert.equal(manifests[0].length, 1, 'Installation must not eagerly fetch lazy pages or translations')
+    assert.equal(manifests[0].length, 1, 'Installation must not eagerly fetch lazy pages or translations; injected URLs: ' + JSON.stringify(manifests[0].map(entry => entry?.url)))
     const entry = manifests[0][0]
     assert.ok(entry.noRevision || entry.revision === createHash('md5').update(logo).digest('hex'), 'Workbox revision must match emitted bytes')
     return {passed: true, precache_entries: 1, logo: entry.url,

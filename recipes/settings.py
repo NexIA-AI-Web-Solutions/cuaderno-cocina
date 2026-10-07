@@ -423,6 +423,12 @@ SPECTACULAR_SETTINGS = {
     'ENUM_NAME_OVERRIDES': {
         'QuantityBasisEnum': [('gross', 'Bruta'), ('net_usable', 'Neta útil')],
         'AllergenStateEnum': [('declared', 'declared'), ('unknown', 'unknown')],
+        'KindEnum': ['receipt', 'consume', 'waste'],
+        'StatusEnum': ['complete', 'incomplete', 'needs_conversion', 'invalid'],
+        'CalendarEntryKindEnum': ['event', 'absence'],
+        'RecipeDietStatusEnum': ['unknown', 'suitable', 'unsuitable'],
+        'RecipeDietEnum': ['celiacos', 'colesterol', 'diabetes', 'hiposodica',
+                           'gastrica', 'fibra', 'sinfructosa', 'sinlactosa'],
     },
     "AUTHENTICATION_WHITELIST": [],
     "APPEND_COMPONENTS": {

@@ -34,6 +34,8 @@ export default defineConfig(async ({command, mode, isSsrBuild, isPreview}) => {
             }),
             VitePWA({
                 injectRegister: false,
+                // Django serves the scoped product manifest; do not generate or precache a second one.
+                manifest: false,
                 //registerType: 'autoUpdate',
                 strategies: 'injectManifest',
                 srcDir: 'src',

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import ts from 'typescript'
 import {verifyWorkerBuild} from './workerBuildProof.mjs'
 
 function fixture(t, worker, secondLogo = false) {
@@ -36,4 +37,26 @@ test('rejects eager page bundles and stale logo revisions', t => {
 test('rejects ambiguous output logo selection', t => {
     const directory = fixture(t, 'const entries=[{url:"assets/cuaderno-logo-real.svg",revision:null}];', true)
     assert.throws(() => verifyWorkerBuild(directory), /exactly one/)
+})
+
+test('rejects the plugin-generated web manifest even alongside the correct logo', t => {
+    const directory = fixture(t, 'const entries=[{url:"assets/cuaderno-logo-real.svg",revision:null},{url:"manifest.webmanifest",revision:"generated"}];')
+    assert.throws(() => verifyWorkerBuild(directory), /injected URLs:.*manifest\.webmanifest/)
+})
+
+test('VitePWA explicitly leaves the product web manifest to Django', () => {
+    const config = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8')
+    const ast = ts.createSourceFile('vite.config.ts', config, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+    assert.equal(ast.parseDiagnostics.length, 0)
+    const options = []
+    const visit = node => {
+        if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'VitePWA') options.push(node.arguments[0])
+        ts.forEachChild(node, visit)
+    }
+    visit(ast)
+    assert.equal(options.length, 1)
+    assert.ok(ts.isObjectLiteralExpression(options[0]))
+    const manifest = options[0].properties.filter(ts.isPropertyAssignment).filter(property => property.name.getText(ast) === 'manifest')
+    assert.equal(manifest.length, 1, 'The plugin must explicitly disable its default generated web manifest')
+    assert.equal(manifest[0].initializer.kind, ts.SyntaxKind.FalseKeyword)
 })
