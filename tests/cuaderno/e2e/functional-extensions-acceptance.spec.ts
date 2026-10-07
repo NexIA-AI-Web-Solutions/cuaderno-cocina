@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto'
 import {request, type Locator, type Page, type TestInfo} from '@playwright/test'
 import {appPath, authFile, fixturePrefix, type Identity} from './contracts.js'
 import {api, assertNoHorizontalOverflow, enterApp, expect, rows, test} from './fixtures.js'
+import {withNativeReadBarrier} from './native-read-barrier.js'
 
 // Real DOM + native APIs against the guarded, disposable CUADERNO-E2E seed.
 // No routing, response replacement, worker override or browser-error exemptions.
@@ -71,8 +72,13 @@ async function recipePage(page: Page, recipe: Recipe) {
   return panel
 }
 async function planningPage(page: Page, date?: string) {
-  await page.goto(appPath('/cuaderno/planificacion'))
-  await expect(page.getByRole('heading', {name: 'Organización de menús'})).toBeVisible()
+  await withNativeReadBarrier(page, async () => {
+    await page.goto(appPath('/cuaderno/planificacion'))
+    await expect(page.getByRole('heading', {name: 'Organización de menús'})).toBeVisible()
+    const settled = page.getByText(/^(Periodo cargado:|La organización profesional de menús está disponible)/)
+    await expect(settled).toBeVisible()
+    await expect(settled).not.toContainText('pendiente')
+  })
   if (date) {
     await expect(page.getByRole('button', {name: 'Actualizar periodo', exact: true})).toBeVisible()
     await expect(page.getByText(/Periodo cargado:/)).not.toContainText('pendiente')
@@ -357,9 +363,10 @@ test('planificación: captura cinco semanas y aplica una plantilla en el calenda
     const card = page.locator('.v-card').filter({hasText: recipe.name}).filter({has: page.getByRole('button', {name: 'Aplicar al calendario', exact: true})})
     await card.getByRole('button', {name: 'Aplicar al calendario', exact: true}).click()
     const dialog = page.getByRole('dialog')
-    await dialog.getByLabel('Primer día', {exact: true}).fill('2041-06-01')
+    await dialog.getByLabel('Primer día de la plantilla', {exact: true}).fill('2041-06-01')
     const applied = await observe<{created_ids: number[]; replaced_ids: number[]}>(page, `/api/cuaderno/planning/templates/${template.id}/apply/`, 'POST', () => dialog.getByRole('button', {name: 'Aplicar plantilla', exact: true}).click(), 201)
     createdIds.push(...applied.created_ids); expect(createdIds).toHaveLength(1); expect(applied.replaced_ids).toEqual([])
+    await expect(dialog).not.toBeVisible()
     const native = await api<Meal>(page, nativePlanPath(createdIds[0]!))
     expect(native.status).toBe(200); expect(native.body.recipe?.id).toBe(recipe.id); expect(native.body.from_date.slice(0, 10)).toBe('2041-06-01')
     await page.getByLabel('Primer día', {exact: true}).fill('2041-06-01')

@@ -2,6 +2,7 @@ import type {BrowserContext, Page} from '@playwright/test'
 import {appPath, fixturePrefix} from './contracts.js'
 import {reserveFreshLogin} from './auth-state.mjs'
 import {api, assertNoHorizontalOverflow, collectBrowserFailures, enterApp, expect, rows, test} from './fixtures.js'
+import {withNativeReadBarrier} from './native-read-barrier.js'
 
 const target = new URL(process.env.BASE_URL || 'http://127.0.0.1:18081')
 const scopePath = target.pathname.replace(/\/+$/, '') + '/'
@@ -106,10 +107,14 @@ test.describe('despliegue aislado bajo prefijo', () => {
     const edition = await api<{edition: string}>(cleanPage, '/api/cuaderno/edition/')
     expect(edition.status).toBe(200)
     expect(edition.body.edition).toBe(identity.edition)
-    await cleanPage.goto(appPath('/cuaderno/precios'))
-    await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
-    await cleanPage.reload()
-    await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
+    await withNativeReadBarrier(cleanPage, async () => {
+      await cleanPage.goto(appPath('/cuaderno/precios'))
+      await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
+    })
+    await withNativeReadBarrier(cleanPage, async () => {
+      await cleanPage.reload()
+      await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
+    })
     expect(new URL(cleanPage.url()).pathname).toBe(appPath('/cuaderno/precios'))
     await assertNoHorizontalOverflow(cleanPage, testInfo)
   })

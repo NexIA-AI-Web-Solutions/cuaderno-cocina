@@ -1,5 +1,28 @@
 # Estado del producto
 
+## Correcciones de aceptación — 8 de octubre de 2026
+
+El candidato `2162075` no se publicó: CI 37694418221 obtuvo 578/599 pruebas
+Playwright en raíz y 694/715 bajo prefijo; ambas matrices conservaron sus fallos.
+El runtime HTTPS continúa en `ff3b685`, imagen `sha256:89bf20d9bcfd280d6403c3894f68aab18e14a1e43d5c8798ab8e960f39855020`.
+
+Esta revisión corrige peticiones MealType prohibidas de Consulta, actualización
+innecesaria del calendario tras asignar un plato y campos persistentes del diálogo
+de plantillas. La lectura de recetas espera la autenticación para registrar una
+visita, descarta respuestas de una ruta anterior y maneja fallos de red. Las
+pruebas de navegación esperan los cuerpos API reales antes de recargar; mantienen
+collector, ocho segundos de presupuesto y cero retries. Se añade el metadato
+móvil estándar conservando el de Apple.
+
+Veinte pruebas focalizadas pasan tras regresiones rojas significativas. La
+ejecución amplia local anterior conserva sus dos fallos de entorno: dependencia
+vue-i18n ausente y contenedor aislado de Markdown inexistente. No se ejecutan
+tests destructivos sobre producción. Una CI completa del nuevo commit, G7,
+recuperación y aceptación HTTPS son requisitos pendientes para publicar.
+La auditoría pública usa Chromium local con cuentas sintéticas, límites propios
+de memoria/CPU y ejecución exclusiva; sus resultados se registran por separado.
+
+
 ## Estado actual — ampliación funcional del 7 de octubre de 2026
 
 La URL HTTPS publicada es <https://gex-dashboard.hopto.org/cuaderno-cocina/>.

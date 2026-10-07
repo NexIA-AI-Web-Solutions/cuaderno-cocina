@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, provide, ref, watch} from 'vue'
+import {computed, onBeforeUnmount, onMounted, provide, ref, watch} from 'vue'
 import {ApiApi, ApiRecipeRetrieveRequest, Recipe, ViewLog} from "@/openapi";
 import RecipeView from "@/components/display/RecipeView.vue";
 import {useDisplay} from "vuetify";
@@ -45,6 +45,20 @@ const servings = computed(() => {
 })
 
 const recipe = ref({} as Recipe)
+let loadGeneration = 0
+let loggedRecipeId: number | undefined
+onBeforeUnmount(() => {loadGeneration++})
+
+// On a deep link the recipe can arrive before user preferences. Log once when
+// both are ready, including after authentication resolves asynchronously.
+watch(() => [recipe.value.id, useUserPreferenceStore().isAuthenticated], () => {
+    const id = recipe.value.id
+    if (!id || !useUserPreferenceStore().isAuthenticated || loggedRecipeId === id) return
+    loggedRecipeId = id
+    new ApiApi().apiViewLogCreate({viewLog: {recipe: id} as ViewLog}).catch(err => {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    })
+})
 
 watch(() => props.id, () => {
     refreshData(props.id)
@@ -55,8 +69,10 @@ onMounted(() => {
 })
 
 function refreshData(recipeId: string) {
+    const generation = ++loadGeneration
     const api = new ApiApi()
     recipe.value = {} as Recipe
+    loggedRecipeId = undefined
     const id = Number(recipeId)
     if (!Number.isInteger(id) || id <= 0) return
 
@@ -66,24 +82,19 @@ function refreshData(recipeId: string) {
     }
 
     api.apiRecipeRetrieve(requestParameters).then(r => {
+        if (generation !== loadGeneration) return
         recipe.value = r
         title.value = recipe.value.name
 
         setTimeout(() => {
-            if (useUserPreferenceStore().isPrintMode) {
+            if (generation === loadGeneration && useUserPreferenceStore().isPrintMode) {
                 window.print()
             }
         }, 500)
 
-        if (useUserPreferenceStore().isAuthenticated) {
-            api.apiViewLogCreate({viewLog: {recipe: Number(recipeId)} as ViewLog})
-        }
     }).catch(err => {
-        if (err.response.status == 403) {
-            // TODO maybe redirect to login if fails with 403? or conflict with group/sapce system?
-        } else {
-            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-        }
+        if (generation !== loadGeneration) return
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     })
 }
 

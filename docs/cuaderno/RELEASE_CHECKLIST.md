@@ -160,3 +160,15 @@ HTTPa3c212029/212155/212324/212448/212611/212733 PASS. Reversión212611 revalida
 B04 Browser autorizado no disponible, sin capturas ni bypass. B01 exportantiguo bloquea solo extractor; importador genérico disponible. Nodefrontend no copiado, pero dependenciaPython nativa incluye Node24.19. No declarar finalización por documentación, inventarios o pruebas de tooling.
 
 [Estado](STATUS.md), [continuidad](RESUME.md), [uso](MANUAL_ES.md), [producción](PRODUCCION_ES.md), [evidencia](evidence/2026-09-30-continuacion.md).
+# Candidato del 8 de octubre de 2026
+
+La ampliación `2162075` queda rechazada para despliegue por fallos Playwright:
+raíz 578/599 y prefijo 694/715. Las correcciones de esta fuente requieren una
+nueva imagen; los checks del runtime publicado `ff3b685` no las certifican.
+
+- [x] Regresiones rojas y veinte pruebas focalizadas verdes de recetas y planificación.
+- [x] Revisión independiente del diff para enviar a CI.
+- [ ] CI completa del nuevo commit: backend, frontend, navegador raíz/prefijo e imagen.
+- [ ] G7 del mismo candidato con sus diecisiete evidencias.
+- [ ] Backup coherente previo y restauración aislada; actualización propia de Cuaderno.
+- [ ] Aceptación HTTPS por edición y rol, backup posterior y recuperación de esa versión.
