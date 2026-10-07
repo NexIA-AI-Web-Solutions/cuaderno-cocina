@@ -136,9 +136,8 @@ import {toVuetifyLocale} from "@/vuetify"
 import VSnackbarQueued from "@/components/display/VSnackbarQueued.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import NavigationDrawerContextMenu from "@/components/display/NavigationDrawerContextMenu.vue";
-import {nextTick, onMounted, ref} from "vue";
+import {onBeforeUnmount, onMounted, ref, watch} from "vue";
 import {isSpaceAboveLimit} from "@/utils/logic_utils";
-import {useTitle} from "@vueuse/core";
 import HelpDialog from "@/components/dialogs/HelpDialog.vue";
 import {useNavigation} from "@/composables/useNavigation.ts";
 import {useRouter} from "vue-router";
@@ -149,8 +148,23 @@ import MenuUserInfo from "@/components/display/MenuUserInfo.vue";
 const {lgAndUp} = useDisplay()
 const {t} = useI18n()
 
-const title = useTitle()
 const router = useRouter()
+
+// These pages replace the generic route title with a recipe/model-specific one.
+const pageOwnedTitles = new Set(['RecipeViewPage', 'ModelListPage', 'ModelEditPage', 'ModelDeletePage'])
+let lastRouteTitle: string | undefined
+watch(() => {
+    const route = router.currentRoute.value
+    return {path: route.fullPath, name: route.name, text: typeof route.meta.title === 'string' ? t(route.meta.title) : 'Cuaderno Cocina'}
+}, (current, previous) => {
+    const navigation = !previous || current.path !== previous.path || current.name !== previous.name
+    // Reading t() above also tracks messages loaded after the initial route.
+    // On locale updates, retain any title that a page has taken ownership of.
+    if (navigation || (!pageOwnedTitles.has(String(current.name)) && document.title === lastRouteTitle)) {
+        document.title = current.text
+        lastRouteTitle = current.text
+    }
+}, {immediate: true, flush: 'sync'})
 
 onMounted(() => {
     useUserPreferenceStore().init().then(() => {
@@ -168,9 +182,9 @@ onMounted(() => {
 })
 
 /**
- * global title update handler, might be overridden by page specific handlers
+ * Space onboarding redirects after navigation.
  */
-router.afterEach((to, from) => {
+const removeNavigationHook = router.afterEach((to, from) => {
     if (to.name == 'StartPage' && useUserPreferenceStore().initCompleted && useUserPreferenceStore().activeSpace.spaceSetupCompleted !== undefined && !useUserPreferenceStore().activeSpace.spaceSetupCompleted && useUserPreferenceStore().activeSpace.createdBy.id! == useUserPreferenceStore().userSettings.user.id!) {
         router.push({name: 'WelcomePage'})
     } else if (to.name == 'StartPage' &&
@@ -182,14 +196,8 @@ router.afterEach((to, from) => {
         useUserPreferenceStore().activeUserSpace?.household == undefined ) {
         router.push({name: 'HouseholdPage'})
     }
-    nextTick(() => {
-        if (typeof to.meta.title === 'string') {
-            title.value = t(to.meta.title)
-        } else {
-            title.value = 'Cuaderno Cocina'
-        }
-    })
 })
+onBeforeUnmount(removeNavigationHook)
 
 </script>
 
