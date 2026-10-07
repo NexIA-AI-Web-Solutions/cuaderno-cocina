@@ -1,6 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {readFileSync, readdirSync} from 'node:fs'
+import {readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join, relative} from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {component} from './functional/functionalHarness.mjs'
 import {loadTestModule} from './testModuleLoader.mjs'
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
@@ -30,7 +34,37 @@ test('anonymous and authenticated navigation share a local branded logo and own 
     assert.doesNotMatch(app, /href="https:\/\/tandoor\.dev"|assets\/brand_logo\.svg/)
     assert.equal((app.match(/:src="brandLogo"/g) || []).length, 2)
     assert.equal((app.match(/alt="Cuaderno Cocina"/g) || []).length, 2)
-    assert.match(app, /title\.value = 'Cuaderno Cocina'/)
+    const assertHomeBrand = componentPath => {
+        const document = {title: 'Previous page'}
+        const router = {
+            currentRoute: {value: {fullPath: '/', name: 'StartPage', meta: {}}},
+            afterEach: () => () => {},
+        }
+        component(componentPath, [], {globals: {
+            document,
+            useRouter: () => router,
+            watch: (source, callback, options) => {
+                if (options?.immediate) callback(source(), undefined)
+                return () => {}
+            },
+        }})
+        assert.equal(document.title, 'Cuaderno Cocina')
+    }
+    assertHomeBrand('apps/tandoor/Tandoor.vue')
+
+    // Execute a wrong-brand mutation of the same SFC to prove this assertion rejects it.
+    const directory = mkdtempSync(join(tmpdir(), 'cuaderno-brand-title-'))
+    try {
+        const mutated = app.replaceAll("'Cuaderno Cocina'", "'Wrong brand'")
+        assert.notEqual(mutated, app)
+        const fixture = join(directory, 'Tandoor.vue')
+        writeFileSync(fixture, mutated)
+        const sourceRoot = fileURLToPath(new URL('../', import.meta.url))
+        assert.throws(() => assertHomeBrand(relative(sourceRoot, fixture)), error =>
+            error.code === 'ERR_ASSERTION' && error.actual === 'Wrong brand' && error.expected === 'Cuaderno Cocina')
+    } finally {
+        rmSync(directory, {recursive: true, force: true})
+    }
     assert.match(app, /Cuaderno Cocina \{\{ useUserPreferenceStore\(\)\.serverSettings\.version/)
     assert.match(app, /activeSpace\.navLogo\?\.preview/)
 })
