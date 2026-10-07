@@ -60,6 +60,10 @@ function createAndJoinHousehold() {
     let api = new ApiApi()
     let userSpace = useUserPreferenceStore().activeUserSpace
 
+    if (userSpace == null) {
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, new Error("El contexto del hogar aún no está disponible"))
+        return Promise.resolve()
+    }
     loading.value = true
     if (userSpace != null) {
         api.apiHouseholdCreate({household: {name: householdName.value}}).then(r => {
@@ -92,18 +96,14 @@ function createAndJoinHousehold() {
 
 function skipHouseholdSetup() {
     let api = new ApiApi()
-
-    useUserPreferenceStore().activeSpace.householdSetupCompleted = true
+    const currentSpace = useUserPreferenceStore().activeSpace
     loading.value = true
-
-    api.apiSpacePartialUpdate({id: useUserPreferenceStore().activeSpace.id!, patchedSpace: useUserPreferenceStore().activeSpace}).then(r => {
+    return api.apiSpacePartialUpdate({id: currentSpace.id!, patchedSpace: {...currentSpace, householdSetupCompleted: true}}).then(r => {
         useUserPreferenceStore().activeSpace = r
+        return router.push({name: 'StartPage'})
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-    }).finally(() => {
-        loading.value = false
-        router.push({name: 'StartPage'})
-    })
+    }).finally(() => { loading.value = false })
 }
 
 

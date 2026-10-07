@@ -132,6 +132,14 @@ class Command(BaseCommand):
         )
         shopping_entry.shopping_lists.add(shopping)
 
+        # Keep the populated list first by native PK ordering. This additional
+        # guarded fixture lets read-only browser cases observe a real empty list.
+        empty_shopping, _ = ShoppingList.objects.get_or_create(
+            space=space, name=f"{PREFIX} compra vacía",
+        )
+        if ShoppingListEntry.objects.filter(shopping_lists=empty_shopping).exists():
+            raise CommandError(f"La lista vacía {PREFIX} de {edition} contiene datos inesperados.")
+
         if edition in {SpaceProfile.PROFESIONAL, SpaceProfile.INTEGRAL}:
             meal_type, _ = MealType.objects.get_or_create(
                 space=space, name=f"{PREFIX} servicio", defaults={"created_by": owner},

@@ -46,7 +46,7 @@ class Integration:
         self.export_type = export_type
         self.ignored_recipes = []
 
-        description = f'Imported by {request.user.get_user_display_name()} at {date_format(timezone.now(), "DATETIME_FORMAT")}. Type: {export_type}'
+        description = f'Importado por {request.user.get_user_display_name()} el {date_format(timezone.now(), "DATETIME_FORMAT")} con Cuaderno Cocina.'
 
         try:
             last_kw = Keyword.objects.filter(name__regex=r'^(Import [0-9]+)', space=request.space).latest('created_at')

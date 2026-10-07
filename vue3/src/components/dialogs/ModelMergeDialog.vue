@@ -85,6 +85,10 @@ const updatedItems = ref<EditorSupportedTypes[]>([])
 watch(dialog, (newValue, oldValue) => {
     if (!oldValue && newValue) {
         sourceItems.value = JSON.parse(JSON.stringify(props.source))
+        target.value = null
+        automate.value = false
+        updatedItems.value = []
+        failedItems.value = []
     }
 })
 
@@ -122,16 +126,17 @@ function mergeModel() {
                         param2: selectedTarget.name,
                         type: genericModel.model.mergeAutomation
                     } as Automation
-                    promises.push(api.apiAutomationCreate({automation: automation}).catch(err => {
+                    return api.apiAutomationCreate({automation: automation}).catch(err => {
                         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-                    }))
+                    })
                 }
             }).catch(err => {
-                updatedItems.value.push(sourceItem)
+                failedItems.value.push(sourceItem)
+                useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
             }))
         })
 
-        Promise.allSettled(promises).then(() => {
+        return Promise.allSettled(promises).then(() => {
             loading.value = false
             emit('change')
         })

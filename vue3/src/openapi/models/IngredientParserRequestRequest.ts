@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Tandoor
- * Tandoor API Docs
+ * Cuaderno Cocina
+ * Cuaderno Cocina API Docs
  *
  * The version of the OpenAPI document: 0.0.0
  * 

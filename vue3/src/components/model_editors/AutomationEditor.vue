@@ -23,7 +23,7 @@
                 <v-number-input :label="$t('Order')" :step="10" v-model="editingObj.order" :hint="$t('OrderInformation')" control-variant="stacked"></v-number-input>
                 <v-checkbox :label="$t('Disabled')" v-model="editingObj.disabled"></v-checkbox>
 
-                <a href="https://docs.tandoor.dev/features/automation/" target="_blank">{{ $t('Learn_More') }}</a>
+                <a href="https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/blob/cuaderno/main/docs/features/automation.md" target="_blank">{{ $t('Learn_More') }}</a>
             </v-form>
         </v-card-text>
     </model-editor-base>

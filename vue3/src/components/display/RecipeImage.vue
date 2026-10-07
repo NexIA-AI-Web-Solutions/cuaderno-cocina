@@ -1,5 +1,5 @@
 <template>
-    <v-img :cover="cover" :style="{'height': height, 'width': width,}" color="recipeImagePlaceholderBg" :src="image" :alt="$t('Recipe_Image')" :rounded="props.rounded">
+    <v-img :class="{'cuaderno-recipe-placeholder': !props.recipe?.image}" :cover="props.recipe?.image ? cover : false" :style="{'height': height, 'width': width,}" color="recipeImagePlaceholderBg" :src="image" :alt="$t('Recipe_Image')" :rounded="props.rounded">
         <slot name="overlay">
 
         </slot>
@@ -10,7 +10,7 @@
 
 import {computed, inject, PropType, type Ref} from "vue";
 import {Recipe, RecipeOverview} from "@/openapi";
-import recipeDefaultImage from '../../assets/recipe_no_image.svg'
+import recipeDefaultImage from '../../assets/cuaderno-recipe-placeholder.svg'
 import {RECIPE_SHARE_TOKEN_KEY, sharedMediaUrl} from "@/cuaderno/sharedMedia";
 
 const props = defineProps({

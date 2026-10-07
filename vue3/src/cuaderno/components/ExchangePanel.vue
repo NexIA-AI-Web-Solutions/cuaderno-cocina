@@ -8,11 +8,11 @@
             <v-expansion-panel-text>
                 <p class="mb-3">
                     Exporta las recetas visibles de este espacio o importa un JSON de Cuaderno con vista previa obligatoria.
-                    El importador nativo de Tandoor, situado debajo, sigue disponible para sus otros formatos.
+                    El importador nativo de Cuaderno Cocina, situado debajo, sigue disponible para sus otros formatos.
                 </p>
                 <v-alert type="info" variant="tonal" class="mb-4">
                     Las nuevas exportaciones incluyen las conversiones de unidades necesarias para las recetas visibles.
-                    Las fotos, archivos y etiquetas se conservan con la exportación ZIP nativa de Tandoor;
+                    Las fotos, archivos y etiquetas se conservan con la exportación ZIP nativa de Cuaderno Cocina;
                     los alérgenos y ajustes fiscales siguen fuera de este intercambio y deben revisarse aparte.
                 </v-alert>
 

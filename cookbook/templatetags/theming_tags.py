@@ -32,20 +32,20 @@ def get_theming_values(request):
                              Space.LIGHT: 'navbar-dark'}  # inverted since navbar-dark means the background
 
     tv = {
-        'logo_color_32': static('assets/logo_color_32.png'),
-        'logo_color_128': static('assets/logo_color_128.png'),
-        'logo_color_144': static('assets/logo_color_144.png'),
-        'logo_color_180': static('assets/logo_color_180.png'),
-        'logo_color_192': static('assets/logo_color_192.png'),
-        'logo_color_512': static('assets/logo_color_512.png'),
-        'logo_color_svg': static('assets/logo_color_svg.svg'),
+        'logo_color_32': static('cuaderno/cuaderno-icon-32.png'),
+        'logo_color_128': static('cuaderno/cuaderno-icon-128.png'),
+        'logo_color_144': static('cuaderno/cuaderno-icon-144.png'),
+        'logo_color_180': static('cuaderno/cuaderno-icon-180.png'),
+        'logo_color_192': static('cuaderno/cuaderno-icon-192.png'),
+        'logo_color_512': static('cuaderno/cuaderno-icon-512.png'),
+        'logo_color_svg': static('cuaderno/cuaderno-mark.svg'),
         'custom_theme': None,
         'theme': static(themes[UserPreference.TANDOOR]),
-        'nav_logo': static('assets/brand_logo.png'),
-        'nav_bg_color': '#ddbf86',
+        'nav_logo': static('cuaderno/cuaderno-logo.svg'),
+        'nav_bg_color': '#fffdf8',
         'nav_text_class': 'navbar-light',
         'sticky_nav': 'position: sticky; top: 0; left: 0; z-index: 1000;',
-        'app_name': 'Tandoor Recipes',
+        'app_name': 'Cuaderno Cocina',
     }
 
     if request.user.is_authenticated:

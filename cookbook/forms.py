@@ -56,12 +56,12 @@ class ImportExportBase(forms.Form):
     PESTLE = 'PESTLE'
 
     type = forms.ChoiceField(
-        choices=((DEFAULT, _('Default')), (PAPRIKA, 'Paprika'), (NEXTCLOUD, 'Nextcloud Cookbook'), (MEALIE, 'Mealie'), (MEALIE1, 'Mealie1'), (CHOWDOWN, 'Chowdown'),
-                 (SAFFRON, 'Saffron'), (CHEFTAP, 'ChefTap'), (PEPPERPLATE, 'Pepperplate'), (RECETTETEK, 'RecetteTek'), (RECIPESAGE, 'Recipe Sage'), (DOMESTICA, 'Domestica'),
-                 (MEALMASTER, 'MealMaster'), (REZKONV, 'RezKonv'), (OPENEATS, 'Openeats'), (RECIPEKEEPER, 'Recipe Keeper'), (PLANTOEAT, 'Plantoeat'), (COOKBOOKAPP, 'CookBookApp'),
+        choices=((DEFAULT, 'Cuaderno Cocina'), (PAPRIKA, 'JSON comprimido de recetas'), (NEXTCLOUD, 'ZIP de carpetas JSON'), (MEALIE, 'ZIP de recetas JSON · legado'), (MEALIE1, 'Backup completo JSON · v1'), (CHOWDOWN, 'Markdown en carpetas'),
+                 (SAFFRON, 'Texto de ingredientes e instrucciones'), (CHEFTAP, 'Texto de recetas sin estructura'), (PEPPERPLATE, 'Texto de recetas en archivos'), (RECETTETEK, 'JSON de listas y etiquetas'), (RECIPESAGE, 'JSON-LD de recetas estructuradas'), (DOMESTICA, 'JSON de biblioteca con imágenes'),
+                 (MEALMASTER, 'Texto en una columna · MMF'), (REZKONV, 'Texto de recetas delimitadas'), (OPENEATS, 'JSON de modelos y relaciones'), (RECIPEKEEPER, 'HTML de fichas de recetas'), (PLANTOEAT, 'Texto con campos y enlaces'), (COOKBOOKAPP, 'YAML de recetas'),
                  # (COOKLANG, 'Cooklang Markdown'), (COPYMETHAT, 'CopyMeThat'), (PDF, 'PDF'), (MELARECIPES, 'Melarecipes'), (COOKMATE, 'Cookmate'),
-                 (COOKLANG, 'Cooklang Markdown'), (COPYMETHAT, 'CopyMeThat'), (MELARECIPES, 'Melarecipes'), (COOKMATE, 'Cookmate'),
-                 (REZEPTSUITEDE, 'Recipesuite.de'), (GOURMET, 'Gourmet'), (PESTLE, 'Pestle'))
+                 (COOKLANG, 'Texto con sintaxis .cook'), (COPYMETHAT, 'HTML con listas de ingredientes'), (MELARECIPES, 'JSON de receta con fotos'), (COOKMATE, 'XML de ingredientes y tiempos'),
+                 (REZEPTSUITEDE, 'XML con cabecera y pasos'), (GOURMET, 'XML de recetario'), (PESTLE, 'JSON de ingredientes por secciones'))
     )
 
 

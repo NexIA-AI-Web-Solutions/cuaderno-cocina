@@ -39,7 +39,7 @@
                         <th>
                             <v-btn color="create" class="mt-1 float-right">
                                 <v-icon icon="$create"></v-icon>
-                                <model-edit-dialog model="PropertyType" @create="(pt:PropertyType) => propertyTypes.push(pt)"></model-edit-dialog>
+                                <model-edit-dialog model="PropertyType" @create="appendPropertyType"></model-edit-dialog>
                             </v-btn>
                         </th>
                     </tr>
@@ -249,16 +249,32 @@ function loadRecipe(id: number) {
 /**
  * load property types from server, if successful trigger building of food map
  */
-function loadPropertyTypes() {
+async function loadPropertyTypes() {
     let api = new ApiApi()
     propertyTypesLoading.value = true
-    api.apiPropertyTypeList().then(r => {
-        propertyTypes.value = r.results
+    try {
+        const loaded: PropertyType[] = []
+        let page = 1
+        while (true) {
+            const result = await api.apiPropertyTypeList({page})
+            loaded.push(...result.results)
+            if (!result.next) break
+            page++
+        }
+        propertyTypes.value = loaded
         buildIngredientMap()
-    }).catch(err => {
+    } catch (err) {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-    }).finally(() => {
+    } finally {
         propertyTypesLoading.value = false
+    }
+}
+
+function appendPropertyType(propertyType: PropertyType) {
+    if (propertyTypes.value.some(existing => existing.id === propertyType.id)) return
+    propertyTypes.value.push(propertyType)
+    ingredients.value.forEach(ingredient => {
+        ingredient.food.properties.push({propertyType, propertyAmount: null})
     })
 }
 
@@ -320,7 +336,8 @@ function deleteFoodProperty(p: PropertyRequest, ingredient: IngredientLoading) {
 
     if (p.id) {
         ingredient.loading = true
-        api.apiPropertyDestroy({id: p.id}).then(r => {
+        return api.apiPropertyDestroy({id: p.id}).then(r => {
+            delete p.id
             p.propertyAmount = null
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
@@ -339,8 +356,9 @@ function deleteFoodProperty(p: PropertyRequest, ingredient: IngredientLoading) {
 function updateFood(ingredient: IngredientLoading) {
     let api = new ApiApi()
     ingredient.loading = true
-    api.apiFoodPartialUpdate({id: ingredient.food.id!, patchedFood: ingredient.food}).then(r => {
-
+    return api.apiFoodPartialUpdate({id: ingredient.food.id!, patchedFood: ingredient.food}).then(r => {
+        const updated = buildIngredientFoodProperties({...ingredient, food: r})
+        if (updated) ingredient.food = updated.food
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
     }).finally(() => {

@@ -3,7 +3,7 @@
         <v-alert-title>
             <v-row>
                 <v-col>
-                    <v-avatar image="../../assets/logo_color.svg" class="me-2"></v-avatar>
+                    <v-avatar :image="brandMark" class="me-2"></v-avatar>
                     {{ $t('ThankYou') }}!
 
                 </v-col>
@@ -20,12 +20,12 @@
         <v-alert-title>
             <v-row>
                 <v-col>
-                    <v-avatar image="../../assets/logo_color.svg" class="me-2"></v-avatar>
+                    <v-avatar :image="brandMark" class="me-2"></v-avatar>
                     {{ $t('ThankYou') }}!
 
                 </v-col>
                 <v-col>
-                    <v-btn color="primary" class="float-right" href="https://github.com/sponsors/vabene1111" target="_blank"><i class="fa-brands fa-github"></i> GitHub Sponsors
+                    <v-btn color="primary" class="float-right" :to="{name: 'SettingsPage'}">{{ $t('Settings') }}
                     </v-btn>
 
                 </v-col>
@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 
+import brandMark from "@/assets/cuaderno-mark.svg";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 </script>
 

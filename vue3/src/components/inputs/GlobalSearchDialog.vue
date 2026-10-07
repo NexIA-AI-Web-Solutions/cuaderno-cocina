@@ -1,6 +1,6 @@
 <template>
     <slot name="activator" >
-        <v-btn @click="dialog = true" variant="plain" icon="fa-solid fa-search" class="mr-1 fa-fw d-print-none" v-if="mobile"></v-btn>
+        <v-btn @click="dialog = true" variant="plain" icon="fa-solid fa-search" class="mr-1 fa-fw d-print-none" :aria-label="$t('Search')" :title="$t('Search')" v-if="mobile"></v-btn>
         <v-btn @click="dialog = true" variant="plain" class="d-print-none"  v-else>
             <v-icon icon="fa-solid fa-search" class="mr-1 fa-fw"></v-icon>
             <span class="d-none d-sm-block">{{ $t('Search') }}</span>
@@ -23,12 +23,25 @@
                     v-model="searchQuery"
                     autocomplete="off"
                     clearable
-                    placeholder="Search"
+                    :label="$t('Search')"
+                    :placeholder="$t('Search')"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-controls="cuaderno-search-results"
+                    :aria-expanded="dialog"
+                    :aria-busy="searchPending"
+                    :aria-activedescendant="searchResults[selectedResult] ? `cuaderno-search-result-${selectedResult}` : undefined"
                     prepend-inner-icon="fas fa-search"
                     variant="solo"
                 ></v-text-field>
 
-                <v-card :variant="cardVariant(index)" v-for="(item, index) in searchResults" hover class="mt-1" @click="selectedResult = index" :key="index">
+                <p v-if="searchPending" role="status" aria-live="polite" class="text-body-2 mb-2">{{ $t('Loading') }}</p>
+                <p v-else-if="searchQuery && !searchPending && !searchResults.some(item => item.recipeId !== undefined)" role="status" class="text-body-2 mb-2">{{ $t('SearchNoMatches') }}</p>
+                <div id="cuaderno-search-results" role="listbox" :aria-label="$t('Recipes')">
+                <v-card :variant="cardVariant(index)" v-for="(item, index) in searchResults" hover class="mt-2 cuaderno-search-result"
+                        :class="{'cuaderno-search-result-selected': selectedResult === index}"
+                        role="option" :aria-selected="selectedResult === index" :id="`cuaderno-search-result-${index}`"
+                        @click="selectedResult = index" :key="index">
                     <v-card-title @click="goToSelectedRecipe(index)">
                         <v-avatar v-if="item.image" :image="item.image"></v-avatar>
                         <v-avatar v-else-if="item.recipeId !== undefined" color="tandoor">{{ item.name.charAt(0) }}</v-avatar>
@@ -36,6 +49,7 @@
                         {{ item.name }}
                     </v-card-title>
                 </v-card>
+                </div>
             </v-card-text>
 
             <v-divider class="d-none d-sm-block"></v-divider>
@@ -85,6 +99,10 @@ const asyncSearchResults = ref([] as RecipeOverview[])
 
 const flatListLoading = ref(false)
 const asyncLoading = ref(false)
+const asyncResultQuery = ref('')
+let searchGeneration = 0
+const searchPending = computed(() => flatListLoading.value || Boolean(searchQuery.value &&
+    (asyncLoading.value || searchQuery.value !== debouncedSearchQuery.value)))
 
 /**
  * build array of search results
@@ -98,7 +116,7 @@ const searchResults = computed(() => {
             searchResults.push({name: r.name, image: r.image, recipeId: r.id, type: "recipe"} as SearchResult)
         })
 
-        if (searchResults.length < 3) {
+        if (searchResults.length < 3 && asyncResultQuery.value === searchQuery.value) {
             asyncSearchResults.value.slice(0, 5).forEach(r => {
                 if (searchResults.findIndex(x => x.recipeId == r.id) == -1) {
                     searchResults.push({name: r.name, image: r.image, recipeId: r.id, type: "recipe"})
@@ -157,7 +175,7 @@ function handleKeydown(e: KeyboardEvent) {
             selectedResult.value = Math.max(0, selectedResult.value - 1)
         }
         if (e.key == 'ArrowDown') {
-            selectedResult.value = Math.min(searchResults.value.length, selectedResult.value + 1)
+            selectedResult.value = Math.min(Math.max(0, searchResults.value.length - 1), selectedResult.value + 1)
         }
         if (e.key == 'Enter') {
             goToSelectedRecipe(selectedResult.value)
@@ -188,18 +206,27 @@ onMounted(() => {
  * search for query on server after debounce
  */
 watch(debouncedSearchQuery, (val) => {
+    const generation = ++searchGeneration
     if (val != null && val != '') {
         let api = new ApiApi()
+        const requestSignal = signal.value
         asyncLoading.value = true
-        api.apiRecipeList({query: val}, {signal: signal.value}).then(r => {
-            asyncSearchResults.value = r.results
+        api.apiRecipeList({query: val}, {signal: requestSignal}).then(r => {
+            if (generation === searchGeneration && !requestSignal?.aborted && searchQuery.value === val) {
+                asyncSearchResults.value = r.results
+                asyncResultQuery.value = val
+            }
         }).catch(err => {
-            if (err.name !== 'AbortError' && err.cause.name !== 'AbortError') {
+            if (err?.name !== 'AbortError' && err?.cause?.name !== 'AbortError') {
                 useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
             }
         }).finally(() => {
-            asyncLoading.value = false
+            if (generation === searchGeneration) asyncLoading.value = false
         })
+    } else {
+        asyncLoading.value = false
+        asyncSearchResults.value = []
+        asyncResultQuery.value = ''
     }
 })
 
@@ -242,5 +269,14 @@ function goToSelectedRecipe(index: number) {
 
 
 <style scoped>
-
+.cuaderno-search-result { border-inline-start: 4px solid transparent; }
+.cuaderno-search-result-selected { border-inline-start-color: rgb(var(--v-theme-primary)); }
+.cuaderno-search-result :deep(.v-card-title) {
+    font-size: 1rem;
+    line-height: 1.5;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 </style>

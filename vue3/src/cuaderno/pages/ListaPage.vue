@@ -29,8 +29,8 @@
         <p v-if="message" role="status">{{ message }}</p>
         <v-progress-linear v-if="loading" indeterminate aria-label="Cargando lista" />
         <p v-else-if="!entries.length" class="my-4">{{ listId ? 'La lista está vacía. Añade el primer alimento.' : 'Crea una lista para empezar.' }}</p>
-        <v-list>
-            <v-list-subheader>Pendiente</v-list-subheader>
+        <v-list class="cuaderno-quick-list">
+            <v-list-subheader><h2 class="text-h6">Pendiente</h2><v-chip class="ms-3" size="small" color="secondary" variant="tonal">{{ pending.length }}</v-chip></v-list-subheader>
             <v-list-item v-for="entry in pending" :key="entry.id">
                 <template #prepend>
                     <v-checkbox-btn :model-value="false" :disabled="!canOperate || busy" :aria-label="`Marcar ${label(entry)}`" @update:model-value="toggle(entry, true)" />
@@ -38,8 +38,8 @@
                 <v-list-item-title>{{ label(entry) }}</v-list-item-title>
                 <v-list-item-subtitle>{{ sourceLabel(entry) }} · {{ syncingEntry === entry.id ? 'Guardando…' : 'Sincronizado' }}</v-list-item-subtitle>
             </v-list-item>
-            <v-list-subheader>Hecho</v-list-subheader>
-            <v-list-item v-for="entry in done" :key="entry.id">
+            <v-list-subheader><h2 class="text-h6">Hecho</h2><v-chip class="ms-3" size="small" variant="tonal">{{ done.length }}</v-chip></v-list-subheader>
+            <v-list-item v-for="entry in done" :key="entry.id" class="cuaderno-completed-entry">
                 <template #prepend>
                     <v-checkbox-btn :model-value="true" :disabled="!canOperate || busy" :aria-label="`Desmarcar ${label(entry)}`" @update:model-value="toggle(entry, false)" />
                 </template>
@@ -245,3 +245,13 @@ async function undoLast() {
 
 onMounted(() => Promise.all([loadRole(), loadLists()]))
 </script>
+
+<style scoped>
+@media screen {
+    .cuaderno-quick-list { border-radius: 16px; padding: 12px; border: 1px solid rgba(var(--v-theme-on-surface), .14); }
+    .cuaderno-quick-list :deep(.v-list-subheader) { min-height: 56px; margin-top: 8px; }
+    .cuaderno-quick-list :deep(.v-list-item) { min-height: 68px; margin-block: 8px; border-radius: 10px; background: rgba(var(--v-theme-secondary), .06); }
+    .cuaderno-quick-list :deep(.v-list-item-title), .cuaderno-quick-list :deep(.v-list-item-subtitle) { white-space: normal; overflow-wrap: anywhere; }
+    .cuaderno-completed-entry :deep(.v-list-item-title) { text-decoration: line-through; }
+}
+</style>

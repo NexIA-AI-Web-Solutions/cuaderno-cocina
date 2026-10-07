@@ -16,7 +16,7 @@
                 <v-text-field :label="$t('Name')" v-model="editingObj.name"></v-text-field>
 
 
-                <v-select :label="$t('Type')" v-model="editingObj.method" :items="['DB', 'NEXTCLOUD', 'LOCAL']"></v-select>
+                <v-select :label="$t('Type')" v-model="editingObj.method" :items="storageMethods"></v-select>
 
                 <v-text-field :label="$t('Username')" v-model="editingObj.username" v-if="editingObj.method == 'NEXTCLOUD' || editingObj.method == 'DB'"></v-text-field>
                 
@@ -26,7 +26,7 @@
                 <v-text-field :label="$t('Url')" v-model="editingObj.url" v-if="editingObj.method == 'NEXTCLOUD'"></v-text-field>
                 <v-text-field :label="$t('Path')" v-model="editingObj.path"></v-text-field>
 
-                <p v-if="editingObj.method === 'LOCAL'">{{ $t('LocalStoragePathHelp') }} <a href="https://docs.tandoor.dev/system/configuration/#local-storage-paths" target="_blank"
+                <p v-if="editingObj.method === 'LOCAL'">{{ $t('LocalStoragePathHelp') }} <a href="https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/blob/cuaderno/main/docs/system/configuration.md#local-storage-paths" target="_blank"
                                                                                             rel="nofollow noreferrer">{{ $t('Help') }}</a></p>
             </v-form>
         </v-card-text>
@@ -61,6 +61,11 @@ watch([() => props.item, () => props.itemId], () => {
 })
 
 // object specific data (for selects/display)
+const storageMethods = [
+    {title: 'Archivos remotos · token', value: 'DB'},
+    {title: 'Archivos remotos · usuario y contraseña', value: 'NEXTCLOUD'},
+    {title: 'Archivos locales', value: 'LOCAL'},
+]
 
 onMounted(() => {
     initializeEditor()

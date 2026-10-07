@@ -195,6 +195,7 @@ const selectedFood = ref<null | Food>(null)
 const selectedUnit = ref<null | Unit>(null)
 
 const deleteConfirmDialog = ref(false)
+let loadRevision = 0
 
 onMounted(() => {
     getAndLoadParameters()
@@ -226,7 +227,6 @@ function updateIngredient(ingredient: EditorIngredient) {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
     }).finally(() => {
         ingredient.loading = false
-        ingredient.changed = false
     })
 }
 
@@ -290,9 +290,12 @@ function refreshPage() {
  * @param groupBy
  */
 function loadItems({page, itemsPerPage}: VDataTableUpdateOptions) {
+    const revision = ++loadRevision
     // never load unfiltered, only load if at least one filter is set
     if (!selectedFood.value && !selectedUnit.value) {
         items.value = []
+        tableItemCount.value = 0
+        ingredientsLoading.value = false
         return
     }
 
@@ -308,15 +311,16 @@ function loadItems({page, itemsPerPage}: VDataTableUpdateOptions) {
         requestParameters.unit = selectedUnit.value.id!
     }
 
-    api.apiIngredientList(requestParameters).then(r => {
+    return api.apiIngredientList(requestParameters).then(r => {
+        if (revision !== loadRevision) return
         items.value = r.results.map(i => {
             return {...i, changed: false, loading: false}
         })
         tableItemCount.value = r.count
     }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        if (revision === loadRevision) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
-        ingredientsLoading.value = false
+        if (revision === loadRevision) ingredientsLoading.value = false
     })
 }
 

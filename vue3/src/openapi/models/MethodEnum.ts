@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Tandoor
- * Tandoor API Docs
+ * Cuaderno Cocina
+ * Cuaderno Cocina API Docs
  *
  * The version of the OpenAPI document: 0.0.0
  * 
@@ -14,9 +14,9 @@
 
 
 /**
- * * `DB` - Dropbox
- * * `NEXTCLOUD` - Nextcloud
- * * `LOCAL` - Local
+ * * `DB` - Archivos remotos · token
+ * * `NEXTCLOUD` - Archivos remotos · usuario y contraseña
+ * * `LOCAL` - Archivos locales
  * @export
  */
 export const MethodEnum = {

@@ -422,7 +422,7 @@
 
                                 <v-row>
                                     <v-col cols="12" md="3" v-for="i in INTEGRATIONS">
-                                        <v-card prepend-icon="fa-solid fa-carrot" :title="i.name" @click="importApp = i.id" variant="outlined" elevation="1"
+                                        <v-card prepend-icon="fa-solid fa-carrot" :title="i.name" :subtitle="i.description" @click="importApp = i.id" variant="outlined" elevation="1"
                                                 :color="(importApp == i.id) ? 'primary' : ''">
                                             <template #append>
                                                 <v-btn icon="$help" variant="plain" :href="i.helpUrl" target="_blank"></v-btn>
@@ -568,7 +568,7 @@
 <script lang="ts" setup>
 
 import {useI18n} from "vue-i18n";
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, onUnmounted, ref, watch} from "vue";
 import {
     AccessToken,
     AiProvider,
@@ -609,39 +609,48 @@ function doListImport() {
     importFromUrlList()
 }
 
-function importFromUrlList() {
-    let api = new ApiApi()
+async function importFromUrlList() {
+    if (disposed) return
+    const api = new ApiApi()
     let url = urlList.value.pop()
-
-    if (url != undefined && url.trim() != '') {
-
-        api.apiRecipeFromSourceCreate({recipeFromSource: {url: url}}).then(sourceResponse => {
-            if (sourceResponse.recipe) {
-                api.apiRecipeCreate({recipe: sourceImportRequest(sourceResponse.recipe)}).then(recipe => {
-                    urlListImportedRecipes.value.push(recipe)
-                    updateRecipeImage(recipe.id!, null, sourceResponse.recipe?.imageUrl).then(imageResponse => {
-                        setTimeout(importFromUrlList, 500)
-                    })
-                }).catch(err => {
-                    setTimeout(importFromUrlList, 500)
-                }).finally(() => {
-                    loading.value = false
-                })
-            }
-        }).catch(err => {
-            if (err.response.status == 429) {
-                useMessageStore().addPreparedMessage(PreparedMessage.RATE_LIMIT, err)
-            } else {
-                useMessageStore().addMessage(MessageType.WARNING, t('ErrorUrlListImport'), 8000, url)
-            }
-            urlListImportInput.value = url + '\n' + urlList.value.join('\n')
-            stepper.value = 'url_list_input'
-        }).finally(() => {
-
-        })
-    } else {
+    while (url != undefined && url.trim() === '') url = urlList.value.pop()
+    if (url === undefined) {
         useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
         loading.value = false
+        return
+    }
+    loading.value = true
+    let sourceResponse: RecipeFromSourceResponse
+    try {
+        sourceResponse = await api.apiRecipeFromSourceCreate({recipeFromSource: {url}})
+        if (!sourceResponse.recipe) throw new Error('La fuente no contiene una receta importable')
+    } catch (err: any) {
+        if (disposed) return
+        if (err?.response?.status === 429) useMessageStore().addPreparedMessage(PreparedMessage.RATE_LIMIT, err)
+        else useMessageStore().addMessage(MessageType.WARNING, t('ErrorUrlListImport'), 8000, url)
+        urlListImportInput.value = [url, ...urlList.value].join('\n')
+        stepper.value = 'url_list_input'
+        loading.value = false
+        return
+    }
+    if (disposed) return
+    try {
+        const recipe = await api.apiRecipeCreate({recipe: sourceImportRequest(sourceResponse.recipe)})
+        if (disposed) return
+        urlListImportedRecipes.value.push(recipe)
+        try {
+            await updateRecipeImage(recipe.id!, null, sourceResponse.recipe.imageUrl)
+        } catch (err) {
+            if (!disposed) useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        }
+    } catch (err) {
+        if (!disposed) useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+    }
+    if (!disposed) {
+        batchTimer = setTimeout(() => {
+            batchTimer = undefined
+            void importFromUrlList()
+        }, 500)
     }
 }
 
@@ -675,6 +684,11 @@ const stepper = ref("type")
 const dialog = ref(false)
 
 const loading = ref(false)
+let disposed = false
+let previewRevision = 0
+let pollTimer: ReturnType<typeof setTimeout> | undefined
+let batchTimer: ReturnType<typeof setTimeout> | undefined
+let bookmarkletRequest: Promise<void> | undefined
 
 const importUrl = ref("")
 
@@ -707,59 +721,58 @@ const editingStep = ref<Step | SourceImportStep>({} as Step)
 const editingStepIndex = ref(0)
 
 onMounted(() => {
-    loadOrCreateBookmarkletToken()
-
     // handle manifest share intend passing url to import page
     if (params.url && typeof params.url === "string") {
         importUrl.value = params.url
         loadRecipeFromUrl({url: importUrl.value})
     }
-    if (params.text && typeof params.text === "string") {
+    else if (params.text && typeof params.text === "string") {
         importUrl.value = params.text
         loadRecipeFromUrl({url: importUrl.value})
     }
 
-    if (params.bookmarklet_import && typeof params.bookmarklet_import === "string" && !isNaN(parseInt(params.bookmarklet_import))) {
+    else if (params.bookmarklet_import && typeof params.bookmarklet_import === "string" && !isNaN(parseInt(params.bookmarklet_import))) {
         importType.value = 'url'
         loadRecipeFromUrl({bookmarklet: parseInt(params.bookmarklet_import)})
     }
+})
+
+onUnmounted(() => {
+    disposed = true
+    previewRevision++
+    if (pollTimer !== undefined) clearTimeout(pollTimer)
+    if (batchTimer !== undefined) clearTimeout(batchTimer)
+})
+
+watch(importType, selected => {
+    if (selected === 'bookmarklet') void loadOrCreateBookmarkletToken()
 })
 
 /**
  * call server to load recipe from a given URl
  */
 function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSourceRequest) {
-    let api = new ApiApi()
+    const api = new ApiApi()
+    const revision = ++previewRevision
     loading.value = true
     importResponse.value = {}
-
-    api.apiRecipeFromSourceCreate({recipeFromSource: recipeFromSourceRequest}).then(r => {
-        if (r.recipeId != null) {
-            router.push({name: 'RecipeViewPage', params: {id: r.recipeId}})
-            return
-        }
-
+    return api.apiRecipeFromSourceCreate({recipeFromSource: recipeFromSourceRequest}).then(r => {
+        if (disposed || revision !== previewRevision) return
+        if (r.recipeId != null) return router.push({name: 'RecipeViewPage', params: {id: r.recipeId}})
         importResponse.value = r
-
-        if (importResponse.value.duplicates && importResponse.value.duplicates.length > 0) {
-            stepper.value = 'duplicates'
-        } else {
-            if (importResponse.value.images && importResponse.value.images.length > 0) {
-                stepper.value = 'image_chooser'
-            } else {
-                stepper.value = 'keywords_chooser'
-            }
-        }
-    }).catch(err => {
-        err.response.json().then((r: RecipeFromSourceResponse) => {
-            if (r.error) {
-                importResponse.value = r
-            } else {
-                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, r)
-            }
-        })
+        if (r.duplicates && r.duplicates.length > 0) stepper.value = 'duplicates'
+        else stepper.value = r.images && r.images.length > 0 ? 'image_chooser' : 'keywords_chooser'
+    }).catch(async (err: any) => {
+        if (disposed || revision !== previewRevision) return
+        let response: RecipeFromSourceResponse | undefined
+        try {
+            if (typeof err?.response?.json === 'function') response = await err.response.json()
+        } catch { /* Network and non-JSON failures use the original error below. */ }
+        if (disposed || revision !== previewRevision) return
+        if (response?.error) importResponse.value = response
+        else useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
-        loading.value = false
+        if (!disposed && revision === previewRevision) loading.value = false
     })
 }
 
@@ -782,8 +795,9 @@ function loadRecipeFromAiImport() {
 
     if (request != null) {
         loading.value = true
-        request.then(r => {
-            loading.value = false
+        const revision = ++previewRevision
+        return request.then(r => {
+            if (disposed || revision !== previewRevision) return
             importResponse.value = r
 
             if (!importResponse.value.error) {
@@ -794,57 +808,65 @@ function loadRecipeFromAiImport() {
                 }
             }
         }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+            if (!disposed && revision === previewRevision) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        }).finally(() => {
+            if (!disposed && revision === previewRevision) loading.value = false
         })
     }
 
 }
 
 function appImport() {
-    doAppImport(appImportFiles.value, importApp.value, appImportDuplicates.value, appImportMealPlans.value, appImportShoppingLists.value, appImportNutritionsPerServing.value).then(r => {
+    return doAppImport(appImportFiles.value, importApp.value, appImportDuplicates.value, appImportMealPlans.value, appImportShoppingLists.value, appImportNutritionsPerServing.value).then(id => {
+        if (disposed) return
         stepper.value = 'import_log'
-        recLoadImportLog(r)
+        return recLoadImportLog(id)
+    }).catch(err => {
+        if (!disposed) useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
     })
 }
 
 function recLoadImportLog(importLogId: number) {
-    let api = new ApiApi()
-
-    api.apiImportLogRetrieve({id: importLogId}).then(r => {
+    if (disposed) return Promise.resolve()
+    if (pollTimer !== undefined) clearTimeout(pollTimer)
+    const api = new ApiApi()
+    return api.apiImportLogRetrieve({id: importLogId}).then(r => {
+        if (disposed) return
         appImportLog.value = r
         if (r.running) {
-            setTimeout(() => {
-                recLoadImportLog(importLogId)
+            pollTimer = setTimeout(() => {
+                pollTimer = undefined
+                void recLoadImportLog(importLogId)
             }, 1000)
         }
     }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        if (!disposed) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     })
 }
 
-/**
- * create recipe in database
- */
-function createRecipeFromImport() {
-    let api = new ApiApi()
-
-    if (importResponse.value.recipe) {
-        loading.value = true
-        importResponse.value.recipe.keywords = (importResponse.value.recipe.keywords ?? []).filter(k => k.importKeyword)
-
-        api.apiRecipeCreate({recipe: sourceImportRequest(importResponse.value.recipe)}).then(recipe => {
-            updateRecipeImage(recipe.id!, null, importResponse.value.recipe?.imageUrl).then(r => {
-                if (editAfterImport.value) {
-                    router.push({name: 'ModelEditPage', params: {id: recipe.id, model: 'recipe'}})
-                } else {
-                    router.push({name: 'RecipeViewPage', params: {id: recipe.id}})
-                }
-            })
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
-        }).finally(() => {
-            loading.value = false
-        })
+/** Create a recipe once, then treat an optional image failure separately. */
+async function createRecipeFromImport() {
+    const source = importResponse.value.recipe
+    if (!source || loading.value || disposed) return
+    const api = new ApiApi()
+    loading.value = true
+    const request = sourceImportRequest({...source, keywords: (source.keywords ?? []).filter(k => k.importKeyword)})
+    try {
+        const recipe = await api.apiRecipeCreate({recipe: request})
+        try {
+            await updateRecipeImage(recipe.id!, null, source.imageUrl)
+        } catch (err) {
+            if (!disposed) useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        }
+        if (!disposed) {
+            await router.push(editAfterImport.value
+                ? {name: 'ModelEditPage', params: {id: recipe.id, model: 'recipe'}}
+                : {name: 'RecipeViewPage', params: {id: recipe.id}})
+        }
+    } catch (err) {
+        if (!disposed) useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+    } finally {
+        if (!disposed) loading.value = false
     }
 }
 
@@ -983,21 +1005,21 @@ function addStep() {
 /**
  * load or create an AccessToken with the bookmarklet scope for use in the bookmarklet code
  */
-function loadOrCreateBookmarkletToken() {
-    let api = new ApiApi()
-    api.apiAccessTokenList().then(r => {
-        r.forEach(token => {
-            if (token.scope == 'bookmarklet') {
-                bookmarkletToken.value = token.token
-            }
-        })
-
-        if (bookmarkletToken.value == '') {
-            api.apiAccessTokenCreate({accessToken: {scope: 'bookmarklet', expires: DateTime.now().plus({year: 100}).toJSDate()} as AccessToken}).then(r => {
-                bookmarkletToken.value = r.token
-            })
-        }
-    })
+function loadOrCreateBookmarkletToken(): Promise<void> {
+    if (bookmarkletToken.value || disposed) return Promise.resolve()
+    if (bookmarkletRequest) return bookmarkletRequest
+    const api = new ApiApi()
+    bookmarkletRequest = api.apiAccessTokenList().then(async tokens => {
+        if (disposed) return
+        const existing = tokens.find(token => token.scope === 'bookmarklet')
+        const token = existing ?? await api.apiAccessTokenCreate({accessToken: {
+            scope: 'bookmarklet', expires: DateTime.now().plus({year: 100}).toJSDate()
+        } as AccessToken})
+        if (!disposed) bookmarkletToken.value = token.token
+    }).catch(err => {
+        if (!disposed) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    }).finally(() => { bookmarkletRequest = undefined })
+    return bookmarkletRequest
 }
 
 /**

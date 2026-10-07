@@ -25,7 +25,7 @@
                 <v-btn key="1" color="save" icon @click="modelEditorFunctions.saveObject()">
                     <v-icon icon="$save"></v-icon>
                 </v-btn>
-                 <v-btn key="1" color="info" icon @click="modelEditorFunctions.saveObject().then(() => router.push({name : 'RecipeViewPage', params: {id: props.id}}))">
+                 <v-btn key="1" color="info" icon @click="saveAndView()">
                     <v-icon icon="fa-solid fa-eye fa-fw"></v-icon>
                 </v-btn>
                 <v-btn color="delete" icon
@@ -78,6 +78,11 @@ watch(() => props.id, (newValue, oldValue) => {
         location.reload()
     }
 })
+
+async function saveAndView() {
+    const saved = await modelEditorFunctions.value?.saveObject()
+    if (saved?.id) return router.push({name: 'RecipeViewPage', params: {id: saved.id}})
+}
 
 /**
  * after creation open object with correct URL in edit mode

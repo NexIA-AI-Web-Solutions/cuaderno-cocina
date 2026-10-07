@@ -26,7 +26,7 @@ const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => wi
 projects.push(
   {
     name: projectName('esencial', 'responsable', 390, 'firefox'),
-    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/ : /browser-acceptance\.spec\.ts/,
+    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance|modernization-acceptance)\.spec\.ts/ : /(?:browser-acceptance|modernization-acceptance)\.spec\.ts/,
     use: {
       ...devices['Desktop Firefox'],
       launchOptions: ciTlsLaunchOptions('firefox'),
@@ -37,7 +37,7 @@ projects.push(
   },
   {
     name: projectName('integral', 'responsable', 768, 'webkit'),
-    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/ : /browser-acceptance\.spec\.ts/,
+    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance|modernization-acceptance)\.spec\.ts/ : /(?:browser-acceptance|modernization-acceptance)\.spec\.ts/,
     use: {
       ...devices['Desktop Safari'],
       launchOptions: ciTlsLaunchOptions('webkit'),
@@ -54,7 +54,7 @@ export default defineConfig({
   globalSetup: './global-setup.ts',
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
+  retries: 0,
   forbidOnly: Boolean(process.env.CI),
   timeout: 45_000,
   expect: {timeout: 8_000},

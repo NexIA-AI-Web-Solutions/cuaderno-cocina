@@ -3,22 +3,23 @@
         <template #prepend>
             <v-avatar color="primary">{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}</v-avatar>
         </template>
-        <v-list-item-title>{{ useUserPreferenceStore().userSettings.user.displayName }}</v-list-item-title>
-        <v-list-item-subtitle>
-            <i :class="TSpace.icon"></i>
+        <v-list-item-title class="text-wrap cuaderno-identity-name">{{ useUserPreferenceStore().userSettings.user.displayName }}</v-list-item-title>
+        <v-list-item-subtitle class="text-wrap cuaderno-identity-line">
+            <i :class="TSpace.icon" aria-hidden="true"></i>
+            <span class="sr-only">{{ $t('Space') }}:</span>
             {{ useUserPreferenceStore().activeSpace.name }}
         </v-list-item-subtitle>
-        <v-list-item-subtitle
+        <router-link class="cuaderno-household-link cuaderno-identity-line"
             :to="{name: 'ModelListPage', params: {model: 'household'}}"
             v-if="activeHousehold">
-            <i :class="THousehold.icon"></i>
+            <i :class="THousehold.icon" aria-hidden="true"></i>
             {{ activeHousehold.name }}
-        </v-list-item-subtitle>
-        <v-list-item-subtitle class="cursor-pointer" @click="router.push({name: 'ModelListPage', params: {model: 'UserSpace'}})"
+        </router-link>
+        <router-link class="cuaderno-household-link cuaderno-identity-line" :to="{name: 'ModelListPage', params: {model: 'UserSpace'}}"
                               v-else>
-            <i :class="THousehold.icon"></i>
+            <i :class="THousehold.icon" aria-hidden="true"></i>
             {{ $t('NoHousehold') }}
-        </v-list-item-subtitle>
+        </router-link>
     </v-list-item>
 </template>
 
@@ -35,5 +36,8 @@ const activeHousehold = computed(() => userPreferences.activeUserSpace?.househol
 </script>
 
 <style scoped>
-
+.cuaderno-identity-name, .cuaderno-identity-line { overflow-wrap: anywhere; }
+.cuaderno-identity-line { display: block; margin-top: 4px; line-height: 1.5; }
+.cuaderno-household-link { color: rgb(var(--v-theme-primary)); font-size: .875rem; }
+.cuaderno-household-link i { margin-inline-end: 4px; }
 </style>

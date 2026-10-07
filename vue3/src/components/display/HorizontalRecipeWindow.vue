@@ -2,9 +2,12 @@
     <template v-if="loading || recipes.length > 0">
         <v-row justify="space-between">
             <v-col>
-                <h4 @click="openSearch()" class="cursor-pointer">
+                <div class="d-flex align-center justify-space-between ga-2">
+                <h2 class="text-h6">
                     <i :class="icon + ' fa-fw'"></i> {{ title }}
-                    <span class="ms-2 text-body-2">{{ $t('More') }} <i class="fa-solid fa-chevron-right"></i></span></h4>
+                </h2>
+                <v-btn class="cuaderno-section-more" :data-mode="props.mode" variant="text" @click="openSearch()" :aria-label="`${$t('More')}: ${title}`" min-height="44" append-icon="fa-solid fa-chevron-right">{{ $t('More') }}</v-btn>
+                </div>
             </v-col>
         </v-row>
 
@@ -13,7 +16,7 @@
                 <v-window show-arrows>
                     <v-window-item v-for="w in recipeWindows" class="pt-1 pb-1">
                         <v-row dense>
-                            <v-col class="pr-0 pl-0" v-for="r in w" :key="r.id">
+                            <v-col class="pr-0 pl-0" cols="12" sm="6" md="3" lg="3" xl="2" v-for="r in w" :key="r.id">
                                 <recipe-card :recipe="r" :show_description="true" :show-keywords="true"></recipe-card>
                             </v-col>
                         </v-row>

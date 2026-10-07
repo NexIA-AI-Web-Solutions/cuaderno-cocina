@@ -108,7 +108,7 @@
 
     </v-autocomplete>
 
-    <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="editingItemId" @save="handleModelEditorUpdate" @create="handleModelEditorUpdate"></model-edit-dialog>
+    <model-edit-dialog :model="props.model" v-model="editDialog" :item-id="editingItemId" @save="handleModelEditorUpdate" @create="handleModelEditorCreate"></model-edit-dialog>
 </template>
 
 <script setup lang="ts">
@@ -166,6 +166,8 @@ const lastAddedItem = ref<ModelOption | undefined>(undefined)
 const items = ref<ModelOption[]>([])
 
 const search = ref<string | undefined>(undefined)
+let searchRevision = 0
+let selectionRevision = 0
 
 /**
  * determine if the user should be able to create a new item based on create prop and if the item is already present
@@ -287,15 +289,18 @@ const debouncedSearchItems = useDebounceFn(() => {
  * performs the API request to search for the selected input
  */
 function searchItems() {
+    const revision = ++searchRevision
     console.log('searching items')
     let query = (search.value == undefined) ? '' : search.value
     if (query.startsWith(' ')) {
         console.log('search query starts with space')
+        loading.value = false
         return
     }
     console.log('search query is', query)
     loading.value = true
     return modelClass.value.list({query: query, page: 1, pageSize: props.limit}).then((r: any) => {
+        if (revision !== searchRevision || query !== (search.value ?? '')) return
         if (modelClass.value.model.isPaginated) {
             hasMoreItems.value = !!r.next
             items.value = r.results
@@ -315,9 +320,9 @@ function searchItems() {
         }
 
     }).catch((err: any) => {
-
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        if (revision === searchRevision) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
+        if (revision !== searchRevision) return
         console.log('search items finished')
         loading.value = false
         hasLoadedOnce.value = true
@@ -376,13 +381,22 @@ function handleModelEditorUpdate(event: ModelOption) {
         if (Array.isArray(autoselectValue.value) && autoselectValue.value.length > 0) {
             let existingIndex = autoselectValue.value.findIndex((item: any) => item.id == event.id)
             console.log('splicing at', existingIndex)
-            autoselectValue.value.splice(existingIndex, 1, event)
-        } else {
-            autoselectValue.value = [event]
+            if (existingIndex >= 0) autoselectValue.value.splice(existingIndex, 1, event)
         }
     } else {
         autoselectValue.value = event
     }
+}
+
+function handleModelEditorCreate(event: ModelOption) {
+    if (props.multiple) {
+        const selected = Array.isArray(autoselectValue.value) ? autoselectValue.value : []
+        if (!selected.some(item => item.id === event.id)) autoselectValue.value = [...selected, event]
+    } else {
+        autoselectValue.value = event
+    }
+    lastAddedItem.value = event
+    emit('create', event)
 }
 
 /**
@@ -390,11 +404,17 @@ function handleModelEditorUpdate(event: ModelOption) {
  * @param newValue
  */
 function updateAutoselectValue(newValue: ModelOption | ModelOption[] | number | number[] | undefined | null) {
+    const revision = ++selectionRevision
     console.log('updating autoselect value', newValue)
     if (typeof newValue === 'number') {
         if (!autoselectValue.value || Array.isArray(autoselectValue.value) || autoselectValue.value.id !== newValue) {
-            modelClass.value.retrieve(newValue).then((r: ModelOption) => {
-                autoselectValue.value = r
+            loading.value = true
+            return modelClass.value.retrieve(newValue).then((r: ModelOption) => {
+                if (revision === selectionRevision) autoselectValue.value = r
+            }).catch((err: any) => {
+                if (revision === selectionRevision) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+            }).finally(() => {
+                if (revision === selectionRevision) loading.value = false
             })
         }
     } else if ((Array.isArray(newValue) && newValue.every(item => typeof item === 'number'))) {
@@ -416,9 +436,10 @@ function updateAutoselectValue(newValue: ModelOption | ModelOption[] | number | 
         if (missingIds.length > 0) {
             loading.value = true
 
-            Promise.all(
+            return Promise.all(
                 missingIds.map(id => modelClass.value.retrieve(id))
             ).then((missingItems: ModelOption[]) => {
+                if (revision !== selectionRevision) return
                 if (autoselectValue.value && Array.isArray(autoselectValue.value)) {
                     // check again items were not already added (might occur with race conditions)
                     const existingIds = new Set(autoselectValue.value.map(item => item.id))
@@ -429,14 +450,16 @@ function updateAutoselectValue(newValue: ModelOption | ModelOption[] | number | 
                     autoselectValue.value = missingItems
                 }
             }).catch((err: any) => {
-                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+                if (revision === selectionRevision) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
             }).finally(() => {
-                loading.value = false
+                if (revision === selectionRevision) loading.value = false
             })
         }
+        if (!Array.isArray(autoselectValue.value)) autoselectValue.value = []
     } else {
         autoselectValue.value = newValue
     }
+    loading.value = false
 }
 
 /**
@@ -450,8 +473,8 @@ function updateModelValue(newValue: ModelOption | ModelOption[] | undefined | nu
         if (Array.isArray(newValue)) {
             console.log('as flat array', newValue.flatMap(item => item.id))
             emit('update:modelValue', newValue.flatMap(item => item.id))
-        } else if (newValue) {
-            emit('update:modelValue', newValue.id)
+        } else {
+            emit('update:modelValue', newValue == null ? newValue : newValue.id)
         }
     } else {
         emit('update:modelValue', newValue)

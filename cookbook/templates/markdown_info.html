@@ -12,11 +12,8 @@
 
     <h1>{% trans 'Markdown Info' %}</h1>
     {% blocktrans %}
-        Markdown is lightweight markup language that can be used to format plain text easily.
-        This site uses the <a href="https://python-markdown.github.io/" target="_blank">Python Markdown</a> library to
-        convert your text into nice looking HTML. Its full markdown documentation can be found
-        <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">here</a>.
-        An incomplete but most likely sufficient documentation can be found below.
+        Markdown permite dar formato a textos de recetas y notas.
+        Esta guía muestra los formatos disponibles en Cuaderno Cocina.
     {% endblocktrans %}
 
     <br/>
@@ -125,11 +122,11 @@
     <h2>{% trans 'Images & Links' %}</h2>
     {% trans 'Links can be formatted with Markdown. This application also allows to paste links directly into markdown fields without any formatting.' %}
     <pre class="intro-code code-block"><code>
-        https://github.com/vabene1111/recipes
-        [](https://github.com/vabene1111/recipes)
-        [GitHub](https://github.com/vabene1111/recipes)
+        https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina
+        [](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina)
+        [GitHub](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina)
 
-        ![{% trans 'This will become an image' %}]({% static 'assets/logo_color_svg.svg' %})
+        ![{% trans 'This will become an image' %}]({% static 'cuaderno/cuaderno-mark.svg' %})
     </code></pre>
 
     <div style="text-align: center">
@@ -140,9 +137,9 @@
 
     <div class="card">
         <div class="card-body">
-            <a href="https://github.com/vabene1111/recipes">https://github.com/vabene1111/recipes</a> <br/>
-            <a href="https://github.com/vabene1111/recipes">GitHub</a> <br/>
-            <img src="{% static 'assets/logo_color_svg.svg' %}" class="img-fluid" alt="{% trans 'This will become an image' %}"
+            <a href="https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina">https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina</a> <br/>
+            <a href="https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina">GitHub</a> <br/>
+            <img src="{% static 'cuaderno/cuaderno-mark.svg' %}" class="img-fluid" alt="{% trans 'This will become an image' %}"
                  style="height: 3vw">
         </div>
 

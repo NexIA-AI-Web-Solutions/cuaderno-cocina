@@ -11,23 +11,51 @@
     "effort": "medium"
   },
   "reviewer": {
-    "model": "gpt-6.1-sol",
+    "model": "gpt-6-astra",
     "effort": "high"
   },
   "max_subagents": 3,
   "max_concurrent_writers": 2,
   "effective_models_verified": false,
   "do_not_silently_fallback": true,
-  "allowed_subagent_models": ["gpt-6-luna", "gpt-6.1-sol"],
+  "allowed_subagent_models": [
+    "gpt-6-luna",
+    "gpt-6.1-sol",
+    "gpt-6-astra"
+  ],
   "session_2026_09_29": {
     "owner_instruction": "continue and use only GPT 6 Luna and GPT 6.1 Sol agentes",
     "effective_subagents": [
-      {"task": "native_share_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
-      {"task": "integrity_review_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
-      {"task": "service_workflow_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
-      {"task": "pin_baseline_luna", "model": "gpt-6-luna", "spawn_accepted": true},
-      {"task": "exchange_ui_sol", "model": "gpt-6.1-sol", "spawn_accepted": true},
-      {"task": "purchase_workflow_sol", "model": "gpt-6.1-sol", "spawn_accepted": true}
+      {
+        "task": "native_share_sol",
+        "model": "gpt-6.1-sol",
+        "spawn_accepted": true
+      },
+      {
+        "task": "integrity_review_sol",
+        "model": "gpt-6.1-sol",
+        "spawn_accepted": true
+      },
+      {
+        "task": "service_workflow_sol",
+        "model": "gpt-6.1-sol",
+        "spawn_accepted": true
+      },
+      {
+        "task": "pin_baseline_luna",
+        "model": "gpt-6-luna",
+        "spawn_accepted": true
+      },
+      {
+        "task": "exchange_ui_sol",
+        "model": "gpt-6.1-sol",
+        "spawn_accepted": true
+      },
+      {
+        "task": "purchase_workflow_sol",
+        "model": "gpt-6.1-sol",
+        "spawn_accepted": true
+      }
     ],
     "previous_agents": "Interrumpidos review_integrity_fixes y frontend_native_consolidation. Sus cambios previos se preservan; no se atribuyen a los modelos nuevos.",
     "leader": "Esta configuración no cambia ni verifica por sí sola el modelo de la sesión principal."
@@ -40,5 +68,15 @@
     ],
     "substitution": false,
     "execution": "Una sola sesión. No se lanzaron subagentes con esos modelos porque no están en el runtime. El trabajo lo ejecuta la sesión actual y no se atribuye a Sol ni a Astra."
+  },
+  "session_2026_10_07": {
+    "owner_instruction": "Usar GPT 6 Astra para juzgar correcciones funcionales, manejo de errores, UX y UI; al menos 20 resultados distintos de cada tipo.",
+    "requested_reviewer_model": "gpt-6-astra",
+    "accepted_agent": "modernization_astra",
+    "spawn_with_requested_model_accepted": true,
+    "additional_astra_spawn": "Dos intentos adicionales de Astra rechazados por límite de threads; no se atribuyen a Astra los agentes heredados.",
+    "effective_effort_verified": false,
+    "existing_workers": "prefix_frontend y deployment_review reanudados; no se ha verificado su modelo efectivo.",
+    "classification": "Una categoría primaria por resultado distinto; hipótesis y pruebas de texto no cuentan como mejoras verificadas."
   }
 }

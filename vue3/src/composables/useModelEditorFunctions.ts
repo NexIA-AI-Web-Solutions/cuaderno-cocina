@@ -190,52 +190,26 @@ export function useModelEditorFunctions<T extends object>(modelName: EditorSuppo
     /**
      * saves the edited object in the database
      */
-    function saveObject() {
+    async function saveObject(): Promise<T | undefined> {
         loading.value = true
-
-        const executeSave = () => {
-            if (isUpdate()) {
-                return modelClass.value.update(editingObj.value.id, editingObj.value).then((r: T) => {
-                    emit('save', r)
-                    editingObj.value = r
-                    useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
-                    if (onAfterSaveCallback) {
-                        return Promise.resolve(onAfterSaveCallback()).then(() => r)
-                    }
-                    return r
-                }).catch((err: any) => {
-                    console.error(err)
-                    useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-                }).finally(() => {
-                    editingObjChanged.value = false
-                    loading.value = false
-                })
-            } else {
-                return modelClass.value.create(editingObj.value).then((r: T) => {
-                    emit('create', r)
-                    editingObj.value = r
-                    useMessageStore().addPreparedMessage(PreparedMessage.CREATE_SUCCESS)
-                    title.value = editingObjName()
-                    if (onAfterSaveCallback) {
-                        return Promise.resolve(onAfterSaveCallback()).then(() => r)
-                    }
-                    return r
-                }).catch((err: any) => {
-                    console.error(err)
-                    useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
-                }).finally(() => {
-                    editingObjChanged.value = false
-                    loading.value = false
-                })
-            }
-        }
-
-        if (onBeforeSaveCallback) {
-            return Promise.resolve(onBeforeSaveCallback()).then(() => {
-                return executeSave()
-            })
-        } else {
-            return executeSave()
+        const updating = isUpdate()
+        try {
+            if (onBeforeSaveCallback) await onBeforeSaveCallback()
+            const result = updating
+                ? await modelClass.value.update(editingObj.value.id, editingObj.value)
+                : await modelClass.value.create(editingObj.value)
+            editingObj.value = result
+            emit(updating ? 'save' : 'create', result)
+            useMessageStore().addPreparedMessage(updating ? PreparedMessage.UPDATE_SUCCESS : PreparedMessage.CREATE_SUCCESS)
+            if (!updating) title.value = editingObjName()
+            if (onAfterSaveCallback) await onAfterSaveCallback()
+            editingObjChanged.value = false
+            return result
+        } catch (err) {
+            useMessageStore().addError(updating ? ErrorMessageType.UPDATE_ERROR : ErrorMessageType.CREATE_ERROR, err)
+            return undefined
+        } finally {
+            loading.value = false
         }
     }
 

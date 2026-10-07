@@ -351,8 +351,8 @@ def setup(request):
         if User.objects.count() > 0 or 'django.contrib.auth.backends.RemoteUserBackend' in settings.AUTHENTICATION_BACKENDS:
             messages.add_message(
                 request, messages.ERROR,
-                _('The setup page can only be used to create the first user! \
-                    If you have forgotten your superuser credentials please consult the django documentation on how to reset passwords.'))
+                _('La página de configuración solo permite crear el primer usuario. \
+                    Si has olvidado la contraseña del administrador, consulta la documentación de recuperación de Cuaderno Cocina.'))
             return HttpResponseRedirect(reverse('account_login'))
 
         if request.method == 'POST':
@@ -461,14 +461,14 @@ def web_manifest(request):
             "url": "./mealplan",
             "icons": [
                 {
-                    "src": static('assets/logo_color_plan.svg'),
+                    "src": static('cuaderno/cuaderno-mark.svg'),
                     "sizes": "any"
                 }, {
-                    "src": static('assets/logo_color_plan_144.png'),
+                    "src": static('cuaderno/cuaderno-icon-144.png'),
                     "type": "image/png",
                     "sizes": "144x144"
                 }, {
-                    "src": static('assets/logo_color_plan_512.png'),
+                    "src": static('cuaderno/cuaderno-icon-512.png'),
                     "type": "image/png",
                     "sizes": "512x512"
                 }
@@ -480,14 +480,14 @@ def web_manifest(request):
             "url": "./shopping",
             "icons": [
                 {
-                    "src": static('assets/logo_color_shopping.svg'),
+                    "src": static('cuaderno/cuaderno-mark.svg'),
                     "sizes": "any"
                 }, {
-                    "src": static('assets/logo_color_shopping_144.png'),
+                    "src": static('cuaderno/cuaderno-icon-144.png'),
                     "type": "image/png",
                     "sizes": "144x144"
                 }, {
-                    "src": static('assets/logo_color_shopping_512.png'),
+                    "src": static('cuaderno/cuaderno-icon-512.png'),
                     "type": "image/png",
                     "sizes": "512x512"
                 }

@@ -7,8 +7,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}
-    {% endblock %}</title>
+    <title>{% block title %}{% trans 'Recipes' %}{% endblock %} · Cuaderno Cocina</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
     <meta name="robots" content="noindex,nofollow"/>
@@ -57,8 +56,8 @@
     {% if not request.user.userpreference.left_handed %}
         {% if not request.user.is_authenticated or request.user.userpreference.nav_show_logo %}
             <a class="navbar-brand p-0 me-2 justify-content-center" href="{% url 'index' %}"
-               aria-label="Tandoor">
-                <img class="brand-icon" src="{{ theme_values.nav_logo }}" alt="Logo">
+               aria-label="Cuaderno Cocina">
+                <img class="brand-icon" src="{{ theme_values.nav_logo }}" alt="Cuaderno Cocina">
             </a>
         {% endif %}
     {% endif %}

@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <v-container class="cuaderno-warehouse-page">
         <v-btn :to="{name: 'PantryPage'}" variant="text" prepend-icon="fa-solid fa-arrow-left" min-height="44" class="mb-3">Despensa y existencias</v-btn>
         <h1 class="text-h5 mb-3">Compras y movimientos</h1>
         <p class="mb-4">Los pedidos no cambian el saldo. Una recepción confirmada sí actualiza la existencia nativa y conserva su documento.</p>
@@ -12,7 +12,7 @@
         <v-row>
             <v-col cols="12" md="6">
                 <v-card class="print-card h-100">
-                    <v-card-title>Movimiento manual</v-card-title>
+                    <v-card-title><h2 class="text-h6">Movimiento manual</h2></v-card-title>
                     <v-card-subtitle>Para recepciones de pedidos usa el flujo de compra superior.</v-card-subtitle>
                     <v-card-text>
                         <v-model-select v-model="move.entry" model="InventoryEntry" label="Existencia del inventario" search-on-load :disabled="!canOperate || moving" />
@@ -37,7 +37,7 @@
             </v-col>
             <v-col cols="12" md="6">
                 <v-card class="h-100">
-                    <v-card-title>Historial de existencias</v-card-title>
+                    <v-card-title><h2 class="text-h6">Historial de existencias</h2></v-card-title>
                     <v-card-text>
                         <v-list v-if="history.length">
                             <v-list-item v-for="row in history" :key="row.id">
@@ -234,6 +234,14 @@ onMounted(loadEdition)
 </script>
 
 <style scoped>
+@media screen {
+    .cuaderno-warehouse-page :deep(.v-card-title) { padding: 18px 20px; border-bottom: 1px solid rgba(var(--v-theme-on-surface), .12); background: rgba(var(--v-theme-secondary), .06); }
+    .cuaderno-warehouse-page :deep(.v-card-text) { padding: 20px; }
+    .cuaderno-warehouse-page :deep(.v-list-item) { margin-block: 8px; border-inline-start: 3px solid rgba(var(--v-theme-primary), .4); border-radius: 8px; }
+}
+
+.movement-detail { font-size: .875rem; line-height: 1.6; padding: 6px 10px; background: rgba(var(--v-theme-secondary), .08); border-radius: 6px; }
+
 .movement-detail { overflow-wrap: anywhere; }
 @media print { .print-card { break-inside: avoid; } }
 </style>

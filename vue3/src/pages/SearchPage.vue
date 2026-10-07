@@ -246,6 +246,7 @@ const newFilterName = ref('')
 const selectedItems = ref<RecipeOverview[]>([])
 const batchDeleteDialog = ref(false)
 const batchEditDialog = ref(false)
+let searchRevision = 0
 
 /**
  * handle query updates when using the GlobalSearchDialog on the search page directly
@@ -277,6 +278,7 @@ onMounted(() => {
  * @param options
  */
 function searchRecipes(options: Pick<VDataTableUpdateOptions, 'page'>) {
+    const revision = ++searchRevision
     let api = new ApiApi()
     loading.value = true
     hasFiltersApplied.value = false
@@ -298,14 +300,17 @@ function searchRecipes(options: Pick<VDataTableUpdateOptions, 'page'>) {
         }
     })
 
-    api.apiRecipeList(searchParameters, {signal: signal.value}).then((r) => {
+    return api.apiRecipeList(searchParameters, {signal: signal.value}).then((r) => {
+        if (revision !== searchRevision) return
         recipes.value = r.results
         tableItemCount.value = r.count
     }).catch(err => {
+        if (revision !== searchRevision) return
         if (err.name !== 'AbortError' && err.cause?.name !== 'AbortError') {
             useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
         }
     }).finally(() => {
+        if (revision !== searchRevision) return
         loading.value = false
         window.scrollTo({top: 0, behavior: 'smooth'})
     })
@@ -425,16 +430,25 @@ function createCustomFilter() {
  */
 function loadSelectedCustomFilter() {
     if (!selectedCustomFilter.value) return
-    let customFilterParams = JSON.parse(selectedCustomFilter.value.search)
-    if (customFilterParams['version'] == null) {
-        customFilterParams = transformTandoor1Filter(customFilterParams)
+    let customFilterParams: Record<string, any>
+    try {
+        customFilterParams = JSON.parse(selectedCustomFilter.value.search)
+        if (!customFilterParams || typeof customFilterParams !== 'object' || Array.isArray(customFilterParams)) {
+            throw new Error('Invalid saved filter')
+        }
+        if (customFilterParams['query'] != null && typeof customFilterParams['query'] !== 'string') throw new Error('Invalid saved query')
+        if (customFilterParams['version'] == null) customFilterParams = transformTandoor1Filter(customFilterParams)
+    } catch (err) {
+        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        return
     }
 
-    if (customFilterParams['query'] != null) {
-        query.value = customFilterParams['query']
-    }
+    resetQuery()
+    query.value = customFilterParams['query'] ?? ''
 
     Object.values(filters.value).forEach((filter) => {
+        filter.modelValue = Array.isArray(filter.default) ? [...filter.default] : filter.default
+        filter.enabled = false
         let filterName = filter.id.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
         if (customFilterParams[filterName] != null) {
             filter.modelValue = customFilterParams[filterName]

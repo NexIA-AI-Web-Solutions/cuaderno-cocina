@@ -19,9 +19,9 @@ def test_theming_function(space_1, u1_s1):
     assert get_theming_values(request)['theme'] == static('themes/tandoor.min.css')
     assert get_theming_values(request)['nav_bg_color'] == '#ddbf86'
     assert get_theming_values(request)['nav_text_class'] == 'navbar-light'
-    assert get_theming_values(request)['nav_logo'] == static('assets/brand_logo.png')
+    assert get_theming_values(request)['nav_logo'] == static('cuaderno/cuaderno-logo.svg')
     assert get_theming_values(request)['sticky_nav'] == 'position: sticky; top: 0; left: 0; z-index: 1000;'
-    assert get_theming_values(request)['app_name'] == 'Tandoor Recipes'
+    assert get_theming_values(request)['app_name'] == 'Cuaderno Cocina'
 
     with scopes_disabled():
         up = UserPreference.objects.filter(user=request.user).first()
@@ -40,7 +40,7 @@ def test_theming_function(space_1, u1_s1):
     assert get_theming_values(request)['nav_bg_color'] == '#ffffff'
     assert get_theming_values(request)['nav_text_class'] == 'navbar-dark'
     assert get_theming_values(request)['sticky_nav'] == ''
-    assert get_theming_values(request)['app_name'] == 'Tandoor Recipes'
+    assert get_theming_values(request)['app_name'] == 'Cuaderno Cocina'
 
     space_1.space_theme = Space.TANDOOR
     space_1.nav_bg_color = '#000000'
@@ -65,4 +65,4 @@ def test_theming_function(space_1, u1_s1):
     # default user settings should apply when user has no space
     assert get_theming_values(request)['nav_bg_color'] == '#ffffff'
     assert get_theming_values(request)['nav_text_class'] == 'navbar-dark'
-    assert get_theming_values(request)['nav_logo'] == static('assets/brand_logo.png')
+    assert get_theming_values(request)['nav_logo'] == static('cuaderno/cuaderno-logo.svg')

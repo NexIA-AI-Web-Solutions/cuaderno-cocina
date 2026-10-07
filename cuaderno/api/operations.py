@@ -477,7 +477,7 @@ class RecipeExchangeView(APIView):
         return Response({
             "export_limit": "La exportación JSON supera los límites de importación "
                             "(1000 recetas, 2 MB o catálogo de 10000 elementos). "
-                            "Utiliza la exportación nativa de Tandoor o una copia de seguridad completa.",
+                            "Utiliza la exportación nativa de Cuaderno Cocina o una copia de seguridad completa.",
         }, status=413)
 
     def get(self, request):
@@ -568,7 +568,7 @@ class RecipeExchangeView(APIView):
         payload["source_space"] = request.space.pk
         payload["media"] = {"included": False, "method": "native-tandoor-zip", "url_downloads": False}
         payload["warnings"] = ["Este JSON incluye pasos, ingredientes, subrecetas, rendimientos y precios. "
-                               "Para fotos, archivos, etiquetas y otros metadatos nativos utiliza también la exportación ZIP de Tandoor. "
+                               "Para fotos, archivos, etiquetas y otros metadatos nativos utiliza también la exportación ZIP de Cuaderno Cocina. "
                                "Incluye las conversiones de unidades alcanzables del catálogo. "
                                "Los alérgenos y ajustes fiscales del espacio no están incluidos."]
         try:

@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
-    <title>Tandoor</title>
+    <title>Cuaderno Cocina</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, shrink-to-fit=no">
     <meta name="robots" content="noindex,nofollow"/>
@@ -22,9 +22,9 @@
 
     <h1>{% trans 'System' %}</h1>
     {% blocktrans %}
-        Tandoor Recipes is an open source free software application. It can be found on
-        <a href="https://github.com/TandoorRecipes/recipes">GitHub</a>.
-        Changelogs can be found <a href="https://github.com/TandoorRecipes/recipes/releases">here</a>.
+        Cuaderno Cocina es una aplicación de código abierto para gestionar recetas y organizar la cocina.
+        Su código fuente está disponible en
+        <a href="https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina">GitHub</a>.
     {% endblocktrans %}
 
     <h3 class="mt-5">{% trans 'System Information' %}</h3>
@@ -35,12 +35,12 @@
                     {% for v in version_info %}
                         <div class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">{{ v.name }} ({{ v.branch }}) {% if v.tag %}- {{ v.tag }}{% endif %}</h5>
+                                <h5 class="mb-1">{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}Cuaderno Cocina{% else %}{{ v.name }}{% endif %} ({{ v.branch }}) {% if v.tag %}- {{ v.tag }}{% endif %}</h5>
                             </div>
                             <pre class="card-text p-2" style="border: 1px solid lightgrey; border-radius: 5px" target="_blank">{{ v.version }}</pre>
-                            <a href="{{ v.website }}">Website</a>
+                            <a href="{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina{% else %}{{ v.website }}{% endif %}">Website</a>
                             {% if v.commit_link %}
-                                - <a href="{{ v.commit_link }}" target="_blank">Commit</a>
+                                - <a href="{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina{% else %}{{ v.commit_link }}{% endif %}" target="_blank">Commit</a>
                             {% endif %}
                         </div>
                     {% endfor %}
@@ -67,10 +67,9 @@
     <h4 class="mt-3">{% trans 'Media Serving' %} <span class="badge text-bg-{% if gunicorn_media %}danger{% else %}success{% endif %}">{% if gunicorn_media %}
         {% trans 'Warning' %}{% else %}{% trans 'Ok' %}{% endif %}</span></h4>
     {% if gunicorn_media %}
-        {% blocktrans %}Serving media files directly using gunicorn/python is <b>not recommend</b>!
-            Please follow the steps described
-            <a href="https://github.com/vabene1111/recipes/releases/tag/0.8.1">here</a> to update
-            your installation.
+        {% blocktrans %}No se recomienda servir archivos multimedia directamente con gunicorn/python.
+            Consulta la documentación de despliegue de
+            <a href="https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/tree/cuaderno/main/docs/cuaderno">Cuaderno Cocina</a>.
         {% endblocktrans %}
     {% else %}
         {% trans 'Everything is fine!' %}
@@ -82,7 +81,7 @@
         {% trans 'Warning' %}{% else %}{% trans 'Ok' %}{% endif %}</span></h4>
     {% if secret_key %}
         {% blocktrans %}
-            You do not have a <code>SECRET_KEY</code> configured in your <code>.env</code> file. Django defaulted to the
+            You do not have a <code>SECRET_KEY</code> configured in your <code>.env</code> file. The application defaulted to the
             standard key
             provided with the installation which is publicly know and insecure! Please set
             <code>SECRET_KEY</code> int the <code>.env</code> configuration file.
@@ -346,5 +345,3 @@ Sqlite: {% if postgres %} {% trans 'False' %} {% else %} {% trans 'True' %} {% e
 
 </body>
 </html>
-
-

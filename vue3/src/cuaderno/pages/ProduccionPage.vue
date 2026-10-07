@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <v-container class="cuaderno-production-page">
         <v-btn :to="{name: 'MealPlanPage'}" variant="text" prepend-icon="fa-solid fa-calendar-days" min-height="44" class="mb-3">Ver planificación de menús</v-btn>
         <h1 class="text-h5 mb-3">Producción</h1>
         <p class="mb-4">
@@ -14,7 +14,7 @@
         <v-row class="no-print">
             <v-col cols="12" md="6">
                 <v-card class="print-card">
-                    <v-card-title>Ficha desde recetas</v-card-title>
+                    <v-card-title><h2 class="text-h6">Ficha desde recetas</h2></v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Calcula las necesidades de las recetas con sus cantidades guardadas. Las subrecetas necesitan un rendimiento de salida declarado.</p>
                         <v-model-select v-model="selectedRecipes" model="Recipe" label="Recetas" multiple chips search-on-load :disabled="!canOperate || calculatingRecipes" />
@@ -29,7 +29,7 @@
             </v-col>
             <v-col cols="12" md="6">
                 <v-card>
-                    <v-card-title>Rendimiento de subreceta</v-card-title>
+                    <v-card-title><h2 class="text-h6">Rendimiento de subreceta</h2></v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Indica cuánto producto terminado obtienes al elaborar una vez la receta completa. No equivale al número de raciones.</p>
                         <v-model-select v-model="output.recipe" model="Recipe" label="Receta" search-on-load :disabled="!canOperate || savingYield" />
@@ -42,7 +42,7 @@
             </v-col>
             <v-col cols="12" md="6">
                 <v-card class="print-card">
-                    <v-card-title>Servicio</v-card-title>
+                    <v-card-title><h2 class="text-h6">Servicio</h2></v-card-title>
                     <v-card-text>
                         <v-text-field v-model="service.title" label="Nombre" :disabled="!canOperate || savingService" />
                         <v-text-field v-model="service.date" label="Fecha del servicio" type="date" :disabled="!canOperate || savingService" />
@@ -68,7 +68,7 @@
             </v-col>
             <v-col cols="12" md="6">
                 <v-card class="print-card">
-                    <v-card-title>Consolidación manual</v-card-title>
+                    <v-card-title><h2 class="text-h6">Consolidación manual</h2></v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Suma las necesidades introducidas. Incluye la unidad en el componente y usa la misma unidad en todas sus líneas. No se guardan como receta ni descuentan existencias.</p>
                         <v-text-field v-model="sheet.component" label="Componente y unidad" placeholder="Por ejemplo: aceite · L" :disabled="!canOperate || consolidating" />
@@ -86,7 +86,7 @@
             </v-col>
             <v-col cols="12" md="6">
                 <v-card>
-                    <v-card-title>Alérgeno</v-card-title>
+                    <v-card-title><h2 class="text-h6">Alérgeno</h2></v-card-title>
                     <v-card-text>
                         <v-model-select v-model="allergen.food" model="Food" label="Alimento" search-on-load :disabled="!canOperate || savingAllergen" />
                         <v-text-field v-model="allergen.name" label="Nombre" :disabled="!canOperate || savingAllergen" />
@@ -116,9 +116,9 @@
             <v-row>
                 <v-col v-for="plan in services" :key="plan.id" cols="12" md="6">
                     <v-card class="print-card">
-                        <v-card-title>{{ plan.title }}</v-card-title>
+                        <v-card-title><h2 class="text-h6">{{ plan.title }}</h2></v-card-title>
                         <v-card-text>
-                            <p>{{ plan.service_date || 'Fecha heredada desconocida' }} · {{ plan.covers }} comensales · {{ stateLabel(plan.state) }}</p>
+                            <div class="d-flex flex-wrap align-center ga-3 mb-3"><p>{{ plan.service_date || 'Fecha heredada desconocida' }} · {{ plan.covers }} comensales</p><v-chip class="cuaderno-service-state" variant="tonal" :color="plan.state === 'produced' ? 'success' : plan.state === 'cancelled' ? 'error' : 'secondary'">{{ stateLabel(plan.state) }}</v-chip></div>
                             <p v-if="plan.snapshot?.cost" class="mt-2">
                                 Coste estimado de ingredientes congelado:
                                 {{ confirmedCostLabel(plan.snapshot.cost) }}.
@@ -706,6 +706,12 @@ async function saveAllergen() {
 </script>
 
 <style scoped>
+@media screen {
+    .cuaderno-production-page :deep(.v-card-title) { padding: 18px 20px; border-bottom: 1px solid rgba(var(--v-theme-on-surface), .12); background: rgba(var(--v-theme-secondary), .06); }
+    .cuaderno-production-page :deep(.v-card-text) { padding: 20px; }
+    .cuaderno-production-page :deep(.v-list-item) { margin-block: 8px; border-inline-start: 3px solid rgba(var(--v-theme-primary), .4); border-radius: 8px; }
+}
+
 @media print {
     .print-card { break-inside: avoid; }
     .no-print { display: none; }

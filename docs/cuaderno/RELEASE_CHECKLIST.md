@@ -1,6 +1,23 @@
 # Aceptación final
 
-## Cierre vigente del despliegue — 7 de octubre de 2026
+## Aceptación pendiente de la modernización
+
+- [x] 20 bugs y 20 errores distintos revisados por Astra a nivel de fuente y
+  pruebas unitarias; 47 FAIL anteriores y 47 PASS sobre la misma suite.
+- [x] Calendario corregido sin creación automática de token: 55/55 pruebas
+  combinadas. No se añade al mínimo de 40 correcciones primarias.
+- [ ] Cierre de las 20 mejoras UX y 20 UI con implementación, compilación y
+  pruebas DOM/navegador; los 80 resultados están en el registro enlazado.
+- [ ] CI completo y G7 del nuevo commit, nueva imagen y sus nueve artefactos.
+- [ ] Publicación del nuevo runtime y aceptación de ediciones/roles bajo prefijo.
+- [ ] Backup coherente, restauración aislada y rollback con la imagen anterior.
+- [ ] Limpieza exacta de los nuevos datos sintéticos y verificación final de las
+  otras aplicaciones, correo y recursos.
+
+La aplicación publicada conserva la versión inicial siguiente. Sus PASS no
+certifican la modernización. Ver [registro de 80 resultados](evidence/2026-10-07-modernizacion.md).
+
+## Cierre del despliegue inicial — 7 de octubre de 2026
 
 Runtime `60aca2d0aa7776137f507699be7f111dcf758e18`; imagen local OCI
 `sha256:93854211cee63e58ca2bd4b066f06af6a5aba17ae150a8acaf33a0a3d7b1d0ce`.

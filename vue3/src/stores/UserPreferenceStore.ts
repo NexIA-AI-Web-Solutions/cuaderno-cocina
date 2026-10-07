@@ -124,7 +124,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
     /**
      * persist changes to user settings to DB
      */
-    function updateUserSettings(silent: boolean = false) {
+    function updateUserSettings(silent: boolean = false, rejectOnError: boolean = false) {
         let api = new ApiApi()
 
         return api.apiUserPreferencePartialUpdate({user: userSettings.value.user.id!, patchedUserPreference: userSettings.value}).then(r => {
@@ -135,6 +135,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
             }
         }).catch(err => {
             useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+            if (rejectOnError) throw err
         })
     }
 

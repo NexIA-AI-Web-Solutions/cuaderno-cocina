@@ -1,6 +1,26 @@
 # Estado del producto
 
-## Estado vigente del despliegue — 7 de octubre de 2026
+## Modernización en curso — 7 de octubre, posterior al reboot programado
+
+La URL publicada sigue funcionando con el runtime `60aca2d`; las fuentes nuevas
+no están desplegadas todavía. Hay 20 correcciones funcionales y 20 de gestión
+de errores con revisión de GPT-6 Astra y pruebas rojas/verdes de los scripts
+reales. La suite original pasa 47/47; el calendario añade ocho pruebas y el
+conjunto pasa 55/55. La compilación, CI y aceptación del nuevo artefacto siguen
+pendientes. Las 20 mejoras de UX y 20 de UI se implementan y revisan por separado;
+ninguna se declara verificada en navegador aún. Registro de los 80 resultados:
+[evidencia de modernización](evidence/2026-10-07-modernizacion.md).
+
+La referencia de las 09:02 UTC conserva 16 contenedores y 46 servicios ajenos,
+sin cambios ni OOM nuevos. El reboot diario existente ocurrió a las 08:30 CEST,
+sin acción de esta tarea; Caddy tiene PID 913 y su configuración se conserva.
+El timer de backup propio se ejecutó a las 03:21 CEST con éxito, antes del reboot.
+Hay nueve cuentas sintéticas en tres espacios propios para la aceptación, con
+sus IDs y credenciales protegidos fuera de Git; no se han inyectado sesiones aún.
+Las cuentas y datos primarios siguen conservados. Las copias continúan locales
+en este VPS; no existe destino externo configurado.
+
+## Referencia del despliegue inicial — 7 de octubre de 2026
 
 Cuaderno responde por HTTPS en `https://gex-dashboard.hopto.org/cuaderno-cocina/`.
 El runtime corresponde a `60aca2d0aa7776137f507699be7f111dcf758e18`, fuente

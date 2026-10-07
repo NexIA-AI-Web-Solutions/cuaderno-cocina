@@ -290,12 +290,12 @@ class Space(ExportModelOperationsMixin('space'), models.Model):
 
     THEMES = (
         (BLANK, '-------'),
-        (TANDOOR, 'Tandoor'),
-        (BOOTSTRAP, 'Bootstrap'),
-        (DARKLY, 'Darkly'),
-        (FLATLY, 'Flatly'),
-        (SUPERHERO, 'Superhero'),
-        (TANDOOR_DARK, 'Tandoor Dark (INCOMPLETE)'),
+        (TANDOOR, 'Cuaderno Cocina'),
+        (BOOTSTRAP, 'Cuaderno clásico claro'),
+        (DARKLY, 'Cuaderno clásico oscuro'),
+        (FLATLY, 'Cuaderno plano'),
+        (SUPERHERO, 'Cuaderno contraste'),
+        (TANDOOR_DARK, 'Cuaderno Cocina oscuro (incompleto)'),
     )
 
     LIGHT = 'LIGHT'
@@ -504,12 +504,12 @@ class UserPreference(models.Model, PermissionModelMixin):
     TANDOOR_DARK = 'TANDOOR_DARK'
 
     THEMES = (
-        (TANDOOR, 'Tandoor'),
-        (BOOTSTRAP, 'Bootstrap'),
-        (DARKLY, 'Darkly'),
-        (FLATLY, 'Flatly'),
-        (SUPERHERO, 'Superhero'),
-        (TANDOOR_DARK, 'Tandoor Dark (INCOMPLETE)'),
+        (TANDOOR, 'Cuaderno Cocina'),
+        (BOOTSTRAP, 'Cuaderno clásico claro'),
+        (DARKLY, 'Cuaderno clásico oscuro'),
+        (FLATLY, 'Cuaderno plano'),
+        (SUPERHERO, 'Cuaderno contraste'),
+        (TANDOOR_DARK, 'Cuaderno Cocina oscuro (incompleto)'),
     )
 
     # Nav colors
@@ -616,7 +616,9 @@ class Storage(models.Model, PermissionModelMixin):
     DROPBOX = 'DB'
     NEXTCLOUD = 'NEXTCLOUD'
     LOCAL = 'LOCAL'
-    STORAGE_TYPES = ((DROPBOX, 'Dropbox'), (NEXTCLOUD, 'Nextcloud'), (LOCAL, 'Local'))
+    STORAGE_TYPES = ((DROPBOX, 'Archivos remotos · token'),
+                     (NEXTCLOUD, 'Archivos remotos · usuario y contraseña'),
+                     (LOCAL, 'Archivos locales'))
 
     name = models.CharField(max_length=128)
     method = models.CharField(

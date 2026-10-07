@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * Tandoor
- * Tandoor API Docs
+ * Cuaderno Cocina
+ * Cuaderno Cocina API Docs
  *
  * The version of the OpenAPI document: 0.0.0
  * 
@@ -15,12 +15,12 @@
 
 /**
  * * `BLANK` - -------
- * * `TANDOOR` - Tandoor
- * * `BOOTSTRAP` - Bootstrap
- * * `DARKLY` - Darkly
- * * `FLATLY` - Flatly
- * * `SUPERHERO` - Superhero
- * * `TANDOOR_DARK` - Tandoor Dark (INCOMPLETE)
+ * * `TANDOOR` - Cuaderno Cocina
+ * * `BOOTSTRAP` - Cuaderno clásico claro
+ * * `DARKLY` - Cuaderno clásico oscuro
+ * * `FLATLY` - Cuaderno plano
+ * * `SUPERHERO` - Cuaderno contraste
+ * * `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)
  * @export
  */
 export const SpaceThemeEnum = {

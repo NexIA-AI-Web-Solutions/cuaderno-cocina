@@ -70,7 +70,7 @@ def parse_recipe_document(payload: dict) -> list[dict]:
             raise DomainError("invalid_import", "Cada receta necesita nombre.")
         servings = parse_decimal(raw.get("servings", "1"), allow_zero=False)
         if servings != servings.to_integral_value() or servings > 2147483647:
-            raise DomainError("invalid_import", "Las raciones de Tandoor deben ser un número entero positivo.")
+            raise DomainError("invalid_import", "Las raciones de Cuaderno Cocina deben ser un número entero positivo.")
         external_id = str(raw.get("id_externo") or raw.get("external_id") or "").strip()
         if not external_id:
             canonical = json.dumps(raw, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)

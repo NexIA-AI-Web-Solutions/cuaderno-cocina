@@ -1,15 +1,15 @@
 {
     "openapi": "3.0.3",
     "info": {
-        "title": "Tandoor",
+        "title": "Cuaderno Cocina",
         "version": "0.0.0",
         "x-logo": {
-            "url": "/static/assets/brand_logo.svg",
+            "url": "/static/cuaderno/cuaderno-logo.svg",
             "backgroundColor": "#FFFFFF",
-            "altText": "Tandoor logo",
+            "altText": "Cuaderno Cocina logo",
             "href": "/"
         },
-        "description": "Tandoor API Docs"
+        "description": "Cuaderno Cocina API Docs"
     },
     "paths": {
         "/api-token-auth/": {
@@ -24571,7 +24571,7 @@
                     "LOCAL"
                 ],
                 "type": "string",
-                "description": "* `DB` - Dropbox\n* `NEXTCLOUD` - Nextcloud\n* `LOCAL` - Local"
+                "description": "* `DB` - Archivos remotos \u00b7 token\n* `NEXTCLOUD` - Archivos remotos \u00b7 usuario y contrase\u00f1a\n* `LOCAL` - Archivos locales"
             },
             "MinimumWriteRequest": {
                 "type": "object",
@@ -31797,7 +31797,7 @@
                     "TANDOOR_DARK"
                 ],
                 "type": "string",
-                "description": "* `BLANK` - -------\n* `TANDOOR` - Tandoor\n* `BOOTSTRAP` - Bootstrap\n* `DARKLY` - Darkly\n* `FLATLY` - Flatly\n* `SUPERHERO` - Superhero\n* `TANDOOR_DARK` - Tandoor Dark (INCOMPLETE)"
+                "description": "* `BLANK` - -------\n* `TANDOOR` - Cuaderno Cocina\n* `BOOTSTRAP` - Cuaderno cl\u00e1sico claro\n* `DARKLY` - Cuaderno cl\u00e1sico oscuro\n* `FLATLY` - Cuaderno plano\n* `SUPERHERO` - Cuaderno contraste\n* `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)"
             },
             "StatusEnum": {
                 "enum": [
@@ -32411,7 +32411,7 @@
                     "TANDOOR_DARK"
                 ],
                 "type": "string",
-                "description": "* `TANDOOR` - Tandoor\n* `BOOTSTRAP` - Bootstrap\n* `DARKLY` - Darkly\n* `FLATLY` - Flatly\n* `SUPERHERO` - Superhero\n* `TANDOOR_DARK` - Tandoor Dark (INCOMPLETE)"
+                "description": "* `TANDOOR` - Cuaderno Cocina\n* `BOOTSTRAP` - Cuaderno cl\u00e1sico claro\n* `DARKLY` - Cuaderno cl\u00e1sico oscuro\n* `FLATLY` - Cuaderno plano\n* `SUPERHERO` - Cuaderno contraste\n* `TANDOOR_DARK` - Cuaderno Cocina oscuro (incompleto)"
             },
             "Unit": {
                 "type": "object",

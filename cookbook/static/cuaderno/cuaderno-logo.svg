@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 100" role="img" aria-labelledby="title description">
+  <title id="title">Cuaderno Cocina</title>
+  <desc id="description">Cuaderno de recetas y hoja de olivo junto al nombre Cuaderno Cocina. Marca original en cobre y oliva.</desc>
+  <rect x="1" y="1" width="438" height="98" rx="14" fill="#fff8ee"/>
+  <g transform="translate(4 4) scale(.72)">
+    <rect x="25" y="14" width="79" height="100" rx="12" fill="#fff8ee" stroke="#b47b54" stroke-width="6"/>
+    <path d="M41 17v94M18 35h15M18 55h15M18 75h15M18 95h15" fill="none" stroke="#b47b54" stroke-width="6" stroke-linecap="round"/>
+    <path d="M55 86h32M55 97h23" fill="none" stroke="#b47b54" stroke-width="4" stroke-linecap="round"/>
+    <path d="M61 73c-9-21 1-40 27-43 4 25-5 44-27 43Z" fill="#68744c"/>
+    <path d="m60 77 20-34" fill="none" stroke="#fff8ee" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <text x="89" y="62" font-family="sans-serif" font-weight="700" font-size="38" fill="#34412b">Cuaderno <tspan fill="#68744c">Cocina</tspan></text>
+</svg>

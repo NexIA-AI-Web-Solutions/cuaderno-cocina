@@ -1242,7 +1242,7 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
                 {
                     'msg':
                         'API Key Rate Limit reached/exceeded, see https://api.data.gov/docs/rate-limits/ for more information. \
-                                Configure your key in Tandoor using environment FDC_API_KEY variable.'
+                                Configure your key in Cuaderno Cocina using environment FDC_API_KEY variable.'
                 },
                 status=429,
                 json_dumps_params={'indent': 4})
@@ -3358,7 +3358,7 @@ class FdcSearchView(APIView):
                     {
                         'msg':
                             'API Key Rate Limit reached/exceeded, see https://api.data.gov/docs/rate-limits/ for more information. \
-                                Configure your key in Tandoor using environment FDC_API_KEY variable.'
+                                Configure your key in Cuaderno Cocina using environment FDC_API_KEY variable.'
                     },
                     status=429,
                     json_dumps_params={'indent': 4})
@@ -3678,7 +3678,7 @@ def get_recipe_file(request, pk):
 def sync_all(request):
     if request.space.demo or settings.HOSTED:
         messages.add_message(request, messages.ERROR,
-                             _('This feature is not yet available in the hosted version of tandoor!'))
+                             _('Esta función todavía no está disponible en la versión alojada de Cuaderno Cocina.'))
         return redirect('index')
 
     if not has_group_permission(request, ['user']):
@@ -3734,7 +3734,7 @@ def share_link(request, pk):
 
 def meal_plans_to_ical(queryset, filename):
     cal = Calendar()
-    cal.add('prodid', f'-//Tandoor Recipes//')
+    cal.add('prodid', '-//Cuaderno Cocina//')
     cal.add('version', '2.0')
 
     for p in queryset:

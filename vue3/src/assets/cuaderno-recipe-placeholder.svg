@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
+  <title id="title">Cuaderno Cocina · receta sin fotografía</title>
+  <desc id="desc">Un cuaderno de recetas y una cuchara dibujados con líneas de cobre y oliva.</desc>
+  <rect x="206" y="82" width="174" height="236" rx="22" fill="#fffdf8" stroke="#b47b54" stroke-width="8"/>
+  <path d="M244 84v232M266 146h80M266 182h80M266 218h58" fill="none" stroke="#68744c" stroke-width="8" stroke-linecap="round"/>
+  <path d="M212 128h32M212 172h32M212 216h32M212 260h32" fill="none" stroke="#b47b54" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="419" cy="150" rx="24" ry="37" fill="none" stroke="#68744c" stroke-width="8"/>
+  <path d="M419 188v108" fill="none" stroke="#68744c" stroke-width="8" stroke-linecap="round"/>
+</svg>

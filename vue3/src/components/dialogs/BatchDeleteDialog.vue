@@ -66,6 +66,8 @@ const updatedItems = ref<EditorSupportedTypes[]>([])
 watch(dialog, (newValue, oldValue) => {
     if(!oldValue && newValue){
         itemsToDelete.value = JSON.parse(JSON.stringify(props.items))
+        updatedItems.value = []
+        failedItems.value = []
     }
 })
 
@@ -76,7 +78,9 @@ function deleteAll() {
     let promises: Promise<any>[] = []
     loading.value = true
 
-    itemsToDelete.value.forEach(item => {
+    const completedIds = new Set(updatedItems.value.map(item => item.id))
+    failedItems.value = []
+    itemsToDelete.value.filter(item => !completedIds.has(item.id)).forEach(item => {
         promises.push(genericModel.destroy(item.id!).then((r: any) => {
             updatedItems.value.push(item)
         }).catch((err: any) => {
@@ -84,7 +88,7 @@ function deleteAll() {
         }))
     })
 
-    Promise.allSettled(promises).then(() => {
+    return Promise.allSettled(promises).then(() => {
         loading.value = false
         emit('change')
     })

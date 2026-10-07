@@ -1,16 +1,17 @@
 <template>
-    <v-app>
+    <v-app class="cuaderno-app">
+        <a href="#cuaderno-main" class="cuaderno-skip-link">{{ $t('SkipToContent') }}</a>
         <v-app-bar color="tandoor" flat density="comfortable" v-if="!useUserPreferenceStore().isAuthenticated && !useUserPreferenceStore().isPrintMode">
-            <a href="https://tandoor.dev">
-                <v-img src="../../assets/brand_logo.svg" width="140px" class="ms-2" ></v-img>
-            </a>
+            <router-link :to="{ name: 'StartPage' }">
+                <v-img :src="brandLogo" alt="Cuaderno Cocina" width="140px" class="ms-2" ></v-img>
+            </router-link>
         </v-app-bar>
         <v-app-bar :color="useUserPreferenceStore().activeSpace.navBgColor ? useUserPreferenceStore().activeSpace.navBgColor : useUserPreferenceStore().userSettings.navBgColor"
                    flat density="comfortable" v-if="useUserPreferenceStore().isAuthenticated && !useUserPreferenceStore().isPrintMode"
                    :absolute="!useUserPreferenceStore().userSettings.navSticky"
                    :scroll-behavior="useUserPreferenceStore().userSettings.navSticky ? 'elevate' : ''">
             <router-link :to="{ name: 'StartPage', params: {} }">
-                <v-img src="../../assets/brand_logo.svg" width="140px" class="ms-2"
+                <v-img :src="brandLogo" alt="Cuaderno Cocina" width="140px" class="ms-2"
                        v-if="useUserPreferenceStore().userSettings.navShowLogo && !useUserPreferenceStore().activeSpace.navLogo"></v-img>
                 <v-img :src="useUserPreferenceStore().activeSpace.navLogo?.preview" width="140px" class="ms-2"
                        v-if="useUserPreferenceStore().userSettings.navShowLogo && useUserPreferenceStore().activeSpace.navLogo != undefined"></v-img>
@@ -18,7 +19,7 @@
 
             <v-spacer></v-spacer>
             <global-search-dialog></global-search-dialog>
-            <v-btn icon="$add" class="d-print-none">
+            <v-btn icon="$add" class="d-print-none" :aria-label="$t('Create Recipe')" :title="$t('Create Recipe')">
                 <v-icon icon="$add" class="fa-fw"></v-icon>
                 <v-menu activator="parent">
                     <v-list>
@@ -28,7 +29,8 @@
                 </v-menu>
             </v-btn>
 
-            <v-avatar color="primary" class="me-2 cursor-pointer d-print-none">{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}
+            <v-btn class="cuaderno-user-menu me-2 d-print-none" :aria-label="$t('Profile')" :title="$t('Profile')" icon variant="text">
+                <v-avatar color="primary" size="36">{{ useUserPreferenceStore().userSettings.user.displayName.charAt(0) }}</v-avatar>
                 <v-menu activator="parent">
 
                     <v-list density="compact">
@@ -38,7 +40,7 @@
                         <component :is="item.component" :="item" :key="item.title" v-for="item in useNavigation().getUserNavigation()"></component>
                     </v-list>
                 </v-menu>
-            </v-avatar>
+            </v-btn>
 
         </v-app-bar>
         <v-app-bar color="info"
@@ -62,7 +64,7 @@
             </p>
         </v-app-bar>
 
-        <v-main>
+        <v-main id="cuaderno-main" tabindex="-1">
             <router-view></router-view>
         </v-main>
 
@@ -80,7 +82,7 @@
                 <v-list nav>
                     <v-list-item prepend-icon="fas fa-sliders" :title="$t('Settings')" :to="{ name: 'SettingsPage', params: {} }"></v-list-item>
                     <v-list-item prepend-icon="fa-solid fa-heart" link>
-                        Tandoor {{ useUserPreferenceStore().serverSettings.version }}
+                        Cuaderno Cocina {{ useUserPreferenceStore().serverSettings.version }}
                         <help-dialog></help-dialog>
                     </v-list-item>
                 </v-list>
@@ -88,21 +90,25 @@
 
         </v-navigation-drawer>
 
-        <v-bottom-navigation grow v-if="useUserPreferenceStore().isAuthenticated && !lgAndUp && !useUserPreferenceStore().isPrintMode">
+        <v-bottom-navigation grow height="72" class="cuaderno-bottom-navigation" v-if="useUserPreferenceStore().isAuthenticated && !lgAndUp && !useUserPreferenceStore().isPrintMode">
             <v-btn value="recent" :aria-label="$t('Recipes')" :to="{ name: 'StartPage', params: {} }">
                 <v-icon icon="fa-fw fas fa-book "/>
+                <span>{{ $t('Recipes') }}</span>
             </v-btn>
 
             <v-btn value="favorites" :aria-label="$t('Meal_Plan')" to="/mealplan">
                 <v-icon icon="fa-fw fas fa-calendar-alt"></v-icon>
+                <span>{{ $t('Meal_Plan') }}</span>
             </v-btn>
 
             <v-btn value="nearby" :aria-label="$t('Shopping_list')" to="/shopping">
                 <v-icon icon="fa-fw fas fa-shopping-cart"></v-icon>
+                <span>{{ $t('Shopping_list') }}</span>
             </v-btn>
 
             <v-btn value="more" :aria-label="$t('More')">
                 <v-icon icon="fa-fw fas fa-bars"></v-icon>
+                <span>{{ $t('More') }}</span>
                 <v-bottom-sheet activator="parent" close-on-content-click>
                     <v-list nav>
                         <menu-user-info></menu-user-info>
@@ -122,6 +128,7 @@
 </template>
 
 <script lang="ts" setup>
+import brandLogo from "@/assets/cuaderno-logo.svg";
 import GlobalSearchDialog from "@/components/inputs/GlobalSearchDialog.vue"
 
 import {useDisplay, useLocale} from "vuetify"
@@ -179,7 +186,7 @@ router.afterEach((to, from) => {
         if (typeof to.meta.title === 'string') {
             title.value = t(to.meta.title)
         } else {
-            title.value = 'Tandoor'
+            title.value = 'Cuaderno Cocina'
         }
     })
 })
@@ -187,6 +194,49 @@ router.afterEach((to, from) => {
 </script>
 
 <style>
+@media screen {
+    .cuaderno-app .v-app-bar { border-bottom: 1px solid rgba(var(--v-theme-on-surface), .12); }
+    .cuaderno-app .v-navigation-drawer .v-list-item {
+        min-height: 48px;
+        margin: 4px 10px;
+        border-radius: 10px;
+        border-inline-start: 3px solid transparent;
+    }
+    .cuaderno-app .v-navigation-drawer .v-list-item--active { border-inline-start-color: rgb(var(--v-theme-primary)); }
+    .cuaderno-app .v-btn { text-transform: none; letter-spacing: .01em; }
+    .cuaderno-app .v-card { border-radius: 16px; border: 1px solid rgba(var(--v-theme-on-surface), .12); }
+    .cuaderno-app .v-card-title { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+    .cuaderno-app main h1, .cuaderno-app main h2 { overflow-wrap: anywhere; }
+    .cuaderno-app :is(a, button, summary, [role="button"]):focus-visible {
+        outline: 3px solid rgb(var(--v-theme-primary));
+        outline-offset: 3px;
+    }
+    .cuaderno-skip-link {
+        position: absolute;
+        top: 8px;
+        left: 16px;
+        z-index: 10000;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: rgb(var(--v-theme-primary));
+        color: rgb(var(--v-theme-on-primary));
+        transform: translateY(-200%);
+    }
+    .cuaderno-skip-link:focus { transform: translateY(0); }
+    .cuaderno-bottom-navigation { padding-bottom: env(safe-area-inset-bottom, 0); }
+    .cuaderno-bottom-navigation .v-btn {
+        min-width: 0;
+        padding-inline: 6px;
+        border-top: 3px solid transparent;
+    }
+    .cuaderno-bottom-navigation .v-btn--active { border-top-color: rgb(var(--v-theme-primary)); }
+    .cuaderno-bottom-navigation .v-btn span {
+        font-size: .75rem;
+        line-height: 1.2;
+        white-space: normal;
+        margin-top: 6px;
+    }
+}
 
 .v-theme--dark {
 

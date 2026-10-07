@@ -1,7 +1,7 @@
 <template>
     <v-row class="h-100">
         <v-col class="pb-0">
-            <v-card class="h-100" :loading="useMealPlanStore().loading">
+            <v-card class="h-100 cuaderno-calendar" :loading="useMealPlanStore().loading">
                 <!-- TODO add hint about CTRL key while drag/drop -->
                 <!-- TODO multi selection? date range selection ? -->
                 <calendar-view
@@ -176,6 +176,11 @@ function dropCalendarItemOnDate(undefinedItem: IMealPlanNormalizedCalendarItem, 
 
 
 <style scoped>
+.cuaderno-calendar :deep(.cv-header-day) { background: rgb(var(--v-theme-surface)); color: rgb(var(--v-theme-on-surface)); padding-block: 8px; font-weight: 600; }
+.cuaderno-calendar :deep(.cv-day) { border-color: rgba(var(--v-theme-on-surface), .14); }
+.cuaderno-calendar :deep(.cv-day.today) { background: rgba(var(--v-theme-primary), .12); color: rgb(var(--v-theme-on-surface)); }
+.cuaderno-calendar :deep(.cv-day.today .cv-day-number) { font-weight: 700; border-bottom: 3px solid rgb(var(--v-theme-primary)); }
+
 /* TODO remove unused styles */
 
 .slide-fade-enter-active {

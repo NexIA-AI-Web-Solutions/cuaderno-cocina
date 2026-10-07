@@ -1,5 +1,5 @@
 <template>
-    <template v-if="!props.loading">
+    <article v-if="!props.loading" class="cuaderno-recipe-card">
 
         <router-link :to="dest" :target="linkTarget">
             <recipe-image :style="{height: props.height}" :recipe="props.recipe" rounded="lg" class="mr-3 ml-3">
@@ -8,9 +8,9 @@
         </router-link>
         <div class="ml-3">
             <div class="d-flex ">
-                <div class="flex-grow-1 cursor-pointer" @click="openRecipe()">
+                <router-link class="cuaderno-recipe-title" :to="dest" :target="linkTarget">
                     <p class="font-weight-bold mt-2">{{ props.recipe.name }}</p>
-                </div>
+                </router-link>
                 <div class="mt-1">
                     <!--                    <v-btn icon="fas fa-ellipsis-v" size="small" variant="plain"></v-btn>-->
                     <recipe-context-menu :recipe="props.recipe" size="small" v-if="props.showMenu"></recipe-context-menu>
@@ -80,10 +80,10 @@
             <!--            </v-card-text>-->
 
         </v-card>
-    </template>
+    </article>
     <template v-else>
         <v-card :style="{'height': props.height}">
-            <v-img src="../../assets/recipe_no_image.svg" cover height="60%"></v-img>
+            <v-img :src="recipePlaceholder" height="60%"></v-img>
             <v-card-title>
                 <v-skeleton-loader type="heading"></v-skeleton-loader>
             </v-card-title>
@@ -103,6 +103,7 @@ import {Recipe, RecipeOverview} from "@/openapi";
 
 import RecipeContextMenu from "@/components/inputs/RecipeContextMenu.vue";
 import RecipeImage from "@/components/display/RecipeImage.vue";
+import recipePlaceholder from '../../assets/cuaderno-recipe-placeholder.svg'
 import {useRouter} from "vue-router";
 import PrivateRecipeBadge from "@/components/display/PrivateRecipeBadge.vue";
 
@@ -142,6 +143,29 @@ function openRecipe() {
 </script>
 
 <style scoped>
+@media screen {
+    .cuaderno-recipe-card {
+        height: 100%;
+        margin: 6px;
+        padding-block: 12px;
+        border: 1px solid rgba(var(--v-theme-on-surface), .14);
+        border-radius: 16px;
+        background: rgb(var(--v-theme-surface));
+    }
+}
+.cuaderno-recipe-title {
+    flex: 1;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+.cuaderno-recipe-title:hover { color: rgb(var(--v-theme-primary)); }
+.cuaderno-recipe-title:focus-visible {
+    outline: 3px solid rgb(var(--v-theme-primary));
+    outline-offset: 3px;
+    border-radius: 4px;
+}
 
 .text-rows-1 {
     overflow: hidden;

@@ -562,7 +562,7 @@
   "nothing": "Ei mitään tekemistä",
   "nothing_planned_today": "Tälle päivälle ei ole suunniteltu mitään!",
   "one_url_per_line": "Yksi URL -osoite riviä kohden",
-  "open_data_help_text": "Tandoori Open Data -projekti tarjoaa yhteisön toimittamaa dataa Tandoorille. Tämä kenttä täytetään automaattisesti tuonnin yhteydessä ja sallii päivitykset tulevaisuudessa.",
+  "open_data_help_text": "Open Data -projekti tarjoaa yhteisön toimittamaa dataa Cuaderno Cocina -palvelulle. Tämä kenttä täytetään automaattisesti tuonnin yhteydessä ja sallii päivitykset tulevaisuudessa.",
   "or": "tai",
   "parameter_count": "Parametri {count}",
   "paste_ingredients": "Liitä ainekset",

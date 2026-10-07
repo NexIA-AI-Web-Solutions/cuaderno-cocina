@@ -22,6 +22,11 @@ from django.urls import include, path, re_path
 from django.views.i18n import JavaScriptCatalog
 from cuaderno.media import authorized_media
 
+admin.site.site_header = 'Cuaderno Cocina'
+admin.site.site_title = 'Cuaderno Cocina'
+admin.site.index_title = 'Administración de Cuaderno Cocina'
+admin.site.site_url = f'{settings.SCRIPT_NAME.rstrip("/")}/'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),

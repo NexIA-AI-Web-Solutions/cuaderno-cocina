@@ -25,7 +25,7 @@
                             <v-text-field v-model="space.name" :label="$t('Name')"></v-text-field>
 
                             <v-select :label="$t('Theme')" v-model="useUserPreferenceStore().userSettings.theme"
-                                      :items="[{title: 'Tandoor', value: 'TANDOOR'}, {title: 'Tandoor Dark', value: 'TANDOOR_DARK'}, ]">
+                                      :items="[{title: 'Cuaderno Cocina', value: 'TANDOOR'}, {title: 'Cuaderno Cocina oscuro (incompleto)', value: 'TANDOOR_DARK'}, ]">
                             </v-select>
 
                             <v-text-field v-model="useUserPreferenceStore().userSettings.defaultUnit" :label="$t('Default_Unit')"></v-text-field>
@@ -200,17 +200,15 @@ onMounted(() => {
  * @param target
  */
 function finishWelcome(target: RouteLocationRaw = {name: 'StartPage'}) {
-    if (space.value) {
-        space.value.spaceSetupCompleted = true
-        space.value.householdSetupCompleted = true
-        loading.value = true
-        updateSpace().then(() => {
-            router.push(target)
-            loading.value = false
-        })
-    } else {
-        useMessageStore().addMessage(MessageType.ERROR, "Space not loaded yet", 5000)
+    if (!space.value) {
+        useMessageStore().addMessage(MessageType.ERROR, "El espacio aún no está disponible", 5000)
+        return Promise.resolve()
     }
+    loading.value = true
+    return updateSpace({...space.value, spaceSetupCompleted: true, householdSetupCompleted: true})
+        .then(() => router.push(target))
+        .catch(() => { /* updateSpace reports the persistence error. */ })
+        .finally(() => { loading.value = false })
 }
 
 /**
@@ -230,16 +228,11 @@ function loadSpace() {
  * update both the space and user settings
  */
 function updateSpaceAndUserSettings() {
-    let promises = [] as Promise<any>[]
     loading.value = true
-
-    promises.push(updateSpace())
-    promises.push(useUserPreferenceStore().updateUserSettings(true))
-
-    Promise.allSettled(promises).then(r => {
-        loading.value = false
-        stepper.value = "2"
-    })
+    return Promise.allSettled([updateSpace(), useUserPreferenceStore().updateUserSettings(true, true)])
+        .then(results => {
+            if (results.every(result => result.status === 'fulfilled')) stepper.value = "2"
+        }).finally(() => { loading.value = false })
 }
 
 function householdAndNext(nextStep: string) {
@@ -272,15 +265,16 @@ function householdAndNext(nextStep: string) {
 /**
  * update space in database
  */
-function updateSpace() {
+function updateSpace(patchedSpace: Space | undefined = space.value) {
     let api = new ApiApi()
-    const currentSpace = space.value
-    if (!currentSpace) return Promise.resolve()
+    const currentSpace = patchedSpace
+    if (!currentSpace) return Promise.reject(new Error("El espacio aún no está disponible"))
     return api.apiSpacePartialUpdate({id: currentSpace.id, patchedSpace: currentSpace}).then(r => {
         space.value = r
         useUserPreferenceStore().activeSpace = Object.assign({}, space.value)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
+        throw err
     })
 }
 

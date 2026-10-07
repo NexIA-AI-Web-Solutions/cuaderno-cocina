@@ -1,15 +1,15 @@
-{
-  "name": "Tandoor Recipes",
-  "short_name": "Tandoor",
-  "description": "Application to manage, tag and search recipes.",
+{% load static %}{
+  "name": "Cuaderno Cocina",
+  "short_name": "Cuaderno Cocina",
+  "description": "Recetas, compras y organización de cocina con Cuaderno Cocina.",
   "icons": [
     {
-      "src": "/static/assets/logo_color144.png",
+      "src": "{% static 'cuaderno/cuaderno-icon-144.png' %}",
       "type": "image/png",
       "sizes": "144x144"
     },
     {
-      "src": "/static/assets/logo_color512.png",
+      "src": "{% static 'cuaderno/cuaderno-icon-512.png' %}",
       "type": "image/png",
       "sizes": "512x512"
     }
@@ -40,7 +40,7 @@
     }
   ],
   "share_target": {
-    "action": "/data/import/url",
+    "action": "{% url 'index' %}recipe/import",
     "method": "GET",
     "params": {
       "title": "title",

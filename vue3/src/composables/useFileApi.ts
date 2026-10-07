@@ -73,10 +73,12 @@ export function useFileApi() {
             formData.append('image_url', imageUrl)
         }
 
+        fileApiLoading.value = true
         return upload(getDjangoUrl(`api/recipe/${recipeId}/image/`), {
             method: 'PUT',
             body: formData
         }).then(r => {
+            if (!r.ok) throw new ResponseError(r)
             return r.json().then(r => {
                 return RecipeImageFromJSON(r)
             })
@@ -143,7 +145,9 @@ export function useFileApi() {
             method: 'POST',
             body: formData
         }).then(r => {
+            if (!r.ok) throw new ResponseError(r)
             return r.json().then(r => {
+                if (!Number.isSafeInteger(r.import_id) || r.import_id <= 0) throw new Error("La importación no devolvió un identificador válido")
                 return r.import_id
             })
         }).finally(() => {

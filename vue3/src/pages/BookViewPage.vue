@@ -20,7 +20,7 @@
                             <v-expansion-panel-title>{{ $t('Table_of_Contents') }}</v-expansion-panel-title>
                             <v-expansion-panel-text>
                                 <v-list>
-                                    <v-list-item v-for="(entry, i) in recipes" :key="entry.id" @click="page = i; toc = false">
+                                    <v-list-item v-for="(entry, i) in recipes" :key="entry.id" @click="setPage(i); toc = false">
                                         {{ entry.name }}
                                     </v-list-item>
                                 </v-list>
@@ -34,7 +34,7 @@
         <v-row>
             <v-col class="text-center">
                 <v-pagination :model-value="currentPageNumber"
-                              @update:model-value="value => page = (value - 1) * recipesPerPage"
+                              @update:model-value="value => setPage((value - 1) * recipesPerPage)"
                               :length="totalPages"
                 ></v-pagination>
             </v-col>
@@ -44,10 +44,10 @@
             <v-col cols="12">
                 <v-window v-model="page" show-arrows>
                     <template #next>
-                        <v-btn icon="fa-solid fa-chevron-right" variant="plain" @click="page = page + (mdAndUp ? 2 : 1)"></v-btn>
+                        <v-btn icon="fa-solid fa-chevron-right" variant="plain" @click="movePage(1)" :disabled="page >= lastPage"></v-btn>
                     </template>
                     <template #prev>
-                        <v-btn icon="fa-solid fa-chevron-left" variant="plain" @click="page = page - (mdAndUp ? 2 : 1)"></v-btn>
+                        <v-btn icon="fa-solid fa-chevron-left" variant="plain" @click="movePage(-1)" :disabled="page <= 0"></v-btn>
                     </template>
 
                     <v-window-item v-for="(entry, i) in recipes" :key="entry.id">
@@ -75,7 +75,7 @@
 <script setup lang="ts">
 
 
-import {computed, onMounted, ref} from "vue";
+import {computed, ref, watch} from "vue";
 import {ApiApi, RecipeBook, RecipeBookEntry, RecipeOverview} from "@/openapi";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {useRouter} from "vue-router";
@@ -107,81 +107,81 @@ const book = ref({} as RecipeBook)
 const entries = ref([] as RecipeBookEntry[])
 const recipes = ref([] as RecipeOverview[])
 
-onMounted(() => {
-    loadBook()
-})
+let bookRevision = 0
+const lastPage = computed(() => Math.max(0, Math.floor((recipes.value.length - 1) / recipesPerPage.value) * recipesPerPage.value))
 
-/**
- * load the given book and trigger loading its entries
- */
-function loadBook() {
+function setPage(index: number) {
+    page.value = Math.max(0, Math.min(lastPage.value, Math.floor(index / recipesPerPage.value) * recipesPerPage.value))
+}
+function movePage(direction: number) {
+    setPage(page.value + direction * recipesPerPage.value)
+}
+watch(() => props.bookId, () => { void loadBook() }, {immediate: true})
+watch(recipesPerPage, () => setPage(page.value))
+
+/** Load a route's book; obsolete responses cannot append into the next book. */
+async function loadBook() {
+    const revision = ++bookRevision
     const api = new ApiApi()
-    loading.value = true
     const bookId = Number(props.bookId)
-    if (!Number.isInteger(bookId) || bookId <= 0) return
-
-    api.apiRecipeBookRetrieve({id: bookId}).then(r => {
-        book.value = r
-
-        entries.value = []
-        recLoadEntries(1)
-    }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-    }).finally(() => {
+    book.value = {} as RecipeBook
+    entries.value = []
+    recipes.value = []
+    manualItems.value = 0
+    filterItems.value = 0
+    page.value = 0
+    loadingEntries.value = false
+    loading.value = true
+    if (!Number.isInteger(bookId) || bookId <= 0) {
         loading.value = false
-    })
+        return
+    }
+    try {
+        const result = await api.apiRecipeBookRetrieve({id: bookId})
+        if (revision !== bookRevision) return
+        book.value = result
+        await recLoadEntries(1, revision, bookId)
+    } catch (err) {
+        if (revision === bookRevision) useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+    } finally {
+        if (revision === bookRevision) loading.value = false
+    }
 }
 
-/**
- * recursively load the book entries and trigger loading all entries from a saved custom filter
- * @param page
- */
-function recLoadEntries(page: number) {
+async function recLoadEntries(pageNumber: number, revision = bookRevision, bookId = Number(props.bookId)): Promise<void> {
     const api = new ApiApi()
     loadingEntries.value = true
-
-    api.apiRecipeBookEntryList({book: Number(props.bookId), page: page, pageSize: 50}).then(r => {
-        r.results.forEach(rBE => {
-            recipes.value.push(rBE.recipeContent)
-        })
-        manualItems.value = r.count
-        if (r.next) {
-            recLoadEntries(page + 1)
-        } else {
-            if (book.value.filter) {
-                recLoadFilter(book.value.filter.id, 1)
-            } else {
-                loadingEntries.value = false
-            }
-        }
-    }).catch(err => {
+    try {
+        const result = await api.apiRecipeBookEntryList({book: bookId, page: pageNumber, pageSize: 50})
+        if (revision !== bookRevision) return
+        entries.value.push(...result.results)
+        recipes.value.push(...result.results.map(entry => entry.recipeContent))
+        manualItems.value = result.count
+        if (result.next) await recLoadEntries(pageNumber + 1, revision, bookId)
+        else if (book.value.filter) await recLoadFilter(book.value.filter.id, 1, revision)
+        else loadingEntries.value = false
+    } catch (err) {
+        if (revision !== bookRevision) return
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
         loadingEntries.value = false
-    })
+    }
 }
 
-/**
- * recursively load the recipes matched by the custom filter configured in the book
- * @param filterId filter id to look for
- * @param page page to load
- */
-function recLoadFilter(filterId: number, page: number) {
-    let api = new ApiApi()
-
-    api.apiRecipeList({filter: filterId, page: page, pageSize: 50}).then(r => {
-        const existingIds = new Set(recipes.value.map(rec => rec.id))
-        const newRecipes = r.results.filter(rec => !existingIds.has(rec.id))
-        recipes.value = recipes.value.concat(newRecipes)
+async function recLoadFilter(filterId: number, pageNumber: number, revision = bookRevision): Promise<void> {
+    const api = new ApiApi()
+    try {
+        const result = await api.apiRecipeList({filter: filterId, page: pageNumber, pageSize: 50})
+        if (revision !== bookRevision) return
+        const existingIds = new Set(recipes.value.map(recipe => recipe.id))
+        recipes.value.push(...result.results.filter(recipe => !existingIds.has(recipe.id)))
         filterItems.value = recipes.value.length - manualItems.value
-        if (r.next) {
-            recLoadFilter(filterId, page + 1)
-        } else {
-            loadingEntries.value = false
-        }
-    }).catch(err => {
+        if (result.next) await recLoadFilter(filterId, pageNumber + 1, revision)
+        else loadingEntries.value = false
+    } catch (err) {
+        if (revision !== bookRevision) return
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
         loadingEntries.value = false
-    })
+    }
 }
 
 </script>

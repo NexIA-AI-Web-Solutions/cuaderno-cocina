@@ -1,9 +1,9 @@
 <template>
-    <v-tabs v-model="currentTab" v-if="!selectEnabled && props.mealPlanId == undefined">
+    <v-tabs v-model="currentTab" class="cuaderno-shopping-tabs" show-arrows v-if="!selectEnabled && props.mealPlanId == undefined">
         <v-tab value="shopping"><i class="fas fa-fw"
                                    :class="{'fa-circle-notch fa-spin':useShoppingStore().currentlyUpdating, 'fa-shopping-cart ': !useShoppingStore().currentlyUpdating}"></i> <span
-            class="d-none d-md-block ms-1">{{ $t('Shopping_list') }} ({{ useShoppingStore().totalFoods }})</span></v-tab>
-        <v-tab value="recipes"><i class="fas fa-book fa-fw"></i> <span class="d-none d-md-block ms-1">{{
+            class="ms-1">{{ $t('Shopping_list') }} ({{ useShoppingStore().totalFoods }})</span></v-tab>
+        <v-tab value="recipes"><i class="fas fa-book fa-fw"></i> <span class="ms-1">{{
                 $t('Recipes')
             }} ({{ useShoppingStore().getAssociatedRecipes().length }})</span></v-tab>
         <v-tab value="selected_supermarket" v-if="selectedSupermarket">
@@ -17,6 +17,8 @@
                     height="100%"
                     rounded="0"
                     variant="plain"
+                    :aria-label="$t('Settings')"
+                    :title="$t('Settings')"
                     v-bind="props"
                 >
                     <i class="fa-solid fa-sliders"></i>
@@ -114,7 +116,7 @@
 
                 <v-row class="pa-0" dense>
                     <v-col class="pa-0">
-                        <v-chip-group>
+                        <v-chip-group class="cuaderno-shopping-toolbar">
                             <!-- enable selection -->
                             <v-btn label size="small" variant="outlined" @click="selectEnabled = true;  selectedLines= []" v-if="!selectEnabled">
                                 <v-icon icon="fa-solid fa-list-check"></v-icon>
@@ -180,6 +182,14 @@
                         </v-alert>
 
                         <shopping-list-entry-input :meal-plan-id="props.mealPlanId"></shopping-list-entry-input>
+                        <v-card v-if="props.mealPlanId === undefined && useShoppingStore().initialized && !useShoppingStore().currentlyUpdating && !shoppingListItems.length"
+                                class="cuaderno-shopping-empty mt-4" variant="outlined">
+                            <v-card-title>{{ $t('ShoppingEmptyTitle') }}</v-card-title>
+                            <v-card-text>{{ $t('ShoppingEmptyHelp') }}</v-card-text>
+                            <v-card-actions>
+                                <v-btn :to="{name: 'CuadernoListaPage'}" min-height="44" prepend-icon="$shopping">{{ $t('ShoppingQuickView') }}</v-btn>
+                            </v-card-actions>
+                        </v-card>
 
                         <v-list class="mt-3" density="compact" v-if="!useShoppingStore().initialized">
                             <v-skeleton-loader type="list-item"></v-skeleton-loader>
@@ -574,5 +584,13 @@ function isAllSelected(category: IShoppingListCategory | undefined = undefined) 
 </script>
 
 <style scoped>
+.cuaderno-shopping-tabs { background: rgb(var(--v-theme-surface)); border-bottom: 1px solid rgba(var(--v-theme-on-surface), .14); }
+.cuaderno-shopping-tabs :deep(.v-tab) { text-transform: none; letter-spacing: normal; font-weight: 600; min-height: 48px; }
+.cuaderno-shopping-tabs :deep(.v-tab--selected) { color: rgb(var(--v-theme-primary)); background: rgba(var(--v-theme-primary), .08); border-radius: 10px 10px 0 0; }
+.cuaderno-shopping-toolbar { padding: 10px; border: 1px solid rgba(var(--v-theme-on-surface), .14); border-radius: 12px; background: rgb(var(--v-theme-surface)); }
+.cuaderno-shopping-toolbar :deep(.v-slide-group__content) { flex-wrap: wrap; gap: 6px; }
+.cuaderno-shopping-toolbar :deep(.v-btn), .cuaderno-shopping-toolbar :deep(.v-chip) { min-height: 44px; }
+.cuaderno-shopping-empty { max-width: 640px; }
+
 
 </style>

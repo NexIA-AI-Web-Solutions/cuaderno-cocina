@@ -48,11 +48,11 @@ const loading = ref(false)
  * show export option for all types that have export marked as true in integration list
  */
 const exportFormats = computed(() => {
-    const formats: Array<{title: string, value: string}> = []
+    const formats: Array<{title: string, value: string, props: {subtitle: string}}> = []
 
     INTEGRATIONS.forEach(integration => {
         if (integration.export) {
-            formats.push({title: integration.name, value: integration.id})
+            formats.push({title: integration.name, value: integration.id, props: {subtitle: integration.description}})
         }
     })
 

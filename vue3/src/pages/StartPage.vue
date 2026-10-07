@@ -1,5 +1,20 @@
 <template>
     <v-container>
+        <header class="cuaderno-home-header">
+            <div class="d-flex align-center ga-3">
+                <h1 class="text-h4">{{ $t('Recipes') }}</h1>
+                <v-chip v-if="totalRecipes >= 0" variant="tonal" color="secondary" :aria-label="`${$t('Recipes')}: ${totalRecipes}`">{{ totalRecipes }}</v-chip>
+            </div>
+            <v-btn v-if="totalRecipes > 0" min-height="44" rounded="lg" prepend-icon="$search" variant="tonal" :to="{name: 'SearchPage', params: {query: ''}}">{{ $t('View_Recipes') }}</v-btn>
+        </header>
+        <div v-if="totalRecipes < 0 && !countError" role="status" aria-live="polite" class="cuaderno-home-loading">
+            <p>{{ $t('Loading') }}</p>
+            <v-skeleton-loader type="card" max-width="360"></v-skeleton-loader>
+        </div>
+        <v-alert v-if="countError" role="alert" type="error" variant="tonal" class="mb-4">
+            {{ $t('LoadRecipesFailure') }}
+            <v-btn variant="text" min-height="44" @click="loadRecipeCount">{{ $t('Refresh') }}</v-btn>
+        </v-alert>
         <horizontal-meal-plan-window v-if="useUserPreferenceStore().deviceSettings.start_showMealPlan"></horizontal-meal-plan-window>
 
         <v-card v-if="totalRecipes == 0" class="mt-5 mb-5">
@@ -43,12 +58,6 @@
             <horizontal-recipe-scroller :skeletons="4" mode="keyword" v-if="totalRecipes > 25"></horizontal-recipe-scroller>
             <horizontal-recipe-scroller :skeletons="4" mode="random" v-if="totalRecipes > 25"></horizontal-recipe-scroller>
 
-            <v-row>
-                <v-col class="text-center">
-                    <v-btn size="x-large" rounded="xl" prepend-icon="$search" variant="tonal" :to="{name: 'SearchPage', params: {query: ''}}">{{ $t('View_Recipes') }}</v-btn>
-                </v-col>
-            </v-row>
-
         </template>
 
 
@@ -65,6 +74,7 @@ import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {settleComponentRequest} from "@/utils/componentRequest";
 
 const totalRecipes = ref(-1)
+const countError = ref(false)
 const messageStore = useMessageStore()
 let requestController: AbortController | undefined
 
@@ -75,6 +85,7 @@ function abortPendingRequest() {
 
 function loadRecipeCount() {
     abortPendingRequest()
+    countError.value = false
     const controller = new AbortController()
     requestController = controller
     const api = new ApiApi()
@@ -82,7 +93,7 @@ function loadRecipeCount() {
         api.apiRecipeList({pageSize: 1}, {signal: controller.signal}),
         controller.signal,
         response => { totalRecipes.value = response.count },
-        error => { messageStore.addError(ErrorMessageType.FETCH_ERROR, error) },
+        error => { countError.value = true; messageStore.addError(ErrorMessageType.FETCH_ERROR, error) },
     )
 }
 
@@ -105,4 +116,14 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.cuaderno-home-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.cuaderno-home-loading { max-width: 360px; padding-block: 16px; }
+</style>

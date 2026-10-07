@@ -1,8 +1,10 @@
 {% extends "rest_framework/base.html" %}
 {% load i18n %}
 
+{% block title %}Cuaderno Cocina API{% endblock %}
+
 {% block branding %}
-    <a class="navbar-brand" href="{% url 'index' %}">{% trans 'Recipe Home' %}</a>
+    <a class="navbar-brand" href="{% url 'index' %}">Cuaderno Cocina</a>
 {% endblock %}
 
 {% block userlinks %}
@@ -12,8 +14,8 @@
         </li>
         <li>
             <a class='navbar-link' rel="noreferrer nofollow" target="_blank"
-               href='https://www.django-rest-framework.org/'>
-                Django REST framework
+               href='https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina'>
+                {% trans 'Código fuente' %}
             </a>
         </li>
     </ul>
