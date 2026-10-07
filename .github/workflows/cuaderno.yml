@@ -202,11 +202,24 @@ jobs:
           source_hash=$(python -c 'from scripts.cuaderno.delivery_backup import source_manifest; print(source_manifest()["sha256"])')
           echo "identity=$(git rev-parse HEAD)+worktree.$source_hash" >> "$GITHUB_OUTPUT"
       - name: Construir candidato y capturar evidencia real de build
+        id: candidate_build
         env:
           CUADERNO_ENV: test
         run: >-
           python scripts/cuaderno/candidate_check.py build-image
           --context .cuaderno-runs/ci-context.json --bootstrap-image cuaderno-cocina:local
+      - name: Conservar diagnóstico de construcción fallida
+        if: failure() && steps.candidate_build.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cuaderno-build-failure
+          path: |
+            .cuaderno-runs/*-build-image-*.json
+            .cuaderno-runs/*-build-image-*.log
+          include-hidden-files: true
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 3
       - name: Contratos del mismo candidato
         env:
           CUADERNO_ENV: test
