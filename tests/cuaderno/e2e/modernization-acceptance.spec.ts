@@ -2,6 +2,10 @@ import type {Locator, Page, Route, TestInfo} from '@playwright/test'
 import {appPath, featureMatrix, fixturePrefix} from './contracts.js'
 import {assertNoHorizontalOverflow, enterApp, expect, test} from './fixtures.js'
 
+// page.route cannot hold API fetches after a worker claims the page. Real worker
+// behavior stays covered by prefix-acceptance; this file exercises DOM states.
+test.use({serviceWorkers: 'block'})
+
 // IDs map to the reviewed presentation ledger. These assertions run against the
 // candidate's native UI and real synthetic data; none submits data edits or
 // settings. Opening a recipe retains its native, owner-scoped view logging.
