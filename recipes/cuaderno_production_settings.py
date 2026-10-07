@@ -1,7 +1,11 @@
 """Secure deployment profile for Cuaderno behind an explicitly configured HTTPS ingress."""
+import os
+
+# AI is disabled in this profile; LiteLLM must use its bundled map during import.
+os.environ['LITELLM_LOCAL_MODEL_COST_MAP'] = 'True'
+
 from recipes.settings import *  # noqa: F403
 from django.core.exceptions import ImproperlyConfigured
-import os
 import re
 
 if DEBUG or SECRET_KEY == 'INSECURE_STANDARD_KEY_SET_IN_ENV' or len(SECRET_KEY) < 50:

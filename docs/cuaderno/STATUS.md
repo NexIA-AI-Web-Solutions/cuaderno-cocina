@@ -1,5 +1,22 @@
 # Estado del producto
 
+## Arranque sin descargas de IA — 8 de octubre de 2026
+
+El arranque del clon de `f58b000` reveló que el import nativo de LiteLLM intenta
+descargar un catálogo remoto incluso con IA y conectores desactivados. El perfil
+de producción ahora fuerza el catálogo incluido antes de importar los ajustes
+base. Tres regresiones de importación en frío pasan tras reproducir el fallo;
+la revisión independiente confirma el orden de imports y la ausencia de una
+nueva opción para habilitar IA. El nuevo arranque real y su CI siguen pendientes.
+
+La fuente `f58b000` y sus artefactos se conservan congelados. Su CI 37701266074
+ha superado ambos backends, tooling, frontend, imagen y Markdown; las matrices
+de navegador y G7 continúan pendientes en esta actualización. La web publicada
+permanece en `ff3b685`. La copia previa de DB/media/env está cifrada y su
+restauración completa se verificó en un namespace aislado con la imagen anterior.
+Las pruebas adicionales del clon y la aceptación HTTPS del candidato final
+se registran por separado; ninguna de estas comprobaciones publica esta fuente.
+
 ## Correcciones de aceptación — 8 de octubre de 2026
 
 El candidato `2162075` no se publicó: CI 37694418221 obtuvo 578/599 pruebas

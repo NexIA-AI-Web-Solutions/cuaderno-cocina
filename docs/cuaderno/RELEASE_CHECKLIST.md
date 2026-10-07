@@ -1,5 +1,19 @@
 # Aceptación final
 
+## Revisión de arranque del 8 de octubre — candidata pendiente
+
+- [x] Evitar la descarga automática del catálogo de LiteLLM en producción,
+  preservando IA y conectores desactivados.
+- [x] Tres regresiones de importación en frío, RED→GREEN y revisión independiente.
+- [x] Copia previa cifrada y descifrada para verificar integridad; restauración
+  aislada completa con el runtime anterior `ff3b685`.
+- [ ] CI de la fuente final: nueve jobs y diecisiete controles G7 del mismo candidato.
+- [ ] Imagen final verificada por transporte oficial, fuente y bytes del runtime.
+- [ ] Pruebas de costes, comensales, entradas inválidas, compras e intercambio
+  en el clon y matriz HTTPS completa de nueve cuentas tras publicar.
+- [ ] Recuperación del esquema final, documentación de rollback y estado del backup.
+- [ ] Recursos, otras aplicaciones y configuración de Caddy comprobados al terminar.
+
 ## Candidato con recetas y planificación ampliadas — pendiente
 
 - [x] Distribución de funciones entre Esencial, Profesional e Integral,
