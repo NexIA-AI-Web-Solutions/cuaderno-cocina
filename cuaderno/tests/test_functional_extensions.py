@@ -137,7 +137,9 @@ class RecipeExtrasTests(ExtrasFixture, TestCase):
         response = client.get(payload["gallery"][0]["url"])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Cache-Control"], "private, no-store")
-        response.close()
+        delivered = b"".join(response.streaming_content)
+        self.assertTrue(delivered.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertEqual(delivered, (Path(self.media.name) / row.image.name).read_bytes())
         self.assertEqual(APIClient().get(payload["gallery"][0]["url"]).status_code, 404)
 
     def test_gallery_rejects_active_and_malformed_uploads_without_rows(self):
@@ -171,8 +173,12 @@ class RecipeExtrasTests(ExtrasFixture, TestCase):
         url = payload["gallery"][0]["url"]
         self.assertEqual(APIClient().get(url, {"share": str(other_share.uuid)}).status_code, 404)
         response = APIClient().get(url, {"share": str(own_share.uuid)})
-        self.assertEqual(response.status_code, 200); response.close()
+        self.assertEqual(response.status_code, 200)
+        delivered = b"".join(response.streaming_content)
+        self.assertTrue(delivered.startswith(b"\x89PNG\r\n\x1a\n"))
         image_id = payload["gallery"][0]["id"]
+        row = RecipeGalleryImage.objects.get(pk=image_id)
+        self.assertEqual(delivered, (Path(self.media.name) / row.image.name).read_bytes())
         self.assert_json(self.client_for(self.helper).delete(f"{self.gallery_url(self.private)}{image_id}/"))
         self.assertEqual(APIClient().get(url, {"share": str(own_share.uuid)}).status_code, 404)
 

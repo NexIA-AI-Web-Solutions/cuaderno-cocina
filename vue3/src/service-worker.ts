@@ -23,7 +23,7 @@ setCacheNameDetails({prefix: namespace, suffix: 'v1', precache: 'precache', runt
 const publicManifest = self.__WB_MANIFEST.flatMap(entry => {
     const url = new URL(typeof entry === 'string' ? entry : entry.url, builtAssets)
     if (url.origin !== scope.origin || !url.pathname.startsWith(staticPath) ||
-        !/^cuaderno-logo-[A-Za-z0-9_-]+\.svg$/.test(url.pathname.split('/').at(-1) || '') ||
+        !/^cuaderno-logo-[A-Za-z0-9_-]+\.svg$/.test(url.pathname.split('/').pop() || '') ||
         url.search || url.hash) return []
     return [typeof entry === 'string' ? url.href : {...entry, url: url.href}]
 })
