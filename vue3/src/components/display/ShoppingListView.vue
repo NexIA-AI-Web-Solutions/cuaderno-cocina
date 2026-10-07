@@ -31,11 +31,11 @@
                               :label="$t('GroupBy')">
                     </v-select>
                 </v-list-item>
-                <v-list-item v-if="useUserPreferenceStore().deviceSettings.shopping_selected_grouping == ShoppingGroupingOptions.CATEGORY">
+                <v-list-item v-if="canManageShopping && useUserPreferenceStore().deviceSettings.shopping_selected_grouping == ShoppingGroupingOptions.CATEGORY">
                     <v-switch color="primary" hide-details :label="$t('SupermarketCategoriesOnly')"
                               v-model="useUserPreferenceStore().deviceSettings.shopping_show_selected_supermarket_only"></v-switch>
                 </v-list-item>
-                <v-list-item>
+                <v-list-item v-if="canManageShopping">
                     <v-model-select model="Supermarket" v-model="useUserPreferenceStore().deviceSettings.shopping_selected_supermarket"></v-model-select>
                 </v-list-item>
 
@@ -88,14 +88,14 @@
         <shopping-list-select-chip
             v-model="selectedShoppingLists"
             :shopping-lists="useShoppingStore().shoppingLists"
-            show-update
+            :show-update="canManageShopping"
             hide-edit
             hide-create
             @refresh="useShoppingStore().loadShoppingLists()"
             @update="batchUpdateShoppingLists"
         ></shopping-list-select-chip>
 
-        <category-select-chip
+        <category-select-chip v-if="canManageShopping"
             :categories="useShoppingStore().supermarketCategories"
             @update="batchUpdateCategories"
         ></category-select-chip>
@@ -131,12 +131,12 @@
                             </v-btn>
 
                             <!-- undo -->
-                            <v-btn label size="small" class="ms-1" variant="outlined" @click="useShoppingStore().undoChange()" :disabled="useShoppingStore().undoStack.length == 0">
+                            <v-btn v-if="canManageShopping" label size="small" class="ms-1" variant="outlined" @click="undoShoppingChange()" :disabled="useShoppingStore().undoStack.length == 0">
                                 <v-icon icon="fa-solid fa-rotate-left"></v-icon>
                             </v-btn>
 
                             <v-chip label size="small" variant="outlined" class="ms-1 me-0 mt-0 mb-0 h-100" style="max-width: 50%;" :prepend-icon="TSupermarket.icon"
-                                    append-icon="fa-solid fa-caret-down" v-if="props.mealPlanId == undefined">
+                                    append-icon="fa-solid fa-caret-down" v-if="canManageShopping && props.mealPlanId == undefined">
                             <span v-if="selectedSupermarket">
                                 {{ selectedSupermarket.name }}
                             </span>
@@ -162,6 +162,8 @@
                                 class="ms-1 mt-0 mb-0 h-100"
                                 v-model:ids="useUserPreferenceStore().deviceSettings.shopping_selected_shopping_lists"
                                 :shopping-lists="useShoppingStore().shoppingLists"
+                                :hide-edit="!canManageShopping"
+                                :hide-create="!canManageShopping"
                                 @refresh="useShoppingStore().loadShoppingLists()"
                             ></shopping-list-select-chip>
                         </v-chip-group>
@@ -283,12 +285,12 @@
                         <v-card>
                             <v-card-title>{{ $t('Recipes') }} / {{ $t('Meal_Plan') }}</v-card-title>
                             <v-card-text>
-                                <v-model-select model="Recipe" v-model="manualAddRecipe">
+                                <v-model-select v-if="canManageShopping" model="Recipe" v-model="manualAddRecipe">
                                     <template #append>
                                         <v-btn icon="$create" color="create" :disabled="manualAddRecipe == undefined">
                                             <v-icon icon="$create"></v-icon>
                                             <add-to-shopping-dialog :recipe="manualAddRecipe" v-if="manualAddRecipe != undefined"
-                                                                    @created="useShoppingStore().refreshFromAPI(); manualAddRecipe = undefined"></add-to-shopping-dialog>
+                                                                    @created="useShoppingStore().refreshFromAPI(undefined, canManageShopping); manualAddRecipe = undefined"></add-to-shopping-dialog>
                                         </v-btn>
                                     </template>
                                 </v-model-select>
@@ -334,7 +336,7 @@
             </v-container>
 
         </v-window-item>
-        <v-window-item value="selected_supermarket">
+        <v-window-item v-if="canManageShopping" value="selected_supermarket">
             <v-container>
                 <v-row>
                     <v-col>
@@ -351,7 +353,7 @@
 
 <script setup lang="ts">
 
-import {computed, onMounted, ref, shallowRef, toRef, watch} from "vue";
+import {computed, onMounted, onUnmounted, ref, shallowRef, toRef, watch} from "vue";
 import {useShoppingStore} from "@/stores/ShoppingStore";
 import {ApiApi, Recipe, ResponseError, ShoppingList, ShoppingListEntry, ShoppingListRecipe, Supermarket, SupermarketCategory} from "@/openapi";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore";
@@ -383,7 +385,11 @@ const props = defineProps({
 const exportDialog = ref(false)
 const currentTab = ref("shopping")
 const supermarkets = ref([] as Supermarket[])
-const selectedSupermarket = computed(() => useUserPreferenceStore().deviceSettings.shopping_selected_supermarket ?? null)
+const canManageShopping = computed(() => {
+    const membership = useUserPreferenceStore().activeUserSpace
+    return membership?.active !== false && membership?.groups.some(group => ['user', 'admin'].includes(group.name)) === true
+})
+const selectedSupermarket = computed(() => canManageShopping.value ? useUserPreferenceStore().deviceSettings.shopping_selected_supermarket ?? null : null)
 const manualAddRecipe = ref<undefined | Recipe>(undefined)
 
 const selectEnabled = ref(false)
@@ -430,17 +436,41 @@ watch(() => useShoppingStore().entriesByGroup, () => {
     selectedLines.value = []
 })
 
+let stopInitializationWatch: (() => void) | undefined
+let shoppingViewActive = false
+
 onMounted(() => {
+    shoppingViewActive = true
     addEventListener("visibilitychange", (event) => {
         useShoppingStore().autoSyncHasFocus = (document.visibilityState === 'visible')
     });
 
-    useShoppingStore().refreshFromAPI()
+    if (useUserPreferenceStore().initCompleted) {
+        initializeShopping()
+    } else {
+        stopInitializationWatch = watch(() => useUserPreferenceStore().initCompleted, initialized => {
+            if (initialized) initializeShopping()
+        })
+    }
+})
+
+function initializeShopping() {
+    if (!shoppingViewActive) return
+    stopInitializationWatch?.()
+    stopInitializationWatch = undefined
+
+    if (useUserPreferenceStore().activeUserSpace && !canManageShopping.value) {
+        // This filter depends on supermarket data that this membership cannot read.
+        // Keep grouping and selected shopping lists while showing all permitted entries.
+        useUserPreferenceStore().deviceSettings.shopping_selected_supermarket = null
+        useUserPreferenceStore().deviceSettings.shopping_show_selected_supermarket_only = false
+    }
+    useShoppingStore().refreshFromAPI(undefined, canManageShopping.value)
 
     autoSyncLoop()
 
     // refresh selected supermarket since category ordering might have changed
-    if (useUserPreferenceStore().deviceSettings.shopping_selected_supermarket != null) {
+    if (canManageShopping.value && useUserPreferenceStore().deviceSettings.shopping_selected_supermarket != null) {
         new ApiApi().apiSupermarketRetrieve({id: useUserPreferenceStore().deviceSettings.shopping_selected_supermarket!.id!}).then(r => {
             useUserPreferenceStore().deviceSettings.shopping_selected_supermarket = r
         }).catch(err => {
@@ -450,9 +480,9 @@ onMounted(() => {
         })
     }
 
-    loadSupermarkets()
+    if (canManageShopping.value) loadSupermarkets()
     useShoppingStore().loadShoppingLists()
-})
+}
 
 /**
  * update the number of servings for an embedded recipe and with it the ShoppingListEntry amounts
@@ -466,7 +496,7 @@ function updateRecipeServings(recipe: ShoppingListRecipe, servings: number) {
     recipe.servings = servings
     api.apiShoppingListRecipeUpdate({id: recipe.id!, shoppingListRecipe: recipe}).then(r => {
         useShoppingStore().currentlyUpdating = false
-        useShoppingStore().refreshFromAPI()
+        useShoppingStore().refreshFromAPI(undefined, canManageShopping.value)
         useMessageStore().addPreparedMessage(PreparedMessage.UPDATE_SUCCESS)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
@@ -494,9 +524,15 @@ function autoSyncLoop() {
 /**
  * cancel auto sync loop before leaving to another page
  */
-onBeforeRouteLeave(() => {
+function stopShoppingView() {
+    shoppingViewActive = false
+    stopInitializationWatch?.()
+    stopInitializationWatch = undefined
     clearTimeout(useShoppingStore().autoSyncTimeoutId)
-})
+}
+
+onBeforeRouteLeave(stopShoppingView)
+onUnmounted(stopShoppingView)
 
 /**
  * delete shopping list recipe
@@ -505,7 +541,7 @@ function deleteListRecipe(slr: ShoppingListRecipe) {
     let api = new ApiApi()
 
     api.apiShoppingListRecipeDestroy({id: slr.id!}).then(r => {
-        useShoppingStore().refreshFromAPI()
+        useShoppingStore().refreshFromAPI(undefined, canManageShopping.value)
         useMessageStore().addPreparedMessage(PreparedMessage.DELETE_SUCCESS)
     }).catch(err => {
         useMessageStore().addError(ErrorMessageType.DELETE_ERROR, err)
@@ -516,6 +552,7 @@ function deleteListRecipe(slr: ShoppingListRecipe) {
  * load a list of supermarkets
  */
 function loadSupermarkets() {
+    if (!canManageShopping.value) return
     let api = new ApiApi()
 
     api.apiSupermarketList().then(r => {
@@ -528,12 +565,19 @@ function loadSupermarkets() {
 
 
 function batchUpdateShoppingLists() {
+    if (!canManageShopping.value) return
     const selectedEntries = selectedLines.value.flatMap(slf => Array.from(slf.entries.values()))
     useShoppingStore().updateEntryShoppingLists(selectedEntries, selectedShoppingLists.value)
     selectedLines.value = []
 }
 
+function undoShoppingChange() {
+    if (!canManageShopping.value) return
+    useShoppingStore().undoChange()
+}
+
 function batchUpdateCategories(category: SupermarketCategory) {
+    if (!canManageShopping.value) return
     useShoppingStore().updateCategories(selectedLines.value, category)
     selectedLines.value = []
 }

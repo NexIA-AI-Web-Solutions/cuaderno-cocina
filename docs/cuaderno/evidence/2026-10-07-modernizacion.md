@@ -10,6 +10,18 @@ Las 40 mejoras UI/UX siguientes están implementadas y clasificadas por Astra, c
 
 ## Correcciones funcionales y gestión de errores
 
+La ejecución real del candidato `808724b` en el CI 37608974757 dio raíz
+290/367 PASS y prefijo 406/483 PASS, con 77 fallos en cada matriz. No hubo
+retries ni skips y G7 rechazó el candidato; su imagen no se cargó ni desplegó.
+El informe oficial de raíz, ligado por SHA256, solo permite atribuir resultados
+parciales de 14 UX y 15 UI a casos aprobados. No cierra los mínimos ni la release.
+Las trazas confirmaron tres GET 403 de supermercados para Consulta, Ayuda con
+ancho inline superior al límite y navegación temática oculta en escritorio.
+Se corrigen esos comportamientos, el nombre accesible de búsqueda y dos
+interacciones del harness: VSelect por teclado y foco después de visibilidad.
+Los permisos nativos, collector, retries y plazos permanecen intactos. Estas
+correcciones suplementarias no añaden resultados al registro de 80.
+
 | ID | Resultado | Fuente | Estado |
 | --- | --- | --- | --- |
 | BUGFIX-01 | La consulta de selector más reciente prevalece frente a respuestas antiguas. | `vue3/src/components/inputs/VModelSelect.vue` | PASS fuente/unitario; CI y navegador pendientes |

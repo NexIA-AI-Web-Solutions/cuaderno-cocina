@@ -39,6 +39,9 @@ async function createStore(api) {
         export class ApiApi {
             apiShoppingListEntryBulkCreate(request) { return globalThis.__shoppingStoreUnit.get(${id}).api.bulk(request); }
             apiShoppingListEntryRetrieve(request) { return globalThis.__shoppingStoreUnit.get(${id}).api.retrieve(request); }
+            apiShoppingListEntryList(request) { return globalThis.__shoppingStoreUnit.get(${id}).api.list(request); }
+            apiSupermarketCategoryList() { return globalThis.__shoppingStoreUnit.get(${id}).api.categories(); }
+            apiSupermarketList() { return globalThis.__shoppingStoreUnit.get(${id}).api.supermarkets(); }
         }
     `)
     const shoppingTypes = moduleUrl(`export const ShoppingGroupingOptions = {CATEGORY: 'Category', CREATED_BY: 'CreatedBy', RECIPE: 'Recipe'};`)
@@ -100,6 +103,76 @@ function entry(id, revision = `opaque-${id}`) {
         createdBy: {displayName: 'Cocina'},
     }
 }
+
+async function settleRefresh() {
+    for (let index = 0; index < 10; index += 1) await new Promise(resolve => setImmediate(resolve))
+}
+
+test('refresh without supermarket permission loads every entry page without requesting restricted metadata', async () => {
+    const calls = []
+    const mounted = await createStore({
+        list(request) {
+            calls.push({...request})
+            return Promise.resolve({count: 51, next: request.page === 1 ? '/api/shopping-list-entry/?page=2' : null, results: [entry(request.page)]})
+        },
+        categories: assert.fail, supermarkets: assert.fail, errors: [],
+    })
+    try {
+        mounted.store.refreshFromAPI(undefined, false)
+        await settleRefresh()
+        assert.deepEqual(calls.map(request => request.page), [1, 2])
+        assert.deepEqual([...mounted.store.entries.keys()], [1, 2])
+        assert.equal(mounted.store.initialized, true)
+        assert.equal(mounted.store.currentlyUpdating, false)
+        assert.equal(mounted.store.entriesByGroup[0].foods.size, 2)
+    } finally { mounted.close() }
+})
+
+test('refresh retains default supermarket metadata and the requested meal-plan filter', async () => {
+    const calls = []
+    const mounted = await createStore({
+        list(request) {calls.push(request);return Promise.resolve({count: 1, next: null, results: [entry(1)]})},
+        categories: () => Promise.resolve({results: [{id: 8, name: 'Secos'}]}),
+        supermarkets: () => Promise.resolve({results: [{id: 9, name: 'Proveedor'}]}), errors: [],
+    })
+    try {
+        mounted.store.refreshFromAPI(42)
+        await settleRefresh()
+        assert.equal(calls[0].mealplan, 42)
+        assert.equal(mounted.store.supermarketCategories[0].name, 'Secos')
+        assert.equal(mounted.store.supermarkets[0].name, 'Proveedor')
+    } finally { mounted.close() }
+})
+
+test('read-only refresh still reports entry failures and releases its loading state', async () => {
+    const errors = []
+    const mounted = await createStore({
+        list: () => Promise.reject(new Error('entry service failed')),
+        categories: assert.fail, supermarkets: assert.fail, errors,
+    })
+    try {
+        mounted.store.refreshFromAPI(undefined, false)
+        await settleRefresh()
+        assert.deepEqual(errors, ['fetch'])
+        assert.equal(mounted.store.currentlyUpdating, false)
+        assert.equal(mounted.store.initialized, false)
+    } finally { mounted.close() }
+})
+
+test('default refresh still reports each real supermarket metadata failure', async () => {
+    const errors = []
+    const mounted = await createStore({
+        list: () => Promise.resolve({count: 0, next: null, results: []}),
+        categories: () => Promise.reject(new Error('category service failed')),
+        supermarkets: () => Promise.reject(new Error('supermarket service failed')), errors,
+    })
+    try {
+        mounted.store.refreshFromAPI()
+        await settleRefresh()
+        assert.deepEqual(errors, ['fetch', 'fetch'])
+        assert.equal(mounted.store.initialized, true)
+    } finally { mounted.close() }
+})
 
 test('offline double toggle stays FIFO and keeps the original revision until a write succeeds', async () => {
     const calls = []

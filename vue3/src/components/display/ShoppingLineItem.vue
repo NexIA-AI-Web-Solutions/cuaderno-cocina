@@ -44,8 +44,9 @@
         </template>
 
         <template v-slot:[checkBtnSlot]>
-            <div class="ps-3 pe-3" @click.native.stop="useShoppingStore().setEntriesCheckedState(entries, !isChecked, true);">
+            <div class="ps-3 pe-3" @click.native.stop="toggleChecked()">
                 <v-btn color="success" size="large"
+                       :disabled="!canBulkEdit"
                        :class="{'btn-success': !isChecked, 'btn-warning': isChecked}" :icon="actionButtonIcon" variant="plain">
                 </v-btn>
             </div>
@@ -86,6 +87,10 @@ const checkBtnSlot = ref(useUserPreferenceStore().userSettings.leftHanded ? 'pre
 const selectBtnSlot = ref(useUserPreferenceStore().userSettings.leftHanded ? 'append' : 'prepend')
 
 const dialog = ref(false)
+const canBulkEdit = computed(() => {
+    const membership = useUserPreferenceStore().activeUserSpace
+    return membership?.active !== false && membership?.groups.some(group => ['user', 'admin'].includes(group.name)) === true
+})
 
 const entries = computed(() => {
     return Array.from(props.shoppingListFood.entries.values())
@@ -238,7 +243,13 @@ const infoRow = computed(() => {
  * set food on_hand status to true and check all associated entries
  * @param food
  */
+function toggleChecked() {
+    if (!canBulkEdit.value) return
+    useShoppingStore().setEntriesCheckedState(entries.value, !isChecked.value, true)
+}
+
 function setFoodIgnoredAndChecked(food: Food) {
+    if (!canBulkEdit.value) return
     let api = new ApiApi()
 
     food.ignoreShopping = true

@@ -1,7 +1,7 @@
 <template>
     <slot name="activator" >
         <v-btn @click="dialog = true" variant="plain" icon="fa-solid fa-search" class="mr-1 fa-fw d-print-none" :aria-label="$t('Search')" :title="$t('Search')" v-if="mobile"></v-btn>
-        <v-btn @click="dialog = true" variant="plain" class="d-print-none"  v-else>
+        <v-btn @click="dialog = true" variant="plain" class="d-print-none" :aria-label="$t('Search')" v-else>
             <v-icon icon="fa-solid fa-search" class="mr-1 fa-fw"></v-icon>
             <span class="d-none d-sm-block">{{ $t('Search') }}</span>
             <v-chip size="x-small" variant="tonal" class="d-none d-md-flex ml-1" label>{{ $t('Ctrl+K') }}</v-chip>

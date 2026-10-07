@@ -11,6 +11,17 @@ pendientes. Las 20 mejoras de UX y 20 de UI se implementan y revisan por separad
 ninguna se declara verificada en navegador aún. Registro de los 80 resultados:
 [evidencia de modernización](evidence/2026-10-07-modernizacion.md).
 
+El [CI 37608974757](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37608974757)
+del candidato `808724b` terminó rechazado: raíz 290 PASS/77 FAIL y prefijo
+406 PASS/77 FAIL, sin retries ni skips; G7 falló. La imagen no se cargó ni
+desplegó. Las capturas y trazas reales mostraron peticiones de supermercados
+prohibidas para Consulta y dos problemas de Ayuda en escritorio. Se corrigen
+la aplicación y las interacciones de teclado del harness, conservando collector,
+permisos y plazos. Una nueva CI debe verificar el resultado antes de desplegar.
+GPT-6 Astra abrió personalmente la web HTTPS anterior con Playwright y revisó
+trece capturas; el recorrido conservó su fallo del calendario. Esa visita y
+los informes fallidos no certifican el nuevo runtime.
+
 La referencia de las 09:02 UTC conserva 16 contenedores y 46 servicios ajenos,
 sin cambios ni OOM nuevos. El reboot diario existente ocurrió a las 08:30 CEST,
 sin acción de esta tarea; Caddy tiene PID 913 y su configuración se conserva.

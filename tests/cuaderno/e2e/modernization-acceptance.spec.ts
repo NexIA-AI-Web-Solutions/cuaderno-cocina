@@ -92,6 +92,15 @@ async function go(page: Page, path: string, marker: Locator) {
   await transition(page, () => page.goto(appPath(path)), remaining => expect(marker).toBeVisible({timeout: remaining()}))
 }
 
+// VSelect's native input is covered by its presentation layer for pointer events.
+// Its supported keyboard handler opens the menu without bypassing actionability.
+async function openNativeSelect(selector: Locator) {
+  await selector.focus()
+  await expect(selector).toBeFocused()
+  await selector.press('Enter')
+  await expect(selector).toHaveAttribute('aria-expanded', 'true')
+}
+
 test('modernización: UX02–08/13–14 y UI01–08 · navegación y recetas', async ({cleanPage: page, identity}, testInfo) => {
   const count = await holdRead(page, '/api/recipe/', url => url.searchParams.get('page_size') === '1')
   const entered = enterApp(page)
@@ -155,6 +164,7 @@ test('modernización: UX02–08/13–14 y UI01–08 · navegación y recetas', a
   await expect(household, 'UX14 household is a native destination').toHaveAttribute('href', new RegExp(`${appPath('/list/')}household$`, 'i'))
   expect(await style(userMenu.locator('.cuaderno-identity-name'), 'white-space'), 'UX13 full identity can wrap').toBe('normal')
   expect(await style(userMenu.locator('.cuaderno-identity-line').first(), 'overflow-wrap')).toBe('anywhere')
+  await expect(household, 'UX14 household is visible after the menu transition').toBeVisible()
   await household.focus()
   await expect(household, 'UX14 household link receives keyboard focus').toBeFocused()
   await page.keyboard.press('Escape')
@@ -230,7 +240,7 @@ test('modernización: UX01/20 y UI11/12 · ajustes y formatos', async ({cleanPag
     expect(await style(section, 'border-radius')).toBe('16px')
   }
   await go(page, '/settings/export', page.getByRole('combobox', {name: /^(Type|Tipo)$/}))
-  await page.getByRole('combobox', {name: /^(Type|Tipo)$/}).click()
+  await openNativeSelect(page.getByRole('combobox', {name: /^(Type|Tipo)$/}))
   const descriptions = page.locator('.v-select__content .v-list-item-subtitle')
   await expect(descriptions, 'UX20 every available format describes its real file structure').toHaveCount(6)
   const expectedDescriptions = [
@@ -303,7 +313,7 @@ test('modernización: UX15–17/19 y UI13–15 · ayuda coherente y legible', as
     if (identity.width < 1440) {
       const selector = article.getByRole('combobox', {name: /^(Help|Ayuda)$/})
       await expect(selector, 'UX19 named native topic selector').toBeVisible()
-      await selector.click()
+      await openNativeSelect(selector)
       await page.getByRole('option', {name}).click()
     } else {
       await page.locator('.cuaderno-help-navigation .v-list-item').filter({hasText: name}).click()

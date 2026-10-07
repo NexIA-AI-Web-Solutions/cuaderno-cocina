@@ -11,7 +11,7 @@
             </v-list>
         </v-navigation-drawer>
         <v-main scrollable>
-            <v-container class="cuaderno-help-article">
+            <v-container class="cuaderno-help-article" max-width="860">
                 <v-select v-model="window" :items="mobileMenuItems" :label="$t('Help')" class="d-block d-lg-none" variant="outlined"></v-select>
                 <v-window v-model="window">
                     <v-window-item v-for="section in helpSections" :key="section.id" :value="section.id">
@@ -127,7 +127,9 @@ const props = withDefaults(defineProps<{
 
 const {t} = useI18n()
 const route = useRoute()
-const drawer = defineModel<boolean>()
+// An unbound Boolean otherwise defaults to false and closes the desktop topics.
+// Undefined preserves Vuetify's adaptive default; bound dialog values still win.
+const drawer = defineModel<boolean>({default: undefined})
 const section = props.defaultSection || (typeof route.query.section === 'string' ? route.query.section : null)
 const window = ref(validHelpSection(section))
 const aiEnabled = computed(() => useUserPreferenceStore().activeSpace.aiEnabled === true)

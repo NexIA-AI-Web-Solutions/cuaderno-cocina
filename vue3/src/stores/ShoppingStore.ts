@@ -213,8 +213,9 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
     /**
      * Retrieves all shopping related data (shopping list entries, supermarkets, supermarket categories and shopping list recipes) from API
      * @param mealPlanId optionally filter by mealplan ID and only load entries associated with that
+     * @param loadSupermarketData only request supermarket APIs when the current membership permits them
      */
-    function refreshFromAPI(mealPlanId?: number) {
+    function refreshFromAPI(mealPlanId?: number, loadSupermarketData = true) {
         if (!currentlyUpdating.value) {
             currentlyUpdating.value = true
             autoSyncLastTimestamp.value = new Date();
@@ -231,17 +232,19 @@ export const useShoppingStore = defineStore(_STORE_ID, () => {
 
             recLoadShoppingListEntries(requestParameters)
 
-            api.apiSupermarketCategoryList().then(r => {
-                supermarketCategories.value = r.results
-            }).catch((err) => {
-                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-            })
+            if (loadSupermarketData) {
+                api.apiSupermarketCategoryList().then(r => {
+                    supermarketCategories.value = r.results
+                }).catch((err) => {
+                    useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+                })
 
-            api.apiSupermarketList().then(r => {
-                supermarkets.value = r.results
-            }).catch((err) => {
-                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-            })
+                api.apiSupermarketList().then(r => {
+                    supermarkets.value = r.results
+                }).catch((err) => {
+                    useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+                })
+            }
         }
     }
 
