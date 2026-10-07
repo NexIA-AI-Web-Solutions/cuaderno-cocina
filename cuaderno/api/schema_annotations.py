@@ -46,7 +46,7 @@ def apply_schema_annotations():
     """Attach exact contracts to collection views; call once from cuaderno.urls."""
     revision = OpenApiParameter("revision", OpenApiTypes.STR, required=True,
                                 description="Revisión SHA256 de la última respuesta leída.")
-    operations = [
+    operation_specs = [
         (recipe_extras.RecipeExtrasView, dict(
             get=extend_schema(operation_id="cuaderno_recipe_extras_retrieve", responses=fs.RecipeExtrasSchema),
             put=extend_schema(operation_id="cuaderno_recipe_extras_update", request=fs.RecipeExtrasWriteSchema, responses=fs.RecipeExtrasSchema))),
@@ -89,7 +89,7 @@ def apply_schema_annotations():
         (planning.MenuPrintView, dict(post=extend_schema(
             operation_id="cuaderno_menu_print", request=fs.MenuPrintWriteSchema, responses=fs.MenuPrintSchema))),
     ]
-    for view, methods in operations:
+    for view, methods in operation_specs:
         extend_schema_view(**methods)(view)
     extend_schema_view(
         get=extend_schema(operation_id="cuaderno_edition_retrieve", responses=s.EditionSchema),

@@ -96,7 +96,12 @@ test('course and event edits retain their read revision and preserve drafts afte
         assert.ok(['planning/courses/3/', 'planning/events/4/'].includes(path)); throw new Error('Conflicto de revisión')
     })
     try {
-        const editButtons = () => all(mounted.root, node => node.type === 'button' && textOf(node) === 'Editar')
+        const editButtons = () => {
+            // Vue slot fragments add empty text anchors in this virtual renderer.
+            const controls = all(mounted.root, node => node.type === 'button' && textOf(node).trim() === 'Editar')
+            assert.equal(controls.length, 2, 'the actual course and event edit controls are rendered')
+            return controls
+        }
         editButtons()[0].props.onClick(); await flush()
         field(mounted.root, 'Nombre').props['onUpdate:modelValue']('Mi primero'); await flush()
         await button(mounted.root, 'Guardar tipo de plato').props.onClick(); await flush()
@@ -106,6 +111,6 @@ test('course and event edits retain their read revision and preserve drafts afte
         await button(mounted.root, 'Guardar anotación').props.onClick(); await flush()
         assert.equal(field(mounted.root, 'Título').props.modelValue, 'Mi anotación')
         assert.match(textOf(mounted.root), /Conflicto de revisión/)
-        assert.equal(mounted.calls.filter(row => row.method === 'PUT').length, 2)
+        assert.deepEqual(mounted.calls.filter(row => row.method === 'PUT').map(row => row.path), ['planning/courses/3/', 'planning/events/4/'])
     } finally {mounted.close()}
 })
