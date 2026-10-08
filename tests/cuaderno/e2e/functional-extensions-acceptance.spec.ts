@@ -372,7 +372,12 @@ test('planificación: captura cinco semanas y aplica una plantilla en el calenda
     await page.getByLabel('Primer día', {exact: true}).fill('2041-06-01')
     await observe(page, '/api/cuaderno/planning/', 'GET', () => page.getByRole('button', {name: 'Actualizar periodo', exact: true}).click())
     await page.getByRole('tab', {name: 'Tipos de plato', exact: true}).click()
-    await expect(page.locator('.v-card').getByText(recipe.name, {exact: true}).filter({visible: true})).toBeVisible()
+    // A saved template has the same title: verify the applied calendar row itself.
+    const appliedCard = page.locator('.v-card').filter({has: page.getByRole('combobox', {name: 'Tipo de plato', exact: true})}).filter({has: page.getByRole('strong').filter({hasText: recipe.name})})
+    await expect(appliedCard).toHaveCount(1)
+    await expect(appliedCard.getByRole('strong')).toHaveText(recipe.name)
+    await expect(appliedCard.getByRole('strong')).toBeVisible()
+    await expect(appliedCard.getByText(/^2041-06-01 · /)).toBeVisible()
   } finally {
     try {for (const id of createdIds) await removePlan(page, id, recipe); if (originalId) await removePlan(page, originalId, recipe)} finally {
       try {if (templateId) {const current = await api<Template>(page, `/api/cuaderno/planning/templates/${templateId}/`); expect(current.status).toBe(200); expect(current.body.name).toBe(recipe.name); expect((await api(page, `/api/cuaderno/planning/templates/${templateId}/?revision=${current.body.revision}`, {method: 'DELETE'})).status).toBe(204)}} finally {await removeRecipe(page, recipe)}
