@@ -1,5 +1,103 @@
 # Estado del producto
 
+## Producción c79b2ce — 8 de octubre de 2026
+
+La [web publicada](https://gex-dashboard.hopto.org/cuaderno-cocina/) está
+healthy y tiene admisión final registrada. Sirve la fuente
+`c79b2ce54c20f778524e3dcadfac0bc7e8053aa0`, imagen
+`sha256:88bf041a552f273f46e3856bb02dfc663397ebf113fbe05ba579446245f255a9`.
+La base de datos original conserva su contenedor y configuración.
+El [informe de producción](PRODUCTION_RELEASE_20261008.md) detalla el cierre.
+
+La [CI 37713643936](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37713643936)
+terminó con nueve jobs verdes: ambos backends, tooling, frontend, imagen,
+Markdown, las dos matrices Playwright y G7 17/17. Las matrices pasan
+599/599 en raíz y 715/715 bajo prefijo, con Chromium, Firefox y WebKit.
+Se comprobaron 609 tests Cuaderno, 1.296 nativos y 21 subtests, y 342 pruebas
+frontend. La verificación offline vincula diecisiete logs reales y nueve
+artefactos a este candidato; la atestación local compara 1.081 archivos
+runtime y los bytes del frontend. El escáner conserva ocho findings originales,
+cero ignorados, con pruebas de backports o alcance bajo
+`reviewed-no-unresolved`; esto no equivale a cero vulnerabilidades.
+
+Las correcciones de esta revisión incluyen permisos de Consulta en calendario
+y precios, actualización de platos y reinicio del diálogo de plantillas,
+sincronización de lectura de recetas y manejo de fallos de red. Los importes
+conservan las cifras significativas con aritmética decimal exacta y al menos
+dos decimales; las entradas con coma se normalizan y los errores mantienen
+el borrador con un mensaje útil. La interfaz de precios usa tarjetas en los
+anchos de tablet y controles adecuados al toque. El arranque de producción
+usa el catálogo local de LiteLLM con IA y conectores desactivados.
+
+El clon restaurado pasó doce casos: nueve combinaciones de los planes
+Esencial, Profesional e Integral con los roles responsable, cocina y Consulta,
+y tres intercambios de recetas entre ediciones. Cubrió CRUD, cálculo por
+raciones, precios, inventario e idempotencia de compras en Integral.
+Se comprobaron hashes y dimensiones de 72 PNG; ocho capturas tuvieron revisión
+visual independiente, cubriendo cuatro anchos y roles operativos y Consulta.
+El fallo inicial del clon y su diagnóstico permanecen conservados; su causa
+exacta no se reprodujo. La brecha demostrada de sincronización del banco de
+pruebas se corrigió manteniendo collector y presupuesto.
+
+La aceptación pública terminó con 54/54 casos nativos PASS: 36 lecturas
+(nueve cuentas × 390×844, 768×1024, 1024×768 y 1440×900), nueve pruebas del
+service worker y nueve de login/logout, estas últimas a 1440×900. Las tres
+fases terminaron con código cero y nueve cierres temporales de sesión
+verificados por fase. Chromium local y los viewports emulados no certifican
+un dispositivo físico. El collector público mantiene su tratamiento previo
+de `ERR_ABORTED`; el del clon crítico incluye todos los errores de petición.
+
+Los doce GET 403 suplementarios del logout se conservan: en cuatro casos,
+las tres rutas de lectura del SPA fueron rechazadas al quedar sin sesión.
+Una reproducción con la función original intacta demuestra peticiones
+iniciadas después del logout 302 y de eliminar la cookie. No aporta tiempos
+individuales de los doce diagnósticos originales. El control de limpieza exige
+esta prueba fijada, los hashes de los 54 casos y tres recibos, y exclusivamente
+esa combinación de rutas, origen, método y código. El bloqueo inicial se
+conserva. La limpieza real posterior eliminó nueve usuarios, tres espacios y
+27 sesiones propias, preservando exactamente las 502 filas ajenas. No había
+sesiones primarias; no se afirma una comprobación sobre sesiones positivas.
+
+El backup previo OLD y su restauración están conservados. El backup posterior
+a la limpieza, `20261008T055520Z-bab104011f10`, pasó cifrado, descifrado y
+verificación de sus cuatro miembros regulares. Su restauración aislada NEW
+pasó con 123 tablas, 330 migraciones y 119 secuencias, incluyendo valores e
+`is_called`, filas, versión y árbol de media (cero archivos). Manifest, assets,
+página de login y CSRF bajo prefijo pasaron con la imagen nueva. La red de
+recuperación es interna, sin puertos publicados; sus contenedores quedaron
+parados. La huella DDL no se compara. Las copias son locales: se conservan
+cifrados y bundles plaintext con permisos protegidos, sin destino offsite.
+
+El wrapper y la unidad de backup están vinculados a la fuente nueva. El timer
+propio vuelve a estar activo y habilitado, manteniendo su configuración diaria
+01:20 UTC (03:20 CEST en esta fecha) con retraso aleatorio; la siguiente ejecución
+observada es el
+9 de octubre a las 03:21:23 CEST. Web y DB usan `unless-stopped` y Docker está
+activo y habilitado. El reboot programado del VPS permanece sin cambios.
+
+El cierre compara los 19 contenedores ajenos, los cinco archivos de Caddy y
+todos los contenedores, redes y volúmenes originales, con dos contenedores,
+una red y dos volúmenes nuevos exclusivamente de la recuperación propia.
+Las seis transiciones automáticas de servicios nativos están atribuidas a
+sus ciclos y actualizaciones, con configuración y estado final verificados;
+no se afirma uptime agregado inmutable ni se actuó sobre servicios ajenos.
+La ventana del kernel de 04:50 a 06:03:44 UTC tiene cero registros OOM; el
+historial anterior permanece conservado. La raíz pública y el readiness de
+la app devuelven HTTP 200. Cuaderno no tiene SMTP configurado; el perfil mantiene
+IA y conectores externos desactivados. No se probó entrega SMTP.
+
+La admisión final privada es `c79b2ce-final-production-admission.json`, SHA
+`c02d51990cc3fbc7df416d1ba1493b892402cb8927148376c6a6ea8d6a582452`.
+Los FAIL originales y los pins históricos con aceptación pendiente se
+preservan; esta admisión posterior registra el cierre real. Los artefactos y
+credenciales permanecen fuera de la fuente canónica. Esta rama documenta la
+operación sin cambiar la identidad del runtime c79b2ce.
+
+## Historial anterior a la aceptación final
+
+Los apartados siguientes conservan los estados observados en su fecha.
+No sustituyen el estado actual indicado arriba.
+
 ## Precios legibles y lectura por rol — 8 de octubre de 2026
 
 La inspección del clon en navegador detectó decimales de almacenamiento visibles

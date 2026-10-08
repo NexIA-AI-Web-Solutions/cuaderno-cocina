@@ -1,5 +1,133 @@
 # Aceptación final
 
+## Release c79b2ce — admitida el 8 de octubre de 2026
+
+**Producción admitida a las 06:06 UTC:** runtime NEW healthy, aceptación pública,
+cleanup, backup/restore NEW, comparación final y timer completados. El recibo
+separado `c79b2ce-final-production-admission.json` (`0600`) declara
+`production_admitted=true`, SHA256
+`c02d51990cc3fbc7df416d1ba1493b892402cb8927148376c6a6ea8d6a582452`.
+Los pins públicos previos conservan `admitted=false`; el recibo final es la
+atestación vigente y no altera esos registros históricos.
+
+Fuente runtime congelada `source-release-20261008-v5`, commit
+`c79b2ce54c20f778524e3dcadfac0bc7e8053aa0`, source SHA256
+`1fb585ca77a057eda83900d8e7ea07ab13076f4a3d51cac59598753d3179fc5d`.
+Imagen `sha256:88bf041a552f273f46e3856bb02dfc663397ebf113fbe05ba579446245f255a9`;
+web `18234e76f0b413d9dd1b90ee221dfce3f625e3bcc35593fd0b7d3d934cccfc5e`, DB
+`c92233bdb17fb5f302de9681fb2955d1e8c156cfadea58e3a6aaf8cbfb1c7c51` conservada.
+Esta documentación vive en una rama separada de notas; no cambia la fuente
+congelada ni representa otra imagen.
+
+- [x] [CI 37713643936](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37713643936):
+  nueve jobs PASS; backend Cuaderno 609, nativo 1.296, frontend 342,
+  Playwright raíz 599/599 y prefijo 715/715 en tres motores.
+- [x] G7 offline 17/17, transporte oficial y atestación real cargada del mismo
+  candidato: nueve artefactos, 1.081 archivos runtime y frontend comprobados.
+- [x] Clon crítico v2: 12 informes PASS, nueve cuentas por edición/rol y tres
+  intercambios entre Spaces. 72 PNG privados con dimensiones/hashes y modo
+  `0600` verificados; revisión visual independiente de ocho capturas.
+- [x] Web NEW healthy desde las 04:58 UTC, identidad exacta y DB conservada.
+  Continuación separada `c79b2ce-post-health-continuation.json` PASS: wrapper NEW
+  `c250e917…` y unit NEW `1b9ce89f…` vinculados a source-v5. El helper de despliegue
+  post-health permanece FAIL en su registro original.
+- [x] Público HTTPS 54/54 PASS, nueve cuentas, tres fases exit0 y nueve logouts
+  por fase. READ 36 en 390×844, 768×1024, 1024×768 y 1440×900; WORKER 9 y
+  LOGIN/LOGOUT 9 a 1440 px. Doce diagnósticos 403 esperados conservados y
+  vinculados a sus informes; collector público conserva su exclusión previa
+  de `ERR_ABORTED`, errores console/pageerror y HTTP ≥500 bloqueantes, y 4xx
+  diagnósticos. CI y clon crítico mantienen todos los requestfailed.
+- [x] Cleanup real PASS: nueve usuarios, tres Spaces y 27 sesiones propias
+  eliminados; 502 filas externas al fixture exactamente conservadas. Datos
+  primarios/memberships/preferencias conservados; `primary_session_count=0`
+  no prueba preservación de una sesión primaria existente. Recibo
+  `c79b2ce-synthetic-cleanup.json`, SHA256
+  `3181724c39d31729d5fab464c089cece95eb964a4b84f64af483b23014ed7f1c`.
+- [x] Backup NEW limpio `20261008T055520Z-bab104011f10`: 123 tablas/330
+  migraciones, imagen88/sourcec79, cuatro miembros regulares descifrados,
+  runtime Docker healthy revalidado; `c79b2ce-new-backup-operation.json` y proof.
+- [x] Restore NEW aislado `cuaderno-restore-e320c008a6a3` PASS: 123 tablas,
+  330 migraciones, 119 secuencias y filas completas; media comprobada con cero
+  archivos, assets/manifest nativos bajo prefijo y página login/CSRF verificados.
+  Red interna, cero puertos publicados y recursos detenidos. Recibo SHA256
+  `71460114f908515e07b304029d5daf6427a2e0cdaf80ab531d89c6c84f6e22bd`.
+- [x] Infraestructura protegida final PASS: contenedores conservados, redes,
+  volúmenes, Caddy/boot y demás estados raw nativos coinciden. Sólo el restore
+  propio añade dos contenedores, una red y dos volúmenes. Seis transiciones
+  ambientales atribuidas, estados actuales y quince huellas de configuración
+  exactos; no se declara uptime ajeno inalterado.
+- [x] Host final PASS: 19 contenedores ajenos y cinco comprobaciones de Caddy;
+  raíz HTTP200/33 ms y ready HTTP200/96 ms. Kernel 04:50–06:03:44 UTC:
+  52 registros y cero relacionados con OOM; incidentes OOM históricos retenidos.
+- [x] Timer propio reanudado, `active/waiting` y `enabled` conservado;
+  `c79b2ce-final-backup-timer-resumed.json` PASS. Próximo backup viernes
+  9 de octubre a las 03:21:23 CEST, horario diario 01:20 UTC (03:20 CEST en esta fecha), con jitter.
+- [x] Persistencia propia web/DB `unless-stopped`, Docker activo/habilitado;
+  reboot existente sin cambios, 8 de octubre a las 08:30 CEST. Esto acredita
+  configuración observada, no una prueba posterior al reboot programado.
+- [x] Admisión final separada con hashes de todas las puertas reales.
+
+Límites vigentes: backup cifrado local y bundles plaintext protegidos, sin
+copia offsite; fingerprint DDL de esquema no comparado. Cuaderno no tiene SMTP configurado; IA y conectores externos desactivados;
+entrega SMTP no probada. Navegador público Chromium y cuatro
+viewports emulados; sin certificación de Safari/iPad físicos. Las 72 imágenes
+no son 72 revisiones visuales: ocho capturas fueron revisadas independientemente.
+Scanner: ocho findings raw, cero ignorados, revisión sin pendientes sin resolver;
+no se declara cero vulnerabilidades. Ver [runbook de esta release](PRODUCTION_RELEASE_20261008.md).
+
+## Cronología operativa y fallos conservados
+
+El primer deploy de las 04:22:46 UTC terminó FAIL en preflight sin mutaciones:
+OLD healthy y env idéntico. Seis inspecciones probaron el orden variable de
+mounts ajenos con los mismos valores; canonicalización completa revisada,
+conservando campos/duplicados. Evidencias `c79-deploy-da2a09fba62f/result.json`
+y `c79b2ce-deploy-preflight-mount-order-diagnostic.json`.
+
+El quinto helper `c79-deploy-6768850b2bb3/result.json` terminó FAIL después de
+health, antes de rebind: cuatro bots nativos ciclaron por su configuración de
+seis horas entre 04:56:56 y 04:57:02, con trece hashes históricos intactos.
+La primera continuación se bloqueó antes de escribir por PHP automático
+05:00:11 y activaciones Polkit/DBus/PackageKit, con configuración PHP conservada.
+Diagnósticos `c79b2ce-native-four-service-runtime-cycle.json` y
+`c79b2ce-ambient-package-service-transitions.json`. La continuación posterior
+PASS tiene recibo separado; ninguno de esos FAIL se reescribe como PASS.
+
+Cleanup original bloqueó antes de mutar por exigir diagnósticos vacíos;
+`c79b2ce-cleanup-original-guard-block.json` y log `0600` conservados. Los doce
+403 originales son GET del mismo origen de cuentas 2/6/7/8 para
+edition/unit/recipe-flat. Una reproducción de un caso con plantilla original
+intacta: un caso nativo PASS de la cuenta índice 6, con cuatro checks, observó
+tres GET comenzar tras logout302 y
+sin cookie a +294/+596/+603 ms: `c79b2ce-public-logout-diagnostic.json`.
+Esos tiempos no se atribuyen a las doce solicitudes originales. El adaptador
+privado revisado (`0d2e505b…`), 26 contratos PASS y revisión independiente,
+exige incondicionalmente hashes de los 54 informes, tres fases/pins, prueba
+estática y sólo esos doce diagnósticos exactos con logout completado; sin
+cambiar fuente runtime, collector ni informes originales.
+
+La unidad READ propia se aumentó preventivamente de 1 a 1,5 GiB, sin OOM
+en esa ejecución, sin reinicio, retries ni cambios de límites productivos; recibo
+`c79b2ce-public-read-memory-adjustment.json`. El primer clon crítico c79
+interrumpido, el ensayo pasivo posterior y la corrección de su barrera de
+harness se conservan sin atribuir una causa no reproducida al fallo original.
+
+Backup OLD histórico `20261008T040507Z-4f76705d692c` y restore v2
+`cuaderno-restore-9df28445db9d`: 114 tablas/329 migraciones/110 secuencias PASS.
+El primer restore falló en export SQL PostgreSQL16 sin `--file -`; corrección
+privada revisada y repetición real PASS. Se conservan los backups/restore OLD
+posteriores y sus recibos; ese punto antiguo no representa el backup NEW final.
+También permanecen `c79b2ce-clone-critical-v1-interrupted.json`,
+`c79b2ce-old-backup-premature-verification.json` y
+`c79b2ce-old-restore-export-fix-review.json`.
+
+Evidencias privadas en `agent-evidence/` del paquete: offline/loaded attestation,
+clon v2, fases públicas, cleanup, backup/restore NEW, continuación, host final,
+timer y admisión final. Los tests unitarios/helpers preparados no sustituyen
+esos recibos. Las casillas históricas siguientes conservan su fecha y estado;
+no representan pendientes vigentes de esta release.
+
+## Historial anterior a la aceptación final
+
 ## Revisión de precios del 8 de octubre — candidata pendiente
 
 - [x] Etiquetas decimales exactas y legibles, sin convertir dinero a Float.
