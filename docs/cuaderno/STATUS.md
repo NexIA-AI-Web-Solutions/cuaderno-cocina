@@ -1,5 +1,22 @@
 # Estado del producto
 
+## Presupuesto de listas y evidencia visual — 8 de octubre de 2026
+
+El propietario fija el presupuesto p95 de las APIs de listas en 800 ms, tanto
+en lectura secuencial como con cinco usuarios simultáneos. El presupuesto de
+escandallo permanece en 300 ms. Se conserva el resultado anterior: la CI
+37831204425 de `4bf56f6` pasó ambos backends, tooling, frontend, TypeScript,
+compilación, las matrices de navegador y las nueve cuentas de precisión;
+G7 rechazó formatos concurrentes con 578,299 ms frente al límite anterior
+de 500 ms. Ese candidato no se desplegó.
+
+La inspección de las capturas largas encontró barras fijas superpuestas al
+recorte. La nueva campaña conserva esos recortes y añade capturas de cada
+tarjeta, tras centrarla mediante desplazamiento real y comprobar que sus
+cantidades y controles quedan completos entre las barras visibles. No oculta
+elementos de la interfaz. La nueva CI, imagen, aceptación visual, G7 y
+despliegue con copia y restauración verificadas siguen pendientes.
+
 ## Candidato de precisión y recuperación — 8 de octubre de 2026
 
 Producción continúa en `c79b2ce54c20f778524e3dcadfac0bc7e8053aa0` y su

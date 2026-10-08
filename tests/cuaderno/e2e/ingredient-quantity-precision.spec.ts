@@ -1,4 +1,4 @@
-import {test, expect, type Browser, type BrowserContext, type Page} from '@playwright/test'
+import {test, expect, type Browser, type BrowserContext, type Locator, type Page} from '@playwright/test'
 import {createHash} from 'node:crypto'
 import {chmod, lstat, mkdir, readFile, writeFile} from 'node:fs/promises'
 import path from 'node:path'
@@ -35,6 +35,70 @@ type Viewport = {
   width: number; pass: true; amounts: {ingredientId: number; raw: string; label: string; bounds: Bounds; yieldEnabled: boolean; basisEnabled: boolean}[]
   screenshot: string; sha256: string; bytes: number; pngWidth: number; pngHeight: number; croppedComponent: true
   readonlyWarningVisible: boolean; saveButtons: number; saveButtonsDisabled: boolean
+}
+type DetailGeometry = {
+  viewportBounds: Bounds; usableBounds: Bounds; chromeBounds: Bounds[]
+  cardBounds: Bounds; labelBounds: Bounds; controlBounds: Bounds[]
+}
+type DetailScreenshot = DetailGeometry & {
+  path: string; sha256: string; bytes: number; width: number; height: number
+  viewportWidth: number; ingredientIndex: number; croppedCard: true; unoccluded: true
+}
+
+function unoccludedBounds(bounds: Bounds, viewport: Bounds, obstructions: Bounds[]): boolean {
+  const valid = (rect: Bounds) => [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) && rect.width > 0 && rect.height > 0
+  if (!valid(bounds) || !valid(viewport) || !obstructions.every(valid)) return false
+  if (bounds.x < viewport.x || bounds.y < viewport.y || bounds.x + bounds.width > viewport.x + viewport.width ||
+    bounds.y + bounds.height > viewport.y + viewport.height) return false
+  return obstructions.every(rect => bounds.x + bounds.width <= rect.x || rect.x + rect.width <= bounds.x ||
+    bounds.y + bounds.height <= rect.y || rect.y + rect.height <= bounds.y)
+}
+
+function validateDetailGeometry(geometry: DetailGeometry) {
+  expect(unoccludedBounds(geometry.cardBounds, geometry.usableBounds, []), 'La tarjeta completa debe caber entre las barras visibles.').toBe(true)
+  expect(geometry.cardBounds.height).toBeLessThan(geometry.viewportBounds.height)
+  expect(geometry.controlBounds.length).toBeGreaterThanOrEqual(2)
+  for (const bounds of [geometry.cardBounds, geometry.labelBounds, ...geometry.controlBounds]) {
+    expect(unoccludedBounds(bounds, geometry.viewportBounds, geometry.chromeBounds), 'Tarjeta, cantidad y controles deben quedar completos y sin barras superpuestas.').toBe(true)
+    expect(unoccludedBounds(bounds, geometry.cardBounds, []), 'La cantidad y los controles deben quedar dentro de la tarjeta.').toBe(true)
+  }
+}
+
+async function settledFrames(page: Page) {
+  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+}
+
+async function detailGeometry(page: Page, row: Locator, label: Locator): Promise<DetailGeometry> {
+  const chrome = await page.evaluate(() => {
+    const bounds = (element: Element) => {
+      const rect = element.getBoundingClientRect()
+      return {x: rect.x, y: rect.y, width: rect.width, height: rect.height}
+    }
+    const viewportBounds = {x: 0, y: 0, width: window.innerWidth, height: window.innerHeight}
+    const visible = (element: Element) => {
+      const style = getComputedStyle(element), rect = bounds(element)
+      return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0 &&
+        rect.width > 0 && rect.height > 0 && rect.x < viewportBounds.width && rect.x + rect.width > 0 &&
+        rect.y < viewportBounds.height && rect.y + rect.height > 0
+    }
+    const headers = [...document.querySelectorAll('.v-app-bar')].filter(visible).map(bounds)
+    const footers = [...document.querySelectorAll('.v-bottom-navigation')].filter(visible).map(bounds)
+    const top = Math.max(0, ...headers.map(rect => rect.y + rect.height))
+    const bottom = Math.min(viewportBounds.height, ...footers.map(rect => rect.y))
+    return {viewportBounds, usableBounds: {x: 0, y: top, width: viewportBounds.width, height: bottom - top},
+      chromeBounds: [...headers, ...footers]}
+  })
+  const cardBounds = await row.boundingBox(), labelBounds = await label.boundingBox()
+  failUnless(cardBounds && labelBounds, 'Faltan bounds reales de tarjeta o cantidad.')
+  const controls = [row.getByRole('textbox', {name: 'Rendimiento (0 a 1)'}), row.getByRole('combobox', {name: 'Base de la cantidad'}),
+    ...await row.getByRole('button', {name: 'Guardar merma', exact: true}).all()]
+  const controlBounds = await Promise.all(controls.map(async control => {
+    await expect(control).toBeVisible()
+    const rect = await control.boundingBox()
+    failUnless(rect, 'Un control de merma no tiene bounds reales.')
+    return rect
+  }))
+  return {...chrome, cardBounds, labelBounds, controlBounds}
 }
 
 function failUnless(condition: unknown, message: string): asserts condition {
@@ -281,7 +345,7 @@ test.afterAll(async ({}, testInfo) => {
   if (identity.edition !== 'integral' || identity.role !== 'responsable') return
   const {directory, token} = campaign()
   const {binding, sha256} = await metadata()
-  const reports: Record<string, unknown>[] = [], screenshots: Record<string, unknown>[] = [], failures: string[] = []
+  const reports: Record<string, unknown>[] = [], screenshots: Record<string, unknown>[] = [], detailScreenshots: DetailScreenshot[] = [], failures: string[] = []
   for (const edition of editions) for (const role of roles) {
     const index = editions.indexOf(edition) * 3 + roles.indexOf(role)
     try {
@@ -311,18 +375,38 @@ test.afterAll(async ({}, testInfo) => {
         screenshots.push({path: expectedName, sha256: viewport.sha256, bytes: viewport.bytes, viewportWidth: viewport.width,
           width: viewport.pngWidth, height: viewport.pngHeight, croppedComponent: true, mode: '0600'})
       }
+      const details = report.detailScreenshots as DetailScreenshot[]
+      failUnless(Array.isArray(details) && details.length === 16, 'Faltan las 16 capturas reales de tarjetas del caso.')
+      let detailIndex = 0
+      for (const width of widths) for (let ingredientIndex = 0; ingredientIndex < quantities.length; ingredientIndex++) {
+        const detail = details[detailIndex++]!
+        const expectedName = `detail-${index}-${edition}-${role}-${width}-${ingredientIndex}.png`
+        failUnless(detail.path === expectedName && detail.viewportWidth === width && detail.ingredientIndex === ingredientIndex &&
+          detail.croppedCard === true && detail.unoccluded === true && detail.viewportBounds.width === width,
+        'Captura de tarjeta no vinculada a cuenta, ancho e ingrediente.')
+        validateDetailGeometry(detail)
+        const filename = path.join(directory, expectedName), stat = await lstat(filename), bytes = await readFile(filename)
+        failUnless(stat.isFile() && !stat.isSymbolicLink() && (stat.mode & 0o777) === 0o600 && bytes.length === detail.bytes &&
+          hash(bytes) === detail.sha256 && bytes.length > 24 && bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a' &&
+          bytes.readUInt32BE(16) === detail.width && bytes.readUInt32BE(20) === detail.height && detail.width > 0 && detail.height > 0 &&
+          Math.abs(detail.width - detail.cardBounds.width) <= 1 && Math.abs(detail.height - detail.cardBounds.height) <= 1,
+        'Bytes PNG de tarjeta no verificables o dimensiones distintas de sus bounds reales.')
+        detailScreenshots.push(detail)
+      }
       reports.push(report)
     } catch (error) {
       failures.push(`${edition}/${role}: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
-  const passed = failures.length === 0 && reports.length === 9 && screenshots.length === 36
+  const passed = failures.length === 0 && reports.length === 9 && screenshots.length === 36 && detailScreenshots.length === 144
   await writePrivate(path.join(directory, 'summary.json'), {mode: 'native-quantity-precision', token, passed,
     failed: failures.length, cases: reports.length, expectedCases: 9, expectedScreenshots: 36, reports, screenshots, failures,
+    detailScreenshots, detailScreenshotsCount: detailScreenshots.length,
     binding: {...binding, metadataSha256: sha256}, newCritical12Claimed: false})
   expect(failures, failures.join('\n')).toEqual([])
   expect(reports).toHaveLength(9)
   expect(screenshots).toHaveLength(36)
+  expect(detailScreenshots).toHaveLength(144)
 })
 
 test('cantidades nativas exactas y merma accesible en cuatro anchos', async ({browser, page}, testInfo) => {
@@ -335,7 +419,7 @@ test('cantidades nativas exactas y merma accesible en cuatro anchos', async ({br
   const accountIndex = editions.indexOf(identity.edition) * 3 + roles.indexOf(identity.role)
   const report: Record<string, unknown> = {mode: 'native-quantity-precision', token, accountIndex,
     edition: identity.edition, role: identity.role, pass: false, failures: [], viewports: [],
-    newCritical12Claimed: false, startedAtUnixMs: Date.now()}
+    newCritical12Claimed: false, detailScreenshots: [], startedAtUnixMs: Date.now()}
   const collector = strictCollector(page)
   try {
     const {binding, sha256} = await metadata()
@@ -357,6 +441,8 @@ test('cantidades nativas exactas y merma accesible en cuatro anchos', async ({br
     await expect(panel.getByRole('status')).toHaveCount(0)
     const viewports: Viewport[] = []
     report.viewports = viewports
+    const detailScreenshots: DetailScreenshot[] = []
+    report.detailScreenshots = detailScreenshots
     for (const width of widths) {
       await page.setViewportSize({width, height: width === 390 ? 844 : width === 768 ? 1024 : 900})
       await panel.scrollIntoViewIfNeeded()
@@ -398,6 +484,28 @@ test('cantidades nativas exactas y merma accesible en cuatro anchos', async ({br
         pngWidth: bytes.readUInt32BE(16), pngHeight: bytes.readUInt32BE(20), croppedComponent: true,
         readonlyWarningVisible: await panel.getByText(warning, {exact: true}).isVisible(), saveButtons: await save.count(),
         saveButtonsDisabled: (await Promise.all((await save.all()).map(button => button.isDisabled()))).every(Boolean)})
+      for (let ingredientIndex = 0; ingredientIndex < quantities.length; ingredientIndex++) {
+        const quantity = quantities[ingredientIndex]!
+        const row = panel.locator('.yield-row').filter({has: page.getByText(fixture.foodNames[ingredientIndex]!, {exact: true})})
+        const label = row.getByText(quantity.label + ' ' + fixture.unitName, {exact: true})
+        await row.evaluate(element => element.scrollIntoView({block: 'center', inline: 'nearest', behavior: 'instant'}))
+        await settledFrames(page)
+        await collector.drain()
+        const geometry = await detailGeometry(page, row, label)
+        validateDetailGeometry(geometry)
+        const detailPath = `detail-${accountIndex}-${identity.edition}-${identity.role}-${width}-${ingredientIndex}.png`
+        const detailFile = path.join(directory, detailPath)
+        const detailBytes = await row.screenshot({path: detailFile, animations: 'disabled'})
+        await chmod(detailFile, 0o600)
+        await settledFrames(page)
+        const afterGeometry = await detailGeometry(page, row, label)
+        validateDetailGeometry(afterGeometry)
+        expect(afterGeometry, 'La captura no debe desplazar la tarjeta ni las barras respecto a los bounds comprobados.').toEqual(geometry)
+        expect(detailBytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a')
+        detailScreenshots.push({...geometry, path: detailPath, sha256: hash(detailBytes), bytes: detailBytes.length,
+          width: detailBytes.readUInt32BE(16), height: detailBytes.readUInt32BE(20), viewportWidth: width, ingredientIndex,
+          croppedCard: true, unoccluded: true})
+      }
     }
     const after = await nativeApi<Envelope>(page.context(), endpoint, 200)
     validateEnvelope(after, fixture, identity)
@@ -410,6 +518,7 @@ test('cantidades nativas exactas y merma accesible en cuatro anchos', async ({br
     // The complete sanitized build graph contains no browser/session state.
     if (accountIndex === 0) await writeFile(path.join(directory, 'frontend-provenance.json'), provenance, {flag: 'wx', mode: 0o600})
     expect(viewports).toHaveLength(4)
+    expect(detailScreenshots).toHaveLength(16)
     report.pass = true
   } catch (error) {
     report.error = error instanceof Error ? error.message : String(error)
