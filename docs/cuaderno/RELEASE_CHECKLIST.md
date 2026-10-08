@@ -1,5 +1,14 @@
 # Aceptación final
 
+## Revisión de precios del 8 de octubre — candidata pendiente
+
+- [x] Etiquetas decimales exactas y legibles, sin convertir dinero a Float.
+- [x] Consulta prioriza listado e historial; guardas de escritura y borradores
+  comprobados mediante componentes Vue y regresiones RED→GREEN.
+- [x] 341 pruebas frontend locales, 58 archivos, sin fallos ni pruebas omitidas.
+- [ ] Build real y revisión visual en 390, 768, 1024 y 1440 píxeles.
+- [ ] CI completa y G7 de la nueva fuente e imagen; los gates siguientes siguen abiertos.
+
 ## Revisión de arranque del 8 de octubre — candidata pendiente
 
 - [x] Evitar la descarga automática del catálogo de LiteLLM en producción,

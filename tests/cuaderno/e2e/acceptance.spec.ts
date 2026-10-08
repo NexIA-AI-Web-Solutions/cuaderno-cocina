@@ -123,15 +123,15 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
   await enterApp(cleanPage)
   await cleanPage.goto(appPath('/cuaderno/precios'))
   const savePackage = cleanPage.getByRole('button', {name: 'Guardar formato'})
-  await expect(savePackage).toBeVisible()
   if (identity.role === 'consulta') {
     await expect(cleanPage.getByText(
       'Cuaderno operativo: no permitido para este rol. La consulta de costes disponible para tu cuenta permanece accesible.',
       {exact: true},
     )).toBeVisible()
-    await expect(savePackage).toBeDisabled()
-    await expect(cleanPage.getByLabel('Formato', {exact: true})).toBeDisabled()
-    const consultHistory = cleanPage.getByRole('button', {name: /^Consultar el historial de /}).first()
+    await expect(savePackage).toHaveCount(0)
+    await expect(cleanPage.getByLabel('Formato', {exact: true})).toHaveCount(0)
+    await expect(cleanPage.getByText('Modo Consulta: puedes revisar formatos, precios e historial, pero no modificarlos.', {exact: true})).toBeVisible()
+    const consultHistory = cleanPage.getByRole('button', {name: /^Consultar el historial de /}).filter({visible: true}).first()
     await expect(consultHistory).toBeEnabled()
     await consultHistory.click()
     await expect(cleanPage.getByRole('heading', {name: 'Historial del formato', exact: true})).toBeVisible()
@@ -214,7 +214,9 @@ test('aplica ACL de rol y bloquea las escrituras de Consulta', async ({cleanPage
       await expect(cleanPage.locator('[inert][aria-disabled="true"]')).toHaveCount(0)
     }
   } else {
-    const managePrice = cleanPage.getByRole('button', {name: /^Gestionar el precio de /}).first()
+    await expect(savePackage).toBeVisible()
+    await expect(savePackage).toBeEnabled()
+    const managePrice = cleanPage.getByRole('button', {name: /^Gestionar el precio de /}).filter({visible: true}).first()
     await expect(managePrice).toBeEnabled()
     await managePrice.click()
     await expect(cleanPage.getByRole('button', {name: 'Actualizar precio', exact: true})).toBeEnabled()

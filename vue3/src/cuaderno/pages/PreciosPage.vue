@@ -10,7 +10,10 @@
                     <span v-else>No se ha podido confirmar la moneda del espacio.</span>
                     Un precio desconocido no se guarda como cero.
                 </p>
-                <v-row>
+                <v-alert v-if="operationalRole?.code === 'guest'" type="info" variant="tonal" class="mb-4" role="status">
+                    Modo Consulta: puedes revisar formatos, precios e historial, pero no modificarlos.
+                </v-alert>
+                <v-row v-if="canOperate">
                     <v-col cols="12" md="4">
                         <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load :disabled="!canOperate" />
                     </v-col>
@@ -39,25 +42,29 @@
                     {{ createMessage }}
                 </v-alert>
 
-                <v-divider class="my-6" />
+                <v-divider v-if="canOperate" class="my-6" />
                 <div class="d-flex flex-wrap align-center justify-space-between ga-2 mb-2">
                     <div>
                         <h2 class="text-h6 mb-0">Formatos guardados</h2>
-                        <p class="text-body-2 text-medium-emphasis mb-0">Abre un formato para actualizar su precio o consultar su historial.</p>
+                        <p class="text-body-2 text-medium-emphasis mb-0">
+                            {{ canOperate ? 'Abre un formato para actualizar su precio o consultar su historial.' : 'Abre un formato para consultar su historial.' }}
+                        </p>
                     </div>
                     <v-btn variant="text" min-height="44" :disabled="loading" @click="load">Actualizar lista</v-btn>
                 </div>
                 <v-progress-linear v-if="loading && !packages.length" indeterminate aria-label="Cargando precios" />
                 <v-alert v-if="loadError" type="error" variant="tonal" class="mb-3" role="alert">{{ loadError }}</v-alert>
                 <p v-if="!loading && !packages.length" class="my-4">
-                    Todavía no hay formatos. Selecciona un ingrediente y su unidad para guardar el primero.
+                    Todavía no hay formatos.
+                    <span v-if="canOperate">Selecciona un ingrediente y su unidad para guardar el primero.</span>
+                    <span v-else>Pide a Cocina o Responsable que guarde el primer formato para poder consultarlo aquí.</span>
                 </p>
                 <v-table v-if="packages.length" class="package-table">
                     <thead><tr><th>Ingrediente y formato</th><th>Contenido</th><th>Precio del envase</th><th>Precio por unidad base</th><th>Vigente desde</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                     <tbody>
                         <tr v-for="item in packages" :key="item.id">
                             <td>{{ item.food_name }} — {{ item.label }}</td>
-                            <td>{{ item.quantity }} {{ item.unit_name }}</td>
+                            <td>{{ priceQuantityLabel(item.quantity, item.unit_name) }}</td>
                             <td>{{ packagePriceLabel(item) }}</td>
                             <td>{{ packageBasePriceLabel(item) }}</td>
                             <td>{{ item.current_price ? priceDateLabel(item.current_price.valid_from) : '—' }}</td>
@@ -75,7 +82,7 @@
                         <v-card-title class="text-body-1 text-wrap">{{ item.food_name }} — {{ item.label }}</v-card-title>
                         <v-card-text>
                             <dl class="package-values">
-                                <div><dt>Contenido</dt><dd>{{ item.quantity }} {{ item.unit_name }}</dd></div>
+                                <div><dt>Contenido</dt><dd>{{ priceQuantityLabel(item.quantity, item.unit_name) }}</dd></div>
                                 <div><dt>Precio del envase</dt><dd>{{ packagePriceLabel(item) }}</dd></div>
                                 <div><dt>Precio por unidad base</dt><dd>{{ packageBasePriceLabel(item) }}</dd></div>
                                 <div><dt>Vigente desde</dt><dd>{{ item.current_price ? priceDateLabel(item.current_price.valid_from) : '—' }}</dd></div>
@@ -139,6 +146,7 @@ import {
     optionalPackagePrice,
     packageSummaries,
     priceAmountLabel,
+    priceQuantityLabel,
     pricePerBaseLabel,
     priceDateLabel,
     priceVersionBody,
@@ -341,11 +349,12 @@ onBeforeUnmount(() => {
     min-height: 64px;
 }
 .package-cards { display: none; }
-.package-values > div { display: flex; justify-content: space-between; gap: 1rem; }
+.package-table :deep(th), .package-table :deep(td) { white-space: normal; overflow-wrap: anywhere; }
+.package-values > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; }
 .package-values dt { font-weight: 600; }
-.package-values dd { margin: 0; text-align: end; }
+.package-values dd { margin: 0; text-align: end; overflow-wrap: anywhere; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-@media (max-width: 700px) {
+@media (max-width: 1279px) {
     .package-table { display: none; }
     .package-cards { display: block; }
 }

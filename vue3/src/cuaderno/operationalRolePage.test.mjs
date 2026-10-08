@@ -78,7 +78,9 @@ async function mount(transport) {
         {compilerOptions: {module: ts.ModuleKind.ESNext}},
     ).outputText)
     const filename = 'PreciosPage.vue'
-    const {descriptor, errors} = parse(readFileSync(new URL('./pages/PreciosPage.vue', import.meta.url), 'utf8'), {filename})
+    const unitSource = readFileSync(new URL('./pages/PreciosPage.vue', import.meta.url), 'utf8')
+        .replace('</script>', '\ndefineExpose({save})\n</script>')
+    const {descriptor, errors} = parse(unitSource, {filename})
     assert.deepEqual(errors, [])
     let code = compileScript(descriptor, {id: `role-page-${id}`, inlineTemplate: true,
         templateOptions: {compilerOptions: {hoistStatic: false}}}).content
@@ -104,9 +106,9 @@ async function mount(transport) {
             setup(_props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name,
                 context.attrs, [context.slots.default?.(), context.slots.append?.()]) }}))
     }
-    app.mount(root)
+    const instance = app.mount(root)
     await flush()
-    return {root, calls, close() { app.unmount(); globalThis.__cuadernoRolePageUnit.delete(id) }}
+    return {root, calls, submit: () => instance.save(), close() { app.unmount(); globalThis.__cuadernoRolePageUnit.delete(id) }}
 }
 
 test('uses the existing edition request and ignores a late role from an aborted load', async () => {
@@ -150,7 +152,7 @@ test('a contradictory role fails closed without hiding native price content', as
     } finally { mounted.close() }
 })
 
-test('Consulta and unverified roles cannot submit price writes while Cocina can', async () => {
+test('Consulta and unverified roles show reads first and cannot submit price writes while Cocina can', async () => {
     for (const [operationalRole, expectedDisabled] of [[role('guest'), true], [role('user'), false], [null, true]]) {
         const mounted = await mount((url, options) => {
             if (options.method) return assert.fail('Role gating must stop unauthorized POSTs')
@@ -160,9 +162,10 @@ test('Consulta and unverified roles cannot submit price writes while Cocina can'
                 : {ok: false, status: 503, data: {detail: 'offline'}}
         })
         try {
-            assert.equal(button(mounted.root, 'Guardar formato').props.disabled, expectedDisabled)
+            if (expectedDisabled) assert.equal(Boolean(button(mounted.root, 'Guardar formato')), false, 'read-only roles must not mount a creation form')
+            else assert.equal(button(mounted.root, 'Guardar formato').props.disabled, false)
             if (expectedDisabled) {
-                await button(mounted.root, 'Guardar formato').props.onClick()
+                await mounted.submit()
                 await flush()
                 assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 0)
             }
@@ -179,6 +182,8 @@ test('Consulta can select a saved package and read its history without exposing 
         return {ok: true, status: 200, data: {currency: 'EUR', operational_role: role('guest')}}
     })
     try {
+        assert.equal(Boolean(button(mounted.root, 'Guardar formato')), false)
+        assert.match(textOf(mounted.root), /Modo Consulta: puedes revisar formatos, precios e historial/)
         const consult = button(mounted.root, 'Consultar historial')
         assert.ok(consult, 'the read action must remain available to Consulta')
         assert.notEqual(consult.props.disabled, true)
@@ -194,17 +199,54 @@ test('Consulta can select a saved package and read its history without exposing 
 test('saved packages render envelope price, unit price and effective date in responsive representations', async () => {
     const validFrom = '2026-10-04T10:00:00+02:00'
     const row = {id: 1, food: 2, food_name: 'Aceite', unit: 3, unit_name: 'L', label: 'Garrafa',
-        quantity: '5', is_reference: true, current_price: {id: 4, amount: '32', explicit_free: false, valid_from: validFrom}}
+        quantity: '5.0000000000000000', is_reference: true, current_price: {id: 4, amount: '32.0000000000000000', explicit_free: false, valid_from: validFrom}}
     const mounted = await mount(url => url === '/api/cuaderno/packages/'
         ? {ok: true, status: 200, data: [row]}
         : {ok: true, status: 200, data: {currency: 'EUR', operational_role: role('user')}})
     try {
         const text = textOf(mounted.root)
         assert.match(text, /Aceite.+Garrafa/)
-        assert.match(text, /32 EUR/)
+        assert.match(text, /32,00 EUR/)
+        assert.match(text, /5 L/)
+        assert.doesNotMatch(text, /5\.0000000000000000/)
+        const representations = [all(mounted.root, node => node.type === 'v-table')[0],
+            all(mounted.root, node => String(node.props?.class || '').includes('package-cards'))[0]]
+        for (const representation of representations) {
+            assert.match(textOf(representation), /5 L/)
+            assert.match(textOf(representation), /32,00 EUR/)
+        }
         assert.match(text, /6,4000 EUR\/L/)
         assert.ok(text.includes(new Intl.DateTimeFormat('es-ES', {dateStyle: 'medium'}).format(new Date(validFrom))))
         assert.equal(all(mounted.root, node => node.type === 'v-table').length, 1)
         assert.equal(all(mounted.root, node => String(node.props?.class || '').includes('package-cards')).length, 1)
     } finally { mounted.close() }
+})
+
+test('Cocina retains invalid and rejected price drafts while history remains selected', async () => {
+    const row = {id: 8, food: 2, food_name: 'Aceite', unit: 3, unit_name: 'L', label: 'Garrafa',
+        quantity: '5', is_reference: true, current_price: null}
+    const mounted = await mount((url, options) => {
+        if (options.method === 'POST') {
+            assert.equal(url, '/api/cuaderno/packages/8/prices/')
+            assert.deepEqual(JSON.parse(options.body), {amount: '40.00', explicit_free: false})
+            return {ok: false, status: 503, data: {detail: 'offline'}}
+        }
+        if (url === '/api/cuaderno/packages/') return {ok: true, status: 200, data: [row]}
+        return {ok: true, status: 200, data: {currency: 'EUR', operational_role: role('user')}}
+    })
+    const priceField = () => all(mounted.root, node => node.props?.label === 'Nuevo precio EUR')[0]
+    try {
+        await button(mounted.root, 'Gestionar precio').props.onClick(); await flush()
+        priceField().props['onUpdate:modelValue']('abc'); await flush()
+        await button(mounted.root, 'Actualizar precio').props.onClick(); await flush()
+        assert.equal(priceField().props.modelValue, 'abc')
+        assert.match(textOf(mounted.root), /Introduce un decimal positivo/)
+        assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 0)
+        priceField().props['onUpdate:modelValue']('40,00'); await flush()
+        await button(mounted.root, 'Actualizar precio').props.onClick(); await flush()
+        assert.equal(priceField().props.modelValue, '40,00')
+        assert.match(textOf(mounted.root), /HTTP 503/)
+        assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 1)
+        assert.equal(all(mounted.root, node => node.type === 'price-history-panel')[0].props.packageId, 8)
+    } finally {mounted.close()}
 })

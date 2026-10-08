@@ -1,5 +1,22 @@
 # Estado del producto
 
+## Precios legibles y lectura por rol — 8 de octubre de 2026
+
+La inspección del clon en navegador detectó decimales de almacenamiento visibles
+y acciones incómodas en tablet. Las etiquetas conservan todas las cifras
+significativas con aritmética exacta y eliminan únicamente ceros de relleno;
+los importes muestran al menos dos decimales. Las tarjetas cubren los anchos
+anteriores al breakpoint de escritorio de Vuetify. Consulta accede directamente
+al listado y al historial, con un aviso de su permiso y sin formulario de creación.
+Las cuentas operativas conservan edición, validación y borradores tras errores.
+
+Las regresiones RED→GREEN pasan, junto con 341 pruebas frontend en 58 archivos
+y tres pruebas de arranque sin descargas. La nueva imagen, revisión final,
+aceptación visual en cuatro viewports, CI completa, G7 y publicación permanecen
+pendientes. La CI de `f58b000` fue sustituida antes de terminar sus matrices:
+sus resultados parciales no certifican esta fuente. La web publicada sigue
+en `ff3b685`; las pruebas de escritura usan exclusivamente un clon restaurado.
+
 ## Arranque sin descargas de IA — 8 de octubre de 2026
 
 El arranque del clon de `f58b000` reveló que el import nativo de LiteLLM intenta

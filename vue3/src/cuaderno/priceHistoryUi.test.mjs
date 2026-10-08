@@ -7,7 +7,7 @@ const source = readFileSync(new URL('./priceHistoryUi.ts', import.meta.url), 'ut
 const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
 const {
     editionCurrency, optionalPackagePrice, packageSummaries, priceAmountLabel, priceHistoryEnvelope,
-    priceHistoryRequest, priceTimingLabel, priceVersionBody, priceWriteResponse, pricePerBaseLabel, priceDateLabel,
+    priceHistoryRequest, priceTimingLabel, priceVersionBody, priceWriteResponse, pricePerBaseLabel, priceDateLabel, priceQuantityLabel,
 } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
 
 test('package summary labels expose exact unit price and effective Spanish date', () => {
@@ -132,7 +132,7 @@ test('history rejects floats, malformed decimals, booleans and inconsistent curr
 test('requests are bounded and presentation marks future prices without money arithmetic', () => {
     assert.equal(priceHistoryRequest(3, 0), '/api/cuaderno/packages/3/prices/?limit=20&offset=0')
     assert.equal(priceHistoryRequest(3, 40), '/api/cuaderno/packages/3/prices/?limit=20&offset=40')
-    assert.equal(priceAmountLabel('1234.5000', 'EUR'), '1234,5000 EUR')
+    assert.equal(priceAmountLabel('1234.5000', 'EUR'), '1234,50 EUR')
     assert.equal(priceTimingLabel(item, envelope.as_of), 'Actual')
     assert.equal(priceTimingLabel({...item, id: 12, is_current: false, valid_from: '2026-10-01T00:00:00Z'}, envelope.as_of), 'Programado; todavía no actual')
     assert.equal(priceTimingLabel({...item, id: 12, is_current: false}, envelope.as_of), 'Histórico')
@@ -150,4 +150,74 @@ test('the unpaged package list remains typed without triggering any history requ
     assert.equal(packageSummaries([{
         ...packages[0], current_price: {...packages[0].current_price, amount: '0', explicit_free: false},
     }]), null)
+})
+
+
+test('money labels trim storage padding with at least two decimal places and no rounding', () => {
+    for (const [amount, expected] of [
+        ['40.0000000000000000', '40,00 EUR'],
+        ['1234.5000', '1234,50 EUR'],
+        ['000040.0500', '40,05 EUR'],
+        ['40', '40,00 EUR'],
+        ['40.1234000000000000', '40,1234 EUR'],
+        ['0.0099000000000000', '0,0099 EUR'],
+        ['0.0000000000000001', '0,0000000000000001 EUR'],
+        ['9999999999999999.9999999999999999', '9999999999999999,9999999999999999 EUR'],
+        ['9999999999999999.0000000000000000', '9999999999999999,00 EUR'],
+    ]) assert.equal(priceAmountLabel(amount, 'EUR'), expected, amount)
+    assert.equal(priceAmountLabel(' 40,5000 ', 'USD'), '40,50 USD')
+})
+
+test('validated free history displays exact zero while preserving the stored Decimal string', () => {
+    const storedAmount = '0.0000000000000000'
+    const free = {...envelope, count: 1, next_offset: null, items: [{...item, amount: storedAmount, explicit_free: true}]}
+    const parsed = priceHistoryEnvelope(free, 3, 0)
+    assert.notEqual(parsed, null)
+    assert.equal(priceAmountLabel(parsed.items[0].amount, parsed.currency), '0,00 EUR')
+    assert.equal(parsed.items[0].amount, storedAmount)
+    assert.equal(priceAmountLabel('0000000000000000.0000000000000000', 'EUR'), '0,00 EUR')
+})
+
+test('invalid monetary values and currencies remain unknown rather than becoming zero', () => {
+    for (const amount of ['', '-1', '+1', 'NaN', 'Infinity', '1e2', '1.234,56', '.5', '1.',
+        '12345678901234567', '1.12345678901234567', 40, null, undefined, true]) {
+        assert.equal(priceAmountLabel(amount, 'EUR'), '—', String(amount))
+    }
+    for (const currency of ['', 'eur', 'EURO', '€', ' EUR', 'EU R', 978, null, undefined]) {
+        assert.equal(priceAmountLabel('40', currency), '—', String(currency))
+    }
+})
+
+test('quantity labels retain exact positive Decimal precision with free-text units', () => {
+    assert.equal(typeof priceQuantityLabel, 'function')
+    for (const [quantity, unit, expected] of [
+        ['5.0000000000000000', 'L', '5 L'],
+        ['0005.2500000000000000', 'kg', '5,25 kg'],
+        ['0.0000000000000001', 'g', '0,0000000000000001 g'],
+        ['9999999999999999.9999999999999999', '', '9999999999999999,9999999999999999'],
+        ['1.5000', 'cucharada (sopera)', '1,5 cucharada (sopera)'],
+        ['2.0000', 'm³', '2 m³'],
+        ['2', '<unidad>', '2 <unidad>'],
+    ]) assert.equal(priceQuantityLabel(quantity, unit), expected, quantity)
+    assert.equal(priceQuantityLabel(' 5,2500 '), '5,25')
+})
+
+test('zero, malformed quantities and non-text unit labels cannot present a valid package', () => {
+    assert.equal(typeof priceQuantityLabel, 'function')
+    for (const quantity of ['0', '0.0000000000000000', '000.000', '-1', '', '1e2', '1.2,3',
+        'NaN', 'Infinity', '1.12345678901234567', '12345678901234567', 5, null, undefined]) {
+        assert.equal(priceQuantityLabel(quantity, 'L'), '—', String(quantity))
+    }
+    for (const unit of [null, 5, true]) assert.equal(priceQuantityLabel('5', unit), '—')
+})
+
+test('package response quantity validation matches the native strictly positive contract', () => {
+    const row = {id: 3, food: 4, food_name: 'Aceite', unit: 5, unit_name: 'L', label: 'Garrafa',
+        quantity: '5.0000000000000000', is_reference: true, current_price: null}
+    for (const quantity of ['0', '0.0000000000000000', '000.000', '-1', '', 'NaN', 5]) {
+        assert.equal(packageSummaries([{...row, quantity}]), null, String(quantity))
+    }
+    for (const quantity of ['0.0000000000000001', '9999999999999999.9999999999999999']) {
+        assert.deepEqual(packageSummaries([{...row, quantity}]), [{...row, quantity}])
+    }
 })

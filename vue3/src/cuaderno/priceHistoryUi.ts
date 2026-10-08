@@ -46,6 +46,7 @@ export type PackageSummary = {
 const DECIMAL_32_16 = /^\d{1,16}(?:\.\d{1,16})?$/
 
 function normalizedDecimal(value: string): string | null {
+    if (typeof value !== 'string') return null
     const trimmed = value.trim()
     if (!trimmed || (trimmed.includes('.') && trimmed.includes(','))) return null
     const normalized = trimmed.replace(',', '.')
@@ -162,6 +163,7 @@ export function packageSummaries(value: unknown): PackageSummary[] | null {
             || typeof row.label !== 'string'
             || typeof row.quantity !== 'string'
             || normalizedDecimal(row.quantity) !== row.quantity
+            || exactZero(row.quantity)
             || typeof row.is_reference !== 'boolean'
         ) return null
         let currentPrice: PackageSummary['current_price'] = null
@@ -240,9 +242,17 @@ export function priceHistoryRequest(packageId: number, offset: number): string {
 }
 
 export function priceAmountLabel(amount: string, currency: string): string {
-    const normalized = normalizedDecimal(amount)
-    if (normalized === null || !currencyCode(currency)) return '—'
-    return `${normalized.replace('.', ',')} ${currency}`
+    const canonical = canonicalDecimal(amount)
+    if (canonical === null || !currencyCode(currency)) return '—'
+    const [integer = '', fraction = ''] = canonical.split('.')
+    return `${integer},${fraction.padEnd(2, '0')} ${currency}`
+}
+
+export function priceQuantityLabel(quantity: string, unit = ''): string {
+    const canonical = canonicalDecimal(quantity)
+    if (canonical === null || exactZero(canonical) || typeof unit !== 'string') return '—'
+    const display = canonical.replace('.', ',')
+    return unit ? `${display} ${unit}` : display
 }
 
 export function pricePerBaseLabel(amount: string, quantity: string, currency: string, unit = ''): string {
