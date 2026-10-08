@@ -24,6 +24,12 @@ de la vista de pasos se presentan exactamente aunque superen el límite de un
 ingrediente individual. El contrato numérico de listas de compra permanece
 separado.
 
+La vista de importación heredada conserva su contrato numérico. Sus entradas
+se envían como cadenas al crear una receta nativa. Una cantidad nativa solo
+puede volver a esa vista si su ciclo JSON numérico conserva exactamente el
+decimal; en caso contrario se mantiene el borrador y se indica que use el
+editor de recetas. La conversión no redondea silenciosamente.
+
 Las regresiones verifican el JSON real de GET → PUT, los IDs originales,
 cantidades máximas y diminutas, edición de notas y rechazo atómico de entradas
 inválidas. La aceptación de navegador también abre el editor nativo, comprueba

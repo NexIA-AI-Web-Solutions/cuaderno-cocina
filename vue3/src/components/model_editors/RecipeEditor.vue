@@ -413,7 +413,7 @@ function aiStepSort(providerId: number) {
  */
 function scaleRecipe(targetServings: number) {
     const plan = prepareScaledIngredientAmounts(
-        editingObj.value.steps.flatMap(step => step.ingredients), editingObj.value.servings, targetServings,
+        editingObj.value.steps.flatMap(step => step.ingredients), editingObj.value.servings ?? 0, targetServings,
     )
     if (plan.changes === null) {
         showQuantityError(plan.error)

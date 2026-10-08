@@ -37,7 +37,7 @@
 
                             <v-card variant="outlined" class="mb-4" v-if="inventoryEntry">
                                 <v-card-title>
-                                    {{ ingredientToString({food: inventoryEntry.food, unit: inventoryEntry.unit, amount: inventoryEntry.amount} as Ingredient) }}
+                                    {{ ingredientToString({food: inventoryEntry.food, unit: inventoryEntry.unit, amount: inventoryEntry.amount}) }}
                                     <v-btn class="float-right" density="compact" icon="fa-solid fa-clock-rotate-left" variant="plain" @click="entryLogDialog = true; entryLogEntry = inventoryEntry"></v-btn>
                                 </v-card-title>
                                 <v-card-text>
@@ -104,7 +104,7 @@
                                 #{{ item.code }}
                             </template>
                             <template #item.food="{item}">
-                                {{ ingredientToString({food: item.food, unit: item.unit, amount: item.amount} as Ingredient) }} <br/>
+                                {{ ingredientToString({food: item.food, unit: item.unit, amount: item.amount}) }} <br/>
                                 <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{item.code}}</v-chip>
                                     <v-chip size="small" label color="info" class="me-2" :prepend-icon="TInventoryLocation.icon">{{item.inventoryLocation.name}}</v-chip>
                                     <v-chip v-if="item.expires" size="small" label :color="expiryColor(item.expires)">
@@ -156,7 +156,7 @@
 
             <v-card-text v-if="bookingConfirmEntry" class="text-center">
                 <p>
-                    {{ ingredientToString({food: bookingConfirmEntry.food, unit: bookingConfirmEntry.unit, amount: bookingConfirmEntry.amount} as Ingredient) }}
+                    {{ ingredientToString({food: bookingConfirmEntry.food, unit: bookingConfirmEntry.unit, amount: bookingConfirmEntry.amount}) }}
                 </p>
 
                 <p class="text-disabled mt-4">{{ $t('Code') }}</p>
@@ -195,7 +195,7 @@
 
 import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import {computed, onMounted, ref, watch} from "vue";
-import {ApiApi, type ApiInventoryEntryListRequest, type Food, type Ingredient, type InventoryEntry, type InventoryEntryRequest, type InventoryLocation, type Unit} from "@/openapi";
+import {ApiApi, type ApiInventoryEntryListRequest, type Food, type InventoryEntry, type InventoryEntryRequest, type InventoryLocation, type Unit} from "@/openapi";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {VDateInput} from "vuetify/labs/VDateInput";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";

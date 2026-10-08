@@ -6,6 +6,11 @@ Producción continúa en `c79b2ce54c20f778524e3dcadfac0bc7e8053aa0` y su
 comprobación HTTPS de disponibilidad devuelve 200. Los candidatos `2d09831`
 y `638f190` se retienen sin desplegar: el primero reveló un desbordamiento
 nativo y la CI del segundo conserva un fallo WebKit de navegación del calendario.
+El candidato `54f3ec5` también se retiene: su CI 37828014208 pasó 1.296 pruebas
+nativas y 21 subpruebas, 616 de Cuaderno, 463 de tooling más 11 de Node y 370
+unitarias frontend. TypeScript detectó ocho incompatibilidades de consumidores;
+no se ejecutaron imagen, matrices de navegador ni G7. Esta revisión adapta los
+consumidores y evita redondear cantidades al convertir una vista de importación.
 
 Esta revisión conserva cantidades exactas en API, SDK y editor, y corrige la
 carga del calendario y su recuperación tras un error de red. La

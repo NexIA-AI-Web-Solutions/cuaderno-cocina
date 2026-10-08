@@ -53,7 +53,7 @@
                                 <v-chip size="small" label color="warning" class="me-2" prepend-icon="fa-solid fa-barcode">{{ item.code }}</v-chip>
                             </template>
                             <template #item.food="{item}">
-                                {{ ingredientToString({food: item.food, unit: item.unit, amount: item.amount} as Ingredient) }}
+                                {{ ingredientToString({food: item.food, unit: item.unit, amount: item.amount}) }}
                             </template>
                             <template #item.expires="{item}">
                                 <template v-if="item.expires ">
@@ -95,7 +95,7 @@
 
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
-import {ApiApi, ApiInventoryEntryListRequest, Food, Ingredient, InventoryEntry, InventoryLocation} from "@/openapi";
+import {ApiApi, ApiInventoryEntryListRequest, Food, InventoryEntry, InventoryLocation} from "@/openapi";
 import {ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import InventoryEntryLogDialog from "@/components/dialogs/InventoryEntryLogDialog.vue";

@@ -63,7 +63,7 @@
                         <v-card variant="outlined">
                             <v-card-text>
                                 <p>
-                                    {{ ingredientToString({food: bookingConfirmEntry.food, unit: bookingConfirmEntry.unit, amount: bookingConfirmEntry.amount} as Ingredient) }}
+                                    {{ ingredientToString({food: bookingConfirmEntry.food, unit: bookingConfirmEntry.unit, amount: bookingConfirmEntry.amount}) }}
                                 </p>
 
                                 <p class="text-disabled mt-4">{{ $t('Code') }}</p>
@@ -112,7 +112,7 @@
 import VClosableCardTitle from "@/components/dialogs/VClosableCardTitle.vue";
 import {DateTime} from "luxon";
 import {ingredientToString} from "@/utils/model_utils.ts";
-import {ApiApi, Food, Ingredient, InventoryEntry, InventoryLocation, Unit} from "@/openapi";
+import {ApiApi, Food, InventoryEntry, InventoryLocation, Unit} from "@/openapi";
 import FreezerExpiryDialog from "@/components/dialogs/FreezerExpiryDialog.vue";
 import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {VDateInput} from "vuetify/labs/VDateInput";
