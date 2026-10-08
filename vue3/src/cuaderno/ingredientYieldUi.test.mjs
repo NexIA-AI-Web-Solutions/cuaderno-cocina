@@ -6,11 +6,31 @@ import ts from 'typescript'
 const source = readFileSync(new URL('./ingredientYieldUi.ts', import.meta.url), 'utf8')
 const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
 const {
-    ingredientYieldBody, yieldSummary, quantityBasisLabel,
+    ingredientYieldBody, yieldSummary, quantityBasisLabel, ingredientAmountLabel,
     ingredientYieldEnvelope, ingredientYieldSaveEnvelope, withYieldRevision, ingredientYieldConflictMessage,
 } = await import(
     `data:text/javascript;base64,${Buffer.from(js).toString('base64')}`
 )
+
+test('ingredient quantities remove redundant zeros and use the Spanish decimal separator', () => {
+    assert.equal(ingredientAmountLabel('400.0000000000000000'), '400')
+    assert.equal(ingredientAmountLabel('400.5000'), '400,5')
+    assert.equal(ingredientAmountLabel('000400.5000'), '400,5')
+    assert.equal(ingredientAmountLabel('-2.5000'), '-2,5')
+    assert.equal(ingredientAmountLabel('-0.0000000000000000'), '0')
+})
+
+test('ingredient quantity labels preserve every significant digit without rounding', () => {
+    assert.equal(ingredientAmountLabel('0.0000000000000001'), '0,0000000000000001')
+    assert.equal(ingredientAmountLabel('9999999999999999.1234567890123456'), '9999999999999999,1234567890123456')
+    assert.equal(ingredientAmountLabel('-0.0000000000000001'), '-0,0000000000000001')
+})
+
+test('invalid ingredient quantities have an explicit label and never become zero', () => {
+    for (const value of ['', 'abc', 'NaN', 'Infinity', '1e3', '400,5', '12345678901234567', '0.12345678901234567', 400, null]) {
+        assert.equal(ingredientAmountLabel(value), 'Cantidad no válida', String(value))
+    }
+})
 
 test('net usable quantities require an exact positive ratio and accept Spanish comma', () => {
     assert.deepEqual(ingredientYieldBody(7, 'net_usable', ' 0,8 '), {

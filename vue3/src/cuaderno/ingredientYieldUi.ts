@@ -47,6 +47,16 @@ function isFixedDecimal(value: unknown): value is string {
     return whole.length <= 16 && fraction.length <= 16 && whole.length + fraction.length <= 32
 }
 
+export function ingredientAmountLabel(amount: unknown): string {
+    if (!isFixedDecimal(amount)) return 'Cantidad no válida'
+    const negative = amount.startsWith('-')
+    const [rawWhole, rawFraction = ''] = (negative ? amount.slice(1) : amount).split('.')
+    const whole = (rawWhole || '0').replace(/^0+(?=\d)/, '')
+    const fraction = rawFraction.replace(/0+$/, '')
+    const sign = negative && (whole !== '0' || fraction) ? '-' : ''
+    return `${sign}${whole}${fraction ? `,${fraction}` : ''}`
+}
+
 function isYieldRatio(value: unknown): value is string {
     if (typeof value !== 'string') return false
     const belowOne = /^0\.(\d{1,16})$/.exec(value)

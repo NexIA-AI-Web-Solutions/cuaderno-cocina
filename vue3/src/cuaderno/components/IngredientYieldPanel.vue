@@ -26,7 +26,7 @@
                                 <div>
                                     <p class="font-weight-bold mb-0">{{ ingredient.food_name || "Ingrediente sin alimento" }}</p>
                                     <p class="text-body-2 text-medium-emphasis mb-0">
-                                        {{ ingredient.amount }} {{ ingredient.unit || "sin unidad" }}
+                                        {{ ingredientAmountLabel(ingredient.amount) }} {{ ingredient.unit || "sin unidad" }}
                                     </p>
                                 </div>
                                 <v-chip size="small" variant="tonal">{{ draftSummary(ingredient) }}</v-chip>
@@ -109,6 +109,7 @@ import {onBeforeUnmount, ref, watch} from 'vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
 import {
+    ingredientAmountLabel,
     ingredientYieldConflictMessage,
     ingredientYieldBody,
     ingredientYieldEnvelope,
