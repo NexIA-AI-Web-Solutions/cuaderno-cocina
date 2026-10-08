@@ -600,7 +600,7 @@ import bookmarkletJs from '@/assets/bookmarklet_v3?url'
 import StepIngredientSorterDialog from "@/components/dialogs/StepIngredientSorterDialog.vue";
 import {mergeAllSteps, splitAllSteps, splitStep} from "@/utils/step_utils.ts";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
-import {sourceImportRequest} from "@/utils/sourceImport";
+import {SourceImportPrecisionError, sourceImportRequest, sourcePreviewIngredientAmount} from "@/utils/sourceImport";
 import ExchangePanel from "@/cuaderno/components/ExchangePanel.vue";
 
 function doListImport() {
@@ -933,7 +933,11 @@ function aiStepSort(providerId: number) {
     api.apiAiStepSortCreate({recipe: sourceImportRequest(importResponse.value.recipe), provider: providerId}).then(r => {
         importResponse.value.recipe = importedRecipePreview(r)
     }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        if (err instanceof SourceImportPrecisionError) {
+            useMessageStore().addMessage(MessageType.ERROR, {title: 'Revisa las cantidades', text: err.message}, 8000)
+        } else {
+            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        }
     }).finally(() => {
         aiStepSortLoading.value = false
     })
@@ -1050,7 +1054,8 @@ function importedRecipePreview(recipe: Recipe): SourceImportRecipe {
         steps: recipe.steps.map(step => ({
             ...step, instruction: step.instruction ?? '',
             ingredients: (step.ingredients ?? []).map(ingredient => ({
-                ...ingredient, food: ingredient.food ?? {name: ''}, unit: ingredient.unit ?? {name: ''},
+                ...ingredient, amount: sourcePreviewIngredientAmount(ingredient.amount),
+                food: ingredient.food ?? {name: ''}, unit: ingredient.unit ?? {name: ''},
                 note: ingredient.note ?? '', originalText: ingredient.originalText ?? '',
             })),
         })),

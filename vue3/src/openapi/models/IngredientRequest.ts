@@ -55,10 +55,10 @@ export interface IngredientRequest {
     unit: UnitRequest | null;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof IngredientRequest
      */
-    amount: number;
+    amount: string;
     /**
      * 
      * @type {string}

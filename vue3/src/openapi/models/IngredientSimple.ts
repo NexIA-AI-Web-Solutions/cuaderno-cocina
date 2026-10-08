@@ -61,10 +61,10 @@ export interface IngredientSimple {
     unit: Unit | null;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof IngredientSimple
      */
-    amount: number;
+    amount: string;
     /**
      * 
      * @type {string}

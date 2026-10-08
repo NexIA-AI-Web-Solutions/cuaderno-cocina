@@ -12,6 +12,7 @@
         :editing-object="editingObj">
 
         <v-card-text class="pa-0">
+            <v-alert v-if="quantityError" type="error" role="alert" class="ma-3">{{ quantityError }}</v-alert>
             <v-tabs v-model="tab" :disabled="loading || fileApiLoading" grow>
                 <v-tab value="recipe">{{ $t('Recipe') }}</v-tab>
                 <v-tab value="steps">{{ $t('Steps') }}</v-tab>
@@ -206,6 +207,7 @@ import AiActionButton from "@/components/buttons/AiActionButton.vue";
 import NumberScalerDialog from "@/components/inputs/NumberScalerDialog.vue";
 import {useI18n} from "vue-i18n";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import {prepareIngredientAmounts, prepareScaledIngredientAmounts} from "@/utils/ingredient_amounts";
 
 
 const props = defineProps({
@@ -217,10 +219,10 @@ const props = defineProps({
 
 const emit = defineEmits(['create', 'save', 'delete', 'close', 'changedState'])
 const modelEditorFunctions = useModelEditorFunctions<Recipe>('Recipe', emit)
-const {setupState, deleteObject, saveObject, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = modelEditorFunctions
+const {setupState, deleteObject, saveObject: saveObjectUnchecked, isUpdate, editingObjName, loading, editingObj, editingObjChanged, modelClass} = modelEditorFunctions
 
 const model = defineModel<typeof modelEditorFunctions>()
-model.value = modelEditorFunctions
+model.value = {...modelEditorFunctions, saveObject}
 
 /**
  * watch prop changes and re-initialize editor
@@ -235,7 +237,24 @@ const {mobile} = useDisplay()
 const {t} = useI18n()
 
 const tab = ref("recipe")
+const quantityError = ref('')
 const dialogStepManager = ref(false)
+
+async function saveObject(): Promise<Recipe | undefined> {
+    const plan = prepareIngredientAmounts(editingObj.value.steps.flatMap(step => step.ingredients))
+    if (plan.changes === null) {
+        showQuantityError(plan.error)
+        return undefined
+    }
+    plan.changes.forEach(change => {change.ingredient.amount = change.amount})
+    quantityError.value = ''
+    return saveObjectUnchecked()
+}
+
+function showQuantityError(text: string) {
+    quantityError.value = text
+    useMessageStore().addMessage(MessageType.ERROR, {title: 'Revisa las cantidades', text}, 8000)
+}
 
 const {fileApiLoading, updateRecipeImage} = useFileApi()
 const file = shallowRef<File>()
@@ -261,6 +280,7 @@ onMounted(() => {
  * component specific state setup logic
  */
 function initializeEditor() {
+    quantityError.value = ''
     setupState(props.item, props.itemId, {
         newItemFunction: () => {
             editingObj.value.steps = [] as Step[]
@@ -270,22 +290,13 @@ function initializeEditor() {
             firstStep.ingredients.push({
                 food: null,
                 unit: useUserPreferenceStore().defaultUnitObj,
-                amount: 0,
+                amount: '0',
             } as Ingredient)
             editingObj.value.internal = true //TODO make database default after v2
         },
         itemDefaults: props.itemDefaults,
         onAfterSave: () => {
             saveRecipeImage()
-        },
-        onBeforeSave: () => {
-            editingObj.value.steps.forEach(step => {
-                step.ingredients.forEach(ingredient => {
-                    if (!ingredient.amount) {
-                        ingredient.amount = 0
-                    }
-                })
-            })
         }
     })
 }
@@ -401,17 +412,16 @@ function aiStepSort(providerId: number) {
  * @param targetServings
  */
 function scaleRecipe(targetServings: number) {
-    if (!editingObj.value.servings) {
-        editingObj.value.servings = 1
+    const plan = prepareScaledIngredientAmounts(
+        editingObj.value.steps.flatMap(step => step.ingredients), editingObj.value.servings ?? 0, targetServings,
+    )
+    if (plan.changes === null) {
+        showQuantityError(plan.error)
+        return
     }
-
-    let scalingFactor = targetServings / editingObj.value.servings
-    editingObj.value.steps.forEach(s => {
-        s.ingredients.forEach(i => {
-            i.amount *= scalingFactor
-        })
-    })
+    plan.changes.forEach(change => {change.ingredient.amount = change.amount})
     editingObj.value.servings = targetServings
+    quantityError.value = ''
 }
 
 </script>

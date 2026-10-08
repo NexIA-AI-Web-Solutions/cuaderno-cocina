@@ -2,7 +2,7 @@
 
 ## Presupuestos de aceptación propuestos, no resultados medidos
 Dataset sintético reproducible: 3000 recetas, 1500 alimentos, 15 ingredientes medios/receta, 10 usuarios de prueba y 100000 movimientos para Integral. Referencia pequeña: 2 vCPU/2 GiB de RAM para probar adecuación, no garantía comercial. Registrar hardware, versiones, red y parámetros.
-APIs listas/paginadas objetivo p95 <=500ms; escandallo de receta corriente <=300ms en red local excluyendo carga de imagen; test concurrencia 5 usuarios. Si baseline upstream excede, documentar y optimizar recorridos críticos sin maquillar dataset.
+APIs listas/paginadas objetivo p95 <=800ms; escandallo de receta corriente <=300ms en red local excluyendo carga de imagen; test concurrencia 5 usuarios. Si baseline upstream excede, documentar y optimizar recorridos críticos sin maquillar dataset. El propietario ha actualizado este presupuesto de 500 a 800 ms; el cambio del criterio de aceptación no implica una mejora de rendimiento medida.
 UI objetivo LCP <=2.5s e INP <=200ms en perfil declarado, no universal. Evitar regresión >20% frente a baseline. Bundle adicional del módulo Esencial objetivo <=100 KiB comprimidos sobre entrada; lazy load de gráficos/Integral. No imponer un límite total inventado al bundle heredado sin medirlo.
 
 ## Estrategias

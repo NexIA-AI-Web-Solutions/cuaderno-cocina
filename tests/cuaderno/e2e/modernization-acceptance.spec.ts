@@ -89,7 +89,10 @@ async function transition(page: Page, action: () => Promise<unknown>, ready: (re
 }
 
 async function go(page: Page, path: string, marker: Locator) {
-  await transition(page, () => page.goto(appPath(path)), remaining => expect(marker).toBeVisible({timeout: remaining()}))
+  await transition(page, () => page.goto(appPath(path)), async remaining => {
+    await expect(marker).toBeVisible({timeout: remaining()})
+    if (path === '/mealplan') await expect(page.locator('.cuaderno-calendar')).toHaveAttribute('aria-busy', 'false', {timeout: remaining()})
+  })
 }
 
 // VSelect's native input is covered by its presentation layer for pointer events.
@@ -387,8 +390,14 @@ test('modernización: UX07 y UI09/10/19/20 · calendario y operaciones por edici
   expect(await style(calendar.locator('.cv-header-day').first(), 'font-weight')).toBe('600')
   const period = calendar.locator('.cuaderno-calendar-period h1')
   const originalPeriod = (await period.innerText()).trim()
-  await transition(page, () => calendar.getByRole('button', {name: /^(Next|Siguiente)$/}).click(), remaining => expect(period, 'UX07 next control changes the native period').not.toHaveText(originalPeriod, {timeout: remaining()}))
-  await transition(page, () => calendar.getByRole('button', {name: /^(Today|Hoy)$/}).click(), remaining => expect(period, 'UX07 today restores the current period').toHaveText(originalPeriod, {timeout: remaining()}))
+  await transition(page, () => calendar.getByRole('button', {name: /^(Next|Siguiente)$/}).click(), async remaining => {
+    await expect(period, 'UX07 next control changes the native period').not.toHaveText(originalPeriod, {timeout: remaining()})
+    await expect(calendar).toHaveAttribute('aria-busy', 'false', {timeout: remaining()})
+  })
+  await transition(page, () => calendar.getByRole('button', {name: /^(Today|Hoy)$/}).click(), async remaining => {
+    await expect(period, 'UX07 today restores the current period').toHaveText(originalPeriod, {timeout: remaining()})
+    await expect(calendar).toHaveAttribute('aria-busy', 'false', {timeout: remaining()})
+  })
   const ids = ['UX07', 'UI09', 'UI10']
   await go(page, '/cuaderno/produccion', page.getByRole('heading', {name: 'Producción', exact: true, level: 1}))
   if (featureMatrix.production.has(identity.edition)) {

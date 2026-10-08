@@ -1,6 +1,53 @@
 # Estado del producto
 
-## Producción c79b2ce — 8 de octubre de 2026
+## Presupuesto de listas y evidencia visual — 8 de octubre de 2026
+
+El propietario fija el presupuesto p95 de las APIs de listas en 800 ms, tanto
+en lectura secuencial como con cinco usuarios simultáneos. El presupuesto de
+escandallo permanece en 300 ms. Se conserva el resultado anterior: la CI
+37831204425 de `4bf56f6` pasó ambos backends, tooling, frontend, TypeScript,
+compilación, las matrices de navegador y las nueve cuentas de precisión;
+G7 rechazó formatos concurrentes con 578,299 ms frente al límite anterior
+de 500 ms. Ese candidato no se desplegó.
+
+La inspección de las capturas largas encontró barras fijas superpuestas al
+recorte. La nueva campaña conserva esos recortes y añade capturas de cada
+tarjeta, tras centrarla mediante desplazamiento real y comprobar que sus
+cantidades y controles quedan completos entre las barras visibles. No oculta
+elementos de la interfaz. La nueva CI, imagen, aceptación visual, G7 y
+despliegue con copia y restauración verificadas siguen pendientes.
+
+## Candidato de precisión y recuperación — 8 de octubre de 2026
+
+Producción continúa en `c79b2ce54c20f778524e3dcadfac0bc7e8053aa0` y su
+comprobación HTTPS de disponibilidad devuelve 200. Los candidatos `2d09831`
+y `638f190` se retienen sin desplegar: el primero reveló un desbordamiento
+nativo y la CI del segundo conserva un fallo WebKit de navegación del calendario.
+El candidato `54f3ec5` también se retiene: su CI 37828014208 pasó 1.296 pruebas
+nativas y 21 subpruebas, 616 de Cuaderno, 463 de tooling más 11 de Node y 370
+unitarias frontend. TypeScript detectó ocho incompatibilidades de consumidores;
+no se ejecutaron imagen, matrices de navegador ni G7. Esta revisión adapta los
+consumidores y evita redondear cantidades al convertir una vista de importación.
+La CI 37830081250 de `0d9c2a3` conserva los backends y tooling en PASS y pasa
+374 pruebas frontend; TypeScript señala cinco consumidores del campo opcional
+de cantidad del almacén. Esta revisión admite ese campo en su presentación y
+omite una cantidad ausente sin inventar un cero. Imagen, navegador y G7 de ese
+candidato no se ejecutaron y tampoco se despliega.
+
+Esta revisión conserva cantidades exactas en API, SDK y editor, y corrige la
+carga del calendario y su recuperación tras un error de red. La
+[decisión de contrato](adr/0012-native-ingredient-decimal-strings.md) describe
+la representación decimal. Siete pruebas nativas pasan realmente en PostgreSQL
+aislado y OpenAPI se genera sin avisos. La exportación posterior de ese esquema
+falló en el harness; su SHA real coincide con los bytes reconstruidos del
+snapshot. Ese fallo de transporte se conserva como evidencia fallida.
+
+La nueva CI completa, las nueve cuentas en cuatro anchos, G7, copia cifrada,
+restauración aislada y aceptación HTTPS del nuevo runtime siguen pendientes
+hasta registrar sus resultados efectivos. Las secciones siguientes conservan
+el historial de candidatos anteriores y no certifican este candidato.
+
+## Producción c79b2ce aceptada — referencia del 8 de octubre de 2026
 
 La [web publicada](https://gex-dashboard.hopto.org/cuaderno-cocina/) está
 healthy y tiene admisión final registrada. Sirve la fuente

@@ -150,13 +150,22 @@ class CustomDecimalField(serializers.Field):
                 raise ValidationError('A valid number is required')
 
 
+@extend_schema_field(str)
 class IngredientAmountField(CustomDecimalField):
-    """Validate native ingredient quantities without passing through float."""
+    """Keep native ingredient quantities lossless across JSON read/write cycles."""
 
     default_error_messages = {
         'required': 'Indica una cantidad.',
         'null': 'Indica una cantidad.',
     }
+
+    def to_representation(self, value):
+        # Decimal.normalize() applies the active precision context and can round
+        # a valid 32-digit quantity. Trim the fixed-point text instead.
+        text = format(value if isinstance(value, Decimal) else Decimal(str(value)), 'f')
+        if '.' in text:
+            text = text.rstrip('0').rstrip('.')
+        return '0' if text in ('', '-0', '+0') else text
 
     def to_internal_value(self, data):
         if isinstance(data, str):

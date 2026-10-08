@@ -69,10 +69,10 @@
                                     <div class="flex-col flex-grow-0 ma-1" style="min-width: 15%" v-if="!ingredient.isHeader">
                                         <div class="d-flex align-center">
                                             <v-icon icon="$dragHandle" class="drag-handle cursor-grab me-4"></v-icon>
-                                            <v-number-input :id="`id_input_amount_${props.stepIndex}_${index}`" :label="$t('Amount')" v-model="ingredient.amount" density="compact"
-                                                            hide-details control-variant="hidden" :disabled="ingredient.noAmount"
-                                                            :precision="useUserPreferenceStore().userSettings.ingredientDecimals">
-                                            </v-number-input>
+                                            <v-text-field :id="`id_input_amount_${props.stepIndex}_${index}`" :label="$t('Amount')" v-model="ingredient.amount" density="compact"
+                                                          type="text" inputmode="decimal" :disabled="ingredient.noAmount"
+                                                          :rules="[ingredientAmountRule]" validate-on="blur"
+                                                          @blur="autocorrectIngredientAmount(ingredient)"></v-text-field>
                                         </div>
                                     </div>
                                     <div class="flex-col flex-grow-0  ma-1" style="min-width: 15%" v-if="!ingredient.isHeader ">
@@ -195,10 +195,11 @@
                 <v-form>
                     <v-text-field :label="$t('Original_Text')" readonly v-model="editingIngredient.originalText"
                                   v-if="editingIngredient.originalText"></v-text-field>
-                    <v-number-input v-model="editingIngredient.amount" inset control-variant="stacked" autofocus :label="$t('Amount')"
-                                    :min="0" :precision="useUserPreferenceStore().userSettings.ingredientDecimals"
-                                    :disabled="editingIngredient.noAmount"
-                                    v-if="!editingIngredient.isHeader"></v-number-input>
+                    <v-text-field v-model="editingIngredient.amount" autofocus :label="$t('Amount')"
+                                  type="text" inputmode="decimal" :rules="[ingredientAmountRule]" validate-on="blur"
+                                  @blur="autocorrectIngredientAmount(editingIngredient)"
+                                  :disabled="editingIngredient.noAmount"
+                                  v-if="!editingIngredient.isHeader"></v-text-field>
                     <v-model-select model="Unit" v-model="editingIngredient.unit"  v-if="!editingIngredient.isHeader"
                                   :disabled="editingIngredient.noAmount"
                                   create></v-model-select>
@@ -212,7 +213,7 @@
                         :label="$t('Headline')"
                         :hint="$t('HeaderWarning')"
                         persistent-hint
-                        @update:modelValue="editingIngredient.unit = null; editingIngredient.food = null; editingIngredient.amount = 0"
+                        @update:modelValue="editingIngredient.unit = null; editingIngredient.food = null; editingIngredient.amount = '0'"
                     ></v-checkbox>
                     <v-checkbox
                         v-model="editingIngredient.noAmount"
@@ -245,6 +246,7 @@ import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import StepIngredientSorterDialog from "@/components/dialogs/StepIngredientSorterDialog.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
+import {autocorrectIngredientAmount, ingredientAmountRule, isZeroIngredientAmount} from "@/utils/ingredient_amounts";
 
 const emit = defineEmits(['delete', 'move'])
 
@@ -290,7 +292,7 @@ function parseAndInsertIngredients() {
 
     api.apiIngredientParserPostCreate({ingredientParserRequest: {ingredients: ingredientList}}).then(r => {
         // clear out empty ingredients when pasting stuff (in part to remove initial ingredient)
-        step.value.ingredients = step.value.ingredients.filter(i => i.food != null || i.note != null || i.amount != 0)
+        step.value.ingredients = step.value.ingredients.filter(i => i.food != null || i.note != null || !isZeroIngredientAmount(i.amount))
 
         // Parsed ingredients contain the writable ingredient fields but omit
         // response-only relationship summaries. They are valid editor drafts.
@@ -324,7 +326,7 @@ function handleIngredientNoteTab(event: KeyboardEvent, index: number) {
  */
 function insertAndFocusIngredient() {
     let ingredient = {
-        amount: 0,
+        amount: '0',
         unit: useUserPreferenceStore().defaultUnitObj,
         food: null,
     } as Ingredient

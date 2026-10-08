@@ -116,7 +116,7 @@ function loadRecipeData() {
                     step.ingredients.forEach(ingredient => {
                         if (!ingredient.isHeader) {
                             dialogRecipe.entries.push({
-                                amount: ingredient.amount,
+                                amount: Number(ingredient.amount),
                                 food: ingredient.food,
                                 unit: ingredient.unit,
                                 ingredient: ingredient,

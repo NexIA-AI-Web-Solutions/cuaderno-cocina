@@ -612,7 +612,7 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
                 "concurrent_users": CONCURRENT_USERS,
                 "concurrent_repetitions": CONCURRENT_REPETITIONS,
             },
-            "budgets_ms": {"cost_recipe_p95": 300, "list_api_p95": 500},
+            "budgets_ms": {"cost_recipe_p95": 300, "list_api_p95": 800},
             "dataset": dataset,
             "fixture_build_ms": self.fixture_ms,
             "runtime": {
@@ -646,7 +646,7 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
             self.assertLessEqual(sequential["cost_recipe_15_lines"]["p95_ms"], 300)
         for name in ("services_100", "movements_100_of_100000", "packages_1500"):
             with self.subTest(endpoint=name, mode="sequential"):
-                self.assertLessEqual(sequential[name]["p95_ms"], 500)
+                self.assertLessEqual(sequential[name]["p95_ms"], 800)
             with self.subTest(endpoint=name, mode="five_concurrent_users"):
                 self.assertEqual(concurrent[name]["errors"], [])
                 self.assertEqual(concurrent[name]["statuses"], [200])
@@ -655,4 +655,4 @@ class CuadernoPerformanceAcceptanceTests(TransactionTestCase):
                     concurrent[name]["item_counts"],
                     [expected_items[name]] * CONCURRENT_USERS * CONCURRENT_REPETITIONS,
                 )
-                self.assertLessEqual(concurrent[name]["p95_ms"], 500)
+                self.assertLessEqual(concurrent[name]["p95_ms"], 800)

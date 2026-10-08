@@ -113,7 +113,7 @@ class NativeIngredientAmountPrecisionTests(TestCase):
                     ingredient.refresh_from_db()
                     self.assertEqual(ingredient.amount, Decimal("400.5000000000000001"))
 
-    def test_all_three_native_ingredient_serializers_persist_exact_decimal_and_keep_four_digit_output(self):
+    def test_all_three_native_ingredient_serializers_persist_and_return_exact_decimal_strings(self):
         request = APIRequestFactory().post("/api/ingredient/", {}, format="json")
         request.user = self.user
         request.space = self.space
@@ -124,9 +124,59 @@ class NativeIngredientAmountPrecisionTests(TestCase):
                 ingredient = serializer.save()
                 ingredient.refresh_from_db()
                 self.assertEqual(ingredient.amount, Decimal("12.3456789012345678"))
-                self.assertEqual(serializer_class(ingredient, context={"request": request}).data["amount"], Decimal("12.3457"))
+                self.assertEqual(serializer_class(ingredient, context={"request": request}).data["amount"], "12.3456789012345678")
                 rejected = serializer_class(data={"food": None, "unit": None, "amount": "NaN"}, context={"request": request})
                 before = self.counts()
                 self.assertFalse(rejected.is_valid())
                 self.assertIn("cantidad", str(rejected.errors).lower())
                 self.assertEqual(self.counts(), before)
+
+    def test_native_json_get_put_roundtrip_and_note_edit_preserve_amounts_and_ids(self):
+        values = ["9999999999999999.1234567890123456", "0.0000000000000001", "400.1234567890123456", "-0.000", "12.50000"]
+        expected = [Decimal(value) for value in values]
+        created = self.client.post("/api/recipe/", self.payload(values), format="json")
+        self.assertEqual(created.status_code, 201, created.content)
+        url = f"/api/recipe/{created.data['id']}/"
+        detail = self.client.get(url)
+        self.assertEqual(detail.status_code, 200, detail.content)
+        # Decode the actual wire JSON, as a browser does; response.data can hide
+        # a Decimal encoder converting the amount to a lossy JSON number.
+        payload = detail.json()
+        rows = payload["steps"][0]["ingredients"]
+        ids = [row["id"] for row in rows]
+        self.assertEqual([row["amount"] for row in rows], [values[0], values[1], values[2], "0", "12.5"])
+        for edit in (False, True):
+            if edit:
+                payload["name"] = "Synthetic recipe renamed without amount edits"
+                rows[0]["note"] = "Synthetic note edit"
+            saved = self.client.put(url, payload, format="json")
+            self.assertEqual(saved.status_code, 200, saved.content)
+            with scopes_disabled():
+                persisted = list(Recipe.objects.get(pk=created.data["id"]).steps.get().ingredients.order_by("pk"))
+                self.assertEqual([row.pk for row in persisted], ids)
+                self.assertEqual([row.amount for row in persisted], expected)
+            self.assertEqual([row["amount"] for row in self.client.get(url).json()["steps"][0]["ingredients"]],
+                             [values[0], values[1], values[2], "0", "12.5"])
+
+    def test_native_recipe_put_normalizes_comma_and_rejects_invalid_edits_atomically(self):
+        created = self.client.post("/api/recipe/", self.payload(["1", "2"]), format="json")
+        self.assertEqual(created.status_code, 201, created.content)
+        url = f"/api/recipe/{created.data['id']}/"
+        payload = self.client.get(url).json()
+        payload["steps"][0]["ingredients"][0]["amount"] = " 400,5000000000000001 "
+        saved = self.client.put(url, payload, format="json")
+        self.assertEqual(saved.status_code, 200, saved.content)
+        payload = self.client.get(url).json()
+        self.assertEqual(payload["steps"][0]["ingredients"][0]["amount"], "400.5000000000000001")
+        for invalid in ("NaN", "10000000000000000", "0.12345678901234567", ""):
+            with self.subTest(invalid=invalid):
+                before = self.counts()
+                payload["name"] = "Invalid edit must not change recipe"
+                payload["steps"][0]["ingredients"][0]["amount"] = "3"
+                payload["steps"][0]["ingredients"][1]["amount"] = invalid
+                rejected = self.client.put(url, payload, format="json")
+                self.assert_amount_error(rejected)
+                self.assertEqual(self.counts(), before)
+                unchanged = self.client.get(url).json()
+                self.assertEqual(unchanged["name"], "Synthetic precision recipe")
+                self.assertEqual([row["amount"] for row in unchanged["steps"][0]["ingredients"]], ["400.5000000000000001", "2"])
