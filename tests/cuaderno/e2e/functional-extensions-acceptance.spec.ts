@@ -313,12 +313,14 @@ test('planificación: eventos persisten y solo Responsable puede anotar ausencia
     await page.getByLabel('Título', {exact: true}).fill(name)
     await page.getByLabel('Desde', {exact: true}).fill(farDate); await page.getByLabel('Hasta', {exact: true}).fill(farDate)
     eventIds.push((await observe<{id: number}>(page, '/api/cuaderno/planning/events/', 'POST', () => page.getByRole('button', {name: 'Guardar anotación', exact: true}).click(), 201)).id)
+    await expect(page.getByRole('status').filter({hasText: 'Anotación guardada.'})).toBeVisible()
     if (identity.role === 'responsable') {
       await select(page, page.getByRole('combobox', {name: 'Tipo', exact: true}), 'Ausencia')
       await page.getByLabel('Título', {exact: true}).fill(name + ' ausencia')
       await page.getByLabel('Persona del equipo', {exact: true}).fill('Persona sintética CI')
       await page.getByLabel('Desde', {exact: true}).fill(farDate); await page.getByLabel('Hasta', {exact: true}).fill(farDate)
       eventIds.push((await observe<{id: number}>(page, '/api/cuaderno/planning/events/', 'POST', () => page.getByRole('button', {name: 'Guardar anotación', exact: true}).click(), 201)).id)
+      await expect(page.getByRole('status').filter({hasText: 'Anotación guardada.'})).toBeVisible()
     } else {
       const type = page.getByRole('combobox', {name: 'Tipo', exact: true})
       await type.focus(); await type.press('Enter')

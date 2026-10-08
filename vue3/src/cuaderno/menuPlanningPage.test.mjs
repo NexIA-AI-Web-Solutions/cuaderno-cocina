@@ -194,3 +194,27 @@ test('course and event edits retain their read revision and preserve drafts afte
         assert.deepEqual(mounted.calls.filter(row => row.method === 'PUT').map(row => row.path), ['planning/courses/3/', 'planning/events/4/'])
     } finally {mounted.close()}
 })
+
+
+test('event success is announced only after the updated period finishes loading', async () => {
+    let finishPeriod, initial = true
+    const pendingPeriod = new Promise(resolve => {finishPeriod = resolve})
+    const saved = {id: 9, kind: 'event', title: 'Anotación sintética', member_name: '', start_date: '2026-10-08', end_date: '2026-10-08', note: '', revision: 'a'.repeat(64)}
+    const writable = {...data, can_edit: true, can_manage_absences: true}
+    const mounted = await mountFunctional('./pages/MenuPlanningPage.vue', {}, (path, method) => {
+        if (path === 'edition/') return {edition: 'integral'}
+        if (path.startsWith('planning/templates/')) return {count: 0, results: []}
+        if (path.startsWith('planning/?')) {if (initial) {initial = false; return writable} return pendingPeriod}
+        assert.equal(path, 'planning/events/'); assert.equal(method, 'POST'); return saved
+    })
+    try {
+        field(mounted.root, 'Título').props['onUpdate:modelValue'](saved.title); await flush()
+        const saving = button(mounted.root, 'Guardar anotación').props.onClick(); await flush()
+        assert.equal(button(mounted.root, 'Guardar anotación').props.disabled, true)
+        assert.doesNotMatch(textOf(mounted.root), /Anotación guardada\./)
+        finishPeriod({...writable, events: [saved]}); await saving; await flush()
+        assert.equal(field(mounted.root, 'Título').props.disabled, false)
+        assert.match(textOf(mounted.root), /Anotación guardada\./)
+        assert.match(textOf(mounted.root), /Anotación sintética/)
+    } finally {mounted.close()}
+})

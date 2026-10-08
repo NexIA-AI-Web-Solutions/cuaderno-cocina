@@ -107,14 +107,28 @@ test.describe('despliegue aislado bajo prefijo', () => {
     const edition = await api<{edition: string}>(cleanPage, '/api/cuaderno/edition/')
     expect(edition.status).toBe(200)
     expect(edition.body.edition).toBe(identity.edition)
+    const requiredPriceReads = identity.role === 'consulta' ? [] : ['/api/food/', '/api/unit/']
+    const pricePageReady = async () => {
+      await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
+      await expect(cleanPage.getByRole('button', {name: 'Actualizar lista', exact: true})).toBeEnabled()
+      if (identity.role === 'consulta') {
+        await expect(cleanPage.getByText('Modo Consulta: puedes revisar formatos, precios e historial, pero no modificarlos.', {exact: true})).toBeVisible()
+        await expect(cleanPage.getByRole('button', {name: 'Guardar formato', exact: true})).toHaveCount(0)
+      } else {
+        await expect(cleanPage.getByRole('button', {name: 'Guardar formato', exact: true})).toBeEnabled()
+      }
+      // Lazy route content can request fonts after document load. Finish the
+      // actual font set before an intentional reload; no canceled read is ignored.
+      await cleanPage.evaluate(async () => {await document.fonts.ready})
+    }
     await withNativeReadBarrier(cleanPage, async () => {
       await cleanPage.goto(appPath('/cuaderno/precios'))
-      await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
-    })
+      await pricePageReady()
+    }, requiredPriceReads)
     await withNativeReadBarrier(cleanPage, async () => {
       await cleanPage.reload()
-      await expect(cleanPage.getByText('Formatos y precios', {exact: true}).first()).toBeVisible()
-    })
+      await pricePageReady()
+    }, requiredPriceReads)
     expect(new URL(cleanPage.url()).pathname).toBe(appPath('/cuaderno/precios'))
     await assertNoHorizontalOverflow(cleanPage, testInfo)
   })
