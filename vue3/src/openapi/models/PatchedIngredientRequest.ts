@@ -55,10 +55,10 @@ export interface PatchedIngredientRequest {
     unit?: UnitRequest | null;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof PatchedIngredientRequest
      */
-    amount?: number;
+    amount?: string;
     /**
      * 
      * @type {string}

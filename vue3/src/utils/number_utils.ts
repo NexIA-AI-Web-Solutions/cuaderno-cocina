@@ -1,4 +1,5 @@
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
+import {ingredientAmountDisplayLabel, normalizeIngredientAmount} from "@/utils/ingredient_amounts";
 
 /**
  * round to the number of decimals specified in user preferences
@@ -18,13 +19,32 @@ export function roundDecimals(num: number) {
  * @param factor factor to scale food amount by
  * @param useFractions if the returned value should be a fraction or not
  */
-export function calculateFoodAmount(amount: number, factor: number, useFractions: boolean = false) {
+export function calculateFoodAmount(amount: string | number, factor: number, useFractions: boolean = false) {
+    const exactAmount = typeof amount === 'string' && factor === 1 ? normalizeIngredientAmount(amount).value : null
+    if (typeof amount === 'string' && factor === 1 && (!useFractions || exactAmount === null)) {
+        return ingredientAmountDisplayLabel(exactAmount ?? amount)
+    }
+    // Arbitrary view factors and legacy numeric inputs remain presentation arithmetic.
+    const displayAmount = Number(amount)
     if (useFractions) {
         let return_string = ""
-        let fraction = frac(amount * factor, 16, true)
+        let fraction = frac(displayAmount * factor, 16, true)
+
+        if (exactAmount !== null) {
+            if (exactAmount.startsWith('-') || !fraction.every(Number.isSafeInteger) || fraction[2] <= 0) {
+                return ingredientAmountDisplayLabel(exactAmount)
+            }
+            const [whole, decimal = ''] = exactAmount.split('.')
+            const decimalScale = 10n ** BigInt(decimal.length)
+            const decimalUnits = BigInt(whole!) * decimalScale + BigInt(decimal || '0')
+            const fractionUnits = BigInt(fraction[0]) * BigInt(fraction[2]) + BigInt(fraction[1])
+            if (decimalUnits * BigInt(fraction[2]) !== fractionUnits * decimalScale) {
+                return ingredientAmountDisplayLabel(exactAmount)
+            }
+        }
 
         if (fraction[0] === 0 && fraction[1] === 0 && fraction[2] === 1) {
-            return roundDecimals(amount * factor)
+            return roundDecimals(displayAmount * factor)
         }
 
         if (fraction[0] > 0) {
@@ -37,7 +57,7 @@ export function calculateFoodAmount(amount: number, factor: number, useFractions
 
         return return_string
     } else {
-        return roundDecimals(amount * factor)
+        return roundDecimals(displayAmount * factor)
     }
 }
 

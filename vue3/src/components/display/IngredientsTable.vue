@@ -40,12 +40,12 @@
                     <td style="width: 1%; text-wrap: nowrap"
                         class="pr-1"
                         v-html="calculateFoodAmount(i.amount, props.ingredientFactor, useUserPreferenceStore().userSettings.useFractions)"
-                        v-if="!i.noAmount && i.amount != 0">
+                        v-if="!i.noAmount && !isZeroIngredientAmount(i.amount)">
                     </td>
                     <td style="width: 1%; text-wrap: nowrap" class="pr-1" v-else></td>
 
                     <td style="width: 1%; text-wrap: nowrap" class="pr-1">
-                        <template v-if="i.unit && !i.noAmount && i.amount != 0"> {{ ingredientToUnitString(i, ingredientFactor) }}</template>
+                        <template v-if="i.unit && !i.noAmount && !isZeroIngredientAmount(i.amount)"> {{ ingredientToUnitString(i, ingredientFactor) }}</template>
                     </td>
                     <td>
                         <template v-if="i.food">
@@ -74,8 +74,8 @@
                                 <v-list>
                                     <v-list-item prepend-icon="fa-solid fa-sort-numeric-up">
                                         {{ $t('Scale') }}
-                                        <number-scaler-dialog :number="i.amount * ingredientFactor"
-                                                              @confirm="(target: number) => emit('scale', target/i.amount)"></number-scaler-dialog>
+                                        <number-scaler-dialog :number="Number(i.amount) * ingredientFactor"
+                                                              @confirm="(target: number) => emit('scale', target/Number(i.amount))"></number-scaler-dialog>
                                     </v-list-item>
                                     <v-list-item prepend-icon="$shopping" @click="addToShopping(i)">
                                         {{ $t('Shopping') }}
@@ -107,6 +107,7 @@ import {ingredientToFoodString, ingredientToUnitString} from "@/utils/model_util
 import {TFood, TUnit} from "@/types/Models.ts";
 import NumberScalerDialog from "@/components/inputs/NumberScalerDialog.vue";
 import {ErrorMessageType, PreparedMessage, useMessageStore} from "@/stores/MessageStore.ts";
+import {isZeroIngredientAmount} from "@/utils/ingredient_amounts";
 
 const emit = defineEmits(['scale'])
 
@@ -147,7 +148,7 @@ function toggleChecked(ingredient: Ingredient) {
 function addToShopping(ingredient: Ingredient) {
     const api = new ApiApi()
     const sLE = {
-        amount: ingredient.amount * props.ingredientFactor,
+        amount: Number(ingredient.amount) * props.ingredientFactor,
         unit: ingredient.unit,
         food: ingredient.food
     } as ShoppingListEntry

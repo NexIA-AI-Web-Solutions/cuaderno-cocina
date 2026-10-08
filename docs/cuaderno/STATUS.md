@@ -1,5 +1,25 @@
 # Estado del producto
 
+## Candidato de precisión y recuperación — 8 de octubre de 2026
+
+Producción continúa en `c79b2ce54c20f778524e3dcadfac0bc7e8053aa0` y su
+comprobación HTTPS de disponibilidad devuelve 200. Los candidatos `2d09831`
+y `638f190` se retienen sin desplegar: el primero reveló un desbordamiento
+nativo y la CI del segundo conserva un fallo WebKit de navegación del calendario.
+
+Esta revisión conserva cantidades exactas en API, SDK y editor, y corrige la
+carga del calendario y su recuperación tras un error de red. La
+[decisión de contrato](adr/0012-native-ingredient-decimal-strings.md) describe
+la representación decimal. Siete pruebas nativas pasan realmente en PostgreSQL
+aislado y OpenAPI se genera sin avisos. La exportación posterior de ese esquema
+falló en el harness; su SHA real coincide con los bytes reconstruidos del
+snapshot. Ese fallo de transporte se conserva como evidencia fallida.
+
+La nueva CI completa, las nueve cuentas en cuatro anchos, G7, copia cifrada,
+restauración aislada y aceptación HTTPS del nuevo runtime siguen pendientes
+hasta registrar sus resultados efectivos. Las secciones siguientes conservan
+el historial de candidatos anteriores y no certifican este candidato.
+
 ## Precios legibles y lectura por rol — 8 de octubre de 2026
 
 La inspección del clon en navegador detectó decimales de almacenamiento visibles

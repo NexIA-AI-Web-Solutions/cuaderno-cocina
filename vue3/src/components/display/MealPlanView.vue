@@ -10,7 +10,7 @@
             <p v-if="professional && !weekMode" class="text-body-2 mb-3">La vista actual conserva el calendario nativo. Elige una vista de 1 a 5 semanas para consultar tipos de plato, dietas y eventos del mismo periodo.</p>
             <v-alert v-if="planningError" type="warning" variant="tonal" role="alert" class="mb-3">{{ planningError }} <v-btn variant="text" @click="loadPlanning">Volver a cargar anotaciones</v-btn></v-alert>
             <p v-if="professional && weekMode && selectedDiet" class="text-body-2 mb-3">Rojo: no apto según declaración manual. «No declarado» no significa apto. Revisa ingredientes y preparación.</p>
-            <v-card class="h-100 cuaderno-calendar" :loading="useMealPlanStore().loading">
+            <v-card class="h-100 cuaderno-calendar" :loading="calendarBusy" :aria-busy="calendarBusy ? 'true' : 'false'">
                 <!-- TODO add hint about CTRL key while drag/drop -->
                 <!-- TODO multi selection? date range selection ? -->
                 <calendar-view
@@ -84,6 +84,8 @@ const {locale} = useI18n()
 const calendarDate = ref(new Date())
 const professional = ref(false), canOperate = ref(false), selectedDiet = ref<string | null>(null), onlySuitable = ref(false)
 const planning = ref<PlanningData | null>(null), planningError = ref('')
+const planningLoading = ref(false), editionLoading = ref(true)
+const calendarBusy = computed(() => useMealPlanStore().loading || planningLoading.value || editionLoading.value)
 const weekMode = computed(() => {const settings = useUserPreferenceStore().deviceSettings; return settings.mealplan_displayPeriod === 'week' && Number.isInteger(settings.mealplan_displayPeriodCount) && settings.mealplan_displayPeriodCount >= 1 && settings.mealplan_displayPeriodCount <= 5})
 const weekCount = computed(() => {const count = useUserPreferenceStore().deviceSettings.mealplan_displayPeriodCount; return Number.isInteger(count) && count >= 1 && count <= 5 ? count : 1})
 let planningGeneration = 0
@@ -99,9 +101,13 @@ function courseLabel(id: number) {
     return planning.value?.courses.find(row => row.id === course)?.name || ''
 }
 async function loadPlanning() {
+    const generation = ++planningGeneration; planning.value = null; planningLoading.value = false
     if (!professional.value) return
-    const generation = ++planningGeneration; planningError.value = ''; planning.value = null
+    planningError.value = ''
     if (!weekMode.value) return
+    planningLoading.value = true
+    // The native completion watcher loads the annotations for the finished period.
+    if (useMealPlanStore().loading) return
     const day = calendarDate.value.getDay(), first = useUserPreferenceStore().deviceSettings.mealplan_startingDayOfWeek
     const start = DateTime.fromJSDate(calendarDate.value).minus({days: (day - first + 7) % 7}).toISODate()!
     const end = planningEndDate(start, weekCount.value)
@@ -109,6 +115,7 @@ async function loadPlanning() {
         const result = await planningRequest<PlanningData>(`planning/?from_date=${start}&to_date=${end}${selectedDiet.value ? '&diet=' + encodeURIComponent(selectedDiet.value) : ''}`)
         if (generation === planningGeneration) planning.value = result
     } catch (error) {if (generation === planningGeneration) planningError.value = 'No se pudieron cargar tipos, dietas y eventos. El calendario nativo sigue disponible. ' + (error as Error).message}
+    finally {if (generation === planningGeneration) planningLoading.value = false}
 }
 
 const currentlyDraggedMealplan = ref({} as IMealPlanNormalizedCalendarItem)
@@ -165,6 +172,7 @@ onMounted(() => {
         canOperate.value = edition.operational_role?.can_operate_cuaderno === true
         if (professional.value) void loadPlanning()
     }).catch(() => {planningError.value = 'No se pudieron comprobar los permisos. El calendario permanece en modo lectura.'})
+        .finally(() => {editionLoading.value = false})
 })
 
 /**

@@ -167,6 +167,53 @@ async function fixtureFor(browser: Browser, edition: Edition, bindingHash: strin
   }
 }
 
+async function nativeEditorRoundtrip(page: Page, fixture: Fixture) {
+  const endpoint = `/api/recipe/${fixture.recipeId}/`
+  const original = await nativeApi<{steps: {ingredients: {id: number; amount: string}[]}[]}>(page.context(), endpoint, 200)
+  const expected = quantities.map(quantity => quantity.input.replace(',', '.').replace(/0+$/, '').replace(/\.$/, ''))
+  const originalRows = original.steps.flatMap(step => step.ingredients)
+  expect(originalRows.map(row => row.id)).toEqual(fixture.ingredientIds)
+  expect(originalRows.map(row => row.amount)).toEqual(expected)
+  await page.goto(appPath(`/edit/recipe/${fixture.recipeId}`))
+  await expect(page.getByRole('textbox', {name: /^(Name|Nombre)$/, exact: true}).first()).toHaveValue(`Cuaderno quantity ${campaign().token} ${fixture.edition}`)
+  await page.getByRole('tab', {name: /^(Steps|Pasos)$/, exact: true}).click()
+  for (let index = 0; index < expected.length; index++) await expect(page.locator(`#id_input_amount_0_${index}`)).toHaveValue(expected[index]!)
+  const invalid = page.locator('#id_input_amount_0_2')
+  const writes: string[] = []
+  const listener = (request: import('@playwright/test').Request) => {
+    if (new URL(request.url()).pathname === appPath(endpoint) && ['PUT', 'PATCH'].includes(request.method())) writes.push(request.method())
+  }
+  page.on('request', listener)
+  try {
+    await invalid.fill('NaN')
+    await invalid.blur()
+    await page.getByRole('button', {name: /^(Save|Guardar)$/, exact: true}).click()
+    await expect(page.locator('.v-alert[role="alert"]').filter({hasText: 'Revisa la cantidad del ingrediente 3'})).toBeVisible()
+    expect(writes, 'invalid quantities are rejected before any native write').toEqual([])
+    await invalid.fill(expected[2]!)
+    await invalid.blur()
+    const first = page.locator('#id_input_amount_0_0')
+    await first.fill(' 400,0000000000000000 ')
+    await first.blur()
+    await expect(first).toHaveValue('400')
+    const saved = page.waitForResponse(response => new URL(response.url()).pathname === appPath(endpoint) && response.request().method() === 'PUT')
+    await page.getByRole('button', {name: /^(Save|Guardar)$/, exact: true}).click()
+    const response = await saved
+    expect(response.status()).toBe(200)
+    expect(await response.finished()).toBeNull()
+    await expect(page.getByRole('button', {name: /^(Save|Guardar)$/, exact: true})).toBeEnabled()
+    expect(writes).toEqual(['PUT'])
+  } finally {
+    page.off('request', listener)
+  }
+  const after = await nativeApi<typeof original>(page.context(), endpoint, 200)
+  const rows = after.steps.flatMap(step => step.ingredients)
+  expect(rows.map(row => row.id)).toEqual(fixture.ingredientIds)
+  expect(rows.map(row => row.amount)).toEqual(expected)
+  return {passed: true, invalidWriteBlocked: true, commaAutocorrected: true,
+    ingredientIds: rows.map(row => row.id), amountsBefore: expected, amountsAfter: rows.map(row => row.amount)}
+}
+
 function strictCollector(page: Page) {
   const failures: string[] = [], warnings: string[] = []
   const pending = new Set<Promise<void>>(), requests = new Set<unknown>(), assets = new Map<string, string>()
@@ -245,6 +292,11 @@ test.afterAll(async ({}, testInfo) => {
       const reportBinding = report.binding as Binding & {metadataSha256: string}
       failUnless(reportBinding.metadataSha256 === sha256 && JSON.stringify(reportBinding) === JSON.stringify({...binding, metadataSha256: sha256}), 'Binding de caso distinto.')
       failUnless(JSON.stringify(report.apiEnvelopeBefore) === JSON.stringify(report.apiEnvelopeAfter), 'La API persistida cambió.')
+      if (role === 'responsable') {
+        const edit = report.nativeEditorRoundtrip as {passed: boolean; invalidWriteBlocked: boolean; commaAutocorrected: boolean; amountsBefore: string[]; amountsAfter: string[]}
+        failUnless(edit?.passed === true && edit.invalidWriteBlocked === true && edit.commaAutocorrected === true &&
+          JSON.stringify(edit.amountsBefore) === JSON.stringify(edit.amountsAfter), 'La edición nativa exacta no está verificada.')
+      }
       const viewports = report.viewports as Viewport[]
       failUnless(viewports.length === 4 && JSON.stringify(viewports.map(row => row.width)) === JSON.stringify(widths), 'La matriz de anchos no es exacta.')
       for (const viewport of viewports) {
@@ -291,6 +343,7 @@ test('cantidades nativas exactas y merma accesible en cuatro anchos', async ({br
     const provenance = await verifyProvenance(page.context(), binding)
     const fixture = await fixtureFor(browser, identity.edition, sha256)
     report.recipeId = fixture.recipeId
+    if (identity.role === 'responsable') report.nativeEditorRoundtrip = await nativeEditorRoundtrip(page, fixture)
     const endpoint = `/api/cuaderno/recipes/${fixture.recipeId}/ingredient-yields/`
     const before = await nativeApi<Envelope>(page.context(), endpoint, 200)
     validateEnvelope(before, fixture, identity)

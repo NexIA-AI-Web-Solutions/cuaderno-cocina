@@ -24779,8 +24779,7 @@
                         "nullable": true
                     },
                     "amount": {
-                        "type": "number",
-                        "format": "double"
+                        "type": "string"
                     },
                     "conversions": {
                         "type": "array",
@@ -24899,8 +24898,7 @@
                         "nullable": true
                     },
                     "amount": {
-                        "type": "number",
-                        "format": "double"
+                        "type": "string"
                     },
                     "note": {
                         "type": "string",
@@ -24968,8 +24966,7 @@
                         "nullable": true
                     },
                     "amount": {
-                        "type": "number",
-                        "format": "double"
+                        "type": "string"
                     },
                     "note": {
                         "type": "string",
@@ -28560,8 +28557,7 @@
                         "nullable": true
                     },
                     "amount": {
-                        "type": "number",
-                        "format": "double"
+                        "type": "string"
                     },
                     "note": {
                         "type": "string",

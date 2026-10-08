@@ -13,7 +13,7 @@ export function isSingularAmount(amount: number): boolean {
  * @param ingredient
  */
 type DisplayIngredient = {
-    amount: number
+    amount: string | number
     food?: {name: string, pluralName?: string | null} | null
     unit?: {name: string, pluralName?: string | null} | null
     note?: string | null
@@ -27,7 +27,7 @@ export function ingredientToString(ingredient: DisplayIngredient | undefined) {
         return ''
     }
 
-    if (ingredient.amount != 0) {
+    if (Number(ingredient.amount) !== 0) {
         content.push(ingredient.amount)
     }
     if (ingredient.unit) {
@@ -50,7 +50,7 @@ export function ingredientToString(ingredient: DisplayIngredient | undefined) {
  */
 export function ingredientToFoodString(ingredient: DisplayIngredient, ingredientFactor: number) {
     if (ingredient.food) {
-        return pluralString(ingredient.food, ingredient.amount * ingredientFactor, ingredient.noAmount)
+        return pluralString(ingredient.food, Number(ingredient.amount) * ingredientFactor, ingredient.noAmount)
     } else {
         return ''
     }
@@ -81,7 +81,7 @@ export function pluralString(object: {name: string, pluralName?: string | null},
 export function ingredientToUnitString(ingredient: DisplayIngredient, ingredientFactor: number) {
     if (!ingredient.unit) return ''
     if (!ingredient.unit.pluralName || ingredient.noAmount) return ingredient.unit.name ?? ''
-    if (isSingularAmount(ingredient.amount * ingredientFactor)) return ingredient.unit.name ?? ''
+    if (isSingularAmount(Number(ingredient.amount) * ingredientFactor)) return ingredient.unit.name ?? ''
     return ingredient.unit.pluralName
 }
 
@@ -97,7 +97,7 @@ export function getRecipeIngredients(recipe: Recipe, t: any, options: { showStep
     recipe.steps.forEach((step, index) => {
         if (step.showAsHeader && options.showStepHeaders && recipe.steps.length > 1 && (step.ingredients.length > 0 || step.name != '')) {
             ingredients.push({
-                amount: 0,
+                amount: '0',
                 unit: null,
                 food: null,
                 note: (step.name !== '') ? step.name : t('Step') + ' ' + (index + 1),

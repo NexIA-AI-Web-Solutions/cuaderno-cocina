@@ -93,6 +93,8 @@ export const useMealPlanStore = defineStore(_STORE_ID, () => {
             }
 
         }).catch((err) => {
+            currently_updating.value = [new Date(0), new Date(0)]
+            loading.value = false
             useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
         })
     }

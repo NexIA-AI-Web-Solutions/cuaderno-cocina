@@ -60,6 +60,7 @@ import {Ingredient, Step} from "@/openapi";
 import IngredientsTable from "@/components/display/IngredientsTable.vue";
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore.ts";
 import {useDisplay} from "vuetify";
+import {sumIngredientAmounts} from "@/utils/ingredient_amounts";
 
 const emit = defineEmits(['scale'])
 
@@ -117,7 +118,7 @@ const mergedIngredients = computed(() => {
         if (groupedIngredients.has(key)) {
             // If this food-unit combination already exists, sum the amounts
             const existingIngredient = groupedIngredients.get(key)!;
-            existingIngredient.amount += ingredient.amount;
+            existingIngredient.amount = sumIngredientAmounts(existingIngredient.amount, ingredient.amount);
         } else {
             // Create a new entry with the adjusted amount
             const clonedIngredient = {...ingredient};

@@ -61,10 +61,10 @@ export interface Ingredient {
     unit: Unit | null;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof Ingredient
      */
-    amount: number;
+    amount: string;
     /**
      * 
      * @type {Array<any>}

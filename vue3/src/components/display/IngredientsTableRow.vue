@@ -7,7 +7,7 @@
             <td>
                 <v-checkbox-btn v-model="checked" color="success"></v-checkbox-btn>
             </td>
-            <td @click="checked = !checked">{{ ingredient.amount * props.ingredientFactor }}</td>
+            <td @click="checked = !checked">{{ Number(ingredient.amount) * props.ingredientFactor }}</td>
             <td @click="checked = !checked"><span v-if="ingredient.unit != null">{{ ingredient.unit.name }}</span></td>
             <td @click="checked = !checked"><span v-if="ingredient.food != null">{{ ingredient.food.name }}</span></td>
             <td v-if="props.showNotes">

@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {component, deferred, settle, templateEvent} from './functionalHarness.mjs'
+import {normalizeIngredientAmount} from '../../utils/ingredient_amounts.ts'
 
 const error = new Error('synthetic request failure')
 test('BUGFIX-05: saved filters replace omitted fields and query', () => {
@@ -40,7 +41,9 @@ test('BUGFIX-13: latest ingredient filter survives reversed responses', async ()
     b.resolve({results: [{id: 2}], count: 1});await settle();a.resolve({results: [{id: 1}], count: 1});await settle();assert.equal(s.items.value[0].id, 2)
 })
 test('ERRORFIX-12: failed ingredient save retains edits and dirty state', async () => {
-    const {exposed: s} = component('pages/IngredientEditorPage.vue', ['updateIngredient', 'items'], {api: {apiIngredientUpdate: () => Promise.reject(error)}})
+    const {exposed: s} = component('pages/IngredientEditorPage.vue', ['updateIngredient', 'items'], {
+        api: {apiIngredientUpdate: () => Promise.reject(error)}, globals: {normalizeIngredientAmount},
+    })
     const item = {id: 1, amount: '3.5', changed: true, loading: false};s.items.value = [item];await s.updateIngredient(item)
     assert.equal(item.changed, true);assert.equal(item.amount, '3.5');assert.equal(item.loading, false)
 })

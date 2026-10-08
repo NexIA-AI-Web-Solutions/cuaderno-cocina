@@ -116,8 +116,9 @@
                 </template>
 
                 <template v-slot:item.amount="{ item }">
-                    <v-number-input :label="$t('Amount')" v-model="item.amount" inset control-variant="stacked" hide-details :min="0" density="compact"
-                                    @update:modelValue="item.changed = true" :precision="2"></v-number-input>
+                    <v-text-field :label="$t('Amount')" v-model="item.amount" type="text" inputmode="decimal" density="compact"
+                                  @update:modelValue="item.changed = true" :rules="[ingredientAmountRule]" validate-on="blur"
+                                  @blur="autocorrectIngredientAmount(item)"></v-text-field>
                 </template>
                 <template v-slot:item.unit="{ item }">
                     <v-model-select model="Unit" v-model="item.unit" density="compact" hide-details create
@@ -159,7 +160,8 @@ import ClosableHelpAlert from "@/components/display/ClosableHelpAlert.vue";
 import {ApiApi, ApiIngredientListRequest, Food, Ingredient, Unit} from "@/openapi";
 import {computed, onMounted, ref} from "vue";
 import {useI18n} from "vue-i18n";
-import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
+import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore";
+import {autocorrectIngredientAmount, ingredientAmountRule, normalizeIngredientAmount} from "@/utils/ingredient_amounts";
 import {useUrlSearchParams} from "@vueuse/core";
 import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
@@ -218,6 +220,12 @@ function updateAllIngredients() {
  * @param ingredient
  */
 function updateIngredient(ingredient: EditorIngredient) {
+    const amount = normalizeIngredientAmount(ingredient.amount)
+    if (amount.value === null) {
+        useMessageStore().addMessage(MessageType.ERROR, {title: 'Revisa la cantidad', text: amount.error}, 7000)
+        return Promise.resolve()
+    }
+    ingredient.amount = amount.value
     let api = new ApiApi()
     ingredient.loading = true
     return api.apiIngredientUpdate({id: ingredient.id!, ingredient: ingredient}).then(r => {
