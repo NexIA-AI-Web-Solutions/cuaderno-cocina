@@ -150,6 +150,35 @@ class CustomDecimalField(serializers.Field):
                 raise ValidationError('A valid number is required')
 
 
+class IngredientAmountField(CustomDecimalField):
+    """Validate native ingredient quantities without passing through float."""
+
+    default_error_messages = {
+        'required': 'Indica una cantidad.',
+        'null': 'Indica una cantidad.',
+    }
+
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            data = data.strip().replace(',', '.')
+            whole, separator, fraction = data.partition('.')
+            if (len(data) <= 1000 and separator and fraction.isdecimal()
+                    and whole.lstrip('+-').isdecimal()):
+                data = whole + '.' + fraction.rstrip('0')
+        return serializers.DecimalField(
+            max_digits=32,
+            decimal_places=16,
+            error_messages={
+                'invalid': 'Introduce una cantidad numérica válida.',
+                'null': 'Indica una cantidad.',
+                'max_string_length': 'La cantidad es demasiado larga.',
+                'max_digits': 'La cantidad admite como máximo 32 dígitos en total.',
+                'max_decimal_places': 'La cantidad admite como máximo 16 decimales.',
+                'max_whole_digits': 'La cantidad admite como máximo 16 dígitos enteros.',
+            },
+        ).run_validation(data)
+
+
 @extend_schema_field(bool)
 class CustomOnHandField(serializers.Field):
     def get_attribute(self, instance):
@@ -1141,7 +1170,7 @@ class FoodSerializer(UniqueFieldsMixin, WritableNestedModelSerializer, ExtendedR
 class IngredientSimpleSerializer(IngredientYieldValidationMixin, WritableNestedModelSerializer):
     food = FoodSimpleSerializer(allow_null=True)
     unit = UnitSerializer(allow_null=True)
-    amount = CustomDecimalField()
+    amount = IngredientAmountField()
     yield_ratio = YieldRatioField(required=False, allow_null=True)
     checked = serializers.BooleanField(read_only=True, default=False, help_text='Just laziness to have a checked field on the frontend API client')
 
@@ -2442,7 +2471,7 @@ class FoodExportSerializer(FoodSerializer):
 class IngredientExportSerializer(IngredientYieldValidationMixin, WritableNestedModelSerializer):
     food = FoodExportSerializer(allow_null=True)
     unit = UnitExportSerializer(allow_null=True)
-    amount = CustomDecimalField()
+    amount = IngredientAmountField()
     yield_ratio = YieldRatioField(required=False, allow_null=True)
 
     def create(self, validated_data):

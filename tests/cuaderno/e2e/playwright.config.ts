@@ -10,7 +10,7 @@ const chromiumLaunchOptions = ciTlsLaunchOptions('chromium')
 
 const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => widths.map(width => ({
   name: projectName(edition, role, width),
-  testIgnore: prefixAcceptance ? /browser-acceptance\.spec\.ts/ : /(?:browser-acceptance|prefix-acceptance)\.spec\.ts/,
+  testIgnore: prefixAcceptance ? /(?:browser-acceptance|ingredient-quantity-precision)\.spec\.ts/ : /(?:browser-acceptance|prefix-acceptance|ingredient-quantity-precision)\.spec\.ts/,
   use: {
     ...devices['Desktop Chrome'],
     launchOptions: chromiumLaunchOptions,

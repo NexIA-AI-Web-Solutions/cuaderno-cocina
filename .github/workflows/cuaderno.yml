@@ -499,6 +499,96 @@ jobs:
           mkdir -p .cuaderno-runs
           export CUADERNO_CANDIDATE_IMAGE="$(cat .cuaderno-runs/candidate-image-id.txt)"
           python scripts/cuaderno/candidate_check.py e2e-final --context .cuaderno-runs/ci-context.json --allow-isolated-mutations
+      - name: Vincular la matriz de cantidades al runtime candidato
+        if: matrix.deployment == 'prefix'
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, re, subprocess
+          root = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
+          records = root / '.cuaderno-runs'
+          commit = os.environ['GITHUB_SHA']
+          context = json.loads((records / 'ci-context.json').read_text())
+          image = (records / 'candidate-image-id.txt').read_text().strip()
+          source = (records / 'candidate-source-identity.txt').read_text().strip()
+          assert re.fullmatch('[a-f0-9]{40}', commit)
+          assert re.fullmatch('sha256:[a-f0-9]{64}', image)
+          assert re.fullmatch(commit + r'\+worktree\.[a-f0-9]{64}', source)
+          assert context['git_commit'] == commit and context['source_identity'] == source and context['image_id'] == image
+          with (records / 'candidate-image.tar.gz').open('rb') as stream:
+              archive_sha = hashlib.file_digest(stream, 'sha256').hexdigest()
+          assert archive_sha == (records / 'candidate-image.tar.gz.sha256').read_text().split()[0]
+          def inspect(name):
+              return json.loads(subprocess.check_output(['docker', 'inspect', name], timeout=15))[0]
+          web, db = inspect('cuaderno-release-web'), inspect('cuaderno-release-db')
+          for row, service in ((web, 'web'), (db, 'db')):
+              assert row['Name'] == '/cuaderno-release-' + service
+              assert re.fullmatch('[a-f0-9]{64}', row['Id'])
+              assert row['Config']['Labels']['com.docker.compose.project'] == 'cuaderno-release'
+              assert row['Config']['Labels']['com.docker.compose.service'] == service
+              assert row['State']['Running'] and not row['State']['OOMKilled']
+              assert row['State']['Health']['Status'] == 'healthy'
+          assert web['Image'] == image and web['Config']['Image'] == image
+          assert web['Config']['Labels']['io.cuaderno.source-identity'] == source
+          raw = subprocess.check_output(['docker', 'exec', web['Id'], 'cat',
+              '/opt/recipes/cookbook/static/vue3/cuaderno-build-provenance.json'], timeout=15)
+          provenance = json.loads(raw)
+          assert provenance['schema_version'] == 1
+          modules = {'vue:src/cuaderno/components/IngredientYieldPanel.vue', 'vue:src/cuaderno/ingredientYieldUi.ts'}
+          chunks = [chunk for chunk in provenance['rollup']['main']['chunks']
+              if any(module['id'] in modules for module in chunk['modules'])]
+          assert chunks and modules <= {module['id'] for chunk in chunks for module in chunk['modules']}
+          assets = []
+          for chunk in chunks:
+              assert any(asset['file_name'] == chunk['file_name'] and asset['sha256'] == chunk['sha256']
+                  for asset in provenance['final_assets'])
+              assets.append({'path': '/cuaderno-cocina/static/vue3/' + chunk['file_name'], 'sha256': chunk['sha256']})
+          token = os.environ['GITHUB_RUN_ID'] + '-' + os.environ['GITHUB_RUN_ATTEMPT']
+          directory = records / ('quantity-' + token)
+          directory.mkdir(mode=0o700)
+          metadata = directory / 'runtime-metadata.json'
+          binding = {'schemaVersion': 1, 'mode': 'isolated-ci-quantity-precision',
+              'repository': os.environ['GITHUB_REPOSITORY'], 'sourceCommit': commit, 'sourceIdentity': source,
+              'ciRunId': os.environ['GITHUB_RUN_ID'], 'ciRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'imageId': image, 'imageArchiveSha256': archive_sha,
+              'runtime': {'webId': web['Id'], 'databaseId': db['Id'], 'imageId': image, 'sourceCommit': commit},
+              'frontendProvenance': {'path': '/cuaderno-cocina/static/vue3/cuaderno-build-provenance.json',
+                  'sha256': hashlib.sha256(raw).hexdigest()}, 'changedAssetBindings': assets}
+          metadata_raw = (json.dumps(binding, sort_keys=True) + '\n').encode()
+          with metadata.open('xb') as stream:
+              stream.write(metadata_raw)
+          metadata.chmod(0o600)
+          values = {'CUADERNO_QUANTITY_TOKEN': token, 'CUADERNO_QUANTITY_RUN_DIR': str(directory),
+              'CUADERNO_QUANTITY_METADATA': str(metadata), 'CUADERNO_QUANTITY_METADATA_SHA256': hashlib.sha256(metadata_raw).hexdigest(),
+              'CUADERNO_QUANTITY_SOURCE_COMMIT': commit, 'CUADERNO_CANDIDATE_IMAGE': image}
+          with open(os.environ['GITHUB_ENV'], 'a') as stream:
+              for key, value in values.items():
+                  assert '\n' not in value and '\r' not in value
+                  stream.write(key + '=' + value + '\n')
+          PY
+      - name: Cantidades exactas en nueve cuentas y cuatro anchos
+        if: matrix.deployment == 'prefix'
+        working-directory: tests/cuaderno/e2e
+        shell: bash
+        run: |
+          npx playwright test --config ingredient-quantity-precision.config.ts
+          python - "$CUADERNO_QUANTITY_RUN_DIR/summary.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as stream:
+              result = json.load(stream)
+          assert result['passed'] is True and result['failed'] == 0
+          assert result['cases'] == 9 and len(result['reports']) == 9 and len(result['screenshots']) == 36
+          assert result['newCritical12Claimed'] is False
+          PY
+      - name: Evidencia de cantidades sin estados de sesión
+        if: always() && matrix.deployment == 'prefix'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cuaderno-quantity-precision-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .cuaderno-runs/quantity-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
       - uses: actions/upload-artifact@v7
         if: always()
         with:
