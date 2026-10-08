@@ -77,3 +77,57 @@ test('Consulta can finish without Food or Unit while all observed native bodies 
     })
     await assert.rejects(barrier, /native GET body finishes/)
 })
+
+test('recipe readiness waits for required GET and POST bodies before the intentional next navigation', async () => {
+    const page = new EventEmitter(), getBody = deferred(), postBody = deferred()
+    let settled = false
+    const barrier = withNativeReadBarrier(page, async () => 'photo-ready', [path('ingredient-yields')], [path('view-log')])
+    void barrier.then(() => {settled = true}, () => {})
+    request(page, 'ingredient-yields', Promise.resolve({finished: () => getBody.promise}))
+    page.emit('request', {method: () => 'POST', url: () => 'https://127.0.0.1:18443/cuaderno-cocina' + path('view-log'),
+        response: async () => ({finished: () => postBody.promise})})
+    getBody.resolve(null); await flush()
+    assert.equal(settled, false, 'the photo and GET completion must not allow navigation while view-log POST is unfinished')
+    postBody.resolve(null); assert.equal(await barrier, 'photo-ready')
+    assert.equal(page.listenerCount('request'), 0)
+})
+
+test('a GET on the required POST path does not satisfy the method-specific readiness signal', async () => {
+    const page = new EventEmitter(), body = deferred()
+    let settled = false
+    const barrier = withNativeReadBarrier(page, async () => 'loaded', [], [path('view-log')])
+    void barrier.then(() => {settled = true}, () => {})
+    request(page, 'view-log', completed()); await flush()
+    assert.equal(settled, false, 'the matching path must also have the expected POST method')
+    page.emit('request', {method: () => 'POST', url: () => 'https://127.0.0.1:18443/cuaderno-cocina' + path('view-log'),
+        response: async () => ({finished: () => body.promise})})
+    await flush(); assert.equal(settled, false, 'POST response headers still leave its body pending')
+    body.resolve(null); assert.equal(await barrier, 'loaded')
+    assert.equal(page.listenerCount('request'), 0)
+})
+
+test('required POST shares the existing eight-second deadline even when it starts late', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']})
+    const page = new EventEmitter(), body = deferred()
+    const barrier = withNativeReadBarrier(page, async () => 'photo-ready', [path('ingredient-yields')], [path('view-log')])
+    const rejected = assert.rejects(barrier, /eight-second/)
+    request(page, 'ingredient-yields', completed()); await flush()
+    t.mock.timers.tick(7_999); await flush()
+    page.emit('request', {method: () => 'POST', url: () => 'https://127.0.0.1:18443/cuaderno-cocina' + path('view-log'),
+        response: async () => ({finished: () => body.promise})})
+    await flush(); t.mock.timers.tick(1); await rejected
+    assert.equal(page.listenerCount('request'), 0)
+    body.resolve(null); await flush()
+})
+
+test('canceled required POST response or body remains a failure and removes its listener', async () => {
+    for (const response of [async () => null, async () => ({finished: async () => 'Load request cancelled'})]) {
+        const page = new EventEmitter()
+        const barrier = withNativeReadBarrier(page, async () => {
+            page.emit('request', {method: () => 'POST', url: () => 'https://127.0.0.1:18443/cuaderno-cocina' + path('view-log'), response})
+            return 'photo-ready'
+        }, [], [path('view-log')])
+        await assert.rejects(barrier, /native POST (receives a response|body finishes)/)
+        assert.equal(page.listenerCount('request'), 0)
+    }
+})

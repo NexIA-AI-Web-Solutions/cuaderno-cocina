@@ -308,17 +308,24 @@ test.describe('despliegue aislado bajo prefijo', () => {
       expect(shared.status()).toBe(200)
       expect(shared.headers()['cache-control']).toContain('no-store')
       // Exercise browser rendering and print routing using the real shared link.
-      await cleanPage.goto(share.body.link)
-      const photo = cleanPage.locator(`img[src*="share=${share.body.share}"]`).first()
-      await expect(photo).toBeVisible()
-      await expect.poll(() => photo.evaluate(element => {
-        const image = element as HTMLImageElement
-        return image.complete && image.naturalWidth > 0
-      })).toBe(true)
-      await cleanPage.goto(appPath(`/recipe/${recipeId}/?print=true`))
-      await cleanPage.emulateMedia({media: 'print'})
-      await expect(cleanPage.locator('.v-navigation-drawer')).toBeHidden()
-      await assertPublicCaches(cleanPage)
+      const requiredRecipeReads = [`/api/recipe/${recipeId}/`, `/api/cuaderno/recipes/${recipeId}/ingredient-yields/`]
+      // The image can finish while the recipe's yield GET or view-log POST is
+      // pending. Finish both real bodies before navigating or deleting the recipe.
+      await withNativeReadBarrier(cleanPage, async () => {
+        await cleanPage.goto(share.body.link)
+        const photo = cleanPage.locator(`img[src*="share=${share.body.share}"]`).first()
+        await expect(photo).toBeVisible()
+        await expect.poll(() => photo.evaluate(element => {
+          const image = element as HTMLImageElement
+          return image.complete && image.naturalWidth > 0
+        })).toBe(true)
+      }, requiredRecipeReads, ['/api/view-log/'])
+      await withNativeReadBarrier(cleanPage, async () => {
+        await cleanPage.goto(appPath(`/recipe/${recipeId}/?print=true`))
+        await cleanPage.emulateMedia({media: 'print'})
+        await expect(cleanPage.locator('.v-navigation-drawer')).toBeHidden()
+        await assertPublicCaches(cleanPage)
+      }, requiredRecipeReads, ['/api/view-log/'])
     } finally {
       await anonymous.close()
       const deleted = await api(cleanPage, `/api/recipe/${recipeId}/`, {method: 'DELETE'})

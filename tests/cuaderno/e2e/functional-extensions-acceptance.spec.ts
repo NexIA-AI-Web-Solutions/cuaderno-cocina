@@ -169,6 +169,11 @@ test('extras: operador guarda dieta y foto real, recarga y elimina solo su foto'
     await page.reload(); panel = page.locator('.recipe-extras')
     await expect(panel.getByLabel('Nota: Celíacos', {exact: true})).toHaveValue('Prueba sintética; revisar ingredientes')
     await expect(panel.locator('.v-select__selection-text').first()).toHaveText('No apto · declaración manual')
+    const photo = panel.locator('figure').filter({hasText: recipe.name})
+    await expect(photo).toHaveCount(1)
+    await expect(photo.locator('figcaption')).toHaveText(recipe.name)
+    // Reload can restore the diet-form scroll position below the lazily loaded gallery.
+    await photo.evaluate(element => element.scrollIntoView({block: 'center', inline: 'nearest', behavior: 'instant'}))
     const image = panel.locator('img')
     await expect(image).toHaveCount(1); await expect(image).toHaveAttribute('alt', recipe.name)
     await expect(image).toBeVisible()

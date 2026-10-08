@@ -3,24 +3,29 @@ import {appPath} from './contracts.js'
 
 // A heading can appear before its route's native API bodies finish. Preserve
 // every collector error and finish observed reads before a deliberate reload.
-export async function withNativeReadBarrier<T>(page: Page, action: () => Promise<T>, requiredPaths: string[] = []): Promise<T> {
+export async function withNativeReadBarrier<T>(page: Page, action: () => Promise<T>, requiredPaths: string[] = [], requiredPostPaths: string[] = []): Promise<T> {
   const base = new URL(process.env.BASE_URL || 'http://127.0.0.1:18081')
   const reads = new Set<Promise<void>>()
-  const required = new Set(requiredPaths.map(path => appPath(path)))
-  for (const path of required) if (!path.startsWith(appPath('/api/'))) throw new Error('Required route reads must be native API paths')
+  const postPaths = new Set(requiredPostPaths.map(path => appPath(path)))
+  for (const path of [...requiredPaths.map(path => appPath(path)), ...postPaths]) {
+    if (!path.startsWith(appPath('/api/'))) throw new Error('Required route reads must be native API paths')
+  }
+  const required = new Set([...requiredPaths.map(path => `GET ${appPath(path)}`), ...[...postPaths].map(path => `POST ${path}`)])
   let requiredStarted!: () => void
   const started = new Promise<void>(resolve => {requiredStarted = resolve})
   if (!required.size) requiredStarted()
   const listen = (request: Request) => {
     const url = new URL(request.url())
-    if (request.method() !== 'GET' || url.origin !== base.origin || !url.pathname.startsWith(appPath('/api/'))) return
+    const method = request.method()
+    if ((method !== 'GET' && !(method === 'POST' && postPaths.has(url.pathname))) ||
+      url.origin !== base.origin || !url.pathname.startsWith(appPath('/api/'))) return
     const pending = request.response().then(async response => {
-      expect(response, 'native GET receives a response before leaving its route').not.toBeNull()
-      expect(await response!.finished(), 'native GET body finishes before leaving its route').toBeNull()
+      expect(response, `native ${method} receives a response before leaving its route`).not.toBeNull()
+      expect(await response!.finished(), `native ${method} body finishes before leaving its route`).toBeNull()
     })
     void pending.catch(() => {})
     reads.add(pending)
-    required.delete(url.pathname)
+    required.delete(`${method} ${url.pathname}`)
     if (!required.size) requiredStarted()
   }
   page.on('request', listen)

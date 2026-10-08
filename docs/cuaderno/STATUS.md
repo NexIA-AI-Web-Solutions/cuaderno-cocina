@@ -1,5 +1,27 @@
 # Estado del producto
 
+## Sincronización de navegador — 9 de octubre de 2026
+
+El candidato `ba236ed` conserva sus resultados originales: la CI 37849562502
+pasó la matriz raíz con 599 pruebas y rechazó la del prefijo con 713 de 715.
+La campaña adicional de nueve cuentas y capturas de cantidades no se ejecutó.
+La versión publicada sigue siendo `c79b2ce`; este candidato no se cargó ni
+se desplegó. La comprobación G7 sigue en curso al preparar esta revisión.
+
+Las trazas originales demuestran dos interacciones incompletas del harness:
+Firefox conserva la foto en la respuesta de galería, pero su `v-img` diferido
+queda fuera del viewport después de restaurar el desplazamiento; WebKit pasa
+al modo impresión con las peticiones de rendimiento y registro de vista aún
+pendientes. Esta revisión desplaza realmente la figura antes de comprobar la
+foto y espera los cuerpos GET/POST antes de abandonar cada ruta. Conserva
+collector, aserciones de imagen, configuración, reintentos cero y presupuesto
+único de ocho segundos. Cuatro regresiones nuevas fallan significativamente
+con el helper anterior; las nueve pruebas puras pasan con la corrección.
+TypeScript de E2E se ejecutó correctamente y la revisión independiente no
+encuentra un defecto concreto. Ninguno de estos resultados sustituye la nueva
+CI, imagen, 144 capturas, G7, copia/restauración ni aceptación productiva.
+
+
 ## Presupuesto de listas y evidencia visual — 8 de octubre de 2026
 
 El propietario fija el presupuesto p95 de las APIs de listas en 800 ms, tanto
