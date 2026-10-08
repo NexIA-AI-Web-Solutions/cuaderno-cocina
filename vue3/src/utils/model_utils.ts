@@ -13,7 +13,7 @@ export function isSingularAmount(amount: number): boolean {
  * @param ingredient
  */
 type DisplayIngredient = {
-    amount: string | number
+    amount?: string | number
     food?: {name: string, pluralName?: string | null} | null
     unit?: {name: string, pluralName?: string | null} | null
     note?: string | null
@@ -27,7 +27,7 @@ export function ingredientToString(ingredient: DisplayIngredient | undefined) {
         return ''
     }
 
-    if (Number(ingredient.amount) !== 0) {
+    if (ingredient.amount !== undefined && Number(ingredient.amount) !== 0) {
         content.push(ingredient.amount)
     }
     if (ingredient.unit) {

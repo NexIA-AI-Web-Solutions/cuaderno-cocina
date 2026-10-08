@@ -231,3 +231,16 @@ test('merged maximum quantities display their exact wider sum while ingredient s
     assert.match(prepareIngredientAmounts(ingredients).error, /16 dígitos enteros/)
     assert.equal(ingredients[0].amount, aggregate)
 })
+
+test('legacy inventory labels omit an absent quantity while keeping food, unit and note', () => {
+    const source = readFileSync(new URL('./model_utils.ts', import.meta.url), 'utf8')
+        .replace(/^import.*$/gm, '').replace(/^export /gm, '')
+    const emitted = ts.transpileModule(source, {compilerOptions: {target: ts.ScriptTarget.ES2022}}).outputText
+    const label = Function(`${emitted}; return ingredientToString`)()
+    const names = {food: {name: 'Harina'}, unit: {name: 'kg'}, note: 'Reservado'}
+    assert.equal(label(names), 'kg Harina (Reservado)')
+    assert.equal(label({...names, amount: undefined}), 'kg Harina (Reservado)')
+    assert.equal(label({...names, amount: 0}), 'kg Harina (Reservado)')
+    assert.equal(label({...names, amount: 400.5}), '400.5 kg Harina (Reservado)')
+    assert.equal(label({...names, amount: '0.0000000000000001'}), '0.0000000000000001 kg Harina (Reservado)')
+})

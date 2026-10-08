@@ -11,6 +11,11 @@ nativas y 21 subpruebas, 616 de Cuaderno, 463 de tooling más 11 de Node y 370
 unitarias frontend. TypeScript detectó ocho incompatibilidades de consumidores;
 no se ejecutaron imagen, matrices de navegador ni G7. Esta revisión adapta los
 consumidores y evita redondear cantidades al convertir una vista de importación.
+La CI 37830081250 de `0d9c2a3` conserva los backends y tooling en PASS y pasa
+374 pruebas frontend; TypeScript señala cinco consumidores del campo opcional
+de cantidad del almacén. Esta revisión admite ese campo en su presentación y
+omite una cantidad ausente sin inventar un cero. Imagen, navegador y G7 de ese
+candidato no se ejecutaron y tampoco se despliega.
 
 Esta revisión conserva cantidades exactas en API, SDK y editor, y corrige la
 carga del calendario y su recuperación tras un error de red. La
