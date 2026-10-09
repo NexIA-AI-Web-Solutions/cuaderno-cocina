@@ -1,5 +1,35 @@
 # Aceptación final
 
+## Estado actual: V12 admitida en producción
+
+La [CI oficial V12 37905852791](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37905852791) completó **9/9 jobs SUCCESS**: **626 casos raíz, 742 bajo `/cuaderno-cocina/` y 9 de cantidades, 1.377 PASS**, más **17 registros G7** con cadena verificada offline. Frontend: 395 pruebas y TypeScript/build PASS; backend Cuaderno: 620; nativo: 1.296 y 21 subpruebas; tooling: 463 Python y 11 Node. Estas cifras corresponden a V12 y no suman campañas históricas.
+
+La fuente congelada es `643e37ada841b182890daf77790e3e21768d5952`, SHA `9205105e02bccdb45ff5cc6048720e2a293532b660db2c3ee46e52394f52623b`. La imagen local atestada `sha256:0f2cb8a04379038b907b1f7de95c56cd372e3fc277c7d3d1f4becc276fcd3ee3` está saludable en el web `33de2a64d5054a05c67130a5971b9b6d086ca92ebde7214e550ee609ea69cb88`; la base persistente se conserva. El ID de configuración del archivo de CI es distinto: `sha256:edf352177c7cc470589326fd6b686177380c31198972d2d7e3b9d07be6185b21`.
+
+La aceptación anónima aprueba **4 casos y 12 PNG**; se inspeccionaron dos login originales. Cantidades aprueba nueve cuentas/cuatro anchos, con **180 PNG originales** y **24 tarjetas revisadas manualmente**, hashes y dimensiones concordantes. La copia OLD y su restauración aislada pasan. El deployer original conserva su **FAIL** en `new-web-healthy`; la continuación separada **PASS** instaló únicamente wrapper/unit de backup y recargó systemd, sin recrear web ni mutar DB o entorno. La frescura OLD se refiere al inicio real del despliegue original, no al momento de la continuación.
+
+**Producción V12 admitida el 9 de octubre de 2026 a las 11:49:25 UTC.** El recibo separado `consulta-v12-final-production-admission.json`, SHA `6bd0ac7d5474098604d30ad5f2e675fe8a8791190676d0cdae7528044949613d`, declara `production_admitted=true`. La observación final del host PASS conserva su propio campo de admisión false y queda vinculada por SHA `e7dabf4fdf7c44cf31f98267f4e88827aab10eeb6526b1de9ee2b4783544739d`; no se alteran los recibos previos.
+
+La campaña pública V3 completó **diez cuentas, tres Consulta, veinte comprobaciones anónimas y trece PNG**, sin errores de navegador ni infracciones de red; collector SHA `b23b6adaf62102477e426ccf26f18faacb6fd9e343e1a9e4e6e31285a01fb7a9`. Se revisaron sus seis originales Consulta a 1440×900. La copia coherente NEW `20261009T113538Z-73dff108e3a0` y el restore nativo aislado PASS verificaron **123 tablas, 330 migraciones, filas, media y 119 secuencias**. El fingerprint DDL figura no comparado; no se afirma esa verificación.
+
+El cierre conserva la DB, **27 recursos propios de clon detenidos**, **19 contenedores ajenos exactos** según sus baselines tipados y Caddy con seis sitios activos y sus 220 pins. El timer está habilitado, activo/en espera y su servicio inactivo. En el boot actual `46317f80-a29d-4877-9072-43038cb02eed`, la observación completa y la ventana desde el despliegue registran cero OOM; los seis más tres OOM históricos permanecen separados, sin afirmación entre arranques ni atribución de actor. El espacio libre puntual final fue 3.696.984.064 bytes, aproximadamente 3,44 GiB.
+
+La etiqueta anotada [production-20261009-643e37a](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/tree/production-20261009-643e37a) está publicada y verificada remotamente: objeto `3b0e1f84e2fe94b21bfb40b7504f66361855ae38`, destino `643e37ada841b182890daf77790e3e21768d5952`. V1/V2 y probes conservan sus resultados originales; el PASS completo V3 no demuestra la causa de los fallos anteriores y conserva los mismos criterios.
+
+El benchmark V12 mide p95 de formatos **125,726 ms**, movimientos **87,549 ms**, servicios **93,939 ms** y escandallo **23,612 ms**, dentro de listas **800 ms** y escandallo **300 ms**. Es DRF APIClient en proceso, cinco usuarios por tres rondas, PostgreSQL 16.15 sin JIT, Python 3.13.16/Django 5.2.17 y cuatro CPU visibles; no mide Internet, LCP/INP ni dispositivos físicos. Los registros históricos posteriores conservan su candidato y fecha; este cierre sustituye sus afirmaciones de estado actual; las limitaciones operativas configuradas siguen vigentes.
+
+## Puertas de cierre V12
+
+- [x] CI completa, G7 offline e imagen local atestada de la fuente643 y su SHA9205.
+- [x] Runtime web V12 saludable y DB conservada; aceptación anónima: cuatro casos y doce PNG.
+- [x] Cantidades oficiales: nueve casos, 180 PNG originales y revisión manual de 24 tarjetas.
+- [x] CopiaOLD/restauración aislada y continuación separada del enlace de backup.
+- [x] Campaña pública V3 completa: diez cuentas, tres Consulta, veinte comprobaciones anónimas, trece PNG y cero errores/infracciones; seis originales Consulta revisados.
+- [x] Copia coherente NEW, restore nativo aislado, observación final del host y timer habilitado/activo en espera.
+- [x] Recibo final de admisión true y etiqueta de producción publicada/verificada remotamente.
+
+## Registros históricos anteriores: no describen el runtime actual
+
 ## Release c79b2ce — admitida el 8 de octubre de 2026
 
 **Producción admitida a las 06:06 UTC:** runtime NEW healthy, aceptación pública,
