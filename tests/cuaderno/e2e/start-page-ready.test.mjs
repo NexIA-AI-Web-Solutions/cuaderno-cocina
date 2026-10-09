@@ -29,12 +29,22 @@ class Page extends EventEmitter {
   current = 'about:blank'
   navigations = []
   onGoto = async () => {}
+  autoAuthentication = true
   marker = deferred()
   spinners = deferred()
   url() { return this.current }
   async goto(url) {
     this.navigations.push(url)
     this.current = url
+    // Existing cases model an authenticated fresh bootstrap. Individual timing
+    // regressions disable this default and provide the real delayed requests.
+    if (this.autoAuthentication) {
+      for (const path of ['api/user-preference/', 'api/recipe/flat/']) {
+        const initial = response(new URL(path, url).href)
+        initial.body.resolve(null)
+        this.emit('request', initial.request())
+      }
+    }
     await this.onGoto()
   }
   locator(selector) {
@@ -44,11 +54,12 @@ class Page extends EventEmitter {
 
 function response(path = 'api/recipe/?page_size=1', method = 'GET', body = deferred()) {
   let calls = 0
-  return {body, get finishedCalls() { return calls },
-    url: () => new URL(path, home).href,
-    request: () => ({method: () => method}),
-    finished: () => { calls++; return body.promise },
+  const url = () => new URL(path, home).href
+  const request = {method: () => method, url, response: async () => result}
+  const result = {body, get finishedCalls() { return calls }, url, status: () => 200,
+    request: () => request, finished: () => { calls++; return body.promise },
   }
+  return result
 }
 
 function observe(promise) {
@@ -104,7 +115,7 @@ test('absence of an optional meal-plan request never creates a required response
   assert.equal(count.finishedCalls, 1)
 })
 
-test('only native recipe and meal-plan GETs on the application origin and prefix are observed', async () => {
+test('only native bootstrap GETs on the application origin and prefix are observed', async () => {
   const page = new Page()
   const ignored = [response('/api/recipe/?page_size=1'), response('https://foreign.test/cuaderno-cocina/api/recipe/?page_size=1'),
     response('api/recipe/?page_size=1', 'POST'), response('api/cuaderno/edition/'), response('api/recipe/42/')]
@@ -298,4 +309,123 @@ test('real enterApp reuses fresh-login home while old response headers are alrea
   assert.equal(beforeBody, false)
   assert.equal(count.finishedCalls, 0)
   assert.deepEqual(page.navigations, [])
+})
+
+// V5 traces: the main dashboard is ready before authenticated header/search
+// bootstrap completes. Navigation must wait for those genuine request bodies.
+test('fresh entry holds an in-flight flat request before its response headers arrive', async () => {
+  const page = new Page()
+  page.autoAuthentication = false
+  const flat = response('api/recipe/flat/')
+  const headers = deferred()
+  const initial = {method: () => 'GET', url: flat.url, response: () => headers.promise}
+  page.onGoto = async () => {
+    const preference = response('api/user-preference/')
+    preference.body.resolve(null)
+    page.emit('request', {method: () => 'GET', url: preference.url, response: async () => preference})
+    page.emit('request', initial)
+  }
+  const entry = observe(enterStartPage(page, home, async () => {}))
+  await turn()
+  const beforeHeaders = entry.settled()
+  headers.resolve(flat); await turn()
+  const beforeBody = entry.settled()
+  flat.body.resolve(null); await entry.done
+  assert.equal(beforeHeaders, false, 'a ready main does not prove a pending global-search response exists')
+  assert.equal(beforeBody, false, 'global-search response headers do not prove its body completed')
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+})
+
+test('delayed user preferences mount flat search after dashboard readiness, before the next navigation', async () => {
+  const page = new Page()
+  page.autoAuthentication = false
+  const preference = response('api/user-preference/'), flat = response('api/recipe/flat/')
+  const authenticated = deferred()
+  page.onGoto = async () => {
+    page.emit('request', {method: () => 'GET', url: preference.url, response: async () => preference})
+    page.emit('response', preference)
+    void preference.body.promise.then(async () => {
+      await turn()
+      page.emit('request', {method: () => 'GET', url: flat.url, response: async () => flat})
+      authenticated.resolve()
+    })
+  }
+  const entry = observe(enterStartPage(page, home, async () => {}))
+  await turn(); const beforeAuthentication = entry.settled()
+  preference.body.resolve(null); await authenticated.promise; await turn()
+  const beforeFlatBody = entry.settled()
+  flat.body.resolve(null); await entry.done
+  assert.equal(beforeAuthentication, false, 'the loaded dashboard must not trigger navigation before authenticated header mounts')
+  assert.equal(beforeFlatBody, false, 'late global-search GET must complete before the intentional next navigation')
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+})
+
+test('a quiet fresh entry missing authenticated flat readiness fails at the same deadline', async () => {
+  const page = new Page()
+  page.autoAuthentication = false
+  const preference = response('api/user-preference/')
+  preference.body.resolve(null)
+  page.onGoto = async () => page.emit('request', {method: () => 'GET', url: preference.url, response: async () => preference})
+  await assert.rejects(enterStartPage(page, home, async () => {}, 25), /StartPage.*25.*ms/)
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+})
+
+
+test('request and response observations retain one real body completion', async () => {
+  const page = new Page(), count = response()
+  page.onGoto = async () => {
+    page.emit('request', count.request())
+    page.emit('response', count)
+  }
+  const entry = observe(enterStartPage(page, home, async () => {}))
+  await turn(); const premature = entry.settled()
+  count.body.resolve(null); await entry.done
+  assert.equal(premature, false)
+  assert.equal(count.finishedCalls, 1, 'Playwright emits both events for the same Request; neither is ignored nor finished twice')
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+})
+
+test('an unauthenticated initial preference response remains a failure despite a ready dashboard', async () => {
+  const page = new Page()
+  page.autoAuthentication = false
+  const preference = response('api/user-preference/'), flat = response('api/recipe/flat/')
+  preference.status = () => 403
+  preference.body.resolve(null); flat.body.resolve(null)
+  page.onGoto = async () => {page.emit('request', preference.request()); page.emit('request', flat.request())}
+  await assert.rejects(enterStartPage(page, home, async () => {}), /lecturas autenticadas/)
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+})
+
+test('an initial native request without a response fails and removes both entry listeners', async () => {
+  const page = new Page()
+  page.onGoto = async () => page.emit('request', {
+    method: () => 'GET', url: () => new URL('api/unit/', home).href, response: async () => null,
+  })
+  await assert.rejects(enterStartPage(page, home, async () => {}), /perdió una respuesta nativa/)
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+})
+
+test('a late authenticated flat request does not reset the shared eight-second deadline', async t => {
+  t.mock.timers.enable({apis: ['setTimeout']})
+  const page = new Page()
+  page.autoAuthentication = false
+  const preference = response('api/user-preference/'), flat = response('api/recipe/flat/')
+  preference.body.resolve(null)
+  page.onGoto = async () => page.emit('request', preference.request())
+  const entry = enterStartPage(page, home, async () => {})
+  const rejected = assert.rejects(entry, /StartPage.*8000.*ms/)
+  for (let i = 0; i < 24; i++) await Promise.resolve()
+  t.mock.timers.tick(7_999)
+  page.emit('request', flat.request())
+  for (let i = 0; i < 24; i++) await Promise.resolve()
+  t.mock.timers.tick(1); await rejected
+  assert.equal(page.listenerCount('request'), 0)
+  assert.equal(page.listenerCount('response'), 0)
+  flat.body.resolve(null)
 })

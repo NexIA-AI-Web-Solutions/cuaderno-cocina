@@ -1,12 +1,44 @@
 # Estado del producto
 
+## Bloqueos nativos y carga autenticada — 9 de octubre de 2026
+
+El candidato `d2737d8` queda rechazado: su CI 37857551325 terminó con
+598 de 599 pruebas en raíz y 711 de 715 bajo el prefijo. La campaña adicional
+de nueve cuentas y 144 capturas de cantidades no se ejecutó. G7 rechazó el
+manifiesto por la evidencia E2E no aprobada. No se cargó ni desplegó su imagen;
+producción continúa en `c79b2ce`.
+
+Las trazas originales separan tres causas. La limpieza de una variante podía
+eliminar su copia antes del remontaje y las lecturas nativas tras recargar.
+El dashboard permitía navegar antes de que la carga de preferencias montara
+la búsqueda global y terminara su GET de recetas. Dos errores 500 de registro
+de vista procedían de un bloqueo real de PostgreSQL: el INSERT obtenía las
+claves foráneas en orden contrario a la consulta de rendimiento de ingredientes.
+
+Esta revisión espera el vínculo visible y los cuerpos nativos antes de limpiar
+la variante, y las lecturas autenticadas de preferencias y búsqueda antes de
+abandonar el dashboard. Conserva el presupuesto único de ocho segundos,
+reintentos cero, collector y aserciones. Las 34 regresiones puras de los helpers
+pasan; TypeScript de E2E también se ha ejecutado correctamente. El registro
+nativo adquiere Space y Recipe en el mismo orden que la consulta de rendimiento,
+conserva la deduplicación y los permisos y devuelve un error claro en español
+si la receta desaparece entre validación y guardado.
+
+La reproducción aislada con PostgreSQL real y el código anterior falla por
+un deadlock auténtico en las tres ediciones. Con el arreglo pasan las cuatro
+regresiones: concurrencia real en tres ediciones, deduplicación, aislamiento
+entre espacios y desaparición de la receta después de validar. Sin skips ni
+reintentos, sobre una base de datos sintética separada de producción. CI
+completa, imagen, revisión visual, G7, copia/restauración y aceptación del
+nuevo runtime siguen pendientes.
+
 ## Sincronización de navegador — 9 de octubre de 2026
 
 El candidato `ba236ed` conserva sus resultados originales: la CI 37849562502
 pasó la matriz raíz con 599 pruebas y rechazó la del prefijo con 713 de 715.
 La campaña adicional de nueve cuentas y capturas de cantidades no se ejecutó.
 La versión publicada sigue siendo `c79b2ce`; este candidato no se cargó ni
-se desplegó. La comprobación G7 sigue en curso al preparar esta revisión.
+se desplegó. La comprobación G7 fue cancelada al sustituirse este candidato por `d2737d8`.
 
 Las trazas originales demuestran dos interacciones incompletas del harness:
 Firefox conserva la foto en la respuesta de galería, pero su `v-img` diferido

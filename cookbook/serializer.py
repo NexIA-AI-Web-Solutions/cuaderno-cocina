@@ -1953,9 +1953,20 @@ class CookLogSerializer(serializers.ModelSerializer):
 
 
 class ViewLogSerializer(serializers.ModelSerializer):
+    @transaction.atomic
     def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
-        validated_data['space'] = self.context['request'].space
+        request = self.context['request']
+        # Match ingredient-yield reads: acquiring Recipe before Space through
+        # the INSERT's foreign keys can deadlock with Space -> Recipe readers.
+        Space._base_manager.select_for_update().get(pk=request.space.pk)
+        recipe = Recipe._base_manager.select_for_update().filter(
+            pk=validated_data['recipe'].pk, space_id=request.space.pk,
+        ).first()
+        if recipe is None:
+            raise ValidationError({'recipe': 'La receta ya no está disponible. Actualiza la página y selecciona otra receta.'})
+        validated_data['recipe'] = recipe
+        validated_data['created_by'] = request.user
+        validated_data['space'] = request.space
 
         view_log = ViewLog.objects.filter(recipe=validated_data['recipe'], created_by=self.context['request'].user, created_at__gt=(timezone.now() - timezone.timedelta(minutes=5)),
                                           space=self.context['request'].space).first()
