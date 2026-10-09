@@ -1,3 +1,4 @@
+import {readFile} from 'node:fs/promises'
 import type {Page, Request} from '@playwright/test'
 import {appPath, fixturePrefix} from './contracts.js'
 import {api, assertNoHorizontalOverflow, enterApp, expect, rows, test} from './fixtures.js'
@@ -87,12 +88,26 @@ test('recetas nativas: Consulta recibe lectura y exportación, operadores conser
       const response = await exportResponse
       expect(response.status()).toBe(200)
       expect(await response.finished()).toBeNull()
-      expect((await response.json()).format).toBe('cuaderno-recipes-v2')
-      expect(await (await download).failure()).toBeNull()
+      const exportedDownload = await download
+      expect(await exportedDownload.failure()).toBeNull()
+      const downloadedFile = await exportedDownload.path()
+      expect(downloadedFile).not.toBeNull()
+      if (downloadedFile === null) throw new Error('La exportación JSON no produjo un archivo descargado.')
+      // Validate the file delivered to the user. The browser response observer
+      // can expose no body even after the export's real blob download starts.
+      const downloadedBytes = await readFile(downloadedFile)
+      expect(downloadedBytes.length).toBeGreaterThan(0)
+      const exported = JSON.parse(downloadedBytes.toString('utf8'))
+      expect(exported.format).toBe('cuaderno-recipes-v2')
+      expect(Array.isArray(exported.recipes)).toBe(true)
+      expect(exported.recipes.length).toBeGreaterThan(0)
+      for (const kind of ['foods', 'units', 'packages', 'conversions']) {
+        expect(Array.isArray(exported.catalog?.[kind])).toBe(true)
+      }
       await withAuthenticatedReadBarrier(page, async () => {
         await page.getByRole('link', {name: 'Volver a recetas', exact: true}).click()
         await expect(page).toHaveURL(new RegExp(`${appPath('/').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
-        await expect(page.locator('main .plan-features')).toBeVisible()
+        await enterApp(page)
       })
       const seeded = await api(page, `/api/recipe/?query=${encodeURIComponent(fixturePrefix + ' receta pública')}&page_size=100`)
       expect(seeded.status).toBe(200)
@@ -106,7 +121,10 @@ test('recetas nativas: Consulta recibe lectura y exportación, operadores conser
       })
       await withAuthenticatedReadBarrier(page, async () => {
         await page.goto(appPath(`/recipe/${recipe.id}`))
-        await expect(page.getByRole('heading', {name: String(recipe.name), exact: true})).toBeVisible()
+        // The mobile recipe title is a span; the desktop title is an h1.
+        const recipeTitle = page.locator('main span.text-h5, main h1').and(page.getByText(String(recipe.name), {exact: true})).filter({visible: true})
+        await expect(recipeTitle).toHaveCount(1)
+        await expect(recipeTitle).toBeVisible()
       }, [`/api/recipe/${recipe.id}/`, `/api/cuaderno/recipes/${recipe.id}/extras/`, `/api/cuaderno/recipes/${recipe.id}/ingredient-yields/`], ['/api/view-log/'])
       expect(writes, 'Consulta must not submit recipe/import/preview/commit or other mutating API requests').toEqual([])
     }
