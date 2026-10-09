@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto'
 import {request, type Locator, type Page, type TestInfo} from '@playwright/test'
 import {appPath, authFile, fixturePrefix, type Identity} from './contracts.js'
 import {api, assertNoHorizontalOverflow, enterApp, expect, rows, test} from './fixtures.js'
-import {withNativeReadBarrier} from './native-read-barrier.js'
+import {withAuthenticatedReadBarrier} from './native-read-barrier.js'
 
 // Real DOM + native APIs against the guarded, disposable CUADERNO-E2E seed.
 // No routing, response replacement, worker override or browser-error exemptions.
@@ -65,14 +65,16 @@ async function select(page: Page, control: Locator, option: string) {
   await page.getByRole('option', {name: option, exact: true}).click()
 }
 async function recipePage(page: Page, recipe: Recipe) {
-  await observe(page, '/api/view-log/', 'POST', () => page.goto(appPath(`/recipe/${recipe.id}`)), 201)
-  const panel = page.locator('.recipe-extras')
-  await expect(panel.getByRole('heading', {name: 'Fotos, variantes y dietas'})).toBeVisible()
-  await expect(panel.getByRole('button', {name: /^(Guardar en favoritas|En mis favoritas)$/})).toBeVisible()
-  return panel
+  return await withAuthenticatedReadBarrier(page, async () => {
+    await page.goto(appPath(`/recipe/${recipe.id}`))
+    const panel = page.locator('.recipe-extras')
+    await expect(panel.getByRole('heading', {name: 'Fotos, variantes y dietas'})).toBeVisible()
+    await expect(panel.getByRole('button', {name: /^(Guardar en favoritas|En mis favoritas)$/})).toBeVisible()
+    return panel
+  }, [`/api/recipe/${recipe.id}/`, `/api/cuaderno/recipes/${recipe.id}/extras/`, `/api/cuaderno/recipes/${recipe.id}/ingredient-yields/`], ['/api/view-log/'])
 }
 async function planningPage(page: Page, date?: string) {
-  await withNativeReadBarrier(page, async () => {
+  await withAuthenticatedReadBarrier(page, async () => {
     await page.goto(appPath('/cuaderno/planificacion'))
     await expect(page.getByRole('heading', {name: 'Organización de menús'})).toBeVisible()
     const settled = page.getByText(/^(Periodo cargado:|La organización profesional de menús está disponible)/)
@@ -134,10 +136,14 @@ test('extras: favorita personal persiste y ocho dietas empiezan desconocidas', a
       await expect(panel.locator('.v-select__selection-text')).toHaveText(Array(8).fill('No declarado'))
     }
     await observe(page, `/api/cuaderno/recipes/${recipe.id}/favorite/`, 'PUT', () => panel.getByRole('button', {name: 'Guardar en favoritas', exact: true}).click())
-    await page.reload(); await expect(panel.getByRole('button', {name: 'En mis favoritas', exact: true})).toHaveAttribute('aria-pressed', 'true')
-    await page.goto(appPath('/cuaderno/favoritas'))
-    await expect(page.getByRole('heading', {name: 'Recetas favoritas'})).toBeVisible()
-    await expect(page.locator(`a[href="${appPath(`/recipe/${recipe.id}`)}"]`).filter({hasText: recipe.name})).toBeVisible()
+    await withAuthenticatedReadBarrier(page, async () => {
+      await page.reload(); await expect(panel.getByRole('button', {name: 'En mis favoritas', exact: true})).toHaveAttribute('aria-pressed', 'true')
+    }, [`/api/recipe/${recipe.id}/`, `/api/cuaderno/recipes/${recipe.id}/extras/`, `/api/cuaderno/recipes/${recipe.id}/ingredient-yields/`], ['/api/view-log/'])
+    await withAuthenticatedReadBarrier(page, async () => {
+      await page.goto(appPath('/cuaderno/favoritas'))
+      await expect(page.getByRole('heading', {name: 'Recetas favoritas'})).toBeVisible()
+      await expect(page.locator(`a[href="${appPath(`/recipe/${recipe.id}`)}"]`).filter({hasText: recipe.name})).toBeVisible()
+    })
     expect((await peerRead()).is_favorite).toBe(peerBefore.is_favorite)
     await assertNoHorizontalOverflow(page, info)
   } finally {
@@ -166,9 +172,11 @@ test('extras: operador guarda dieta y foto real, recarga y elimina solo su foto'
     await panel.getByLabel('Descripción de la foto', {exact: true}).fill(recipe.name)
     const uploaded = await observe<Extras>(page, `/api/cuaderno/recipes/${recipe.id}/gallery/`, 'POST', () => panel.getByRole('button', {name: 'Añadir foto', exact: true}).click(), 201)
     expect(uploaded.gallery).toHaveLength(1)
-    await page.reload(); panel = page.locator('.recipe-extras')
-    await expect(panel.getByLabel('Nota: Celíacos', {exact: true})).toHaveValue('Prueba sintética; revisar ingredientes')
-    await expect(panel.locator('.v-select__selection-text').first()).toHaveText('No apto · declaración manual')
+    await withAuthenticatedReadBarrier(page, async () => {
+      await page.reload(); panel = page.locator('.recipe-extras')
+      await expect(panel.getByLabel('Nota: Celíacos', {exact: true})).toHaveValue('Prueba sintética; revisar ingredientes')
+      await expect(panel.locator('.v-select__selection-text').first()).toHaveText('No apto · declaración manual')
+    }, [`/api/recipe/${recipe.id}/`, `/api/cuaderno/recipes/${recipe.id}/extras/`, `/api/cuaderno/recipes/${recipe.id}/ingredient-yields/`], ['/api/view-log/'])
     const photo = panel.locator('figure').filter({hasText: recipe.name})
     await expect(photo).toHaveCount(1)
     await expect(photo.locator('figcaption')).toHaveText(recipe.name)
@@ -181,7 +189,9 @@ test('extras: operador guarda dieta y foto real, recarga y elimina solo su foto'
     expect((await page.context().request.get(new URL(uploaded.gallery[0]!.url, page.url()).href)).status()).toBe(200)
     await panel.getByRole('button', {name: `Eliminar foto: ${recipe.name}`, exact: true}).click()
     await observe(page, `/api/cuaderno/recipes/${recipe.id}/gallery/${uploaded.gallery[0]!.id}/`, 'DELETE', () => page.getByRole('dialog').getByRole('button', {name: 'Eliminar foto', exact: true}).click())
-    await page.reload(); await expect(page.locator('.recipe-extras').getByText('Todavía no hay fotos adicionales.', {exact: true})).toBeVisible()
+    await withAuthenticatedReadBarrier(page, async () => {
+      await page.reload(); await expect(page.locator('.recipe-extras').getByText('Todavía no hay fotos adicionales.', {exact: true})).toBeVisible()
+    }, [`/api/recipe/${recipe.id}/`, `/api/cuaderno/recipes/${recipe.id}/extras/`, `/api/cuaderno/recipes/${recipe.id}/ingredient-yields/`], ['/api/view-log/'])
     const restored = await readExtras(page, recipe.id)
     expect(restored.gallery).toEqual([])
     expect((await api(page, `/api/cuaderno/recipes/${recipe.id}/extras/`, {method: 'PUT', body: {revision: restored.revision, diets: restored.diets.map(row => ({slug: row.slug, status: 'unknown', note: ''}))}})).status).toBe(200)
@@ -210,7 +220,7 @@ test('extras: variante usa la copia nativa y conserva el vínculo tras recarga',
     expect(copy.id).not.toBe(recipe.id); expect(copy.name.startsWith(recipe.name)).toBe(true)
     await expect(page).toHaveURL(new RegExp(`${appPath('/recipe/')}${copy.id}/?$`))
     await expect(page.locator('.recipe-extras').getByRole('link', {name: recipe.name, exact: true})).toBeVisible()
-    await withNativeReadBarrier(page, async () => {
+    await withAuthenticatedReadBarrier(page, async () => {
       await page.reload()
       await expect(page.locator('.recipe-extras').getByRole('link', {name: recipe.name, exact: true})).toBeVisible()
     }, [`/api/recipe/${copy.id}/`, `/api/cuaderno/recipes/${copy.id}/extras/`, `/api/cuaderno/recipes/${copy.id}/ingredient-yields/`], ['/api/view-log/'])
@@ -230,10 +240,12 @@ test('planificación: calendario nativo cinco semanas, filtro real y límite de 
       planId = (await createPlan(page, recipe, today)).id
       await declareUnsuitable(page, recipe)
     }
-    await page.goto(appPath('/mealplan'))
-    await select(page, page.getByRole('combobox', {name: 'Vista de 1 a 5 semanas', exact: true}), '5')
-    await expect(page.locator('.cuaderno-calendar .cv-week')).toHaveCount(5)
-    await expect(page.locator('.cuaderno-calendar .cv-day')).toHaveCount(35)
+    await withAuthenticatedReadBarrier(page, async () => {
+      await page.goto(appPath('/mealplan'))
+      await select(page, page.getByRole('combobox', {name: 'Vista de 1 a 5 semanas', exact: true}), '5')
+      await expect(page.locator('.cuaderno-calendar .cv-week')).toHaveCount(5)
+      await expect(page.locator('.cuaderno-calendar .cv-day')).toHaveCount(35)
+    })
     if (professional) {
       await expect(page.getByRole('link', {name: 'Plantillas y organización', exact: true})).toBeVisible()
       await select(page, page.getByRole('combobox', {name: 'Consultar dieta', exact: true}), 'Celíacos')

@@ -1,5 +1,38 @@
 # Estado del producto
 
+## Carga del shell tras recargar una receta — 9 de octubre de 2026
+
+La CI 37872276744 de `47dd9d0` pasa la matriz raíz con 599 pruebas y
+rechaza la del prefijo con 714 de 715. La campaña adicional de cantidades
+no se ejecuta después de ese fallo. Las diecisiete comprobaciones G7
+aprueban el mismo candidato, utilizando la evidencia E2E de raíz; esto no
+convierte el fallo del prefijo ni la CI completa en aprobados. Su imagen no
+se carga ni se despliega; producción sigue en `c79b2ce`.
+
+La traza original de Firefox muestra que la favorita persiste y su control
+queda marcado. Sin embargo, la recarga del documento permite navegar a
+Favoritas antes de que las preferencias monten la búsqueda global. Su GET
+`recipe/flat/` empieza 14,335 ms después de la siguiente navegación y Firefox
+lo cancela. Las lecturas de la ficha y el registro de vista no demuestran
+por sí solos que haya terminado la carga del shell autenticado.
+
+El nuevo candidato captura la navegación antes de iniciarla y espera
+preferencias, búsqueda global y sus cuerpos cuando se carga un documento
+autenticado nuevo. Cada nueva recarga vuelve a exigir su propia carga; las
+transiciones internas conservan el shell y sus requisitos propios. Las ocho
+entradas y recargas de la suite funcional usan esta barrera. Se conserva
+la respuesta 201 del registro de vista y la exclusión explícita de la vista
+de impresión, que no monta búsqueda global.
+
+Las 62 comprobaciones puras de preparación de página, lectura nativa,
+recarga de variante y dimensiones de capturas pasan sin skips. Incluyen
+la secuencia real de favorita, una segunda recarga, cuerpos pendientes,
+respuesta incorrecta, cancelación y agotamiento del presupuesto. TypeScript
+de E2E pasa sin diagnósticos. Se mantienen los ocho segundos, el collector
+estricto y cero reintentos. CI completa, cantidades, G7, imagen,
+copia/restauración y aceptación productiva siguen pendientes.
+
+
 ## Rectángulos de capturas de cantidades — 9 de octubre de 2026
 
 El candidato `4287c25` pasa sus matrices completas: 599 pruebas en raíz y
