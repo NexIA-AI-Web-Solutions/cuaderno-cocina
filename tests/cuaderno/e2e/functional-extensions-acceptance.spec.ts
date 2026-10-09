@@ -210,7 +210,10 @@ test('extras: variante usa la copia nativa y conserva el vínculo tras recarga',
     expect(copy.id).not.toBe(recipe.id); expect(copy.name.startsWith(recipe.name)).toBe(true)
     await expect(page).toHaveURL(new RegExp(`${appPath('/recipe/')}${copy.id}/?$`))
     await expect(page.locator('.recipe-extras').getByRole('link', {name: recipe.name, exact: true})).toBeVisible()
-    await page.reload()
+    await withNativeReadBarrier(page, async () => {
+      await page.reload()
+      await expect(page.locator('.recipe-extras').getByRole('link', {name: recipe.name, exact: true})).toBeVisible()
+    }, [`/api/recipe/${copy.id}/`, `/api/cuaderno/recipes/${copy.id}/extras/`, `/api/cuaderno/recipes/${copy.id}/ingredient-yields/`], ['/api/view-log/'])
     expect((await readExtras(page, copy.id)).variant_of).toEqual(recipe)
     expect((await readExtras(page, recipe.id)).variants).toContainEqual(copy)
   } finally {try {if (copy) await removeRecipe(page, copy)} finally {await removeRecipe(page, recipe)}}
