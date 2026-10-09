@@ -9,20 +9,25 @@ export function imageDimensions(bytes: Uint8Array): [number, number] {
     if (bytes.length >= 10 && bytes[0] === 71 && bytes[1] === 73) return [view.getUint16(6,true),view.getUint16(8,true)]
     if (bytes.length >= 30 && String.fromCharCode(...bytes.slice(0,4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8,12)) === 'WEBP') {
         const kind=String.fromCharCode(...bytes.slice(12,16))
-        if(kind==='VP8X') return [1+bytes[24]+bytes[25]*256+bytes[26]*65536,1+bytes[27]+bytes[28]*256+bytes[29]*65536]
+        if(kind==='VP8X') return [1+view.getUint8(24)+view.getUint8(25)*256+view.getUint8(26)*65536,1+view.getUint8(27)+view.getUint8(28)*256+view.getUint8(29)*65536]
         if(kind==='VP8 ') return [view.getUint16(26,true)&0x3fff,view.getUint16(28,true)&0x3fff]
-        if(kind==='VP8L' && bytes[20]===47) return [1+(((bytes[22]&63)<<8)|bytes[21]),1+(((bytes[24]&15)<<10)|(bytes[23]<<2)|(bytes[22]>>6))]
+        if(kind==='VP8L' && view.getUint8(20)===47) return [1+(((view.getUint8(22)&63)<<8)|view.getUint8(21)),1+(((view.getUint8(24)&15)<<10)|(view.getUint8(23)<<2)|(view.getUint8(22)>>6))]
     }
     if(bytes[0]===255 && bytes[1]===216) {
         let cursor=2
-        while(cursor+9<bytes.length) {
-            if(bytes[cursor++]!==255) break
-            while(bytes[cursor]===255) cursor++
-            const marker=bytes[cursor++]; if(marker===217 || marker===218) break
+        while(cursor<bytes.length) {
+            if(view.getUint8(cursor++)!==255) break
+            while(cursor<bytes.length && view.getUint8(cursor)===255) cursor++
+            if(cursor>=bytes.length) break
+            const marker=view.getUint8(cursor++); if(marker===217 || marker===218) break
             if(marker===1 || (marker>=208 && marker<=215)) continue
+            if(cursor+2>bytes.length) break
             const length=view.getUint16(cursor)
             if(length<2 || cursor+length>bytes.length) break
-            if([192,193,194,195,197,198,199,201,202,203,205,206,207].includes(marker)) return [view.getUint16(cursor+5),view.getUint16(cursor+3)]
+            if([192,193,194,195,197,198,199,201,202,203,205,206,207].includes(marker)) {
+                if(length<8) break
+                return [view.getUint16(cursor+5),view.getUint16(cursor+3)]
+            }
             cursor+=length
         }
     }
@@ -31,7 +36,8 @@ export function imageDimensions(bytes: Uint8Array): [number, number] {
 export function authorizedCoverUrl(path: string): string {
     const url=new URL(resolveDjangoUrl(path),window.location.origin)
     const queryEntries = [...url.searchParams.entries()]
-    const validQuery = !url.search || (queryEntries.length === 1 && queryEntries[0][0] === 'v' && /^[a-f0-9]{16}$/.test(queryEntries[0][1]))
+    const [query] = queryEntries
+    const validQuery = !url.search || (queryEntries.length === 1 && query !== undefined && query[0] === 'v' && /^[a-f0-9]{16}$/.test(query[1]))
     const route = url.pathname.match(/\/api\/cuaderno\/planning\/templates\/(\d+)\/image\/content\/$/)
     const expectedPath = route ? new URL(resolveDjangoUrl(`/api/cuaderno/planning/templates/${route[1]}/image/content/`), window.location.origin).pathname : null
     if(url.origin!==window.location.origin || url.pathname !== expectedPath || !validQuery || url.hash) throw new Error('La portada debe proceder de una plantilla autorizada de Cuaderno Cocina.')
@@ -85,7 +91,7 @@ export async function downloadMenu(doc:PrintedMenus,format:'png'|'pdf',onPages:(
             canvas.width=canvas.height=0
         }
         if(format==='pdf') download(new Blob([new Uint8Array(encodeMenuPdf(pdfImages,doc.orientation)).buffer],{type:'application/pdf'}),'menus.pdf')
-        else for(let i=0;i<pngs.length;i++) download(pngs[i],`menus-pagina-${i+1}.png`)
+        else for(const [i,blob] of pngs.entries()) download(blob,`menus-pagina-${i+1}.png`)
         return pages.length
     } finally {canvas.width=canvas.height=0}
 }

@@ -58,3 +58,17 @@ test('PNG and PDF render at twice the logical A4 pixels and PDF declares physica
         const pdf=await downloads[1].text();assert.match(pdf,/\/Width 2246 \/Height 1588/);assert.match(pdf,/\/MediaBox \[0 0 841.89 595.28\]/)
     } finally {globalThis.document=originals.document;globalThis.setTimeout=originals.setTimeout;URL.createObjectURL=originals.create;URL.revokeObjectURL=originals.revoke}
 })
+
+test('truncated WebP and JPEG headers reject with a useful image error instead of reading outside the buffer', () => {
+    const webp = new Uint8Array(30)
+    webp.set(Buffer.from('RIFF'), 0); webp.set(Buffer.from('WEBPVP8X'), 8)
+    for (let length = 0; length < 30; length++) {
+        assert.throws(() => imageDimensions(webp.slice(0, length)), error => !(error instanceof RangeError) && /leer la portada/.test(error.message), `truncated WebP at ${length}`)
+    }
+    const fillOnly = new Uint8Array(20).fill(255); fillOnly[0] = 255; fillOnly[1] = 216
+    const truncatedSof = Uint8Array.from([255,216,255,192,0,17,8,0,20,0,30])
+    const invalidSofLength = Uint8Array.from([255,216,255,192,0,2,8,0,20,0,30,0,0,0,0])
+    for (const bytes of [fillOnly, truncatedSof, invalidSofLength]) {
+        assert.throws(() => imageDimensions(bytes), error => !(error instanceof RangeError) && /leer la portada/.test(error.message))
+    }
+})
