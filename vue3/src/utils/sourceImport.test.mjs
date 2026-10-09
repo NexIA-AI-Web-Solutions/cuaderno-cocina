@@ -69,7 +69,7 @@ test('numeric source previews reject significant rounding and invalid quantities
 })
 
 function recipeSorter(nativeRecipe) {
-    return component('pages/RecipeImportPage.vue', ['aiStepSort', 'importResponse', 'aiStepSortLoading'], {
+    const h = component('pages/RecipeImportPage.vue', ['aiStepSort', 'importResponse', 'aiStepSortLoading'], {
         api: {apiAiStepSortCreate: async () => nativeRecipe},
         globals: {
             sourceImportRequest, sourcePreviewIngredientAmount, SourceImportPrecisionError,
@@ -78,6 +78,9 @@ function recipeSorter(nativeRecipe) {
             useDjangoUrls: () => ({getFullUrl: path => path}),
         },
     })
+    h.store.canWriteNativeRecipes = true
+    h.store.nativeRecipeWriteAccess = 'allowed'
+    return h
 }
 
 test('actual AI-sort precision rejection retains the draft and displays its Spanish recovery message', async () => {

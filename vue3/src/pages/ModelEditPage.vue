@@ -1,5 +1,7 @@
 <template>
     <v-container>
+        <native-recipe-access-notice v-if="model.toLowerCase() === 'recipe' && !useUserPreferenceStore().canWriteNativeRecipes" :access="useUserPreferenceStore().nativeRecipeWriteAccess" />
+        <template v-else>
         <v-row>
             <v-col>
                 <v-card>
@@ -44,6 +46,7 @@
         </v-fab>
             </template>
 
+        </template>
     </v-container>
 </template>
 
@@ -57,6 +60,8 @@ import {useModelEditorFunctions} from "@/composables/useModelEditorFunctions.ts"
 import {Recipe} from "@/openapi";
 import DeleteConfirmDialog from "@/components/dialogs/DeleteConfirmDialog.vue";
 import {useDisplay} from "vuetify";
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore';
+import NativeRecipeAccessNotice from '@/cuaderno/components/NativeRecipeAccessNotice.vue';
 
 const {t} = useI18n()
 const router = useRouter()

@@ -1,7 +1,8 @@
 <template>
     <v-container>
-        <exchange-panel />
-        <v-row>
+        <native-recipe-access-notice v-if="!useUserPreferenceStore().canWriteNativeRecipes" :access="useUserPreferenceStore().nativeRecipeWriteAccess" />
+        <exchange-panel :read-only="!useUserPreferenceStore().canWriteNativeRecipes" />
+        <v-row v-if="useUserPreferenceStore().canWriteNativeRecipes">
             <v-col>
 
 
@@ -553,14 +554,14 @@
                 </v-stepper>
             </v-col>
         </v-row>
-        <v-row dense>
+        <v-row v-if="useUserPreferenceStore().canWriteNativeRecipes" dense>
             <v-col class="text-center">
                 <v-btn size="small" prepend-icon="fa-solid fa-arrow-rotate-left" variant="tonal" color="warning" @click="resetImporter()">{{ $t('Reset') }}</v-btn>
             </v-col>
         </v-row>
     </v-container>
 
-    <step-ingredient-sorter-dialog v-if="importResponse.recipe" :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe" v-model="dialogIngredientSorter"
+    <step-ingredient-sorter-dialog v-if="useUserPreferenceStore().canWriteNativeRecipes && importResponse.recipe" :step-index="editingStepIndex" :step="editingStep" :recipe="importResponse.recipe" v-model="dialogIngredientSorter"
                                    :ingredient-index="editingIngredientIndex"></step-ingredient-sorter-dialog>
 
 </template>
@@ -602,14 +603,25 @@ import {mergeAllSteps, splitAllSteps, splitStep} from "@/utils/step_utils.ts";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 import {SourceImportPrecisionError, sourceImportRequest, sourcePreviewIngredientAmount} from "@/utils/sourceImport";
 import ExchangePanel from "@/cuaderno/components/ExchangePanel.vue";
+import NativeRecipeAccessNotice from '@/cuaderno/components/NativeRecipeAccessNotice.vue';
+import {nativeRecipeWriteMessage} from '@/cuaderno/nativeRecipeWriteUi';
+
+function ensureCanImportRecipes(): boolean {
+    const store = useUserPreferenceStore()
+    if (store.canWriteNativeRecipes) return true
+    useMessageStore().addMessage(MessageType.WARNING, {title: 'Permisos de recetas', text: nativeRecipeWriteMessage(store.nativeRecipeWriteAccess)}, 8000)
+    return false
+}
 
 function doListImport() {
+    if (!ensureCanImportRecipes()) return
     urlList.value = urlListImportInput.value.split('\n')
     loading.value = true
     importFromUrlList()
 }
 
 async function importFromUrlList() {
+    if (!ensureCanImportRecipes()) {loading.value = false; return}
     if (disposed) return
     const api = new ApiApi()
     let url = urlList.value.pop()
@@ -635,9 +647,11 @@ async function importFromUrlList() {
     }
     if (disposed) return
     try {
+        if (!ensureCanImportRecipes()) {loading.value = false; return}
         const recipe = await api.apiRecipeCreate({recipe: sourceImportRequest(sourceResponse.recipe)})
         if (disposed) return
         urlListImportedRecipes.value.push(recipe)
+        if (!ensureCanImportRecipes()) {loading.value = false; return}
         try {
             await updateRecipeImage(recipe.id!, null, sourceResponse.recipe.imageUrl)
         } catch (err) {
@@ -720,7 +734,10 @@ const dialogIngredientSorter = ref(false)
 const editingStep = ref<Step | SourceImportStep>({} as Step)
 const editingStepIndex = ref(0)
 
-onMounted(() => {
+let sharedImportStarted = false
+function startSharedImport() {
+    if (sharedImportStarted || !useUserPreferenceStore().canWriteNativeRecipes) return
+    sharedImportStarted = true
     // handle manifest share intend passing url to import page
     if (params.url && typeof params.url === "string") {
         importUrl.value = params.url
@@ -735,7 +752,9 @@ onMounted(() => {
         importType.value = 'url'
         loadRecipeFromUrl({bookmarklet: parseInt(params.bookmarklet_import)})
     }
-})
+}
+onMounted(startSharedImport)
+watch(() => useUserPreferenceStore().canWriteNativeRecipes, allowed => {if (allowed) startSharedImport()})
 
 onUnmounted(() => {
     disposed = true
@@ -752,6 +771,7 @@ watch(importType, selected => {
  * call server to load recipe from a given URl
  */
 function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSourceRequest) {
+    if (!ensureCanImportRecipes()) return
     const api = new ApiApi()
     const revision = ++previewRevision
     loading.value = true
@@ -780,6 +800,7 @@ function loadRecipeFromUrl(recipeFromSourceRequest: RecipeFromSourceRequest) {
  * upload file to conversion endpoint
  */
 function loadRecipeFromAiImport() {
+    if (!ensureCanImportRecipes()) return
     let request = null
 
     if (selectedAiProvider.value == undefined) {
@@ -817,6 +838,7 @@ function loadRecipeFromAiImport() {
 }
 
 function appImport() {
+    if (!ensureCanImportRecipes()) return
     return doAppImport(appImportFiles.value, importApp.value, appImportDuplicates.value, appImportMealPlans.value, appImportShoppingLists.value, appImportNutritionsPerServing.value).then(id => {
         if (disposed) return
         stepper.value = 'import_log'
@@ -846,6 +868,7 @@ function recLoadImportLog(importLogId: number) {
 
 /** Create a recipe once, then treat an optional image failure separately. */
 async function createRecipeFromImport() {
+    if (!ensureCanImportRecipes()) return
     const source = importResponse.value.recipe
     if (!source || loading.value || disposed) return
     const api = new ApiApi()
@@ -854,12 +877,12 @@ async function createRecipeFromImport() {
     try {
         const recipe = await api.apiRecipeCreate({recipe: request})
         try {
-            await updateRecipeImage(recipe.id!, null, source.imageUrl)
+            if (ensureCanImportRecipes()) await updateRecipeImage(recipe.id!, null, source.imageUrl)
         } catch (err) {
             if (!disposed) useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
         }
         if (!disposed) {
-            await router.push(editAfterImport.value
+            await router.push(editAfterImport.value && useUserPreferenceStore().canWriteNativeRecipes
                 ? {name: 'ModelEditPage', params: {id: recipe.id, model: 'recipe'}}
                 : {name: 'RecipeViewPage', params: {id: recipe.id}})
         }
@@ -925,6 +948,7 @@ function deleteIngredient(step: SourceImportStep, ingredient: SourceImportIngred
  * @param providerId provider to use for request
  */
 function aiStepSort(providerId: number) {
+    if (!ensureCanImportRecipes()) return
     if (!importResponse.value.recipe) return;
 
     let api = new ApiApi()
@@ -1010,11 +1034,12 @@ function addStep() {
  * load or create an AccessToken with the bookmarklet scope for use in the bookmarklet code
  */
 function loadOrCreateBookmarkletToken(): Promise<void> {
+    if (!ensureCanImportRecipes()) return Promise.resolve()
     if (bookmarkletToken.value || disposed) return Promise.resolve()
     if (bookmarkletRequest) return bookmarkletRequest
     const api = new ApiApi()
     bookmarkletRequest = api.apiAccessTokenList().then(async tokens => {
-        if (disposed) return
+        if (disposed || !ensureCanImportRecipes()) return
         const existing = tokens.find(token => token.scope === 'bookmarklet')
         const token = existing ?? await api.apiAccessTokenCreate({accessToken: {
             scope: 'bookmarklet', expires: DateTime.now().plus({year: 100}).toJSDate()

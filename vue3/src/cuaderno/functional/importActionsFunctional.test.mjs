@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {component, deferred, settle} from './functionalHarness.mjs'
 
 function load(api = {}, extra = {}) {
-    return component('pages/RecipeImportPage.vue', ['loadRecipeFromUrl', 'loadRecipeFromAiImport', 'appImport', 'recLoadImportLog', 'createRecipeFromImport', 'importFromUrlList', 'loadOrCreateBookmarkletToken', 'loading', 'importResponse', 'stepper', 'urlList', 'urlListImportInput', 'urlListImportedRecipes', 'selectedAiProvider', 'sourceImportText', 'aiMode', 'importUrl', 'importType'], {
+    const h = component('pages/RecipeImportPage.vue', ['loadRecipeFromUrl', 'loadRecipeFromAiImport', 'appImport', 'recLoadImportLog', 'createRecipeFromImport', 'importFromUrlList', 'loadOrCreateBookmarkletToken', 'loading', 'importResponse', 'stepper', 'urlList', 'urlListImportInput', 'urlListImportedRecipes', 'selectedAiProvider', 'sourceImportText', 'aiMode', 'importUrl', 'importType'], {
         api, globals: {
             sourceImportRequest: value => value,
             useFileApi: () => ({updateRecipeImage: async () => ({}), doAiImport: async () => ({}), doAppImport: async () => 1, fileApiLoading: {value: false}}),
@@ -11,6 +11,9 @@ function load(api = {}, extra = {}) {
             ...extra,
         },
     })
+    h.store.canWriteNativeRecipes = true
+    h.store.nativeRecipeWriteAccess = 'allowed'
+    return h
 }
 test('BUGFIX-17: unmount cancels import log polling', async () => {
     let calls = 0;const h = load({apiImportLogRetrieve: async () => {calls++;return {running: true}}})

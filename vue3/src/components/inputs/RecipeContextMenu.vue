@@ -3,7 +3,7 @@
         <v-icon icon="fa-solid fa-ellipsis-v"></v-icon>
         <v-menu activator="parent" close-on-content-click>
             <v-list density="compact" class="pt-1 pb-1">
-                <v-list-item :to="{ name: 'ModelEditPage', params: {model: 'recipe', id: recipe.id} }" prepend-icon="$edit">
+                <v-list-item v-if="useUserPreferenceStore().canWriteNativeRecipes" :to="{ name: 'ModelEditPage', params: {model: 'recipe', id: recipe.id} }" prepend-icon="$edit">
                     {{ $t('Edit') }}
                 </v-list-item>
                 <v-list-item prepend-icon="$mealplan" @click="mealPlanDialog = true">
@@ -23,13 +23,13 @@
                     {{ $t('Share') }}
                     <recipe-share-dialog :recipe="props.recipe"></recipe-share-dialog>
                 </v-list-item>
-                <v-list-item @click.stop="duplicateRecipe()" prepend-icon="$copy" :disabled="duplicateLoading">
+                <v-list-item v-if="useUserPreferenceStore().canWriteNativeRecipes" @click.stop="duplicateRecipe()" prepend-icon="$copy" :disabled="duplicateLoading">
                     {{ $t('Duplicate') }}
                     <template #append>
                         <v-progress-circular v-if="duplicateLoading" indeterminate size="small"></v-progress-circular>
                     </template>
                 </v-list-item>
-                <v-list-item v-if="canCreateVariant" @click.stop="duplicateRecipe(true)" prepend-icon="fa-solid fa-code-branch" :disabled="duplicateLoading">Crear variante vinculada</v-list-item>
+                <v-list-item v-if="canCreateVariant && useUserPreferenceStore().canWriteNativeRecipes" @click.stop="duplicateRecipe(true)" prepend-icon="fa-solid fa-code-branch" :disabled="duplicateLoading">Crear variante vinculada</v-list-item>
                 <v-list-item :to="{ name: 'RecipeViewPage', params: { id: recipe.id}, query: {print: 'true', servings: props.servings} }" :active="false" target="_blank"
                              prepend-icon="fa-solid fa-print">
                     {{ $t('Print') }}
@@ -57,12 +57,14 @@ import {ApiApi, Recipe, RecipeFlat, RecipeOverview, RecipeRequest} from "@/opena
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 import RecipeShareDialog from "@/components/dialogs/RecipeShareDialog.vue";
 import AddToShoppingDialog from "@/components/dialogs/AddToShoppingDialog.vue";
-import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore.ts";
+import {ErrorMessageType, MessageType, useMessageStore} from "@/stores/MessageStore.ts";
 import {useRouter} from "vue-router";
 import {useFileApi} from "@/composables/useFileApi.ts";
 import {useI18n} from "vue-i18n";
 import PantryBookingDialog from "@/components/dialogs/PantryBookingDialog.vue";
 import {planningRequest, type RecipeExtras} from '@/cuaderno/planningApi';
+import {useUserPreferenceStore} from '@/stores/UserPreferenceStore';
+import {nativeRecipeWriteMessage} from '@/cuaderno/nativeRecipeWriteUi';
 
 const router = useRouter()
 const {t} = useI18n()
@@ -83,8 +85,16 @@ const pantryFoodId = ref<number | undefined>(undefined)
 const variantCopy = ref<number | null>(null)
 const variantOrigin = ref<number | null>(null)
 const variantError = ref('')
+function ensureCanWriteRecipes() {
+    const store = useUserPreferenceStore()
+    if (store.canWriteNativeRecipes) return true
+    useMessageStore().addMessage(MessageType.WARNING, {title: 'Permisos de recetas', text: nativeRecipeWriteMessage(store.nativeRecipeWriteAccess)}, 8000)
+    return false
+}
 async function linkVariant(id: number, origin: number) {
+    if (!useUserPreferenceStore().canWriteNativeRecipes) throw new Error(nativeRecipeWriteMessage(useUserPreferenceStore().nativeRecipeWriteAccess))
     const extras = await planningRequest<RecipeExtras>(`recipes/${id}/extras/`)
+    if (!useUserPreferenceStore().canWriteNativeRecipes) throw new Error(nativeRecipeWriteMessage(useUserPreferenceStore().nativeRecipeWriteAccess))
     await planningRequest(`recipes/${id}/extras/`, 'PUT', {revision: extras.revision, variant_of: origin})
 }
 function openVariantCopy() {
@@ -92,6 +102,7 @@ function openVariantCopy() {
     if (id !== null) router.push({name: 'RecipeViewPage', params: {id}})
 }
 async function retryVariantLink() {
+    if (!useUserPreferenceStore().canWriteNativeRecipes) return
     if (variantCopy.value === null || variantOrigin.value === null || duplicateLoading.value) return
     duplicateLoading.value = true; variantError.value = ''
     try {await linkVariant(variantCopy.value, variantOrigin.value); openVariantCopy()}
@@ -103,11 +114,13 @@ async function retryVariantLink() {
  * create a duplicate of the recipe by pulling its current data and creating a new recipe with the same data
  */
 function duplicateRecipe(linkedVariant = false) {
+    if (!useUserPreferenceStore().canWriteNativeRecipes) return
     if (duplicateLoading.value || (linkedVariant && !props.canCreateVariant)) return
     const originId = props.recipe.id!
     let api = new ApiApi()
     duplicateLoading.value = true
     api.apiRecipeRetrieve({id: props.recipe.id!}).then(originalRecipe => {
+        if (!ensureCanWriteRecipes()) {duplicateLoading.value = false; return}
 
         const {id: _recipeId, ...recipeFields} = originalRecipe
         const recipe: RecipeRequest = {
@@ -121,6 +134,10 @@ function duplicateRecipe(linkedVariant = false) {
         }
 
         api.apiRecipeCreate({recipe: recipe}).then(async newRecipe => {
+            if (!ensureCanWriteRecipes()) {
+                duplicateLoading.value = false
+                return router.push({name: 'RecipeViewPage', params: {id: newRecipe.id!}})
+            }
             if (linkedVariant) {
                 try {await linkVariant(newRecipe.id!, originId)}
                 catch (error) {
@@ -129,7 +146,7 @@ function duplicateRecipe(linkedVariant = false) {
                 }
             }
 
-            if (originalRecipe.image) {
+            if (originalRecipe.image && ensureCanWriteRecipes()) {
                 updateRecipeImage(newRecipe.id!, null, originalRecipe.image).then(r => {
                     router.push({name: 'RecipeViewPage', params: {id: newRecipe.id!}})
                 }).catch(err => {
