@@ -5,7 +5,8 @@ type Membership = {space?: number; active?: boolean; groups?: Array<{name?: stri
 // Match the native backend's single active membership, including its Space binding.
 export function nativeRecipeMembership(memberships: Exclude<Membership, null | undefined>[], spaceId: number | undefined): Membership {
     const active = memberships.filter(membership => membership.active === true)
-    return active.length === 1 && active[0].space === spaceId && spaceId !== undefined ? active[0] : null
+    const membership = active[0]
+    return active.length === 1 && membership !== undefined && membership.space === spaceId && spaceId !== undefined ? membership : null
 }
 
 // Native recipe/import writes require the active space's user/admin group.
