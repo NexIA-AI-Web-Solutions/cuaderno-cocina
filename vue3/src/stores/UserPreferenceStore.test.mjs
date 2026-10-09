@@ -61,6 +61,7 @@ async function createStore(route) {
         ['@/types/Shopping', shopping], ['@/stores/MessageStore', messages],
         ['@/types/settings', settings],
         ['@/cuaderno/storage', moduleUrl(ts.transpileModule(readFileSync(new URL('../cuaderno/storage.ts', import.meta.url), 'utf8'), {compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022}}).outputText)],
+        ['@/cuaderno/nativeRecipeWriteUi', moduleUrl(ts.transpileModule(readFileSync(new URL('../cuaderno/nativeRecipeWriteUi.ts', import.meta.url), 'utf8'), {compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022}}).outputText)],
     ])
     const source = readFileSync(new URL('./UserPreferenceStore.ts', import.meta.url), 'utf8')
     let code = ts.transpileModule(source, {compilerOptions: {
