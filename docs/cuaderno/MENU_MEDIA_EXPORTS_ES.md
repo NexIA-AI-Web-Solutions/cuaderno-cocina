@@ -73,3 +73,18 @@ supere. Las portadas se obtienen únicamente de rutas autorizadas de la app.
 La presencia de los tests no acredita su ejecución. Los resultados del
 candidato, navegador y despliegue se registran por separado en las evidencias
 de la release; esta guía describe el comportamiento implementado.
+
+## Seguimiento de la validación de navegador
+
+La ejecución GitHub Actions `37953516292`, fuente `309d809`, terminó su matriz
+raíz con 683 pruebas aprobadas y un fallo en WebKit: al abrir «Platos del
+periodo», el desplegable tenía un mínimo de 736 px y un máximo disponible de
+720 px. El navegador notificó un ciclo de ResizeObserver antes de seleccionar
+el plato; la subida y las cuatro descargas PDF/PNG completaron sus aserciones.
+Se conserva el fallo original.
+
+La corrección limita solo ese desplegable al ancho disponible y elimina su
+mínimo implícito. Una regresión de selección múltiple con nombres largos y
+Consulta pasó de RED a GREEN; 32 pruebas enfocadas aprobaron. Falta confirmar
+esta nueva corrección en WebKit y completar la release de producción. No se
+modifican el colector de errores, las barreras de lectura ni los tiempos.

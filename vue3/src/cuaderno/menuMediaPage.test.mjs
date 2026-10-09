@@ -61,3 +61,30 @@ test('creating a template with a cover refreshes the real image panel after its 
         assert.equal(button(mounted.root, 'Guardar imagen'), undefined)
     } finally {mounted.close()}
 })
+
+test('the meal menu bounds its overlay without losing long labels or multiple read-only selections', async () => {
+    const recipeName = 'Sopa gástrica con verduras y una descripción completa para distinguir el plato del calendario'
+    const meals = [{...meal, recipe: {id: 3, name: recipeName}}, {...meal, id: 8, title: 'Segundo plato'}]
+    let prepared = false
+    const mounted = await mountFunctional('./pages/MenuPlanningPage.vue', {}, (path, method, body) => {
+        if(path === 'edition/') return {edition: 'integral'}
+        if(path.startsWith('planning/?')) return {...data, can_edit: false, can_merge_print: true, meal_plans: meals}
+        if(path.startsWith('planning/templates/?')) return {count: 0, results: []}
+        assert.equal(path, 'planning/print/'); assert.equal(method, 'POST')
+        assert.deepEqual(body.menus, [{name: 'Menú', meal_plan_ids: [7, 8]}]); prepared = true
+        return {orientation: 'portrait', menus: [{name: 'Menú', entries: meals}], declaration: 'Manual', diet: null, diet_label: null, merged: false}
+    })
+    try {
+        const selection = field(mounted.root, 'Platos del periodo')
+        // The default activator-width minimum exceeded the available overlay
+        // maximum in the real 768px WebKit trace (736px versus 720px).
+        assert.deepEqual(selection.props['menu-props'], {minWidth: 0})
+        assert.ok(Object.hasOwn(selection.props, 'multiple')); assert.ok(Object.hasOwn(selection.props, 'chips'))
+        assert.ok(selection.props.items.some(item => item.id === 7 && item.label.includes(recipeName)))
+        assert.equal(field(mounted.root, 'Portada de una plantilla (opcional)').props['menu-props'], undefined)
+        selection.props['onUpdate:modelValue']([7, 8]); await flush()
+        button(mounted.root, 'Añadir menú a la impresión').props.onClick(); await flush()
+        await button(mounted.root, 'Preparar documento').props.onClick(); await flush()
+        assert.equal(prepared, true); assert.match(textOf(mounted.root), /Sopa gástrica con verduras/)
+    } finally {mounted.close()}
+})

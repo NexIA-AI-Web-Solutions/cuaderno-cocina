@@ -538,3 +538,11 @@ Los scripts operativos son locales y abortan en producción: no retirar guardas 
 ## Ampliación de imágenes y documentos — 9 de octubre de 2026
 
 Implementación en la rama `cuaderno/menu-media-exports-20261009`: fotos de Food en las tres ediciones; portadas de plantillas y PDF/PNG en Profesional e Integral. Guía y mapa de código: [MENU_MEDIA_EXPORTS_ES](MENU_MEDIA_EXPORTS_ES.md). Validación local real: 65 pruebas Django/PostgreSQL aprobadas (23 nuevas de imágenes y 42 de extensiones), 17 pruebas frontend focalizadas aprobadas, migración sin cambios pendientes y OpenAPI validado. Se conservan los fallos iniciales: permisos corregidos, refresco de portada y fusión Food (400 en rojo, corregido). Las pruebas Playwright con fotos CC0 están preparadas; navegador, CI y publicación de este candidato todavía pendientes. No se atribuyen al candidato los resultados de releases anteriores.
+
+### Seguimiento de imágenes y exportación: selector WebKit (2026-10-09)
+
+El candidato `309d809` no se admite: CI `37953516292` obtuvo 683/684 en la
+matriz raíz por un ResizeObserver al abrir «Platos del periodo». Se conserva
+la evidencia oficial del fallo y se corrige únicamente la anchura contradictoria
+del desplegable. Regresión RED→GREEN y 32 pruebas enfocadas aprobadas; nueva
+matriz completa y publicación pendientes. Producción mantiene la release V12.

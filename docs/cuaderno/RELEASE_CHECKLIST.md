@@ -206,3 +206,11 @@ nueva imagen; los checks del runtime publicado `ff3b685` no las certifican.
 - [ ] CI completa del nuevo candidato y pruebas Playwright reales con fotos CC0.
 - [ ] Aceptación visual y descargas PDF/PNG de la misma imagen.
 - [ ] Backup previo, actualización propia, aceptación HTTPS y recuperación posterior.
+
+### Seguimiento de imágenes y exportación: selector WebKit (2026-10-09)
+
+El candidato `309d809` no se admite: CI `37953516292` obtuvo 683/684 en la
+matriz raíz por un ResizeObserver al abrir «Platos del periodo». Se conserva
+la evidencia oficial del fallo y se corrige únicamente la anchura contradictoria
+del desplegable. Regresión RED→GREEN y 32 pruebas enfocadas aprobadas; nueva
+matriz completa y publicación pendientes. Producción mantiene la release V12.
