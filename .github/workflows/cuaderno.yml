@@ -111,7 +111,18 @@ jobs:
           printf 'CUADERNO_LOCAL_DB_PASSWORD=%s\nCUADERNO_LOCAL_SECRET_KEY=%s\n' "$db_password" "$secret_key" > data/cuaderno/local/compose.env
           chmod 600 data/cuaderno/local/compose.env
           cd .cuaderno-runs/prior-image
-          sha256sum -c candidate-image.tar.gz.sha256
+          python - <<'PYPRIORHASH'
+          import hashlib, re
+          from pathlib import Path
+          descriptor = Path('candidate-image.tar.gz.sha256').read_bytes()
+          match = re.fullmatch(rb'([a-f0-9]{64})  \.cuaderno-runs/candidate-image\.tar\.gz\n', descriptor)
+          if match is None:
+              raise SystemExit('Invalid prior checksum descriptor')
+          with Path('candidate-image.tar.gz').open('rb') as stream:
+              actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+          if actual != match[1].decode('ascii'):
+              raise SystemExit('Prior archive checksum mismatch')
+          PYPRIORHASH
           gunzip -c candidate-image.tar.gz | docker load
           cd ../..
           python scripts/cuaderno/verify_loaded_image.py --archive .cuaderno-runs/prior-image/candidate-image.tar.gz \
