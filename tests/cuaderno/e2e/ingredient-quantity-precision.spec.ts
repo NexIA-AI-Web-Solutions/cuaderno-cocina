@@ -54,6 +54,16 @@ function unoccludedBounds(bounds: Bounds, viewport: Bounds, obstructions: Bounds
     bounds.y + bounds.height <= rect.y || rect.y + rect.height <= bounds.y)
 }
 
+function cardPngDimensionsMatch(width: number, height: number, bounds: Bounds): boolean {
+  if (![bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite) || bounds.width <= 0 || bounds.height <= 0 ||
+    !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return false
+  // Playwright 1.63 encloses the two edges, including a fractional origin:
+  // packages/playwright-core/src/server/helper.ts, enclosingIntRect.
+  const expectedWidth = Math.ceil(bounds.x + bounds.width - 1e-3) - Math.floor(bounds.x + 1e-3)
+  const expectedHeight = Math.ceil(bounds.y + bounds.height - 1e-3) - Math.floor(bounds.y + 1e-3)
+  return width === expectedWidth && height === expectedHeight
+}
+
 function validateDetailGeometry(geometry: DetailGeometry) {
   expect(unoccludedBounds(geometry.cardBounds, geometry.usableBounds, []), 'La tarjeta completa debe caber entre las barras visibles.').toBe(true)
   expect(geometry.cardBounds.height).toBeLessThan(geometry.viewportBounds.height)
@@ -389,7 +399,7 @@ test.afterAll(async ({}, testInfo) => {
         failUnless(stat.isFile() && !stat.isSymbolicLink() && (stat.mode & 0o777) === 0o600 && bytes.length === detail.bytes &&
           hash(bytes) === detail.sha256 && bytes.length > 24 && bytes.subarray(0, 8).toString('hex') === '89504e470d0a1a0a' &&
           bytes.readUInt32BE(16) === detail.width && bytes.readUInt32BE(20) === detail.height && detail.width > 0 && detail.height > 0 &&
-          Math.abs(detail.width - detail.cardBounds.width) <= 1 && Math.abs(detail.height - detail.cardBounds.height) <= 1,
+          cardPngDimensionsMatch(detail.width, detail.height, detail.cardBounds),
         'Bytes PNG de tarjeta no verificables o dimensiones distintas de sus bounds reales.')
         detailScreenshots.push(detail)
       }
