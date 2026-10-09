@@ -152,9 +152,9 @@ function recipeEditorSave(recipe) {
     const errors = []
     const saves = []
     const save = Function('editingObj', 'prepareIngredientAmounts', 'quantityError', 'showQuantityError',
-        'saveObjectUnchecked', `${emitted}; return saveObject`)(
+        'saveObjectUnchecked', 'useUserPreferenceStore', `${emitted}; return saveObject`)(
         {value: recipe}, prepareIngredientAmounts, quantityError, error => errors.push(error),
-        async () => {saves.push(structuredClone(recipe)); return recipe})
+        async () => {saves.push(structuredClone(recipe)); return recipe}, () => ({canWriteNativeRecipes: true}))
     return {save, errors, saves, quantityError}
 }
 

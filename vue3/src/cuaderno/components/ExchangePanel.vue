@@ -7,8 +7,8 @@
             </v-expansion-panel-title>
             <v-expansion-panel-text>
                 <p class="mb-3">
-                    Exporta las recetas visibles de este espacio o importa un JSON de Cuaderno con vista previa obligatoria.
-                    El importador nativo de Cuaderno Cocina, situado debajo, sigue disponible para sus otros formatos.
+                    Exporta las recetas visibles de este espacio.
+                    <template v-if="!readOnly">También puedes importar un JSON de Cuaderno con vista previa obligatoria; el importador nativo situado debajo admite otros formatos.</template>
                 </p>
                 <v-alert type="info" variant="tonal" class="mb-4">
                     Las nuevas exportaciones incluyen las conversiones de unidades necesarias para las recetas visibles.
@@ -23,6 +23,7 @@
                     </v-btn>
                 </div>
 
+                <template v-if="!readOnly">
                 <v-file-input label="Archivo JSON de Cuaderno" accept="application/json,.json" clearable
                               prepend-icon="fa-solid fa-file-code" hint="Máximo 2 MB y 1000 recetas. No se aceptan URL."
                               persistent-hint :loading="loadingFile" :disabled="operationBusy" @update:model-value="selectFile" />
@@ -117,10 +118,6 @@
                     </div>
                 </template>
 
-                <v-alert v-if="message" :type="messageType" variant="tonal" class="mt-4" role="status">
-                    {{ message }}
-                </v-alert>
-
                 <v-card v-if="previewResult" variant="outlined" class="mt-4">
                     <v-card-title>Vista previa: {{ previewResult.count }} recetas</v-card-title>
                     <v-card-text>
@@ -133,6 +130,11 @@
                                  type="warning" variant="tonal" class="mt-2">{{ warning }}</v-alert>
                     </v-card-text>
                 </v-card>
+                </template>
+                <v-alert v-if="message" :type="messageType" variant="tonal" class="mt-4" role="status">
+                    {{ message }}
+                </v-alert>
+
             </v-expansion-panel-text>
         </v-expansion-panel>
     </v-expansion-panels>
@@ -144,6 +146,8 @@ import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
 import {exchangeBody, readExchangeFile} from '@/cuaderno/exchangeUi'
+
+const props = defineProps({readOnly: {type: Boolean, default: false}})
 
 type CatalogItem = {ref: string; id?: number; name?: string; label?: string}
 type CatalogConversion = CatalogItem & {
@@ -250,6 +254,7 @@ function validateCatalogShape(value: Record<string, any>) {
 }
 
 async function selectFile(value: File | File[] | null) {
+    if (props.readOnly) return
     const token = ++selectionToken
     const file = Array.isArray(value) ? value[0] : value
     message.value = ''
@@ -337,6 +342,7 @@ function mapping(): Record<string, any> {
 }
 
 async function previewImport() {
+    if (props.readOnly) return
     if (!document.value || previewing.value) return
     message.value = ''
     invalidatePreview()
@@ -361,6 +367,7 @@ async function previewImport() {
 }
 
 async function confirmImport() {
+    if (props.readOnly) return
     if (!document.value || !previewHash.value || importing.value) return
     message.value = ''
     try {

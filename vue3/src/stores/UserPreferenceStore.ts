@@ -8,6 +8,7 @@ import {computed, ComputedRef, ref} from "vue";
 import {DeviceSettings} from "@/types/settings";
 import {useTheme} from "vuetify";
 import {useRoute, useRouter} from "vue-router";
+import {nativeRecipeMembership, nativeRecipeWriteAccess as recipeWriteAccess} from '@/cuaderno/nativeRecipeWriteUi';
 
 const DEVICE_SETTINGS_KEY = cuadernoStorageKey('device-settings')
 const USER_PREFERENCE_KEY = cuadernoStorageKey('user-preference')
@@ -50,6 +51,7 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
      * complete refresh of all data from server completed
      */
     const initCompleted = ref(false)
+    const recipeMembershipState = ref<'loading' | 'ready' | 'failed'>('loading')
 
     /**
      * load the default unit to the store for easy use in editors and more
@@ -76,6 +78,11 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
         })
         return userSpace
     })
+    const nativeRecipeWriteAccess = computed(() => recipeWriteAccess(
+        isAuthenticated.value, initCompleted.value && recipeMembershipState.value !== 'loading',
+        recipeMembershipState.value === 'ready', nativeRecipeMembership(userSpaces.value, activeSpace.value.id),
+    ))
+    const canWriteNativeRecipes = computed(() => nativeRecipeWriteAccess.value === 'allowed')
 
     /**
      * retrieve user settings from DB
@@ -169,10 +176,13 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
      * load user spaces (permission mapping ot space)
      */
     function loadUserSpaces() {
+        recipeMembershipState.value = 'loading'
         let api = new ApiApi()
         return api.apiUserSpaceAllPersonalList().then(r => {
             userSpaces.value = r
+            recipeMembershipState.value = 'ready'
         }).catch(err => {
+            recipeMembershipState.value = 'failed'
             if (err.response.status != 403) {
                 useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
             }
@@ -291,6 +301,8 @@ export const useUserPreferenceStore = defineStore('user_preference_store', () =>
         isAuthenticated,
         isPrintMode,
         initCompleted,
+        nativeRecipeWriteAccess,
+        canWriteNativeRecipes,
         defaultUnitObj,
         loadUserSettings,
         loadServerSettings,

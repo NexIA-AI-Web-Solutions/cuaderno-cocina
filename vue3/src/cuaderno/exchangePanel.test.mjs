@@ -88,7 +88,7 @@ function fileFor(payload) {
 }
 
 let nextId = 0
-async function mount(transport) {
+async function mount(transport, properties = {}) {
     const id = ++nextId
     const calls = []
     globalThis.__cuadernoExchangeUnit ??= new Map()
@@ -126,7 +126,8 @@ async function mount(transport) {
     })
     const component = (await import(moduleUrl(code))).default
     const root = {type: 'root', props: {}, children: [], parent: null}
-    const app = virtualRenderer().createApp(component)
+    const state = Vue.reactive(properties)
+    const app = virtualRenderer().createApp({setup: () => () => Vue.h(component, state)})
     const renderErrors = []
     app.config.errorHandler = error => { renderErrors.push(error) }
     const widgets = new Map([
@@ -149,7 +150,7 @@ async function mount(transport) {
     }
     app.mount(root)
     await flush()
-    return {root, calls, renderErrors, close() { app.unmount(); globalThis.__cuadernoExchangeUnit.delete(id) }}
+    return {root, calls, renderErrors, properties: state, close() { app.unmount(); globalThis.__cuadernoExchangeUnit.delete(id) }}
 }
 
 async function loadFile(mounted, payload) {
@@ -275,4 +276,43 @@ test('malformed conversion collections are rejected atomically before preview', 
             assert.equal(byType(mounted.root, 'model-select').some(node => node.props.model === 'UnitConversion'), false)
         } finally { mounted.close() }
     }
+})
+
+test('readonly exchange renders export without import inputs and retains its GET download', async () => {
+    const previousDocument = globalThis.document
+    let downloads = 0
+    globalThis.document = {createElement: () => ({click() {downloads++}})}
+    const mounted = await mount(() => ({ok: true, status: 200, blob: async () => new Blob(['{}'], {type: 'application/json'})}), {readOnly: true})
+    try {
+        assert.equal(byType(mounted.root, 'file-input').length, 0)
+        assert.equal(byType(mounted.root, 'textarea').length, 0)
+        assert.equal(button(mounted.root, 'Previsualizar'), undefined)
+        assert.equal(button(mounted.root, 'Confirmar importación'), undefined)
+        const exportButton = button(mounted.root, 'Exportar JSON visible'); assert.ok(exportButton)
+        await exportButton.props.onClick(); await flush()
+        assert.equal(downloads, 1); assert.equal(mounted.calls.length, 1)
+        assert.equal(mounted.calls[0].url, '/api/cuaderno/exchange/')
+        assert.equal(mounted.calls[0].options.method, undefined)
+        assert.match(textOf(mounted.root), /Exportación JSON descargada/)
+        assert.deepEqual(mounted.renderErrors, [])
+    } finally {mounted.close(); globalThis.document = previousDocument}
+})
+test('revoking exchange write access prevents queued preview and confirm callbacks from posting', async () => {
+    const mounted = await mount(url => url === '/api/cuaderno/packages/'
+        ? {ok: true, status: 200, data: []}
+        : {ok: true, status: 200, data: {count: 1, preview: [], writes: 0, preview_sha256: 'e'.repeat(64)}}, {readOnly: false})
+    try {
+        await loadFile(mounted, portableDocument())
+        const preview = button(mounted.root, 'Previsualizar').props.onClick
+        await preview(); await flush()
+        const confirm = button(mounted.root, 'Confirmar importación').props.onClick
+        const previousCalls = mounted.calls.length
+        mounted.properties.readOnly = true; await flush()
+        assert.equal(byType(mounted.root, 'file-input').length, 0)
+        assert.equal(button(mounted.root, 'Previsualizar'), undefined)
+        assert.equal(button(mounted.root, 'Confirmar importación'), undefined)
+        await preview(); await confirm(); await flush()
+        assert.equal(mounted.calls.length, previousCalls)
+        assert.deepEqual(mounted.renderErrors, [])
+    } finally {mounted.close()}
 })

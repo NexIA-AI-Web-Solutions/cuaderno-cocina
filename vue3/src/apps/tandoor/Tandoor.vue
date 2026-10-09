@@ -19,7 +19,7 @@
 
             <v-spacer></v-spacer>
             <global-search-dialog></global-search-dialog>
-            <v-btn icon="$add" class="d-print-none" :aria-label="$t('Create Recipe')" :title="$t('Create Recipe')">
+            <v-btn v-if="useUserPreferenceStore().canWriteNativeRecipes" icon="$add" class="d-print-none" :aria-label="$t('Create Recipe')" :title="$t('Create Recipe')">
                 <v-icon icon="$add" class="fa-fw"></v-icon>
                 <v-menu activator="parent">
                     <v-list>

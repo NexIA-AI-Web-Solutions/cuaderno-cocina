@@ -1,5 +1,6 @@
 <template>
-    <model-editor-base
+    <native-recipe-access-notice v-if="!useUserPreferenceStore().canWriteNativeRecipes" :access="useUserPreferenceStore().nativeRecipeWriteAccess" />
+    <model-editor-base v-else
         :loading="loading || fileApiLoading"
         :dialog="dialog"
         @save="saveObject"
@@ -208,6 +209,8 @@ import NumberScalerDialog from "@/components/inputs/NumberScalerDialog.vue";
 import {useI18n} from "vue-i18n";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 import {prepareIngredientAmounts, prepareScaledIngredientAmounts} from "@/utils/ingredient_amounts";
+import NativeRecipeAccessNotice from '@/cuaderno/components/NativeRecipeAccessNotice.vue';
+import {nativeRecipeWriteMessage} from '@/cuaderno/nativeRecipeWriteUi';
 
 
 const props = defineProps({
@@ -241,6 +244,11 @@ const quantityError = ref('')
 const dialogStepManager = ref(false)
 
 async function saveObject(): Promise<Recipe | undefined> {
+    const store = useUserPreferenceStore()
+    if (!store.canWriteNativeRecipes) {
+        useMessageStore().addMessage(MessageType.WARNING, {title: 'Permisos de recetas', text: nativeRecipeWriteMessage(store.nativeRecipeWriteAccess)}, 8000)
+        return undefined
+    }
     const plan = prepareIngredientAmounts(editingObj.value.steps.flatMap(step => step.ingredients))
     if (plan.changes === null) {
         showQuantityError(plan.error)

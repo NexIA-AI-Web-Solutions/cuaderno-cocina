@@ -20,7 +20,9 @@
         <v-card v-if="totalRecipes == 0" class="mt-5 mb-5">
             <v-card-title class="text-center"><i class="fa-solid fa-eye-slash"></i> {{ $t('search_no_recipes') }}</v-card-title>
             <v-card-text>
+                <native-recipe-access-notice v-if="!useUserPreferenceStore().canWriteNativeRecipes" :access="useUserPreferenceStore().nativeRecipeWriteAccess" :show-back="false" />
                 <v-card
+                    v-if="useUserPreferenceStore().canWriteNativeRecipes"
                     :title="$t('Create Recipe')"
                     variant="outlined"
                     :to="{name: 'ModelEditPage', params: {model: 'Recipe'}}"
@@ -35,6 +37,7 @@
                 </v-card>
 
                 <v-card
+                    v-if="useUserPreferenceStore().canWriteNativeRecipes"
                     :title="$t('Import')"
                     variant="outlined"
                     :to="{name: 'RecipeImportPage', params: {}}"
@@ -72,6 +75,7 @@ import HorizontalMealPlanWindow from "@/components/display/HorizontalMealPlanWin
 import {useUserPreferenceStore} from "@/stores/UserPreferenceStore";
 import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import {settleComponentRequest} from "@/utils/componentRequest";
+import NativeRecipeAccessNotice from '@/cuaderno/components/NativeRecipeAccessNotice.vue';
 
 const totalRecipes = ref(-1)
 const countError = ref(false)
