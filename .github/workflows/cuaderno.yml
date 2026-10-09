@@ -1,660 +1,44 @@
-name: Cuaderno Cocina CI
+name: Cuaderno G7Recovery433
 
 on:
   push:
-    branches: [cuaderno/main]
-  pull_request:
-    branches: [cuaderno/main]
-  workflow_dispatch:
+    branches: [cuaderno/g7-recovery-20261009]
 
 permissions:
   contents: read
   actions: read
 
 concurrency:
-  group: cuaderno-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: cuaderno-g7-recovery-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
-  tooling:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-          cache: pip
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24.21.0"
-          cache: yarn
-          cache-dependency-path: vue3/yarn.lock
-      - name: Dependencias exactas de tooling
-        run: >-
-          python -m pip install -c tooling/cuaderno/python-tooling.constraints.txt
-          -c tooling/cuaderno/python-test.constraints.txt
-          packaging==26.3 jsonschema==4.26.0 referencing==0.37.0 PyJWT==2.15.0
-          cryptography==50.0.1 oauthlib==3.3.1 PyYAML==6.0.3
-      - name: Todos los contratos unitarios de tooling
-        run: python -m unittest discover -s scripts/cuaderno -p 'test_*.py' -v
-      - name: Procedencia frontend
-        run: node --test scripts/cuaderno/test_frontend_inventory.mjs
-
-  frontend:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24.21.0"
-          cache: yarn
-          cache-dependency-path: vue3/yarn.lock
-      - name: Instalar lock autoritativo
-        working-directory: vue3
-        run: yarn install --frozen-lockfile --non-interactive
-      - name: Unitarias frontend sin runtime
-        working-directory: vue3
-        shell: bash
-        run: |
-          mapfile -d '' tests < <(find src/cuaderno src/stores src/utils -name '*.test.mjs' ! -name 'markdownSecurity.test.mjs' -print0 | sort -z)
-          test "${#tests[@]}" -gt 0
-          node --test "${tests[@]}"
-      - name: TypeScript estricto sin diagnosticos heredados
-        run: python scripts/cuaderno/typecheck_container.py
-      - name: Build Vue/PWA con procedencia
-        working-directory: vue3
-        run: yarn build
-      - name: SVG propio emitido y precache instalado acotado
-        working-directory: vue3
-        run: node src/cuaderno/workerBuildProof.mjs
-
-  backend-cuaderno-postgresql:
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
-    services:
-      postgres:
-        image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
-        env:
-          POSTGRES_DB: cuaderno_ci_app
-          POSTGRES_USER: cuaderno_ci
-          POSTGRES_PASSWORD: cuaderno-ci-only
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U cuaderno_ci -d cuaderno_ci_app"
-          --health-interval 5s --health-timeout 3s --health-retries 20
-    env:
-      DJANGO_SETTINGS_MODULE: recipes.test_settings
-      TEST_DB_ENGINE: django.db.backends.postgresql
-      TEST_POSTGRES_HOST: 127.0.0.1
-      TEST_POSTGRES_PORT: "5432"
-      TEST_POSTGRES_DB: cuaderno_ci_app
-      TEST_POSTGRES_USER: cuaderno_ci
-      TEST_POSTGRES_PASSWORD: cuaderno-ci-only
-      TEST_DB_OPTIONS: "{'options': '-c jit=off'}"
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-          cache: pip
-      - name: Librerias de compilacion
-        run: >-
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends
-          build-essential libpq-dev libjpeg-dev libwebp-dev libxml2-dev libxslt1-dev
-          libldap2-dev libsasl2-dev libssl-dev libxmlsec1-dev libxmlsec1-openssl
-      - name: Dependencias de produccion antes del overlay de test
-        shell: bash
-        run: |
-          sed '/# Development/,$d' requirements.txt > /tmp/cuaderno-production-requirements.txt
-          python -c 'from pathlib import Path; from scripts.cuaderno.release_runtime_check import _dev_requirements; Path("/tmp/cuaderno-test-requirements.txt").write_text(_dev_requirements(Path(".")))'
-          python -m pip install -c tooling/cuaderno/python-production.constraints.txt pip setuptools wheel setuptools-rust
-          python -m pip install -c tooling/cuaderno/python-production.constraints.txt -r /tmp/cuaderno-production-requirements.txt
-          python scripts/cuaderno/python_lock.py --constraints tooling/cuaderno/python-production.constraints.txt --requirements /tmp/cuaderno-production-requirements.txt --installed
-          python scripts/cuaderno/check_oauthlib_runtime.py
-          python -m pip check
-          python -m pip install -c tooling/cuaderno/python-production.constraints.txt -c tooling/cuaderno/python-test.constraints.txt -r /tmp/cuaderno-test-requirements.txt
-      - name: Suite Cuaderno completa en PostgreSQL
-        run: python manage.py test cuaderno.tests --noinput --verbosity 2
-      - name: OpenAPI sin warnings, snapshot exacto y SDK reproducible
-        id: openapi_check
-        shell: bash
-        run: |
-          mkdir -p .cuaderno-runs
-          python manage.py spectacular --validate --fail-on-warn --format openapi-json --file .cuaderno-runs/openapi.generated.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          expected = json.loads(Path('tooling/cuaderno/openapi.json').read_text(encoding='utf-8'))
-          actual = json.loads(Path('.cuaderno-runs/openapi.generated.json').read_text(encoding='utf-8'))
-          if actual != expected:
-              raise SystemExit('El OpenAPI generado no coincide con tooling/cuaderno/openapi.json')
-          PY
-          python scripts/generate_api_client.py --schema .cuaderno-runs/openapi.generated.json --check
-      - name: Preparar contrato y SDK para revisar si el snapshot difiere
-        if: failure() && steps.openapi_check.outcome == 'failure'
-        shell: bash
-        run: |
-          test -s .cuaderno-runs/openapi.generated.json
-          python scripts/generate_api_client.py --schema .cuaderno-runs/openapi.generated.json
-          mkdir -p .cuaderno-runs/contract-preparation/tooling/cuaderno
-          cp .cuaderno-runs/openapi.generated.json .cuaderno-runs/contract-preparation/tooling/cuaderno/openapi.json
-          mkdir -p .cuaderno-runs/contract-preparation/vue3/src
-          cp -a vue3/src/openapi .cuaderno-runs/contract-preparation/vue3/src/openapi
-          git rev-parse HEAD > .cuaderno-runs/contract-preparation/source-commit.txt
-      - name: Conservar propuesta de contrato sin convertir el fallo en PASS
-        if: failure() && steps.openapi_check.outcome == 'failure'
-        uses: actions/upload-artifact@v7
-        with:
-          name: cuaderno-contract-preparation
-          path: .cuaderno-runs/contract-preparation/
-          if-no-files-found: error
-          retention-days: 3
-
-  backend-native-postgresql:
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
-    services:
-      postgres:
-        image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
-        env:
-          POSTGRES_DB: cuaderno_ci_native
-          POSTGRES_USER: cuaderno_ci
-          POSTGRES_PASSWORD: cuaderno-ci-only
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U cuaderno_ci -d cuaderno_ci_native"
-          --health-interval 5s --health-timeout 3s --health-retries 20
-    env:
-      DJANGO_SETTINGS_MODULE: recipes.test_settings
-      TEST_DB_ENGINE: django.db.backends.postgresql
-      TEST_POSTGRES_HOST: 127.0.0.1
-      TEST_POSTGRES_PORT: "5432"
-      TEST_POSTGRES_DB: cuaderno_ci_native
-      TEST_POSTGRES_USER: cuaderno_ci
-      TEST_POSTGRES_PASSWORD: cuaderno-ci-only
-      TEST_DB_OPTIONS: "{'options': '-c jit=off'}"
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-          cache: pip
-      - name: Librerias de compilacion
-        run: >-
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends
-          build-essential libpq-dev libjpeg-dev libwebp-dev libxml2-dev libxslt1-dev
-          libldap2-dev libsasl2-dev libssl-dev libxmlsec1-dev libxmlsec1-openssl
-      - name: Dependencias de produccion antes del overlay de test
-        shell: bash
-        run: |
-          sed '/# Development/,$d' requirements.txt > /tmp/cuaderno-production-requirements.txt
-          python -c 'from pathlib import Path; from scripts.cuaderno.release_runtime_check import _dev_requirements; Path("/tmp/cuaderno-test-requirements.txt").write_text(_dev_requirements(Path(".")))'
-          python -m pip install -c tooling/cuaderno/python-production.constraints.txt pip setuptools wheel setuptools-rust
-          python -m pip install -c tooling/cuaderno/python-production.constraints.txt -r /tmp/cuaderno-production-requirements.txt
-          python scripts/cuaderno/python_lock.py --constraints tooling/cuaderno/python-production.constraints.txt --requirements /tmp/cuaderno-production-requirements.txt --installed
-          python scripts/cuaderno/check_oauthlib_runtime.py
-          python -m pip check
-          python -m pip install -c tooling/cuaderno/python-production.constraints.txt -c tooling/cuaderno/python-test.constraints.txt -r /tmp/cuaderno-test-requirements.txt
-      - name: Suite nativa completa en PostgreSQL
-        run: python -m pytest -o addopts= -vv -o faulthandler_timeout=60 cookbook/tests
-
-  candidate-image:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    needs: [tooling, frontend, backend-cuaderno-postgresql, backend-native-postgresql]
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - name: Identidad exacta de fuente
-        id: source
-        shell: bash
-        run: |
-          test -z "$(git status --porcelain --untracked-files=all)"
-          source_hash=$(python -c 'from scripts.cuaderno.delivery_backup import source_manifest; print(source_manifest()["sha256"])')
-          echo "identity=$(git rev-parse HEAD)+worktree.$source_hash" >> "$GITHUB_OUTPUT"
-      - name: Construir candidato y capturar evidencia real de build
-        id: candidate_build
-        env:
-          CUADERNO_ENV: test
-        run: >-
-          python scripts/cuaderno/candidate_check.py build-image
-          --context .cuaderno-runs/ci-context.json --bootstrap-image cuaderno-cocina:local
-      - name: Conservar diagnóstico de construcción fallida
-        if: failure() && steps.candidate_build.outcome == 'failure'
-        uses: actions/upload-artifact@v7
-        with:
-          name: cuaderno-build-failure
-          path: |
-            .cuaderno-runs/*-build-image-*.json
-            .cuaderno-runs/*-build-image-*.log
-          include-hidden-files: true
-          if-no-files-found: error
-          compression-level: 9
-          retention-days: 3
-      - name: Contratos del mismo candidato
-        env:
-          CUADERNO_ENV: test
-        shell: bash
-        run: |
-          for check in runtime-python-lock runtime-pip-check frontend-provenance sbom-python sbom-frontend; do
-            python scripts/cuaderno/candidate_check.py "$check" --context .cuaderno-runs/ci-context.json --allow-isolated-mutations
-          done
-      - name: Transporte Gunicorn real de raíz y prefijo
-        shell: bash
-        run: |
-          image_id=$(python -c 'import json; print(json.load(open(".cuaderno-runs/ci-context.json"))["image_id"])')
-          docker run --rm --network none --memory 512m --cpus 0.5 --cap-drop ALL \
-            --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,nosuid,nodev,size=32m \
-            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/work,readonly" \
-            --entrypoint /opt/recipes/venv/bin/python "$image_id" \
-            /work/scripts/cuaderno/gunicorn_prefix_transport.py --source-root /work \
-            > .cuaderno-runs/gunicorn-prefix-transport.json
-      - name: Exportar imagen por ID y hash
-        shell: bash
-        run: |
-          image_id=$(docker image inspect cuaderno-cocina:local --format '{{.Id}}')
-          test "$(docker image inspect cuaderno-cocina:local --format '{{index .Config.Labels "io.cuaderno.source-identity"}}')" = '${{ steps.source.outputs.identity }}'
-          printf '%s\n' "$image_id" > .cuaderno-runs/candidate-image-id.txt
-          printf '%s\n' '${{ steps.source.outputs.identity }}' > .cuaderno-runs/candidate-source-identity.txt
-          docker save "$image_id" | gzip -1 > .cuaderno-runs/candidate-image.tar.gz
-          sha256sum .cuaderno-runs/candidate-image.tar.gz > .cuaderno-runs/candidate-image.tar.gz.sha256
-      - uses: actions/upload-artifact@v7
-        with:
-          name: cuaderno-candidate-image
-          path: |
-            .cuaderno-runs/candidate-image.tar.gz
-            .cuaderno-runs/candidate-image.tar.gz.sha256
-            .cuaderno-runs/candidate-image-id.txt
-            .cuaderno-runs/candidate-source-identity.txt
-            .cuaderno-runs/ci-context.json
-            .cuaderno-runs/gunicorn-prefix-transport.json
-            .cuaderno-runs/*-build-image-*.json
-            .cuaderno-runs/*-build-image-*.log
-            .cuaderno-runs/*-runtime-python-lock-*.json
-            .cuaderno-runs/*-runtime-python-lock-*.log
-            .cuaderno-runs/*-runtime-pip-check-*.json
-            .cuaderno-runs/*-runtime-pip-check-*.log
-            .cuaderno-runs/*-frontend-provenance-*.json
-            .cuaderno-runs/*-frontend-provenance-*.log
-            .cuaderno-runs/*-sbom-*.json
-            .cuaderno-runs/*-sbom-*.log
-          include-hidden-files: true
-          compression-level: 0
-          retention-days: 3
-
-  markdown-runtime:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    needs: candidate-image
-    services:
-      postgres:
-        image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
-        env:
-          POSTGRES_DB: cuaderno_ci_markdown
-          POSTGRES_USER: cuaderno_ci
-          POSTGRES_PASSWORD: cuaderno-ci-only
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U cuaderno_ci -d cuaderno_ci_markdown"
-          --health-interval 5s --health-timeout 3s --health-retries 20
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24.21.0"
-          cache: yarn
-          cache-dependency-path: vue3/yarn.lock
-      - uses: actions/download-artifact@v8
-        with:
-          name: cuaderno-candidate-image
-          path: .cuaderno-runs
-      - name: Cargar la imagen candidata exacta
-        shell: bash
-        run: |
-          sha256sum -c .cuaderno-runs/candidate-image.tar.gz.sha256
-          gunzip -c .cuaderno-runs/candidate-image.tar.gz | docker load
-          test "$(docker image inspect "$(cat .cuaderno-runs/candidate-image-id.txt)" --format '{{.Id}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
-      - name: Instalar frontend para Markdown
-        working-directory: vue3
-        run: yarn install --frozen-lockfile --non-interactive
-      - name: Arrancar runtime Markdown aislado
-        shell: bash
-        run: |
-          docker run -d --name cuaderno-g0-t002-web \
-            --add-host=host.docker.internal:host-gateway \
-            -e SECRET_KEY=cuaderno-ci-synthetic-secret-not-for-production \
-            -e ALLOWED_HOSTS=127.0.0.1,localhost \
-            -e DB_ENGINE=django.db.backends.postgresql -e DB_OPTIONS="{'options': '-c jit=off'}" \
-            -e POSTGRES_HOST=host.docker.internal -e POSTGRES_PORT=5432 \
-            -e POSTGRES_DB=cuaderno_ci_markdown -e POSTGRES_USER=cuaderno_ci \
-            -e POSTGRES_PASSWORD=cuaderno-ci-only -e ENABLE_SIGNUP=0 -e DEBUG=0 \
-            "$(cat .cuaderno-runs/candidate-image-id.txt)"
-          test "$(docker inspect cuaderno-g0-t002-web --format '{{.Image}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
-          for attempt in $(seq 1 120); do
-            if docker exec cuaderno-g0-t002-web /opt/recipes/venv/bin/python -c \
-              "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1/health/ready/',timeout=3))['ready'] is True"; then
-              exit 0
-            fi
-            sleep 2
-          done
-          docker logs cuaderno-g0-t002-web
-          exit 1
-      - name: Integracion Markdown backend y Vue
-        working-directory: vue3
-        run: node --test src/cuaderno/markdownSecurity.test.mjs
-      - name: Diagnostico Markdown
-        if: failure()
-        run: docker logs cuaderno-g0-t002-web || true
-      - name: Cerrar runtime Markdown aislado
-        if: always()
-        run: docker rm -f cuaderno-g0-t002-web >/dev/null 2>&1 || true
-
-  playwright-candidate:
-    strategy:
-      fail-fast: false
-      matrix:
-        deployment: [root, prefix]
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    needs: candidate-image
-    env:
-      BASE_URL: ${{ matrix.deployment == 'prefix' && 'https://127.0.0.1:18443/cuaderno-cocina/' || 'http://127.0.0.1:18081' }}
-      CUADERNO_E2E_PREFIX: ${{ matrix.deployment == 'prefix' && '1' || '0' }}
-      CUADERNO_E2E_SELF_SIGNED: "0"
-      CUADERNO_ENV: test
-      CI: "1"
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "24.21.0"
-          cache: npm
-          cache-dependency-path: tests/cuaderno/e2e/package-lock.json
-      - uses: actions/download-artifact@v8
-        with:
-          name: cuaderno-candidate-image
-          path: .cuaderno-runs
-      - name: Cargar la imagen candidata exacta
-        shell: bash
-        run: |
-          sha256sum -c .cuaderno-runs/candidate-image.tar.gz.sha256
-          gunzip -c .cuaderno-runs/candidate-image.tar.gz | docker load
-          test "$(docker image inspect "$(cat .cuaderno-runs/candidate-image-id.txt)" --format '{{.Id}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
-          docker tag "$(cat .cuaderno-runs/candidate-image-id.txt)" cuaderno-cocina:local
-      - name: Instalar Playwright bloqueado y los tres motores
-        working-directory: tests/cuaderno/e2e
-        run: |
-          npm ci
-          node --test *.test.mjs
-          npx playwright install --with-deps chromium firefox webkit
-          npm run typecheck
-          if test "$CUADERNO_E2E_PREFIX" != 1; then npx playwright test --list; fi
-      - name: Crear secretos sinteticos efimeros
-        shell: bash
-        run: |
-          db_password=$(openssl rand -hex 24)
-          secret_key=$(openssl rand -hex 48)
-          demo_password=$(openssl rand -hex 24)
-          echo "::add-mask::$db_password"
-          echo "::add-mask::$secret_key"
-          echo "::add-mask::$demo_password"
-          echo "CUADERNO_LOCAL_DB_PASSWORD=$db_password" >> "$GITHUB_ENV"
-          echo "CUADERNO_LOCAL_SECRET_KEY=$secret_key" >> "$GITHUB_ENV"
-          echo "CUADERNO_DEMO_PASSWORD=$demo_password" >> "$GITHUB_ENV"
-      - name: Arrancar preview candidato aislado
-        shell: bash
-        run: |
-          mkdir -p data/cuaderno/local
-          chmod 700 data/cuaderno/local
-          env_file=data/cuaderno/local/compose.env
-          printf 'CUADERNO_LOCAL_DB_PASSWORD=%s\nCUADERNO_LOCAL_SECRET_KEY=%s\n' \
-            "$CUADERNO_LOCAL_DB_PASSWORD" "$CUADERNO_LOCAL_SECRET_KEY" > "$env_file"
-          chmod 600 "$env_file"
-          export CUADERNO_LOCAL_IMAGE="$(cat .cuaderno-runs/candidate-image-id.txt)"
-          override=()
-          if test "$CUADERNO_E2E_PREFIX" = 1; then override=(-f deploy/cuaderno/compose.e2e-prefix.yml); fi
-          docker compose --project-name cuaderno-release --env-file "$env_file" \
-            -f deploy/cuaderno/compose.local.yml "${override[@]}" up -d --wait --wait-timeout 600
-          test "$(docker inspect cuaderno-release-web --format '{{.Image}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
-          test "$(docker inspect cuaderno-release-web --format '{{.Config.Image}}')" = "$(cat .cuaderno-runs/candidate-image-id.txt)"
-      - name: Ingress HTTPS aislado bajo prefijo
-        if: matrix.deployment == 'prefix'
-        shell: bash
-        run: |
-          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=Cuaderno CI test CA' \
-            -addext basicConstraints=critical,CA:TRUE,pathlen:0 \
-            -addext keyUsage=critical,keyCertSign,cRLSign \
-            -keyout .cuaderno-runs/ci-tls-ca.key -out .cuaderno-runs/ci-tls-ca.crt
-          openssl req -new -newkey rsa:2048 -nodes -subj /CN=127.0.0.1 \
-            -keyout .cuaderno-runs/ci-tls.key -out .cuaderno-runs/ci-tls.csr
-          cat > .cuaderno-runs/ci-tls.ext <<'CERT_EXTENSIONS'
-          basicConstraints=critical,CA:FALSE
-          keyUsage=critical,digitalSignature,keyEncipherment
-          extendedKeyUsage=serverAuth
-          subjectAltName=IP:127.0.0.1
-          authorityKeyIdentifier=keyid,issuer
-          subjectKeyIdentifier=hash
-          CERT_EXTENSIONS
-          openssl x509 -req -in .cuaderno-runs/ci-tls.csr \
-            -CA .cuaderno-runs/ci-tls-ca.crt -CAkey .cuaderno-runs/ci-tls-ca.key -CAcreateserial \
-            -days 1 -sha256 -extfile .cuaderno-runs/ci-tls.ext -out .cuaderno-runs/ci-tls.crt
-          chmod 600 .cuaderno-runs/ci-tls.key .cuaderno-runs/ci-tls-ca.key
-          cert=$(realpath .cuaderno-runs/ci-tls.crt)
-          ca=$(realpath .cuaderno-runs/ci-tls-ca.crt)
-          openssl verify -CAfile "$ca" -purpose sslserver -verify_ip 127.0.0.1 "$cert" > .cuaderno-runs/ci-tls-verify.log
-          policy=$(realpath .cuaderno-runs/ci-firefox-policies.json)
-          python -c 'import json,sys; json.dump({"policies":{"Certificates":{"Install":[sys.argv[1]]}}},open(sys.argv[2],"w"))' "$ca" "$policy"
-          # Trust only this job's generated CA, on its disposable runner.
-          # Chromium also pins its exact SPKI; Firefox receives the policy below;
-          # WebKit's bundled launcher uses the runner's system CA bundle.
-          sudo install -m 0644 "$ca" "/usr/local/share/ca-certificates/cuaderno-e2e-${{ github.run_id }}.crt"
-          sudo update-ca-certificates > .cuaderno-runs/ci-ca-install.log
-          printf 'CUADERNO_E2E_TLS_CERT=%s\nCUADERNO_E2E_TLS_CA=%s\nNODE_EXTRA_CA_CERTS=%s\nPLAYWRIGHT_FIREFOX_POLICIES_JSON=%s\n' \
-            "$cert" "$ca" "$ca" "$policy" >> "$GITHUB_ENV"
-          python scripts/cuaderno/e2e_prefix_proxy.py --cert .cuaderno-runs/ci-tls.crt --key .cuaderno-runs/ci-tls.key > .cuaderno-runs/prefix-proxy.log 2>&1 &
-          echo "$!" > .cuaderno-runs/prefix-proxy.pid
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent --cacert "$ca" "$BASE_URL"health/ready/ > .cuaderno-runs/prefix-ready.json; then
-              python -c 'import json; assert json.load(open(".cuaderno-runs/prefix-ready.json"))["ready"] is True'
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 1
-      - name: Listar matriz prefijada con confianza TLS verificada
-        if: matrix.deployment == 'prefix'
-        working-directory: tests/cuaderno/e2e
-        run: npx playwright test --list
-      - name: Sembrar fixtures sinteticos guardados
-        run: >-
-          docker exec -e CUADERNO_ENV=local -e CUADERNO_DEMO_PASSWORD="$CUADERNO_DEMO_PASSWORD"
-          cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_e2e
-      - name: Verificar confianza TLS y worker real en los tres motores
-        if: matrix.deployment == 'prefix'
-        working-directory: tests/cuaderno/e2e
-        run: node tls-fixture-preflight.mjs > ../../../.cuaderno-runs/tls-fixture-preflight.json
-      - name: Preparar autenticacion una vez
-        working-directory: tests/cuaderno/e2e
-        run: |
-          node prepare-auth.mjs --base-url "$BASE_URL"
-          node prepare-auth.mjs --base-url "$BASE_URL" --reuse
-      - name: Matriz completa sin retries y con preview verificado
-        shell: bash
-        run: |
-          mkdir -p .cuaderno-runs
-          export CUADERNO_CANDIDATE_IMAGE="$(cat .cuaderno-runs/candidate-image-id.txt)"
-          python scripts/cuaderno/candidate_check.py e2e-final --context .cuaderno-runs/ci-context.json --allow-isolated-mutations
-      - name: Vincular la matriz de cantidades al runtime candidato
-        if: matrix.deployment == 'prefix'
-        shell: bash
-        run: |
-          python - <<'PY'
-          import hashlib, json, os, pathlib, re, subprocess
-          root = pathlib.Path(os.environ['GITHUB_WORKSPACE'])
-          records = root / '.cuaderno-runs'
-          commit = os.environ['GITHUB_SHA']
-          context = json.loads((records / 'ci-context.json').read_text())
-          image = (records / 'candidate-image-id.txt').read_text().strip()
-          source = (records / 'candidate-source-identity.txt').read_text().strip()
-          assert re.fullmatch('[a-f0-9]{40}', commit)
-          assert re.fullmatch('sha256:[a-f0-9]{64}', image)
-          assert re.fullmatch(commit + r'\+worktree\.[a-f0-9]{64}', source)
-          assert context['git_commit'] == commit and context['source_identity'] == source and context['image_id'] == image
-          with (records / 'candidate-image.tar.gz').open('rb') as stream:
-              archive_sha = hashlib.file_digest(stream, 'sha256').hexdigest()
-          assert archive_sha == (records / 'candidate-image.tar.gz.sha256').read_text().split()[0]
-          def inspect(name):
-              return json.loads(subprocess.check_output(['docker', 'inspect', name], timeout=15))[0]
-          web, db = inspect('cuaderno-release-web'), inspect('cuaderno-release-db')
-          for row, service in ((web, 'web'), (db, 'db')):
-              assert row['Name'] == '/cuaderno-release-' + service
-              assert re.fullmatch('[a-f0-9]{64}', row['Id'])
-              assert row['Config']['Labels']['com.docker.compose.project'] == 'cuaderno-release'
-              assert row['Config']['Labels']['com.docker.compose.service'] == service
-              assert row['State']['Running'] and not row['State']['OOMKilled']
-              assert row['State']['Health']['Status'] == 'healthy'
-          assert web['Image'] == image and web['Config']['Image'] == image
-          assert web['Config']['Labels']['io.cuaderno.source-identity'] == source
-          raw = subprocess.check_output(['docker', 'exec', web['Id'], 'cat',
-              '/opt/recipes/cookbook/static/vue3/cuaderno-build-provenance.json'], timeout=15)
-          provenance = json.loads(raw)
-          assert provenance['schema_version'] == 1
-          modules = {'vue:src/cuaderno/components/IngredientYieldPanel.vue', 'vue:src/cuaderno/ingredientYieldUi.ts'}
-          chunks = [chunk for chunk in provenance['rollup']['main']['chunks']
-              if any(module['id'] in modules for module in chunk['modules'])]
-          assert chunks and modules <= {module['id'] for chunk in chunks for module in chunk['modules']}
-          assets = []
-          for chunk in chunks:
-              assert any(asset['file_name'] == chunk['file_name'] and asset['sha256'] == chunk['sha256']
-                  for asset in provenance['final_assets'])
-              assets.append({'path': '/cuaderno-cocina/static/vue3/' + chunk['file_name'], 'sha256': chunk['sha256']})
-          token = os.environ['GITHUB_RUN_ID'] + '-' + os.environ['GITHUB_RUN_ATTEMPT']
-          directory = records / ('quantity-' + token)
-          directory.mkdir(mode=0o700)
-          metadata = directory / 'runtime-metadata.json'
-          binding = {'schemaVersion': 1, 'mode': 'isolated-ci-quantity-precision',
-              'repository': os.environ['GITHUB_REPOSITORY'], 'sourceCommit': commit, 'sourceIdentity': source,
-              'ciRunId': os.environ['GITHUB_RUN_ID'], 'ciRunAttempt': os.environ['GITHUB_RUN_ATTEMPT'],
-              'imageId': image, 'imageArchiveSha256': archive_sha,
-              'runtime': {'webId': web['Id'], 'databaseId': db['Id'], 'imageId': image, 'sourceCommit': commit},
-              'frontendProvenance': {'path': '/cuaderno-cocina/static/vue3/cuaderno-build-provenance.json',
-                  'sha256': hashlib.sha256(raw).hexdigest()}, 'changedAssetBindings': assets}
-          metadata_raw = (json.dumps(binding, sort_keys=True) + '\n').encode()
-          with metadata.open('xb') as stream:
-              stream.write(metadata_raw)
-          metadata.chmod(0o600)
-          values = {'CUADERNO_QUANTITY_TOKEN': token, 'CUADERNO_QUANTITY_RUN_DIR': str(directory),
-              'CUADERNO_QUANTITY_METADATA': str(metadata), 'CUADERNO_QUANTITY_METADATA_SHA256': hashlib.sha256(metadata_raw).hexdigest(),
-              'CUADERNO_QUANTITY_SOURCE_COMMIT': commit, 'CUADERNO_CANDIDATE_IMAGE': image}
-          with open(os.environ['GITHUB_ENV'], 'a') as stream:
-              for key, value in values.items():
-                  assert '\n' not in value and '\r' not in value
-                  stream.write(key + '=' + value + '\n')
-          PY
-      - name: Cantidades exactas en nueve cuentas y cuatro anchos
-        if: matrix.deployment == 'prefix'
-        working-directory: tests/cuaderno/e2e
-        shell: bash
-        run: |
-          npx playwright test --config ingredient-quantity-precision.config.ts
-          python - "$CUADERNO_QUANTITY_RUN_DIR/summary.json" <<'PY'
-          import json, sys
-          with open(sys.argv[1]) as stream:
-              result = json.load(stream)
-          assert result['passed'] is True and result['failed'] == 0
-          assert result['cases'] == 9 and len(result['reports']) == 9 and len(result['screenshots']) == 36
-          assert result['newCritical12Claimed'] is False
-          PY
-      - name: Evidencia de cantidades sin estados de sesión
-        if: always() && matrix.deployment == 'prefix'
-        uses: actions/upload-artifact@v7
-        with:
-          name: cuaderno-quantity-precision-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .cuaderno-runs/quantity-${{ github.run_id }}-${{ github.run_attempt }}
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 7
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: cuaderno-e2e-records-${{ matrix.deployment }}
-          path: |
-            .cuaderno-runs/*-e2e-final-*.json
-            .cuaderno-runs/*-e2e-final-*.log
-            .cuaderno-runs/tls-fixture-preflight.json
-          include-hidden-files: true
-          retention-days: 7
-      - name: Capturar diagnostico del preview
-        if: failure()
-        shell: bash
-        run: |
-          mkdir -p tests/cuaderno/e2e/runtime-diagnostics
-          docker compose --project-name cuaderno-release --env-file data/cuaderno/local/compose.env \
-            -f deploy/cuaderno/compose.local.yml ps > tests/cuaderno/e2e/runtime-diagnostics/compose-ps.txt || true
-          docker logs cuaderno-release-web > tests/cuaderno/e2e/runtime-diagnostics/web.log 2>&1 || true
-          docker logs cuaderno-release-db > tests/cuaderno/e2e/runtime-diagnostics/db.log 2>&1 || true
-      - name: Subir informes HTML por edicion
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cuaderno-playwright-reports-${{ github.run_id }}-${{ matrix.deployment }}
-          path: |
-            .cuaderno-runs/e2e-final-*/playwright-report
-            .cuaderno-runs/*-e2e-final-*.json
-            .cuaderno-runs/*-e2e-final-*.log
-          if-no-files-found: warn
-          include-hidden-files: true
-          retention-days: 7
-      - name: Subir evidencia Playwright solo al fallar
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cuaderno-playwright-failure-${{ github.run_id }}-${{ matrix.deployment }}
-          path: |
-            .cuaderno-runs/e2e-final-*/test-results
-            tests/cuaderno/e2e/runtime-diagnostics
-          if-no-files-found: warn
-          include-hidden-files: true
-          retention-days: 7
-      - name: Cerrar preview aislado
-        if: always()
-        shell: bash
-        run: |
-          if test -f data/cuaderno/local/compose.env; then
-            docker compose --project-name cuaderno-release --env-file data/cuaderno/local/compose.env \
-              -f deploy/cuaderno/compose.local.yml down --remove-orphans || true
-          fi
-
   release-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 300
-    needs: [candidate-image, playwright-candidate, markdown-runtime]
-    # A prefix failure still fails the entire workflow. Run the independent G7
-    # checks as well so its recovery/security diagnostics are available; a failed
-    # root matrix cannot supply the required passing e2e-final artifact.
-    if: always() && !cancelled() && needs.candidate-image.result == 'success' && needs.markdown-runtime.result == 'success'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/cuaderno/g7-recovery-20261009'
+    defaults:
+      run:
+        working-directory: runtime-source
     env:
       CUADERNO_ENV: test
       CUADERNO_BACKUP_TARGET: release
       CI: '1'
     steps:
-      - uses: actions/checkout@v7
+      - name: Controlador explícito, separado de la fuente runtime
+        uses: actions/checkout@v7
         with:
+          ref: ${{ github.sha }}
+          path: controller
+          fetch-depth: 0
+      - name: Fuente runtime congelada 4335e6e
+        uses: actions/checkout@v7
+        with:
+          ref: 4335e6e9b858581c724e154c799c095cddb88383
+          path: runtime-source
           fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
@@ -662,17 +46,57 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: cuaderno-candidate-image
-          path: .cuaderno-runs
+          run-id: 37972458941
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: runtime-source/.cuaderno-runs
       - uses: actions/download-artifact@v8
         with:
           name: cuaderno-e2e-records-root
-          path: .cuaderno-runs
+          run-id: 37972458941
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: runtime-source/.cuaderno-runs
       - uses: actions/download-artifact@v8
         with:
-          name: cuaderno-candidate-image
-          run-id: 37451427468
+          artifact-ids: 11605008153
+          run-id: 37905852791
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: .cuaderno-runs/prior-image
+          path: runtime-source/.cuaderno-runs/prior-image
+      - name: Procedencia del controlador y contexto original inmutable
+        shell: bash
+        env:
+          G7_CONTROLLER_SHA: ${{ github.sha }}
+          G7_CONTROLLER_RUN: ${{ github.run_id }}
+        run: |
+          python - <<'PYPROOF'
+          import hashlib, json, os, subprocess, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts/cuaderno')
+          from candidate_context import source_identity
+          source = source_identity(Path.cwd())
+          expected = {'git_commit': '4335e6e9b858581c724e154c799c095cddb88383',
+              'source_sha256': '111e3b15e098839437c8e64a67bb3a9b34a04863f946ca344a7e7a853c377f05',
+              'source_identity': '4335e6e9b858581c724e154c799c095cddb88383+worktree.111e3b15e098839437c8e64a67bb3a9b34a04863f946ca344a7e7a853c377f05'}
+          assert source == expected, 'Runtime source identity mismatch'
+          controller = subprocess.check_output(['git', '-C', '../controller', 'rev-parse', 'HEAD'], text=True).strip()
+          assert controller == os.environ['G7_CONTROLLER_SHA'] and controller != expected['git_commit']
+          context_path = Path('.cuaderno-runs/ci-context.json')
+          context = json.loads(context_path.read_bytes())
+          assert all(context.get(key) == value for key, value in expected.items())
+          assert context['image_id'] == 'sha256:79a4eab1018a7afcd7f22c1dbc16cb76d43a226fcb0f1804366b94dda00a28ba'
+          prior = Path('.cuaderno-runs/prior-image/candidate-source-identity.txt').read_text().strip()
+          assert prior == '643e37ada841b182890daf77790e3e21768d5952+worktree.9205105e02bccdb45ff5cc6048720e2a293532b660db2c3ee46e52394f52623b'
+          proof = {'schema_version': 1, 'controller_commit': controller,
+              'controller_run_id': int(os.environ['G7_CONTROLLER_RUN']), 'runtime_source': source,
+              'candidate_run_id': 37972458941, 'root_records_run_id': 37972458941,
+              'prior_run_id': 37905852791, 'prior_artifact_id': 11605008153,
+              'prior_source_identity': prior, 'context_sha256': hashlib.sha256(context_path.read_bytes()).hexdigest(),
+              'context_regenerated': False, 'original_run_reclassified': False}
+          output = Path(os.environ['RUNNER_TEMP']) / 'g7-recovery-controller-provenance.json'
+          with output.open('x') as stream:
+              os.fchmod(stream.fileno(), 0o600)
+              json.dump(proof, stream, sort_keys=True)
+              stream.write('\n')
+          PYPROOF
       - name: Secretos sinteticos y entorno previo aislado
         shell: bash
         run: |
@@ -695,7 +119,7 @@ jobs:
             --source-identity-file .cuaderno-runs/prior-image/candidate-source-identity.txt \
             --local-id-output .cuaderno-runs/prior-local-image-id.txt --report .cuaderno-runs/prior-image-binding.json
           prior_id=$(cat .cuaderno-runs/prior-local-image-id.txt)
-          git worktree add --detach .cuaderno-runs/prior-source f2e3f3ca6da66848fd1234c6189a342184316d52
+          git worktree add --detach .cuaderno-runs/prior-source 643e37ada841b182890daf77790e3e21768d5952
           CUADERNO_LOCAL_IMAGE="$prior_id" docker compose --project-name cuaderno-prior-ci \
             --env-file data/cuaderno/local/compose.env -f .cuaderno-runs/prior-source/deploy/cuaderno/compose.local.yml \
             up -d --wait --wait-timeout 600
@@ -721,16 +145,48 @@ jobs:
             cuaderno-release-web /opt/recipes/venv/bin/python manage.py seed_cuaderno_e2e
       - name: Diecisiete evidencias del mismo candidato y gate estricto
         run: python scripts/cuaderno/ci_release_gate.py --context .cuaderno-runs/ci-context.json
+      - name: Verificar que G7 conservó el contexto original
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PYCONTEXT'
+          import hashlib, json, os
+          from pathlib import Path
+          path = Path(os.environ['RUNNER_TEMP']) / 'g7-recovery-controller-provenance.json'
+          proof = json.loads(path.read_bytes())
+          assert hashlib.sha256(Path('.cuaderno-runs/ci-context.json').read_bytes()).hexdigest() == proof['context_sha256']
+          proof['context_unchanged_after_gate'] = True
+          with path.open('w') as stream:
+              json.dump(proof, stream, sort_keys=True)
+              stream.write('\n')
+          PYCONTEXT
+      - name: Empaquetar evidencias sin alterar el layout nativo del artefacto
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PYEVIDENCE'
+          import os, shutil
+          from pathlib import Path
+          root = Path.cwd()
+          output = Path(os.environ['RUNNER_TEMP']) / 'g7-recovery-evidence'
+          output.mkdir(mode=0o700)
+          for pattern in ('.cuaderno-runs/*.json', '.cuaderno-runs/*.log',
+              'data/cuaderno/scans/**/grype-linux.json', 'data/cuaderno/scans/**/summary-linux.json',
+              'data/cuaderno/backups/**/restore-result.json'):
+              for path in root.glob(pattern):
+                  assert path.is_file() and not path.is_symlink()
+                  dest = output / path.relative_to(root)
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  assert not dest.exists()
+                  shutil.copy2(path, dest)
+          shutil.copy2(Path(os.environ['RUNNER_TEMP']) / 'g7-recovery-controller-provenance.json',
+              output / 'g7-recovery-controller-provenance.json')
+          PYEVIDENCE
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cuaderno-release-gate-evidence
-          path: |
-            .cuaderno-runs/*.json
-            .cuaderno-runs/*.log
-            data/cuaderno/scans/**/grype-linux.json
-            data/cuaderno/scans/**/summary-linux.json
-            data/cuaderno/backups/**/restore-result.json
+          path: ${{ runner.temp }}/g7-recovery-evidence/
           include-hidden-files: true
           retention-days: 7
       - name: Cerrar solo el preview de CI
