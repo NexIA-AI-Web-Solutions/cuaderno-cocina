@@ -43,7 +43,7 @@ async function foodPanel(page:Page,id:number) {
   await withAuthenticatedReadBarrier(page,async()=>{
     await page.goto(appPath(`/edit/Food/${id}`))
     await expect(page.getByRole('heading',{name:'Foto del ingrediente',exact:true})).toBeVisible()
-    await expect(page.locator('.entity-image-panel .v-progress-linear')).toHaveCount(0)
+    await expect(page.locator('.entity-image-panel .v-progress-linear').filter({visible:true})).toHaveCount(0)
   },[`/api/food/${id}/`,`/api/cuaderno/foods/${id}/image/`])
   return page.locator('.entity-image-panel')
 }
@@ -72,7 +72,7 @@ test('media: foto Food real persiste, Consulta solo lee y eliminación conserva 
     await panel.locator('input[type=file]').setInputFiles({name:'invalid.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>')})
     let uploads=0;const listen=(request:import('@playwright/test').Request)=>{if(new URL(request.url()).pathname===appPath(`/api/cuaderno/foods/${food!.id}/image/`) && request.method()==='PUT')uploads++}
     owner.page.on('request',listen)
-    try {await panel.getByRole('button',{name:'Guardar imagen',exact:true}).click();await expect(panel.getByRole('alert')).toContainText('JPG, PNG, WebP o GIF');expect(uploads).toBe(0);await expect(panel).toContainText('invalid.svg')} finally {owner.page.off('request',listen)}
+    try {await panel.getByRole('button',{name:'Guardar imagen',exact:true}).click();const imageError=panel.locator('.v-alert[role="alert"]').filter({visible:true});await expect(imageError).toHaveCount(1);await expect(imageError).toContainText('JPG, PNG, WebP o GIF');expect(uploads).toBe(0);await expect(panel).toContainText('invalid.svg')} finally {owner.page.off('request',listen)}
     await panel.locator('input[type=file]').setInputFiles(tomatoes);await panel.getByLabel('Descripción de la imagen',{exact:true}).fill(name)
     const saved=await observe<Media>(owner.page,`/api/cuaderno/foods/${food.id}/image/`,'PUT',()=>panel.getByRole('button',{name:'Guardar imagen',exact:true}).click())
     expect(saved.image?.caption).toBe(name);await visibleImage(panel,name)
@@ -93,7 +93,7 @@ test('media: foto Food real persiste, Consulta solo lee y eliminación conserva 
 })
 
 async function planningPage(page:Page,period?:string) {
-  await withAuthenticatedReadBarrier(page,async()=>{await page.goto(appPath('/cuaderno/planificacion'));await expect(page.getByRole('heading',{name:'Organización de menús'})).toBeVisible();await expect(page.getByText(/^(Periodo cargado:|La organización profesional de menús está disponible)/)).toBeVisible();await expect(page.locator('.menu-planning .v-progress-linear')).toHaveCount(0)})
+  await withAuthenticatedReadBarrier(page,async()=>{await page.goto(appPath('/cuaderno/planificacion'));await expect(page.getByRole('heading',{name:'Organización de menús'})).toBeVisible();await expect(page.getByText(/^(Periodo cargado:|La organización profesional de menús está disponible)/)).toBeVisible();await expect(page.locator('.menu-planning .v-progress-linear').filter({visible:true})).toHaveCount(0)})
   if(period) {await page.getByLabel('Primer día',{exact:true}).fill(period);await observe(page,'/api/cuaderno/planning/','GET',()=>page.getByRole('button',{name:'Actualizar periodo',exact:true}).click());await expect(page.getByText(/^Periodo cargado:/)).toContainText(period)}
 }
 async function downloadBytes(page:Page,format:'PNG'|'PDF',info:TestInfo,orientation:string) {
