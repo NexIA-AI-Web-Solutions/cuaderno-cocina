@@ -1,9 +1,13 @@
 import {expect, type Page, type Request} from '@playwright/test'
 import {appPath} from './contracts.js'
 
+export function withAuthenticatedReadBarrier<T>(page: Page, action: () => Promise<T>, requiredPaths: string[] = [], requiredPostPaths: string[] = []): Promise<T> {
+  return withNativeReadBarrier(page, action, requiredPaths, requiredPostPaths, true)
+}
+
 // A heading can appear before its route's native API bodies finish. Preserve
 // every collector error and finish observed reads before a deliberate reload.
-export async function withNativeReadBarrier<T>(page: Page, action: () => Promise<T>, requiredPaths: string[] = [], requiredPostPaths: string[] = []): Promise<T> {
+export async function withNativeReadBarrier<T>(page: Page, action: () => Promise<T>, requiredPaths: string[] = [], requiredPostPaths: string[] = [], authenticatedDocuments = false): Promise<T> {
   const base = new URL(process.env.BASE_URL || 'http://127.0.0.1:18081')
   const reads = new Set<Promise<void>>()
   const postPaths = new Set(requiredPostPaths.map(path => appPath(path)))
@@ -11,22 +15,46 @@ export async function withNativeReadBarrier<T>(page: Page, action: () => Promise
     if (!path.startsWith(appPath('/api/'))) throw new Error('Required route reads must be native API paths')
   }
   const required = new Set([...requiredPaths.map(path => `GET ${appPath(path)}`), ...[...postPaths].map(path => `POST ${path}`)])
-  let requiredStarted!: () => void
-  const started = new Promise<void>(resolve => {requiredStarted = resolve})
-  if (!required.size) requiredStarted()
+  const startupPaths = new Set(['/api/user-preference/', '/api/recipe/flat/'].map(path => appPath(path)))
+  let freshDocument = false
+  let changed!: () => void
+  let nextChange = new Promise<void>(resolve => {changed = resolve})
+  const notify = () => {
+    const previous = changed
+    nextChange = new Promise<void>(resolve => {changed = resolve})
+    previous()
+  }
+  let rejectRead!: (error: unknown) => void
+  const failedRead = new Promise<never>((_resolve, reject) => {rejectRead = reject})
+  void failedRead.catch(() => {})
   const listen = (request: Request) => {
     const url = new URL(request.url())
     const method = request.method()
+    if (authenticatedDocuments && request.isNavigationRequest() && request.frame() === page.mainFrame() &&
+      url.origin === base.origin && url.pathname.startsWith(appPath('/'))) {
+      // A second document (including ModelEditPage's creation reload) has its
+      // own authenticated header. SPA transitions never enter this branch.
+      freshDocument = true
+      for (const path of startupPaths) required.add(`GET ${path}`)
+      notify()
+      return
+    }
     if ((method !== 'GET' && !(method === 'POST' && postPaths.has(url.pathname))) ||
       url.origin !== base.origin || !url.pathname.startsWith(appPath('/api/'))) return
     const pending = request.response().then(async response => {
       expect(response, `native ${method} receives a response before leaving its route`).not.toBeNull()
+      if (freshDocument && startupPaths.has(url.pathname) && method === 'GET') {
+        expect(response!.status(), 'authenticated document startup confirms its native reads').toBe(200)
+      }
+      if (authenticatedDocuments && method === 'POST' && url.pathname === appPath('/api/view-log/')) {
+        expect(response!.status(), 'native recipe view is logged before leaving its route').toBe(201)
+      }
       expect(await response!.finished(), `native ${method} body finishes before leaving its route`).toBeNull()
     })
-    void pending.catch(() => {})
+    void pending.catch(rejectRead)
     reads.add(pending)
     required.delete(`${method} ${url.pathname}`)
-    if (!required.size) requiredStarted()
+    notify()
   }
   page.on('request', listen)
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -38,14 +66,18 @@ export async function withNativeReadBarrier<T>(page: Page, action: () => Promise
       (async () => {
         // Selectors can mount after the heading: an empty observed set alone
         // must not allow a reload before their required requests even start.
-        await started
-        while (reads.size) {
+        while (required.size || reads.size) {
+          if (required.size) {
+            await nextChange
+            continue
+          }
           const snapshot = [...reads]
           await Promise.all(snapshot)
           for (const item of snapshot) reads.delete(item)
         }
         return result
       })(),
+      failedRead,
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error('Native route reads exceeded the existing eight-second readiness budget')), 8_000)
       }),
