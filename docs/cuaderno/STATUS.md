@@ -1,5 +1,30 @@
 # Estado del producto
 
+## Rectángulos de capturas de cantidades — 9 de octubre de 2026
+
+El candidato `4287c25` pasa sus matrices completas: 599 pruebas en raíz y
+715 bajo `/cuaderno-cocina/`, sin reintentos. En la campaña adicional de
+cantidades pasan ocho casos, pero el hook agregado rechaza las nueve cuentas
+por comparar la altura PNG con el tamaño CSS sin incluir el origen fraccionario
+de la tarjeta. La CI 37864699135 no aprueba el candidato; no se cargó ni desplegó
+su imagen. Producción sigue en `c79b2ce`.
+
+Los 144 PNG originales coinciden exactamente con sus hashes, bytes, IHDR y
+rectángulo entero envolvente de Playwright 1.63. En 120 la diferencia entre
+altura raster y altura CSS supera un píxel porque ambos extremos son
+fraccionarios. La revisión visual independiente de 24 capturas originales
+(Responsable en tres ediciones, cuatro anchos y cantidades mínima/máxima)
+confirma cantidades completas y controles sin superposición. Esta revisión
+no convierte la campaña fallida en una aprobada.
+
+El verificador exige ahora el ancho y alto exactos del rectángulo entero que
+Playwright obtiene de ambos extremos, con su epsilon de una milésima de píxel.
+Conserva todos los hashes, bounds, visibilidad, cardinalidad, collector y
+presupuestos. Rechaza incluso un píxel de recorte o relleno. Quince pruebas
+puras pasan después de un rojo significativo con el predicado anterior.
+No cambia código de aplicación. La nueva CI, imagen, campaña de cantidades,
+G7, copia/restauración y aceptación productiva siguen pendientes.
+
 ## Bloqueos nativos y carga autenticada — 9 de octubre de 2026
 
 El candidato `d2737d8` queda rechazado: su CI 37857551325 terminó con
