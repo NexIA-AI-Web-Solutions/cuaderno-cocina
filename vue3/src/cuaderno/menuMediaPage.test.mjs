@@ -1,5 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+import {parse, compileStyle} from '@vue/compiler-sfc'
 import {mountFunctional,button,field,textOf,flush} from './functionalComponentHarness.mjs'
 const meal={id:7,title:'Sopa gástrica',recipe:null,meal_type:{id:1,name:'Almuerzo'},course:null,servings:'4',from_date:'2026-10-09T12:00:00Z',to_date:null,note:'',diet_status:'unknown'}
 const data={courses:[],meal_plans:[meal],events:[],can_edit:true,can_manage_absences:false,can_merge_print:false}
@@ -76,12 +78,26 @@ test('the meal menu bounds its overlay without losing long labels or multiple re
     })
     try {
         const selection = field(mounted.root, 'Platos del periodo')
-        // The default activator-width minimum exceeded the available overlay
-        // maximum in the real 768px WebKit trace (736px versus 720px).
-        assert.deepEqual(selection.props['menu-props'], {minWidth: 0})
+        // Native WebKit changed the list width from 720px to 744px while
+        // delivering row observers; this menu needs a stable scoped width.
+        assert.deepEqual(selection.props['menu-props'], {minWidth: 0, contentClass: 'cuaderno-menu-recipe-options'})
+        const {descriptor} = parse(readFileSync(new URL('./pages/MenuPlanningPage.vue', import.meta.url), 'utf8'))
+        const style = descriptor.styles.find(item => item.scoped)
+        const compiled = compileStyle({source: style.content, filename: 'MenuPlanningPage.vue', id: 'data-v-menu-test', scoped: true})
+        assert.deepEqual(compiled.errors, [])
+        const css = compiled.code.replace(/\s+/g, '')
+        // Teleported menu content must retain the class without an ancestor or
+        // scope attribute, and override Vuetify's changing inline max-width.
+        const overlayRule = css.match(/\.cuaderno-menu-recipe-options\{([^}]+)\}/)?.[1]
+        assert.ok(overlayRule)
+        assert.ok(overlayRule.includes('width:min(38rem,calc(100vw-48px))!important;'))
+        assert.ok(overlayRule.includes('max-width:min(38rem,calc(100vw-48px))!important;'))
+        assert.ok(overlayRule.includes('min-width:0!important;'))
         assert.ok(Object.hasOwn(selection.props, 'multiple')); assert.ok(Object.hasOwn(selection.props, 'chips'))
         assert.ok(selection.props.items.some(item => item.id === 7 && item.label.includes(recipeName)))
         assert.equal(field(mounted.root, 'Portada de una plantilla (opcional)').props['menu-props'], undefined)
+        assert.equal(field(mounted.root, 'Orientación').props['menu-props'], undefined)
+        assert.equal(field(mounted.root, 'Declaración dietética en el documento (opcional)').props['menu-props'], undefined)
         selection.props['onUpdate:modelValue']([7, 8]); await flush()
         button(mounted.root, 'Añadir menú a la impresión').props.onClick(); await flush()
         await button(mounted.root, 'Preparar documento').props.onClick(); await flush()

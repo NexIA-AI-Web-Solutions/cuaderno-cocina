@@ -1,5 +1,20 @@
 # Estado del producto
 
+## Imágenes y exportación: candidato rechazado y nueva corrección — 9 de octubre de 2026
+
+La [CI 37961329952](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37961329952)
+de `42c420d` terminó con 683 PASS y 1 FAIL en raíz, 799 PASS y 1 FAIL bajo
+el prefijo, y G7 FAIL. Ambas matrices conservan el mismo error WebKit
+`ResizeObserver loop completed with undelivered notifications` en el test de
+portada y descargas. G7 no produjo el aggregate de sus diecisiete controles.
+Este candidato no se desplegó; producción mantiene V12 (`643e37a`) saludable.
+
+La nueva fuente de trabajo `source-menu-media-resize-20261009` prepara una
+anchura estable únicamente para «Platos del periodo». Su commit e imagen final
+no están fijados. El diagnóstico CSS V9 pasa un caso WebKit con collector
+estricto; usa CSS experimental global y no certifica la corrección limitada
+al selector de la aplicación. [Resultados y límites de la validación](#resizeobserver-nativo-y-evidencia-retenida--9-de-octubre-de-2026).
+
 ## Carga del shell tras recargar una receta — 9 de octubre de 2026
 
 La CI 37872276744 de `47dd9d0` pasa la matriz raíz con 599 pruebas y
@@ -546,3 +561,51 @@ matriz raíz por un ResizeObserver al abrir «Platos del periodo». Se conserva
 la evidencia oficial del fallo y se corrige únicamente la anchura contradictoria
 del desplegable. Regresión RED→GREEN y 32 pruebas enfocadas aprobadas; nueva
 matriz completa y publicación pendientes. Producción mantiene la release V12.
+
+
+### ResizeObserver nativo y evidencia retenida — 9 de octubre de 2026
+
+La primera corrección `minWidth: 0` fue insuficiente. La fuente `42c420d`
+conserva los dos fallos de la CI completa citada arriba. El test termina las
+aserciones de subida y descargas, pero el collector estricto registra el error
+del navegador y rechaza el caso; no se relajan collector, tiempos ni retries.
+
+Los artefactos oficiales descargados y verificados corresponden a la misma
+fuente y CI. Sus metadatos, referencias de descarga y ZIP quedan privados;
+las URLs firmadas no se incorporan a Git.
+
+| Artefacto | ID y ZIP verificado | Resultado retenido |
+|---|---|---|
+| `cuaderno-e2e-records-prefix` | `11634796075`, 9.567 bytes, SHA256 `fcf87062fca42ed0f220d6603b4b1ca676e5b400228dc8f10b7a57a7f4defb00` | 799 PASS / 1 FAIL; WebKit, `menu-media-exports.spec.ts:117`. |
+| `cuaderno-release-gate-evidence` | `11634681437`, 136.119 bytes, SHA256 `44eaf1152075d2f259fd84e25ed047a19ab2baa4ada264964d061a728b1990d4` | Seis records de imagen PASS; `e2e-final` de raíz FAIL, exit 1; sin aggregate G7. |
+
+El record de prefijo es `20261009T174812Z-e2e-final-50c1a36ccea5.json`;
+el de raíz retenido en G7 es `20261009T174003Z-e2e-final-e45a49ec44e9.json`.
+Se verificaron tamaños y SHA256 de sus logs además del transporte y CRC del ZIP.
+
+La campaña local Chromium V5 conserva seis casos PASS, con imagen/fuente
+`2abd98b` y tests de `309d809`; no certifica `42c420d` ni la nueva corrección.
+La ejecución local WebKit V7 con exportación raster completa sufrió OOM de su
+unidad de 1.024 MiB. Se preservan el fallo y sus resultados parciales: foto
+privada y PDF/PNG vertical; no equivalen a una matriz aprobada.
+
+El diagnóstico nativo WebKit V8 reproduce el error después de crear y recargar
+la portada y de preparar el documento, antes de exportar el raster. Su registro
+por frame observa la lista de 720 a 744 px y sus filas de 688 a 712 px, con
+alturas constantes. Se limpian sus contenedores propios sin OOM registrado en
+ellos. `browser_unit_after` es `None`: no acredita cero OOM en la unidad del
+navegador. La evidencia acota la oscilación de anchura; no acredita el arreglo.
+
+El candidato de trabajo limita únicamente ese selector mediante la clase
+`cuaderno-menu-recipe-options`, con anchura de 38 rem acotada al viewport menos
+48 px. El diagnóstico CSS experimental V9 pasa un caso WebKit en 57,1 s,
+con collector estricto, sin pageerror ni snapshots. El receipt privado
+`cuaderno-menu-media-ui-v9-a857e2911da5/receipt.json` registra navegador
+completado, cgroups finales sin OOM/kill y limpieza de contenedores/red propios.
+Ese CSS afecta todos los VSelect únicamente en el diagnóstico. La corrección
+final usa `contentClass` solo en «Platos del periodo» y conserva 32 pruebas
+focalizadas PASS; no tiene nueva matriz nativa completa ni commit final
+registrados aquí. La admisión exige nueva CI con nueve jobs verdes, G7 del
+mismo candidato, aceptación pública de nueve cuentas y administrador, y
+backup/restauración de la imagen nueva. El backup cifrado y la restauración
+verificados de V12 conservan su alcance anterior y no cierran esos gates.

@@ -46,7 +46,7 @@
                     <v-tabs-window-item value="print">
                         <v-alert type="info" variant="tonal" class="mb-3">La impresión usa los platos autorizados que devuelve el servidor. Las dietas son declaraciones manuales; lo desconocido se muestra como «No declarado».</v-alert>
                         <v-text-field v-model="printName" label="Nombre del menú" maxlength="120" />
-                        <v-select v-model="printTemplateId" :items="templates" item-title="name" item-value="id" label="Portada de una plantilla (opcional)" clearable :disabled="busy" /><v-select v-model="printSelection" :items="mealChoices" label="Platos del periodo" :menu-props="{minWidth: 0}" multiple chips item-title="label" item-value="id" />
+                        <v-select v-model="printTemplateId" :items="templates" item-title="name" item-value="id" label="Portada de una plantilla (opcional)" clearable :disabled="busy" /><v-select v-model="printSelection" :items="mealChoices" label="Platos del periodo" :menu-props="{minWidth: 0, contentClass: 'cuaderno-menu-recipe-options'}" multiple chips item-title="label" item-value="id" />
                         <v-btn :disabled="busy || !printSelection.length || !printName.trim() || printGroups.length >= (planning?.can_merge_print ? 5 : 1)" @click="addPrintGroup">Añadir menú a la impresión</v-btn>
                         <v-list class="my-3"><v-list-item v-for="(group,index) in printGroups" :key="index" :title="group.name" :subtitle="group.meal_plan_ids.length + ' platos'"><template #append><v-btn variant="text" :aria-label="'Quitar menú ' + group.name" @click="printGroups.splice(index,1)">Quitar</v-btn></template></v-list-item></v-list>
                         <p v-if="!planning?.can_merge_print" class="mb-3">Profesional imprime un menú. Integral permite reunir hasta cinco menús en un documento.</p>
@@ -222,6 +222,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Keep teleported recipe options stable while Vuetify positions the overlay. */
+:global(.cuaderno-menu-recipe-options) {
+    width: min(38rem, calc(100vw - 48px)) !important;
+    max-width: min(38rem, calc(100vw - 48px)) !important;
+    min-width: 0 !important;
+}
 .menu-planning :deep(.v-card-title) {white-space: normal;}
 .menu-print-table {width: 100%; border-collapse: collapse; table-layout:fixed;}
 .menu-cover {margin-left:0;margin-right:0;}

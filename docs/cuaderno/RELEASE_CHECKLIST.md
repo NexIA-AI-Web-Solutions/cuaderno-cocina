@@ -214,3 +214,34 @@ matriz raíz por un ResizeObserver al abrir «Platos del periodo». Se conserva
 la evidencia oficial del fallo y se corrige únicamente la anchura contradictoria
 del desplegable. Regresión RED→GREEN y 32 pruebas enfocadas aprobadas; nueva
 matriz completa y publicación pendientes. Producción mantiene la release V12.
+
+
+### ResizeObserver: nueva fuente de trabajo y gates abiertos (2026-10-09)
+
+El candidato `42c420d`, [CI 37961329952](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37961329952),
+queda rechazado: raíz 683 PASS / 1 FAIL, prefijo 799 PASS / 1 FAIL y G7 FAIL,
+sin aggregate de diecisiete controles. La corrección inicial `minWidth: 0`
+no evitó el ResizeObserver WebKit. La evidencia oficial y los diagnósticos
+locales se conservan en [STATUS](STATUS.md#resizeobserver-nativo-y-evidencia-retenida--9-de-octubre-de-2026).
+
+- [x] Transporte oficial, SHA256 y logs de Prefix/G7 verificados; ambos fallos retenidos.
+- [x] Diagnóstico nativo V8 reproduce oscilación de anchura antes del raster;
+  limpieza de contenedores propios registrada. El estado final de la unidad
+  browser es desconocido (`browser_unit_after: None`).
+- [x] Backup cifrado y recuperación aislada de V12 comprobados; producción anterior saludable.
+- [x] Diagnóstico CSS V9: un caso WebKit PASS en 57,1 s con collector estricto,
+  sin pageerror/snapshots, cgroups finales sin OOM/kill y cleanup propio.
+  El CSS experimental global a todos los VSelect no certifica la app final.
+- [x] Corrección final limitada a «Platos del periodo» mediante `contentClass`: 32 pruebas focalizadas PASS.
+- [ ] Matriz nativa completa de esa corrección; fuente de trabajo sin commit/imagen finales todavía.
+- [ ] Nueva CI completa: nueve jobs verdes y diecisiete controles G7 unidos
+  al mismo commit limpio, imagen y contexto.
+- [ ] Matrices raíz/prefijo y descargas completas de esa imagen, sin errores
+  de navegador ni aceptación de resultados parciales de la campaña V7 con OOM.
+- [ ] Aceptación pública por nueve cuentas y administrador del runtime nuevo.
+- [ ] Backup y restauración aislada posteriores de la misma imagen nueva,
+  con verificación de DB/media/env y cleanup propio.
+
+Los seis casos Chromium V5 aprobados pertenecen a fuente `2abd98b` y tests
+`309d809`. No sustituyen la aceptación del candidato siguiente. No se ha
+publicado `42c420d` ni esta nueva fuente; V12 sigue en producción.

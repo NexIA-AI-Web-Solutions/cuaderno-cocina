@@ -88,3 +88,33 @@ mínimo implícito. Una regresión de selección múltiple con nombres largos y
 Consulta pasó de RED a GREEN; 32 pruebas enfocadas aprobaron. Falta confirmar
 esta nueva corrección en WebKit y completar la release de producción. No se
 modifican el colector de errores, las barreras de lectura ni los tiempos.
+
+
+### Resultado posterior y corrección en curso
+
+La [CI 37961329952](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37961329952)
+de `42c420d` confirma que la primera corrección fue insuficiente: raíz 683
+PASS / 1 FAIL y prefijo 799 PASS / 1 FAIL, por el mismo ResizeObserver en
+WebKit. G7 falla y no produce el aggregate de diecisiete controles. La release
+no se publica; producción mantiene V12 saludable.
+
+El diagnóstico nativo V8 reproduce el ciclo al crear/recargar la portada y
+preparar el documento, antes del raster: lista 720→744 px y filas 688→712 px,
+sin cambio de altura. Sus contenedores se limpian sin OOM registrado; el estado
+final de la unidad browser no se capturó. La campaña raster V7 conserva su OOM
+y descargas parciales, sin certificación. Chromium V5 conserva seis PASS de
+fuente `2abd98b` y tests `309d809`, con ese alcance histórico.
+
+La nueva fuente de trabajo prepara una anchura estable de 38 rem, limitada al
+viewport menos 48 px, únicamente en «Platos del periodo» mediante
+`cuaderno-menu-recipe-options`; sus 32 pruebas focalizadas pasan. El diagnóstico
+CSS V9 pasa un caso WebKit en 57,1 s, con collector estricto, sin pageerror
+ni snapshots, cgroups finales sin OOM/kill y limpieza propia. Su CSS experimental
+afecta todos los VSelect solo durante el diagnóstico y no certifica el cambio
+final limitado a ese selector. La CI completa, commit e imagen final siguen
+pendientes. Se mantienen collector,
+permisos, barreras de lectura, tiempos y cero retries. Los artefactos oficiales
+y gates pendientes constan en [STATUS](STATUS.md#resizeobserver-nativo-y-evidencia-retenida--9-de-octubre-de-2026)
+y [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md#resizeobserver-nueva-fuente-de-trabajo-y-gates-abiertos-2026-10-09).
+La admisión requiere nueva CI completa, G7, aceptación pública de nueve cuentas
+y administrador, y backup/restauración del nuevo runtime.
