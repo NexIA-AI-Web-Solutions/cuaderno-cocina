@@ -70,6 +70,22 @@ class GalleryWriteSchema(f.Serializer):
     caption = f.CharField(required=False, allow_blank=True, max_length=256)
 
 
+class EntityImageSchema(f.Serializer):
+    url = f.CharField(help_text="Ruta autenticada del contenido de la imagen.")
+    caption = f.CharField(help_text="Descripción de la imagen.")
+
+
+class EntityImageResultSchema(f.Serializer):
+    image = EntityImageSchema(allow_null=True, help_text="Imagen actual; null si no existe.")
+    can_edit = f.BooleanField(help_text="Permiso actual para modificar esta imagen.")
+    revision = Sha256(required=False, help_text="Revisión actual de la plantilla, cuando corresponda.")
+
+
+class EntityImageWriteSchema(f.Serializer):
+    image = f.FileField(help_text="Imagen JPG, PNG, WebP o GIF de un fotograma, hasta 5 MiB.")
+    caption = f.CharField(required=False, allow_blank=True, max_length=240, help_text="Descripción opcional de la imagen.")
+
+
 class CourseWriteSchema(f.Serializer):
     name = f.CharField(max_length=128)
     meal_type = f.IntegerField()
@@ -164,6 +180,7 @@ class MenuTemplateSchema(TemplateWriteSchema):
     id = f.IntegerField()
     revision = Sha256()
     entries = TemplateEntrySchema(many=True)
+    image = EntityImageSchema(required=False, allow_null=True, help_text="Portada opcional de la plantilla.")
 
 
 class MenuTemplatesSchema(f.Serializer):
@@ -185,6 +202,7 @@ class TemplateApplyResultSchema(f.Serializer):
 class PrintMenuWriteSchema(f.Serializer):
     name = f.CharField(max_length=128)
     meal_plan_ids = f.ListField(child=f.IntegerField(), min_length=1, max_length=100)
+    template_id = f.IntegerField(required=False, min_value=1, help_text="Plantilla visible cuya portada se usará en el documento.")
 
 
 class MenuPrintWriteSchema(f.Serializer):
@@ -196,6 +214,7 @@ class MenuPrintWriteSchema(f.Serializer):
 class PrintedMenuSchema(f.Serializer):
     name = f.CharField()
     entries = PlanningMealSchema(many=True)
+    image = EntityImageSchema(required=False, allow_null=True, help_text="Portada autorizada del menú.")
 
 
 class MenuPrintSchema(f.Serializer):

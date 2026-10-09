@@ -20,6 +20,13 @@ import {
     TemplateEntrySchemaToJSON,
     TemplateEntrySchemaToJSONTyped,
 } from './TemplateEntrySchema';
+import type { EntityImageSchema } from './EntityImageSchema';
+import {
+    EntityImageSchemaFromJSON,
+    EntityImageSchemaFromJSONTyped,
+    EntityImageSchemaToJSON,
+    EntityImageSchemaToJSONTyped,
+} from './EntityImageSchema';
 
 /**
  * 
@@ -57,6 +64,12 @@ export interface MenuTemplateSchema {
      * @memberof MenuTemplateSchema
      */
     revision: string;
+    /**
+     * Portada opcional de la plantilla.
+     * @type {EntityImageSchema}
+     * @memberof MenuTemplateSchema
+     */
+    image?: EntityImageSchema | null;
 }
 
 /**
@@ -86,6 +99,7 @@ export function MenuTemplateSchemaFromJSONTyped(json: any, ignoreDiscriminator: 
         'entries': ((json['entries'] as Array<any>).map(TemplateEntrySchemaFromJSON)),
         'id': json['id'],
         'revision': json['revision'],
+        'image': json['image'] == null ? undefined : EntityImageSchemaFromJSON(json['image']),
     };
 }
 
@@ -105,6 +119,7 @@ export function MenuTemplateSchemaToJSONTyped(value?: MenuTemplateSchema | null,
         'entries': ((value['entries'] as Array<any>).map(TemplateEntrySchemaToJSON)),
         'id': value['id'],
         'revision': value['revision'],
+        'image': EntityImageSchemaToJSON(value['image']),
     };
 }
 

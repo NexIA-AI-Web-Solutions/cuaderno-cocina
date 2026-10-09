@@ -2584,6 +2584,164 @@
                 }
             }
         },
+        "/api/cuaderno/foods/{foodId}/image/": {
+            "get": {
+                "operationId": "cuadernoFoodImageRetrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "foodId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EntityImageResultSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "cuadernoFoodImageUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "foodId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EntityImageWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EntityImageResultSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cuadernoFoodImageDestroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "foodId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/foods/{foodId}/image/content/": {
+            "get": {
+                "operationId": "cuadernoFoodImageContent",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "foodId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "image/jpeg": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/webp": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/gif": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/cuaderno/movements/": {
             "get": {
                 "operationId": "cuadernoMovementsList",
@@ -3604,6 +3762,164 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/TemplateApplyResultSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/templates/{templateId}/image/": {
+            "get": {
+                "operationId": "cuadernoTemplateImageRetrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EntityImageResultSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "put": {
+                "operationId": "cuadernoTemplateImageUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EntityImageWriteSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EntityImageResultSchema"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "cuadernoTemplateImageDestroy",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/planning/templates/{templateId}/image/content/": {
+            "get": {
+                "operationId": "cuadernoTemplateImageContent",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "image/jpeg": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/webp": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/gif": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
                                 }
                             }
                         },
@@ -22358,6 +22674,68 @@
                     }
                 }
             },
+            "EntityImageResultSchema": {
+                "type": "object",
+                "properties": {
+                    "image": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/EntityImageSchema"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Imagen actual; null si no existe."
+                    },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Permiso actual para modificar esta imagen."
+                    },
+                    "revision": {
+                        "type": "string",
+                        "description": "Revisión actual de la plantilla, cuando corresponda.",
+                        "pattern": "^[0-9a-f]{64}$"
+                    }
+                },
+                "required": [
+                    "can_edit",
+                    "image"
+                ]
+            },
+            "EntityImageSchema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "Ruta autenticada del contenido de la imagen."
+                    },
+                    "caption": {
+                        "type": "string",
+                        "description": "Descripción de la imagen."
+                    }
+                },
+                "required": [
+                    "caption",
+                    "url"
+                ]
+            },
+            "EntityImageWriteSchemaRequest": {
+                "type": "object",
+                "properties": {
+                    "image": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "Imagen JPG, PNG, WebP o GIF de un fotograma, hasta 5 MiB."
+                    },
+                    "caption": {
+                        "type": "string",
+                        "description": "Descripción opcional de la imagen.",
+                        "maxLength": 240
+                    }
+                },
+                "required": [
+                    "image"
+                ]
+            },
             "ExchangeCatalogSchema": {
                 "type": "object",
                 "properties": {
@@ -26026,6 +26404,15 @@
                     "revision": {
                         "type": "string",
                         "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "image": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/EntityImageSchema"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Portada opcional de la plantilla."
                     }
                 },
                 "required": [
@@ -30184,6 +30571,11 @@
                         },
                         "maxItems": 100,
                         "minItems": 1
+                    },
+                    "template_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Plantilla visible cuya portada se usará en el documento."
                     }
                 },
                 "required": [
@@ -30202,6 +30594,15 @@
                         "items": {
                             "$ref": "#/components/schemas/PlanningMealSchema"
                         }
+                    },
+                    "image": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/EntityImageSchema"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Portada autorizada del menú."
                     }
                 },
                 "required": [

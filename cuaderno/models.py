@@ -511,3 +511,49 @@ def _gallery_file_deleted(sender, instance, using, **kwargs):
 from django.db.models.signals import post_delete
 post_delete.connect(_gallery_file_deleted, sender=RecipeGalleryImage, weak=False,
                     dispatch_uid="cuaderno.gallery.committed-file-delete")
+
+
+def entity_media_path(instance, filename):
+    """Never retain a user-supplied filename in the private storage namespace."""
+    return f"cuaderno/entity-media/{uuid.uuid4().hex}{PurePosixPath(filename).suffix.lower()}"
+
+
+class EntityImageBase(models.Model):
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=entity_media_path)
+    caption = models.CharField(max_length=240, blank=True, default="")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        parent = self.food if isinstance(self, FoodImage) else self.template
+        if parent.space_id != self.space_id:
+            raise ValidationError("La imagen debe pertenecer al mismo espacio que su ingrediente o menú.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
+
+
+class FoodImage(EntityImageBase):
+    food = models.OneToOneField("cookbook.Food", on_delete=models.CASCADE, related_name="cuaderno_image")
+
+
+class MenuTemplateImage(EntityImageBase):
+    template = models.OneToOneField(MenuTemplate, on_delete=models.CASCADE, related_name="cuaderno_image")
+
+
+def _entity_image_file_deleted(sender, instance, using, **kwargs):
+    from django.db import transaction
+    from cuaderno.services.entity_media import delete_unreferenced_file
+    storage, name = instance.image.storage, instance.image.name
+    transaction.on_commit(lambda: delete_unreferenced_file(storage, name, using), using=using, robust=True)
+
+
+for _image_model in (FoodImage, MenuTemplateImage):
+    post_delete.connect(_entity_image_file_deleted, sender=_image_model, weak=False,
+                        dispatch_uid=f"cuaderno.{_image_model.__name__}.committed-file-delete")

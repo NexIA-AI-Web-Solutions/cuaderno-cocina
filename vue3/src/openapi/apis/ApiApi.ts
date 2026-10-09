@@ -46,6 +46,7 @@ import type {
   CustomFilterRequest,
   EditionSchema,
   EditionWriteSchemaRequest,
+  EntityImageResultSchema,
   ExchangeDocumentSchema,
   ExchangeImportDocumentSchemaRequest,
   ExchangeImportResultSchema,
@@ -350,6 +351,8 @@ import {
     EditionSchemaToJSON,
     EditionWriteSchemaRequestFromJSON,
     EditionWriteSchemaRequestToJSON,
+    EntityImageResultSchemaFromJSON,
+    EntityImageResultSchemaToJSON,
     ExchangeDocumentSchemaFromJSON,
     ExchangeDocumentSchemaToJSON,
     ExchangeImportDocumentSchemaRequestFromJSON,
@@ -2671,6 +2674,24 @@ export interface CuadernoFavoritesListRequest {
     offset?: string;
 }
 
+export interface CuadernoFoodImageContentRequest {
+    foodId: number;
+}
+
+export interface CuadernoFoodImageDestroyRequest {
+    foodId: number;
+}
+
+export interface CuadernoFoodImageRetrieveRequest {
+    foodId: number;
+}
+
+export interface CuadernoFoodImageUpdateRequest {
+    foodId: number;
+    image: Blob;
+    caption?: string;
+}
+
 export interface CuadernoLegacyOrderCreateRequest {
     legacyOrderWriteSchema: LegacyOrderWriteSchemaRequest;
 }
@@ -2886,6 +2907,24 @@ export interface CuadernoStockMinimumsRetrieveRequest {
 
 export interface CuadernoStockMinimumsUpdateRequest {
     minimumWrite: MinimumWriteRequest;
+}
+
+export interface CuadernoTemplateImageContentRequest {
+    templateId: number;
+}
+
+export interface CuadernoTemplateImageDestroyRequest {
+    templateId: number;
+}
+
+export interface CuadernoTemplateImageRetrieveRequest {
+    templateId: number;
+}
+
+export interface CuadernoTemplateImageUpdateRequest {
+    templateId: number;
+    image: Blob;
+    caption?: string;
 }
 
 /**
@@ -19664,6 +19703,193 @@ export class ApiApi extends runtime.BaseAPI {
 
     /**
      */
+    async cuadernoFoodImageContentRaw(requestParameters: CuadernoFoodImageContentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters['foodId'] == null) {
+            throw new runtime.RequiredError(
+                'foodId',
+                'Required parameter "foodId" was null or undefined when calling cuadernoFoodImageContent().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/foods/{foodId}/image/content/`;
+        urlPath = urlPath.replace(`{${"foodId"}}`, encodeURIComponent(String(requestParameters['foodId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.BlobApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoFoodImageContent(requestParameters: CuadernoFoodImageContentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.cuadernoFoodImageContentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoFoodImageDestroyRaw(requestParameters: CuadernoFoodImageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['foodId'] == null) {
+            throw new runtime.RequiredError(
+                'foodId',
+                'Required parameter "foodId" was null or undefined when calling cuadernoFoodImageDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/foods/{foodId}/image/`;
+        urlPath = urlPath.replace(`{${"foodId"}}`, encodeURIComponent(String(requestParameters['foodId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoFoodImageDestroy(requestParameters: CuadernoFoodImageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cuadernoFoodImageDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async cuadernoFoodImageRetrieveRaw(requestParameters: CuadernoFoodImageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EntityImageResultSchema>> {
+        if (requestParameters['foodId'] == null) {
+            throw new runtime.RequiredError(
+                'foodId',
+                'Required parameter "foodId" was null or undefined when calling cuadernoFoodImageRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/foods/{foodId}/image/`;
+        urlPath = urlPath.replace(`{${"foodId"}}`, encodeURIComponent(String(requestParameters['foodId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EntityImageResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoFoodImageRetrieve(requestParameters: CuadernoFoodImageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EntityImageResultSchema> {
+        const response = await this.cuadernoFoodImageRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoFoodImageUpdateRaw(requestParameters: CuadernoFoodImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EntityImageResultSchema>> {
+        if (requestParameters['foodId'] == null) {
+            throw new runtime.RequiredError(
+                'foodId',
+                'Required parameter "foodId" was null or undefined when calling cuadernoFoodImageUpdate().'
+            );
+        }
+
+        if (requestParameters['image'] == null) {
+            throw new runtime.RequiredError(
+                'image',
+                'Required parameter "image" was null or undefined when calling cuadernoFoodImageUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['image'] != null) {
+            formParams.append('image', requestParameters['image'] as any);
+        }
+
+        if (requestParameters['caption'] != null) {
+            formParams.append('caption', requestParameters['caption'] as any);
+        }
+
+
+        let urlPath = `/api/cuaderno/foods/{foodId}/image/`;
+        urlPath = urlPath.replace(`{${"foodId"}}`, encodeURIComponent(String(requestParameters['foodId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EntityImageResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoFoodImageUpdate(requestParameters: CuadernoFoodImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EntityImageResultSchema> {
+        const response = await this.cuadernoFoodImageUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
     async cuadernoLegacyOrderCreateRaw(requestParameters: CuadernoLegacyOrderCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LegacyOrderResultSchema>> {
         if (requestParameters['legacyOrderWriteSchema'] == null) {
             throw new runtime.RequiredError(
@@ -21884,6 +22110,193 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async cuadernoStockMinimumsUpdate(requestParameters: CuadernoStockMinimumsUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StockMinimumSchema> {
         const response = await this.cuadernoStockMinimumsUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageContentRaw(requestParameters: CuadernoTemplateImageContentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoTemplateImageContent().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/image/content/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.BlobApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageContent(requestParameters: CuadernoTemplateImageContentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.cuadernoTemplateImageContentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageDestroyRaw(requestParameters: CuadernoTemplateImageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoTemplateImageDestroy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/image/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageDestroy(requestParameters: CuadernoTemplateImageDestroyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cuadernoTemplateImageDestroyRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageRetrieveRaw(requestParameters: CuadernoTemplateImageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EntityImageResultSchema>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoTemplateImageRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/image/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EntityImageResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageRetrieve(requestParameters: CuadernoTemplateImageRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EntityImageResultSchema> {
+        const response = await this.cuadernoTemplateImageRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageUpdateRaw(requestParameters: CuadernoTemplateImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EntityImageResultSchema>> {
+        if (requestParameters['templateId'] == null) {
+            throw new runtime.RequiredError(
+                'templateId',
+                'Required parameter "templateId" was null or undefined when calling cuadernoTemplateImageUpdate().'
+            );
+        }
+
+        if (requestParameters['image'] == null) {
+            throw new runtime.RequiredError(
+                'image',
+                'Required parameter "image" was null or undefined when calling cuadernoTemplateImageUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['image'] != null) {
+            formParams.append('image', requestParameters['image'] as any);
+        }
+
+        if (requestParameters['caption'] != null) {
+            formParams.append('caption', requestParameters['caption'] as any);
+        }
+
+
+        let urlPath = `/api/cuaderno/planning/templates/{templateId}/image/`;
+        urlPath = urlPath.replace(`{${"templateId"}}`, encodeURIComponent(String(requestParameters['templateId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EntityImageResultSchemaFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoTemplateImageUpdate(requestParameters: CuadernoTemplateImageUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EntityImageResultSchema> {
+        const response = await this.cuadernoTemplateImageUpdateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

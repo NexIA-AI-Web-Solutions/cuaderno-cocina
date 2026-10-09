@@ -11,7 +11,11 @@ def preserve_native_food_relations(source, target):
     Space._base_manager.select_for_update().get(pk=source.space_id)
     target_recipe = Food._base_manager.filter(pk=target.pk, space_id=source.space_id).values_list("recipe_id", flat=True).get()
     assert_food_recipe_compatible(source.pk, source.space_id, target_recipe)
-    from cuaderno.models import StockMinimum
+    from cuaderno.models import StockMinimum, FoodImage
+    source_image = FoodImage.objects.filter(space=source.space, food=source).first()
+    if source_image and not FoodImage.objects.filter(food=target).exists():
+        source_image.food = target
+        source_image.save(update_fields=["food"])
     minimums = list(StockMinimum.objects.filter(space=source.space, food=source))
     for minimum in minimums:
         others = StockMinimum.objects.filter(space=source.space, food=target, household_id=minimum.household_id)

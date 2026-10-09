@@ -420,6 +420,11 @@ class MergeMixin(ViewSetMixin):
                     UnitConversion.objects.filter(converted_unit=source).delete()
 
                 for link in [field for field in source._meta.get_fields() if issubclass(type(field), ForeignObjectRel)]:
+                    # This reverse one-to-one is preserved explicitly above.
+                    # It is an image instance, not a related manager; source
+                    # deletion cleans a redundant image after commit.
+                    if isinstance(source, Food) and link.get_accessor_name() == 'cuaderno_image':
+                        continue
                     linkManager = getattr(source, link.get_accessor_name())
                     related = linkManager.all()
                     # link to foreign relationship could be OneToMany or ManyToMany

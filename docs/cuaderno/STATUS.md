@@ -534,3 +534,7 @@ Scanner unit11PASS211252Z/reviewfresh y fixes7106/cfff. Scans reales210844Z (DBs
 Upgrade desde pin al a3c pendiente; upgrade591070137Z histórico no lo acredita. B04 Browser autorizado no disponible: faltan capturas, responsividad, impresión y E2E. B01 export antiguo bloquea SOLOextractor; B02 iPad físico/B03VPS externos no ejecutados.
 
 Los scripts operativos son locales y abortan en producción: no retirar guardas para el servidor. La guía productiva es preparatoria, con secretos externos, media autorizada, cookies Secure y validación de proxy/dominio pendientes de ensayo real. [RESUME](RESUME.md) contiene lo pendiente; [evidencia cronológica](evidence/2026-09-30-continuacion.md) conserva todos los RED y resultados históricos. REVIEW no significa DONE.
+
+## Ampliación de imágenes y documentos — 9 de octubre de 2026
+
+Implementación en la rama `cuaderno/menu-media-exports-20261009`: fotos de Food en las tres ediciones; portadas de plantillas y PDF/PNG en Profesional e Integral. Guía y mapa de código: [MENU_MEDIA_EXPORTS_ES](MENU_MEDIA_EXPORTS_ES.md). Validación local real: 65 pruebas Django/PostgreSQL aprobadas (23 nuevas de imágenes y 42 de extensiones), 17 pruebas frontend focalizadas aprobadas, migración sin cambios pendientes y OpenAPI validado. Se conservan los fallos iniciales: permisos corregidos, refresco de portada y fusión Food (400 en rojo, corregido). Las pruebas Playwright con fotos CC0 están preparadas; navegador, CI y publicación de este candidato todavía pendientes. No se atribuyen al candidato los resultados de releases anteriores.

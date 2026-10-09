@@ -31,6 +31,12 @@ export interface PrintMenuWriteSchemaRequest {
      * @memberof PrintMenuWriteSchemaRequest
      */
     mealPlanIds: Array<number>;
+    /**
+     * Plantilla visible cuya portada se usará en el documento.
+     * @type {number}
+     * @memberof PrintMenuWriteSchemaRequest
+     */
+    templateId?: number;
 }
 
 /**
@@ -54,6 +60,7 @@ export function PrintMenuWriteSchemaRequestFromJSONTyped(json: any, ignoreDiscri
         
         'name': json['name'],
         'mealPlanIds': json['meal_plan_ids'],
+        'templateId': json['template_id'] == null ? undefined : json['template_id'],
     };
 }
 
@@ -70,6 +77,7 @@ export function PrintMenuWriteSchemaRequestToJSONTyped(value?: PrintMenuWriteSch
         
         'name': value['name'],
         'meal_plan_ids': value['mealPlanIds'],
+        'template_id': value['templateId'],
     };
 }
 

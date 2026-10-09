@@ -95,6 +95,10 @@ def template_payload(template):
         "title": row.title, "source_url": row.source_url, "servings": format(row.servings, "f"),
     } for row in template.entries.all()]
     value = {"id": template.pk, "name": template.name, "weeks": template.weeks, "entries": entries}
+    from cuaderno.services.entity_media import image_payload
+    image = image_payload("template", template)
+    if image is not None:
+        value["image"] = image
     value["revision"] = revision({**value, "updated_at": template.updated_at.isoformat()})
     return value
 
@@ -226,7 +230,7 @@ def print_document(request, data):
     require_professional(request.space, merged=len(menus) > 1)
     output = []
     for menu in menus:
-        checked(fields, menu, ("name", "meal_plan_ids"), ("name", "meal_plan_ids"))
+        checked(fields, menu, ("name", "meal_plan_ids", "template_id"), ("name", "meal_plan_ids"))
         ids = menu["meal_plan_ids"]
         if type(ids) is not list or not 1 <= len(ids) <= 100:
             raise ValidationError({"meal_plan_ids": "Selecciona de 1 a 100 platos por menú."})
@@ -236,7 +240,12 @@ def print_document(request, data):
         plans = list(visible_plans(request).filter(pk__in=ids).order_by("from_date", "meal_type__order", "cuaderno_course__course__position", "pk"))
         if len(plans) != len(ids):
             raise NotFound("Algún menú no está disponible.")
-        output.append({"name": checked(text, menu["name"]), "entries": plan_rows(request, plans, data.get("diet"))})
+        item = {"name": checked(text, menu["name"]), "entries": plan_rows(request, plans, data.get("diet"))}
+        if "template_id" in menu:
+            template = get_object_or_404(visible_templates(request), pk=checked(integer, menu["template_id"]))
+            from cuaderno.services.entity_media import image_payload
+            item["image"] = image_payload("template", template)
+        output.append(item)
     diet = data.get("diet")
     return {"orientation": data["orientation"], "merged": len(menus) > 1, "menus": output,
             "diet": diet, "diet_label": dict(DIETS).get(diet), "declaration": DECLARATION}

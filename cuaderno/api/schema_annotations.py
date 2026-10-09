@@ -17,7 +17,7 @@ from cuaderno.api.purchasing import (
 from cuaderno.api.stock_minimums import MinimumWriteSerializer
 from cuaderno.health import readiness
 from cuaderno.api import schema as s
-from cuaderno.api import functional_schema as fs, planning, recipe_extras
+from cuaderno.api import functional_schema as fs, planning, recipe_extras, entity_media
 
 
 SERVINGS = OpenApiParameter("servings", OpenApiTypes.STR, description="Decimal objetivo enviado como texto.")
@@ -91,6 +91,22 @@ def apply_schema_annotations():
     ]
     for view, methods in operation_specs:
         extend_schema_view(**methods)(view)
+    for prefix, view, content in (
+        ("food", entity_media.FoodImageView, entity_media.FoodImageContentView),
+        ("template", entity_media.MenuTemplateImageView, entity_media.MenuTemplateImageContentView),
+    ):
+        extend_schema_view(
+            get=extend_schema(operation_id=f"cuaderno_{prefix}_image_retrieve", responses=fs.EntityImageResultSchema),
+            put=extend_schema(operation_id=f"cuaderno_{prefix}_image_update",
+                              request={"multipart/form-data": fs.EntityImageWriteSchema}, responses=fs.EntityImageResultSchema),
+            delete=extend_schema(operation_id=f"cuaderno_{prefix}_image_destroy", responses=fs.EntityImageResultSchema),
+        )(view)
+        extend_schema_view(get=extend_schema(
+            operation_id=f"cuaderno_{prefix}_image_content", responses={
+                (200, "image/jpeg"): OpenApiTypes.BINARY, (200, "image/png"): OpenApiTypes.BINARY,
+                (200, "image/webp"): OpenApiTypes.BINARY, (200, "image/gif"): OpenApiTypes.BINARY,
+            },
+        ))(content)
     extend_schema_view(
         get=extend_schema(operation_id="cuaderno_edition_retrieve", responses=s.EditionSchema),
         put=extend_schema(operation_id="cuaderno_edition_update", request=s.EditionWriteSchema, responses=s.EditionSchema),

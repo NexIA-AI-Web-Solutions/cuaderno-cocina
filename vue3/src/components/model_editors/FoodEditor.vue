@@ -32,6 +32,8 @@
                         <v-model-select :label="$t('Category')" v-model="editingObj.supermarketCategory" model="SupermarketCategory" create ></v-model-select>
                         <v-model-select :label="$t('ShoppingList')" :hint="$t('DefaultShoppingListHelp')" v-model="editingObj.shoppingLists" model="ShoppingList" create chips multiple></v-model-select>
                     </v-form>
+                    <entity-image-panel v-if="editingObj.id" :key="editingObj.id" :entity-id="editingObj.id" kind="food" title="Foto del ingrediente" />
+                    <p v-else class="text-body-2 mt-3">La foto es opcional. Guarda primero el ingrediente y abre su edición para añadir una imagen.</p>
                 </v-tabs-window-item>
 
                 <v-tabs-window-item value="properties">
@@ -159,6 +161,7 @@ import FdcSearchDialog from "@/components/dialogs/FdcSearchDialog.vue";
 import {openFdcPage} from "@/utils/fdc.ts";
 import {DateTime} from "luxon";
 import HierarchyEditor from "@/components/inputs/HierarchyEditor.vue";
+import EntityImagePanel from '@/cuaderno/components/EntityImagePanel.vue';
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
 

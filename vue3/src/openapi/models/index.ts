@@ -55,6 +55,8 @@ export * from './EditionEnum';
 export * from './EditionSchema';
 export * from './EditionWriteSchemaRequest';
 export * from './EditionWriteSchemaRequestTargetFoodCostRatio';
+export * from './EntityImageResultSchema';
+export * from './EntityImageSchema';
 export * from './ExchangeCatalogSchema';
 export * from './ExchangeConversionSchema';
 export * from './ExchangeDocumentSchema';

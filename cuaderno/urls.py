@@ -18,6 +18,7 @@ from cuaderno.api.purchasing import (
     ReplenishmentView,
 )
 from cuaderno.health import readiness
+from cuaderno.api.entity_media import FoodImageView, FoodImageContentView, MenuTemplateImageView, MenuTemplateImageContentView
 from cuaderno.api.finance import RecipeFinanceView
 from cuaderno.api.ingredient_yields import IngredientYieldView
 from cuaderno.api.stock_minimums import StockMinimumView
@@ -36,6 +37,10 @@ from cuaderno.api.planning import (
 apply_schema_annotations()
 
 urlpatterns = [
+    path("api/cuaderno/foods/<int:food_id>/image/", FoodImageView.as_view()),
+    path("api/cuaderno/foods/<int:food_id>/image/content/", FoodImageContentView.as_view(), name="cuaderno-food-image-content"),
+    path("api/cuaderno/planning/templates/<int:template_id>/image/", MenuTemplateImageView.as_view()),
+    path("api/cuaderno/planning/templates/<int:template_id>/image/content/", MenuTemplateImageContentView.as_view(), name="cuaderno-template-image-content"),
     path("api/cuaderno/recipes/<int:recipe_id>/extras/", RecipeExtrasView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/favorite/", RecipeFavoriteView.as_view()),
     path("api/cuaderno/recipes/<int:recipe_id>/gallery/", RecipeGalleryView.as_view()),

@@ -20,6 +20,13 @@ import {
     PlanningMealSchemaToJSON,
     PlanningMealSchemaToJSONTyped,
 } from './PlanningMealSchema';
+import type { EntityImageSchema } from './EntityImageSchema';
+import {
+    EntityImageSchemaFromJSON,
+    EntityImageSchemaFromJSONTyped,
+    EntityImageSchemaToJSON,
+    EntityImageSchemaToJSONTyped,
+} from './EntityImageSchema';
 
 /**
  * 
@@ -39,6 +46,12 @@ export interface PrintedMenuSchema {
      * @memberof PrintedMenuSchema
      */
     entries: Array<PlanningMealSchema>;
+    /**
+     * Portada autorizada del menú.
+     * @type {EntityImageSchema}
+     * @memberof PrintedMenuSchema
+     */
+    image?: EntityImageSchema | null;
 }
 
 /**
@@ -62,6 +75,7 @@ export function PrintedMenuSchemaFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'name': json['name'],
         'entries': ((json['entries'] as Array<any>).map(PlanningMealSchemaFromJSON)),
+        'image': json['image'] == null ? undefined : EntityImageSchemaFromJSON(json['image']),
     };
 }
 
@@ -78,6 +92,7 @@ export function PrintedMenuSchemaToJSONTyped(value?: PrintedMenuSchema | null, i
         
         'name': value['name'],
         'entries': ((value['entries'] as Array<any>).map(PlanningMealSchemaToJSON)),
+        'image': EntityImageSchemaToJSON(value['image']),
     };
 }
 

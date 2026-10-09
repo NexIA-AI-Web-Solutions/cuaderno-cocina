@@ -15,7 +15,7 @@ export const button = (root, text) => all(root, node => node.type === 'button' &
 export const field = (root, label) => all(root, node => node.props?.label === label)[0]
 export async function flush() {for (let i = 0; i < 24; i++) await Vue.nextTick()}
 let sequence = 0
-export async function mountFunctional(filename, props, transport, upload = () => assert.fail('Unexpected upload')) {
+export async function mountFunctional(filename, props, transport, upload = () => assert.fail('Unexpected upload'), options = {}) {
     const id = ++sequence, calls = []
     globalThis.__cuadernoFunctionalUnits ??= new Map()
     globalThis.__cuadernoFunctionalUnits.set(id, {transport, upload, calls})
@@ -24,15 +24,30 @@ export async function mountFunctional(filename, props, transport, upload = () =>
         export async function planningRequest(path,method='GET',body) {
             const state=globalThis.__cuadernoFunctionalUnits.get(${id});state.calls.push({path,method,body});return state.transport(path,method,body);
         }
+        export const validateEntityImage = file => {if(file.size > 5*1024*1024 || !['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)) throw new Error('Elige una imagen JPG, PNG, WebP o GIF sin animación de hasta 5 MiB.')};
+        export const uploadEntityImage = (...args) => globalThis.__cuadernoFunctionalUnits.get(${id}).upload(...args);
         export const uploadRecipeGallery = (...args) => globalThis.__cuadernoFunctionalUnits.get(${id}).upload(...args);
     `)
+    let imagePanel = moduleUrl(`export default {render: () => null}`)
+    if (options.actualImagePanel) {
+        const panelFilename = './components/EntityImagePanel.vue'
+        const {descriptor: panelDescriptor} = parse(readFileSync(new URL(panelFilename, import.meta.url), 'utf8'), {filename: panelFilename})
+        let panelSource = compileScript(panelDescriptor, {id: `image-panel-${id}`, inlineTemplate: true, templateOptions: {compilerOptions: {hoistStatic: false}}}).content
+        panelSource = ts.transpileModule(panelSource, {compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022}}).outputText
+        panelSource = panelSource.replace(/from (["'])([^"']+)\1/g, (_, _quote, name) => {
+            assert.ok(['vue', '@/cuaderno/planningApi'].includes(name), name)
+            return `from ${JSON.stringify(name === 'vue' ? import.meta.resolve('vue') : api)}`
+        })
+        imagePanel = moduleUrl(panelSource)
+    }
+    const downloadModule = moduleUrl(`export async function downloadMenu(doc,format,onPages) {onPages(2);globalThis.__cuadernoExportCalls?.push({doc,format});return 2}`)
     const selector = moduleUrl(`import {h} from ${JSON.stringify(import.meta.resolve('vue'))};export default {props:['modelValue','label','disabled'],emits:['update:modelValue'],setup:(p,c)=>()=>h('model-select',{...p,'onUpdate:modelValue':v=>c.emit('update:modelValue',v)})}`)
     const {descriptor, errors} = parse(readFileSync(new URL(filename, import.meta.url), 'utf8'), {filename})
     assert.deepEqual(errors, [])
     let source = compileScript(descriptor, {id: `functional-${id}`, inlineTemplate: true, templateOptions: {compilerOptions: {hoistStatic: false}}}).content
     source = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022}}).outputText
     const replacements = new Map([['vue', import.meta.resolve('vue')], ['luxon', import.meta.resolve('luxon')], ['@/cuaderno/planningApi', api],
-        ['@/cuaderno/planningUi.mjs', new URL('./planningUi.mjs', import.meta.url).href], ['@/components/inputs/VModelSelect.vue', selector]])
+        ['@/cuaderno/planningUi.mjs', new URL('./planningUi.mjs', import.meta.url).href], ['@/components/inputs/VModelSelect.vue', selector], ['@/cuaderno/components/EntityImagePanel.vue',imagePanel], ['@/cuaderno/menuExportBrowser',downloadModule]])
     source = source.replace(/from (["'])([^"']+)\1/g, (_, _quote, name) => {assert.ok(replacements.has(name), name); return `from ${JSON.stringify(replacements.get(name))}`})
     const component = (await import(moduleUrl(source))).default
     const renderer = Vue.createRenderer({

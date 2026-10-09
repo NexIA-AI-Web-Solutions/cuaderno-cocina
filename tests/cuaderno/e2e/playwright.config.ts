@@ -26,7 +26,7 @@ const projects: Project[] = editions.flatMap(edition => roles.flatMap(role => wi
 projects.push(
   {
     name: projectName('esencial', 'responsable', 390, 'firefox'),
-    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance|modernization-acceptance|functional-extensions-acceptance)\.spec\.ts/ : /(?:browser-acceptance|modernization-acceptance|functional-extensions-acceptance)\.spec\.ts/,
+    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance|modernization-acceptance|functional-extensions-acceptance|menu-media-exports)\.spec\.ts/ : /(?:browser-acceptance|modernization-acceptance|functional-extensions-acceptance|menu-media-exports)\.spec\.ts/,
     use: {
       ...devices['Desktop Firefox'],
       launchOptions: ciTlsLaunchOptions('firefox'),
@@ -37,7 +37,7 @@ projects.push(
   },
   {
     name: projectName('integral', 'responsable', 768, 'webkit'),
-    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance|modernization-acceptance|functional-extensions-acceptance)\.spec\.ts/ : /(?:browser-acceptance|modernization-acceptance|functional-extensions-acceptance)\.spec\.ts/,
+    testMatch: prefixAcceptance ? /(?:browser-acceptance|prefix-acceptance|modernization-acceptance|functional-extensions-acceptance|menu-media-exports)\.spec\.ts/ : /(?:browser-acceptance|modernization-acceptance|functional-extensions-acceptance|menu-media-exports)\.spec\.ts/,
     use: {
       ...devices['Desktop Safari'],
       launchOptions: ciTlsLaunchOptions('webkit'),

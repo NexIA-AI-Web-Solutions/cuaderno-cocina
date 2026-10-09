@@ -15,11 +15,11 @@
                 <v-tabs-window v-model="tab" class="mt-4">
                     <v-tabs-window-item value="templates">
                         <v-card class="mb-4" title="Guardar el periodo como plantilla">
-                            <v-card-text><p class="mb-3">Usa el calendario de comidas para añadir o modificar recetas. Se guardarán los platos visibles del periodo cargado, conservando receta, raciones, día, comida y tipo de plato.</p><v-text-field v-model="templateName" label="Nombre de la plantilla" maxlength="120" :disabled="!canEdit || busy" /><v-btn color="primary" :disabled="!canEdit || busy || !templateName.trim() || !planning?.meal_plans.length" :loading="busy" @click="saveTemplate">Guardar nueva plantilla</v-btn></v-card-text>
+                            <v-card-text><p class="mb-3">Usa el calendario de comidas para añadir o modificar recetas. Se guardarán los platos visibles del periodo cargado, conservando receta, raciones, día, comida y tipo de plato.</p><v-text-field v-model="templateName" label="Nombre de la plantilla" maxlength="120" :disabled="!canEdit || busy || Boolean(createdTemplateId)" /><v-file-input v-if="canEdit" v-model="templatePhoto" label="Portada opcional de la nueva plantilla (hasta 5 MiB)" accept="image/jpeg,image/png,image/webp,image/gif" :disabled="busy" /><v-text-field v-if="canEdit" v-model="templateCaption" label="Descripción de la portada" maxlength="240" :disabled="busy" /><p class="text-body-2 mb-3">La portada es opcional. Usa una imagen JPG, PNG, WebP o GIF sin animación de hasta 5 MiB.</p><p v-if="createdTemplateId" role="status" class="mb-3">La plantilla ya está guardada. Puedes reintentar su portada sin crear otra plantilla.</p><div class="d-flex flex-wrap ga-2"><v-btn color="primary" :disabled="!canEdit || busy || (createdTemplateId ? !selectedTemplatePhoto : !templateName.trim() || !planning?.meal_plans.length)" :loading="busy" @click="saveTemplate">{{ createdTemplateId ? 'Reintentar portada' : 'Guardar nueva plantilla' }}</v-btn><v-btn v-if="createdTemplateId" :disabled="busy" variant="text" @click="finishTemplateDraft">Terminar sin portada</v-btn></div></v-card-text>
                         </v-card>
                         <v-card v-for="template in templates" :key="template.id" class="mb-3">
                             <v-card-title class="text-wrap">{{ template.name }}</v-card-title>
-                            <v-card-text><p>{{ template.weeks }} semanas · {{ template.entries.length }} platos</p><v-expansion-panels class="mt-3"><v-expansion-panel title="Ver platos"><v-expansion-panel-text><v-list density="compact"><v-list-item v-for="(entry,index) in template.entries" :key="index" :title="entry.recipe_name || entry.title || 'Plato sin receta'" :subtitle="`Día ${entry.day_index + 1} · ${entry.meal_type_name || 'Comida'} · ${entry.servings} raciones`" /></v-list></v-expansion-panel-text></v-expansion-panel></v-expansion-panels></v-card-text>
+                            <v-card-text><p>{{ template.weeks }} semanas · {{ template.entries.length }} platos</p><entity-image-panel :entity-id="template.id" kind="template" title="Portada de la plantilla" :allow-edit="canEdit && !busy" :refresh-key="templateImageRefresh[template.id] || 0" @changed="(image, revision) => {template.image = image; if (revision) template.revision = revision}" /><v-expansion-panels class="mt-3"><v-expansion-panel title="Ver platos"><v-expansion-panel-text><v-list density="compact"><v-list-item v-for="(entry,index) in template.entries" :key="index" :title="entry.recipe_name || entry.title || 'Plato sin receta'" :subtitle="`Día ${entry.day_index + 1} · ${entry.meal_type_name || 'Comida'} · ${entry.servings} raciones`" /></v-list></v-expansion-panel-text></v-expansion-panel></v-expansion-panels></v-card-text>
                             <v-card-actions class="flex-wrap"><v-btn :disabled="!canEdit || busy" color="primary" @click="applyTarget = template; applyDate = startDate; overwrite = false">Aplicar al calendario</v-btn><v-btn :disabled="!canEdit || busy" @click="renameTarget = template; renameValue = template.name">Cambiar nombre</v-btn><v-btn :disabled="!canEdit || busy" color="error" @click="deleteTarget = template">Eliminar plantilla</v-btn></v-card-actions>
                         </v-card>
                         <p v-if="!templates.length && !loading">Todavía no hay plantillas guardadas.</p>
@@ -46,7 +46,7 @@
                     <v-tabs-window-item value="print">
                         <v-alert type="info" variant="tonal" class="mb-3">La impresión usa los platos autorizados que devuelve el servidor. Las dietas son declaraciones manuales; lo desconocido se muestra como «No declarado».</v-alert>
                         <v-text-field v-model="printName" label="Nombre del menú" maxlength="120" />
-                        <v-select v-model="printSelection" :items="mealChoices" label="Platos del periodo" multiple chips item-title="label" item-value="id" />
+                        <v-select v-model="printTemplateId" :items="templates" item-title="name" item-value="id" label="Portada de una plantilla (opcional)" clearable :disabled="busy" /><v-select v-model="printSelection" :items="mealChoices" label="Platos del periodo" multiple chips item-title="label" item-value="id" />
                         <v-btn :disabled="busy || !printSelection.length || !printName.trim() || printGroups.length >= (planning?.can_merge_print ? 5 : 1)" @click="addPrintGroup">Añadir menú a la impresión</v-btn>
                         <v-list class="my-3"><v-list-item v-for="(group,index) in printGroups" :key="index" :title="group.name" :subtitle="group.meal_plan_ids.length + ' platos'"><template #append><v-btn variant="text" :aria-label="'Quitar menú ' + group.name" @click="printGroups.splice(index,1)">Quitar</v-btn></template></v-list-item></v-list>
                         <p v-if="!planning?.can_merge_print" class="mb-3">Profesional imprime un menú. Integral permite reunir hasta cinco menús en un documento.</p>
@@ -59,8 +59,8 @@
             </template>
         </div>
         <section v-if="printed" class="menu-print-document mt-5" aria-label="Documento de menús">
-            <div class="d-flex flex-wrap ga-2 mb-4 d-print-none"><v-btn color="primary" prepend-icon="fa-solid fa-print" @click="printDocument">Imprimir {{ printed.orientation === 'landscape' ? 'en horizontal' : 'en vertical' }}</v-btn><v-btn variant="text" @click="printed = null">Cerrar documento</v-btn></div>
-            <article v-for="(menu,index) in printed.menus" :key="index" class="menu-sheet mb-5"><h2 class="text-h5 mb-3">{{ menu.name }}</h2><p class="text-body-2 mb-3">{{ printed.declaration }}</p><p v-if="printed.diet" class="mb-3">Declaración consultada: {{ printed.diet_label || printed.diet }}</p><table class="menu-print-table"><thead><tr><th>Fecha / comida</th><th>Plato</th><th>Raciones</th><th v-if="printed.diet">Declaración</th></tr></thead><tbody><tr v-for="entry in menu.entries" :key="entry.id" :class="{'menu-diet-unsuitable': printed.diet && entry.diet_status === 'unsuitable'}"><td>{{ entry.from_date.slice(0,10) }}<br>{{ entry.meal_type.name }}<span v-if="entry.course_name"><br>{{ entry.course_name }}</span></td><td>{{ entry.recipe?.name || entry.title }}</td><td>{{ entry.servings }}</td><td v-if="printed.diet">{{ dietPresentation(entry.diet_status).label }}</td></tr></tbody></table></article>
+            <p class="d-print-none mb-3">PNG genera una imagen por página; el navegador puede pedir permiso para varias descargas. PDF reúne todas las páginas en un archivo. Hasta 40 páginas por descarga.</p><p v-if="exportNotice" role="status" class="d-print-none mb-3">{{ exportNotice }}</p><v-alert v-if="exportError" type="error" role="alert" class="d-print-none mb-3">{{ exportError }}</v-alert><div class="d-flex flex-wrap ga-2 mb-4 d-print-none"><v-btn color="primary" :disabled="exporting" :loading="exporting" @click="exportDocument('png')">Descargar PNG</v-btn><v-btn color="primary" :disabled="exporting" :loading="exporting" @click="exportDocument('pdf')">Descargar PDF</v-btn><v-btn color="primary" prepend-icon="fa-solid fa-print" :disabled="exporting" @click="printDocument">Imprimir {{ printed.orientation === 'landscape' ? 'en horizontal' : 'en vertical' }}</v-btn><v-btn variant="text" :disabled="exporting" @click="printed = null">Cerrar documento</v-btn></div>
+            <article v-for="(menu,index) in printed.menus" :key="index" class="menu-sheet mb-5"><h2 class="text-h5 mb-3">{{ menu.name }}</h2><figure v-if="menu.image" class="menu-cover mb-3"><v-img :src="menu.image.url" :alt="menu.image.caption || 'Portada del menú'" max-height="240" contain /><figcaption>{{ menu.image.caption }}</figcaption></figure><p class="text-body-2 mb-3">{{ printed.declaration }}</p><p v-if="printed.diet" class="mb-3">Declaración consultada: {{ printed.diet_label || printed.diet }}</p><table class="menu-print-table"><thead><tr><th>Fecha / comida</th><th>Plato</th><th>Raciones</th><th v-if="printed.diet">Declaración</th></tr></thead><tbody><tr v-for="entry in menu.entries" :key="entry.id" :class="{'menu-diet-unsuitable': printed.diet && entry.diet_status === 'unsuitable'}"><td>{{ entry.from_date.slice(0,10) }}<br>{{ entry.meal_type.name }}<span v-if="entry.course_name"><br>{{ entry.course_name }}</span></td><td>{{ entry.recipe?.name || entry.title }}</td><td>{{ entry.servings }}</td><td v-if="printed.diet">{{ dietPresentation(entry.diet_status).label }}</td></tr></tbody></table></article>
         </section>
         <v-dialog :model-value="applyTarget !== null" max-width="560" @update:model-value="value => {if (!value && !busy) applyTarget = null}"><v-card v-if="applyTarget" title="Aplicar plantilla al calendario"><v-card-text><p class="mb-3">{{ applyTarget?.name }} · {{ applyTarget?.weeks }} semanas. Se crearán platos en el calendario de comidas.</p><v-text-field v-model="applyDate" label="Primer día de la plantilla" type="date" :disabled="busy" /><v-checkbox v-model="overwrite" :disabled="busy" label="Sustituir solo mi aplicación anterior de esta misma plantilla y fecha" /><p class="text-body-2">No se sustituyen otros platos ni entradas vinculadas a compras o producción.</p></v-card-text><v-card-actions><v-btn :disabled="busy" @click="applyTarget = null">Cancelar</v-btn><v-btn color="primary" :loading="busy" :disabled="!canEdit || busy" @click="applyTemplate">Aplicar plantilla</v-btn></v-card-actions></v-card></v-dialog>
         <v-dialog :model-value="renameTarget !== null" max-width="440" @update:model-value="value => {if (!value && !busy) renameTarget = null}"><v-card title="Cambiar nombre"><v-card-text><v-text-field v-model="renameValue" label="Nombre" maxlength="120" :disabled="busy" /></v-card-text><v-card-actions><v-btn :disabled="busy" @click="renameTarget = null">Cancelar</v-btn><v-btn :loading="busy" :disabled="!renameValue.trim()" @click="renameTemplate">Guardar</v-btn></v-card-actions></v-card></v-dialog>
@@ -71,12 +71,17 @@
 <script setup lang="ts">
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
 import {DateTime} from 'luxon'
+import EntityImagePanel from '@/cuaderno/components/EntityImagePanel.vue'
+import {downloadMenu} from '@/cuaderno/menuExportBrowser'
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
-import {dietOptions, planningRequest, type PlanningData, type MenuTemplate, type PlanningCourse, type PlanningEvent, type PrintedMenus} from '@/cuaderno/planningApi'
+import {dietOptions, planningRequest, uploadEntityImage, validateEntityImage, type PlanningData, type MenuTemplate, type PlanningCourse, type PlanningEvent, type PrintedMenus} from '@/cuaderno/planningApi'
 import {planningEndDate, templateEntriesFromPlans, dietPresentation} from '@/cuaderno/planningUi.mjs'
 const enabled = ref(false), editionChecked = ref(false), loading = ref(false), busy = ref(false), error = ref(''), notice = ref(''), tab = ref('templates')
 const startDate = ref(DateTime.local().toISODate()!), weeks = ref(1), loadedStart = ref(''), loadedEnd = ref(''), loadedWeeks = ref(1)
 const planning = ref<PlanningData | null>(null), templates = ref<MenuTemplate[]>([]), templateName = ref('')
+const templateImageRefresh = ref<Record<number, number>>({})
+const templatePhoto = ref<File | File[] | null>(null), templateCaption = ref(''), createdTemplateId = ref<number | null>(null)
+const selectedTemplatePhoto = computed(() => Array.isArray(templatePhoto.value) ? templatePhoto.value[0] : templatePhoto.value)
 const templateOffset = ref(0), templateCount = ref(0), loadingTemplates = ref(false)
 const canEdit = computed(() => planning.value?.can_edit === true)
 const applyTarget = ref<MenuTemplate | null>(null), applyDate = ref(startDate.value), overwrite = ref(false)
@@ -86,8 +91,10 @@ const courseName = ref(''), courseMealType = ref<{id?: number; name?: string} | 
 const blankEvent = () => ({kind: 'event' as 'event' | 'absence', title: '', member_name: '', start_date: startDate.value, end_date: startDate.value, note: ''})
 const eventDraft = ref(blankEvent()), editingEvent = ref<number | null>(null), deleteEvent = ref<PlanningEvent | null>(null)
 const eventKinds = computed(() => [{value: 'event', label: 'Evento'}, ...(planning.value?.can_manage_absences ? [{value: 'absence', label: 'Ausencia'}] : [])])
-const orientation = ref<'portrait' | 'landscape'>('portrait'), printed = ref<PrintedMenus | null>(null), printName = ref('Menú'), printSelection = ref<number[]>([]), printGroups = ref<{name: string; meal_plan_ids: number[]}[]>([])
-const printDiet = ref<string | null>(null)
+const orientation = ref<'portrait' | 'landscape'>('portrait'), printed = ref<PrintedMenus | null>(null), printName = ref('Menú'), printSelection = ref<number[]>([]), printGroups = ref<{name: string; meal_plan_ids: number[]; template_id?: number}[]>([])
+const printDiet = ref<string | null>(null), printTemplateId = ref<number | null>(null)
+const preparedRequest = ref<{orientation: 'portrait' | 'landscape'; menus: {name: string; meal_plan_ids: number[]; template_id?: number}[]; diet?: string} | null>(null)
+const exporting = ref(false), exportError = ref(''), exportNotice = ref('')
 const mealChoices = computed(() => (planning.value?.meal_plans || []).map(meal => ({id: meal.id, label: `${meal.from_date.slice(0,10)} · ${meal.meal_type.name} · ${meal.recipe?.name || meal.title}`})))
 let printStyle: HTMLStyleElement | null = null
 async function loadPeriod() {
@@ -112,9 +119,30 @@ async function mutate(action: () => Promise<void>, message: string, refresh = tr
     busy.value = true; error.value = ''; notice.value = ''
     try {await action(); if (refresh) await loadPeriod(); notice.value = message} catch (failure) {error.value = (failure as Error).message} finally {busy.value = false}
 }
-function saveTemplate() {
-    if (!canEdit.value || !planning.value) return
-    return mutate(async () => {const entries = templateEntriesFromPlans(planning.value!.meal_plans, loadedStart.value, loadedWeeks.value); await planningRequest('planning/templates/', 'POST', {name: templateName.value.trim(), weeks: loadedWeeks.value, entries}); templateName.value = ''}, 'Plantilla guardada.')
+function finishTemplateDraft() {error.value = ''; createdTemplateId.value = null; templateName.value = ''; templatePhoto.value = null; templateCaption.value = ''; notice.value = 'Plantilla guardada.'}
+async function saveTemplate() {
+    if (!canEdit.value || !planning.value || busy.value || loading.value || loadingTemplates.value) return
+    const file = selectedTemplatePhoto.value
+    busy.value = true; error.value = ''; notice.value = ''
+    try {
+        if (file) validateEntityImage(file)
+        if (!createdTemplateId.value) {
+            const entries = templateEntriesFromPlans(planning.value.meal_plans, loadedStart.value, loadedWeeks.value)
+            const saved = await planningRequest<MenuTemplate>('planning/templates/', 'POST', {name: templateName.value.trim(), weeks: loadedWeeks.value, entries})
+            createdTemplateId.value = saved.id
+            templates.value.unshift(saved); templateCount.value++
+        }
+        if (file) {
+            const path = `planning/templates/${createdTemplateId.value}/image/`
+            const permissions = await planningRequest<{can_edit: boolean}>(path)
+            if (!permissions.can_edit) throw new Error('La plantilla está guardada, pero tu acceso ya no permite cambiar la portada.')
+            const image = await uploadEntityImage(path, file, templateCaption.value)
+            const template = templates.value.find(template => template.id === createdTemplateId.value)
+            if (template) {template.image = image.image; if (image.revision) template.revision = image.revision; templateImageRefresh.value[template.id] = (templateImageRefresh.value[template.id] || 0) + 1}
+        }
+        finishTemplateDraft(); await loadPeriod()
+    } catch (failure) {error.value = (createdTemplateId.value ? 'Plantilla guardada; no se ha podido guardar la portada. ' : '') + (failure as Error).message}
+    finally {busy.value = false}
 }
 function applyTemplate() {
     if (!canEdit.value || !applyTarget.value) return
@@ -159,13 +187,25 @@ function confirmDelete() {
 }
 function addPrintGroup() {
     if (!planning.value || !printSelection.value.length || printSelection.value.length > 100 || printGroups.value.length >= (planning.value.can_merge_print ? 5 : 1)) return
-    printGroups.value.push({name: printName.value.trim(), meal_plan_ids: [...new Set(printSelection.value)]}); printSelection.value = []
+    printGroups.value.push({name: printName.value.trim(), meal_plan_ids: [...new Set(printSelection.value)], ...(printTemplateId.value ? {template_id: printTemplateId.value} : {})}); printSelection.value = []
 }
 async function preparePrint() {
     if (busy.value || !planning.value || !printGroups.value.length) return
-    busy.value = true; error.value = ''; printed.value = null
-    try {printed.value = await planningRequest<PrintedMenus>('planning/print/', 'POST', {orientation: orientation.value, menus: printGroups.value, ...(printDiet.value ? {diet: printDiet.value} : {})})}
+    busy.value = true; error.value = ''; printed.value = null; exportError.value = ''; exportNotice.value = ''
+    try {const request = {orientation: orientation.value, menus: printGroups.value.map(group => ({...group, meal_plan_ids: [...group.meal_plan_ids]})), ...(printDiet.value ? {diet: printDiet.value} : {})}; printed.value = await planningRequest<PrintedMenus>('planning/print/', 'POST', request); preparedRequest.value = request}
     catch (failure) {error.value = (failure as Error).message} finally {busy.value = false}
+}
+async function exportDocument(format: 'png' | 'pdf') {
+    if (!printed.value || !preparedRequest.value || exporting.value) return
+    exporting.value = true; exportError.value = ''; exportNotice.value = ''
+    try {
+        // Revalidate visibility immediately before exporting, including linked covers.
+        const document = await planningRequest<PrintedMenus>('planning/print/', 'POST', preparedRequest.value)
+        printed.value = document
+        const count = await downloadMenu(document, format, pages => {exportNotice.value = format === 'png' && pages > 1 ? `Se descargarán ${pages} imágenes PNG, una por página. Permite varias descargas si el navegador lo solicita.` : `Preparando ${pages} página${pages === 1 ? '' : 's'}…`})
+        exportNotice.value = format === 'pdf' ? `PDF descargado: ${count} página${count === 1 ? '' : 's'}.` : `${count} archivo${count === 1 ? '' : 's'} PNG preparado${count === 1 ? '' : 's'} para descargar. Si falta alguno, revisa el permiso de descargas múltiples del navegador.`
+    } catch (failure) {exportError.value = (failure as Error).message; exportNotice.value = ''}
+    finally {exporting.value = false}
 }
 function printDocument() {
     if (!printed.value) return
@@ -183,7 +223,13 @@ onMounted(async () => {
 
 <style scoped>
 .menu-planning :deep(.v-card-title) {white-space: normal;}
-.menu-print-table {width: 100%; border-collapse: collapse;}
+.menu-print-table {width: 100%; border-collapse: collapse; table-layout:fixed;}
+.menu-cover {margin-left:0;margin-right:0;}
+.menu-planning {overflow-wrap:anywhere;}
+.menu-planning :deep(.v-field), .menu-planning :deep(.v-col) {min-width:0;}
+.menu-planning :deep(.v-btn) {max-width:100%;}
+.menu-planning :deep(.v-btn__content) {white-space:normal;}
+.menu-planning :deep(.v-list-item__append) {flex-wrap:wrap;}
 .menu-print-table th, .menu-print-table td {padding: 10px; text-align: left; border-bottom: 1px solid #b4aa98; vertical-align: top; overflow-wrap: anywhere;}
 .menu-print-table th {background: #eee8dd; color: #34382c;}
 .menu-diet-unsuitable {border-left: 4px solid #a32323; color: #8c1b1b;}

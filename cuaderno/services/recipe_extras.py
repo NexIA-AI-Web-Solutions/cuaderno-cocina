@@ -4,7 +4,7 @@ import warnings
 
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from cookbook.helper.permission_helper import CustomRecipePermission, has_group_permission
@@ -90,7 +90,14 @@ def validated_raster(upload):
                     raise ValueError
                 image.load()
                 output = BytesIO()
-                image.save(output, format=image.format)
+                # Apply phone/camera rotation before removing EXIF (including
+                # location). Retain palette transparency, not other metadata.
+                with ImageOps.exif_transpose(image) as normalized:
+                    transparency = normalized.info.get("transparency")
+                    normalized.info.clear()
+                    if transparency is not None:
+                        normalized.info["transparency"] = transparency
+                    normalized.save(output, format=image.format)
                 if output.tell() > 5 * 1024 * 1024:
                     raise ValueError
                 return ContentFile(output.getvalue(), name="upload" + extension)

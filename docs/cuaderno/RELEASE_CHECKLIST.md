@@ -195,3 +195,14 @@ nueva imagen; los checks del runtime publicado `ff3b685` no las certifican.
 - [ ] G7 del mismo candidato con sus diecisiete evidencias.
 - [ ] Backup coherente previo y restauración aislada; actualización propia de Cuaderno.
 - [ ] Aceptación HTTPS por edición y rol, backup posterior y recuperación de esa versión.
+
+## Fotos y exportación de menús — candidato del 9 de octubre
+
+- [x] Extender Food/MenuTemplate existentes y proteger imágenes por Space, visibilidad y rol.
+- [x] Pruebas PostgreSQL focalizadas: 65/65, incluida fusión Food con las cuatro combinaciones de fotos.
+- [x] Frontend focalizado: 17/17; pruebas adicionales del implementador: 34/34.
+- [x] Migración sin diferencias y regeneración del contrato/SDK.
+- [x] Revisión independiente de código y corrección de sus hallazgos.
+- [ ] CI completa del nuevo candidato y pruebas Playwright reales con fotos CC0.
+- [ ] Aceptación visual y descargas PDF/PNG de la misma imagen.
+- [ ] Backup previo, actualización propia, aceptación HTTPS y recuperación posterior.

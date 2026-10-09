@@ -23,8 +23,10 @@ export interface PlanningMeal {
 export interface PlanningEvent {id: number; revision: string; kind: 'event' | 'absence'; title: string; member_name: string; start_date: string; end_date: string; note: string}
 export interface PlanningData {courses: PlanningCourse[]; meal_plans: PlanningMeal[]; events: PlanningEvent[]; can_edit: boolean; can_manage_absences: boolean; can_merge_print: boolean}
 export interface TemplateEntry {id?: number; day_index: number; meal_type: number; course: number | null; recipe: number | null; title: string; source_url: string; servings: string; recipe_name?: string; meal_type_name?: string; course_name?: string}
-export interface MenuTemplate {id: number; name: string; weeks: number; revision: string; entries: TemplateEntry[]}
-export interface PrintedMenus {orientation: 'portrait' | 'landscape'; merged: boolean; menus: {name: string; entries: PlanningMeal[]}[]; declaration: string; diet: string | null; diet_label: string | null}
+export interface EntityImage {url: string; caption: string}
+export interface EntityImageData {image: EntityImage | null; can_edit: boolean; revision?: string}
+export interface MenuTemplate {image?: EntityImage | null; id: number; name: string; weeks: number; revision: string; entries: TemplateEntry[]}
+export interface PrintedMenus {orientation: 'portrait' | 'landscape'; merged: boolean; menus: {name: string; entries: PlanningMeal[]; image?: EntityImage | null}[]; declaration: string; diet: string | null; diet_label: string | null}
 
 export class PlanningError extends Error {
     constructor(public status: number, message: string) {super(message)}
@@ -34,7 +36,7 @@ export async function planningRequest<T>(path: string, method = 'GET', body?: un
     const value = await response.json().catch(() => ({}))
     if (!response.ok) throw new PlanningError(response.status, response.status === 409
         ? 'Los datos han cambiado o el periodo ya tiene platos. Actualiza antes de continuar; no se han sobrescrito tus cambios.'
-        : typeof value.detail === 'string' ? value.detail : 'No se pudo guardar. Revisa los campos y tus permisos; el formulario conserva los datos.')
+        : planningErrorMessage(value, 'No se pudo guardar. Revisa los campos y tus permisos; el formulario conserva los datos.'))
     return value as T
 }
 
@@ -51,4 +53,32 @@ export async function uploadRecipeGallery(recipeId: number, file: File, caption:
     const value = await response.json().catch(() => ({}))
     if (!response.ok) throw new PlanningError(response.status, typeof value.detail === 'string' ? value.detail : 'No se pudo añadir la imagen. Revisa el formato, tamaño y permisos.')
     return value as RecipeExtras
+}
+
+/** DRF field errors should remain actionable in Spanish, including multipart validation. */
+export function planningErrorMessage(value: unknown, fallback: string): string {
+    if (!value || typeof value !== 'object') return fallback
+    const detail = (value as {detail?: unknown}).detail
+    if (typeof detail === 'string') return detail
+    const labels: Record<string,string> = {image: 'Imagen', caption: 'Descripción', name: 'Nombre', non_field_errors: 'Formulario', template_id: 'Portada', menus: 'Menús', entries: 'Platos'}
+    const parts = Object.entries(value).flatMap(([key, messages]) => {
+        const list = Array.isArray(messages) ? messages : [messages]
+        return list.filter(message => typeof message === 'string').map(message => `${labels[key] || key}: ${message}`)
+    })
+    return parts.length ? parts.join(' ') : fallback
+}
+export function validateEntityImage(file: File): void {
+    if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) throw new Error('Elige una imagen JPG, PNG, WebP o GIF sin animación de hasta 5 MiB.')
+}
+export async function uploadEntityImage(path: string, file: File, caption: string): Promise<EntityImageData> {
+    validateEntityImage(file)
+    if (!/^(foods|planning\/templates)\/\d+\/image\/$/.test(path)) throw new Error('No se reconoce el destino de la imagen.')
+    const url = resolveDjangoUrl('/api/cuaderno/' + path)
+    const body = new FormData(); body.append('image', file); body.append('caption', caption)
+    let response: Response
+    try {response = await fetch(url, {method: 'PUT', body, headers: csrfHeadersForUrl(url), credentials: 'same-origin', redirect: 'error'})}
+    catch {throw new Error('No hay conexión. Conservamos la imagen seleccionada para que puedas reintentar.')}
+    const value = await response.json().catch(() => ({}))
+    if (!response.ok) throw new PlanningError(response.status, planningErrorMessage(value, 'No se pudo guardar la imagen. Revisa el formato, tamaño y permisos.'))
+    return value as EntityImageData
 }
