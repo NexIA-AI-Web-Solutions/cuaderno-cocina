@@ -669,8 +669,8 @@ jobs:
           path: .cuaderno-runs
       - uses: actions/download-artifact@v8
         with:
-          name: cuaderno-candidate-image
-          run-id: 37451427468
+          artifact-ids: 11638282350
+          run-id: 37972458941
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: .cuaderno-runs/prior-image
       - name: Secretos sinteticos y entorno previo aislado
@@ -687,7 +687,18 @@ jobs:
           printf 'CUADERNO_LOCAL_DB_PASSWORD=%s\nCUADERNO_LOCAL_SECRET_KEY=%s\n' "$db_password" "$secret_key" > data/cuaderno/local/compose.env
           chmod 600 data/cuaderno/local/compose.env
           cd .cuaderno-runs/prior-image
-          sha256sum -c candidate-image.tar.gz.sha256
+          python - <<'PYPRIORHASH'
+          import hashlib, re
+          from pathlib import Path
+          descriptor = Path('candidate-image.tar.gz.sha256').read_bytes()
+          match = re.fullmatch(rb'([a-f0-9]{64})  \.cuaderno-runs/candidate-image\.tar\.gz\n', descriptor)
+          if match is None:
+              raise SystemExit('Invalid prior checksum descriptor')
+          with Path('candidate-image.tar.gz').open('rb') as stream:
+              actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+          if actual != match[1].decode('ascii'):
+              raise SystemExit('Prior archive checksum mismatch')
+          PYPRIORHASH
           gunzip -c candidate-image.tar.gz | docker load
           cd ../..
           python scripts/cuaderno/verify_loaded_image.py --archive .cuaderno-runs/prior-image/candidate-image.tar.gz \
@@ -695,7 +706,7 @@ jobs:
             --source-identity-file .cuaderno-runs/prior-image/candidate-source-identity.txt \
             --local-id-output .cuaderno-runs/prior-local-image-id.txt --report .cuaderno-runs/prior-image-binding.json
           prior_id=$(cat .cuaderno-runs/prior-local-image-id.txt)
-          git worktree add --detach .cuaderno-runs/prior-source f2e3f3ca6da66848fd1234c6189a342184316d52
+          git worktree add --detach .cuaderno-runs/prior-source 4335e6e9b858581c724e154c799c095cddb88383
           CUADERNO_LOCAL_IMAGE="$prior_id" docker compose --project-name cuaderno-prior-ci \
             --env-file data/cuaderno/local/compose.env -f .cuaderno-runs/prior-source/deploy/cuaderno/compose.local.yml \
             up -d --wait --wait-timeout 600
