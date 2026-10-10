@@ -140,7 +140,7 @@ test('production has readable form headings and independent labeled service-stat
     for (const title of ['Ficha desde recetas', 'Rendimiento de subreceta', 'Servicio', 'Consolidación manual']) {
         assert.match(production, new RegExp(`<h2[^>]*>${title}</h2>`))
     }
-    assert.match(production, /<h2[^>]*>\{\{ plan\.title \}\}<\/h2>/)
+    assert.match(production, /<h2[^>]*><router-link[^>]+:to="\{name: 'RecipeViewPage', params: \{id: plan\.snapshot\.recipe_id\}\}"[^>]*>\{\{ plan\.title \}\}<\/router-link><template v-else>\{\{ plan\.title \}\}<\/template><\/h2>/)
     assert.match(production, /<v-chip[^>]+class="cuaderno-service-state"[^>]+:color=[^>]+>\{\{ stateLabel\(plan\.state\) \}\}/)
 })
 
@@ -157,9 +157,11 @@ test('home count failure stops loading and preserves a visible retry without fab
     const script = component.split('<script setup lang="ts">')[1].split('</script>')[0]
     const executable = stripTypeScriptTypes(script, {mode: 'transform'}).replace(/^import .*$/gm, '')
     let fail = true, count = 0, errorMessages = 0
-    const state = new Function('ref', 'onMounted', 'onBeforeUnmount', 'ApiApi', 'useMessageStore', 'settleComponentRequest', 'ErrorMessageType', `${executable};return {totalRecipes,countError,loadRecipeCount}`)(
+    const destinations = []
+    const state = new Function('ref', 'onMounted', 'onBeforeUnmount', 'ApiApi', 'useMessageStore', 'settleComponentRequest', 'ErrorMessageType', 'useRouter', `${executable};return {totalRecipes,countError,loadRecipeCount,recipeQuery,searchRecipes}`)(
         value => ({value}), () => {}, () => {}, class {apiRecipeList() {return Promise.resolve({count})}},
         () => ({addError() {errorMessages++}}), (_, signal, success, failure) => {if (fail) failure(new Error('benign count failure')); else success({count})}, {FETCH_ERROR: 'fetch'},
+        () => ({push: destination => { destinations.push(destination) }}),
     )
     state.loadRecipeCount()
     assert.equal(state.countError.value, true)
@@ -171,6 +173,12 @@ test('home count failure stops loading and preserves a visible retry without fab
     state.loadRecipeCount()
     assert.equal(state.countError.value, false)
     assert.equal(state.totalRecipes.value, 2)
+    state.recipeQuery.value = '  Arroz con verduras  '
+    state.searchRecipes()
+    assert.deepEqual(destinations.pop(), {name: 'SearchPage', query: {query: 'Arroz con verduras'}})
+    state.recipeQuery.value = null
+    state.searchRecipes()
+    assert.deepEqual(destinations.pop(), {name: 'SearchPage', query: {}})
 })
 
 test('quick search retains usable selection at the final result and handles errors without a cause', () => {

@@ -17,6 +17,7 @@
                         :disabled="!props.canOperate"
                         no-data-text="Crea primero un formato en Ingredientes y precios"
                     />
+                    <v-btn :to="{name: 'CuadernoPreciosPage'}" variant="text" min-height="44" prepend-icon="fa-solid fa-tags" class="mb-3">Ver o crear formatos y precios</v-btn>
                     <v-model-select v-model="offer.supplier" model="Supermarket" label="Proveedor" :search-on-load="props.canOperate" create :disabled="!props.canOperate" />
                     <v-text-field
                         v-model="offer.amount"
@@ -82,9 +83,10 @@
                     <v-alert v-if="ordersMessage" type="error" variant="tonal" class="mb-3" role="alert">{{ ordersMessage }}</v-alert>
                     <v-list v-if="orders.length" lines="three">
                         <v-list-item v-for="order in orders" :key="order.id" class="order-row px-0">
-                            <v-list-item-title class="font-weight-medium">
-                                {{ order.supplier_name || 'Sin proveedor' }} · {{ order.quantity }} {{ unitName(order) }}
+                            <v-list-item-title class="font-weight-medium text-wrap">
+                                <v-btn variant="text" class="order-name" min-height="44" :aria-expanded="expandedReceipts === order.id" @click="toggleReceipts(order)">{{ orderName(order) }}</v-btn>
                             </v-list-item-title>
+                            <p class="text-body-2 mb-1">{{ order.supplier_name || 'Sin proveedor' }} · {{ order.quantity }} {{ unitName(order) }}</p>
                             <v-list-item-subtitle class="text-wrap">
                                 {{ stateLabel(order.state) }} · recibido {{ order.received_quantity }}
                                 <span v-if="order.state !== 'cancelled'"> · pendiente {{ remaining(order) }}</span>
@@ -122,7 +124,7 @@
                                         @click="openReceipt(order)"
                                     >Recibir</v-btn>
                                     <v-btn size="small" variant="text" min-height="44" @click="toggleReceipts(order)">
-                                        Recepciones
+                                        {{ expandedReceipts === order.id ? 'Ocultar recepciones' : 'Recepciones' }}
                                     </v-btn>
                                 </div>
                             </template>
@@ -301,6 +303,10 @@ const replenishmentMessage = ref('')
 
 function packageLabel(item: Package) { return `${item.food_name} · ${item.label} (${item.quantity} ${item.unit_name})` }
 function offerLabel(item: Offer) { return `${item.amount} ${item.currency} · ${new Date(item.valid_from).toLocaleDateString('es-ES')}` }
+function orderName(order: Order) {
+    const item = packages.value.find(item => item.id === order.package)
+    return item ? `${item.food_name} · ${item.label} · Pedido #${order.id}` : `Pedido #${order.id}`
+}
 function unitName(order: Order) { return packages.value.find(item => item.id === order.package)?.unit_name || `unidad ${order.unit}` }
 function foodName(id: number) { return foods[id] || `Alimento ${id}` }
 function rememberFoods(values: Record<number, string>) { Object.assign(foods, values) }
@@ -513,6 +519,8 @@ onMounted(async () => { await Promise.all([loadCatalog(), loadOrders()]) })
 </script>
 
 <style scoped>
+.order-name { text-transform: none; height: auto; justify-content: flex-start; max-width: 100%; padding-inline: 0.25rem; }
+.order-name :deep(.v-btn__content) { white-space: normal; text-align: start; overflow-wrap: anywhere; }
 .order-row { border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)); }
 .order-actions { max-width: 32rem; }
 .replenishment-cards { display: none; }
@@ -520,6 +528,9 @@ onMounted(async () => { await Promise.all([loadCatalog(), loadOrders()]) })
 .compact-values dt { font-weight: 600; }
 .location-shortfalls { min-width: 16rem; padding-inline-start: 1rem; font-size: 0.8rem; }
 @media (max-width: 700px) {
+    .order-row { grid-template-columns: 1fr; grid-template-areas: "content" "append"; padding-block: 1rem; }
+    .order-row :deep(.v-list-item__content) { overflow: visible; }
+    .order-row :deep(.v-list-item-subtitle) { -webkit-line-clamp: unset; max-height: none; }
     .order-row :deep(.v-list-item__append) { align-self: stretch; margin-inline-start: 0; margin-top: 0.75rem; }
     .order-actions { justify-content: flex-start !important; }
     .receipt-form { width: 100%; }

@@ -63,7 +63,7 @@
                     <thead><tr><th>Ingrediente y formato</th><th>Contenido</th><th>Precio del envase</th><th>Precio por unidad base</th><th>Vigente desde</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                     <tbody>
                         <tr v-for="item in packages" :key="item.id">
-                            <td>{{ item.food_name }} — {{ item.label }}</td>
+                            <td><v-btn variant="text" class="format-name" min-height="44" :disabled="savingPrice" @click="selectPackage(item.id)">{{ item.food_name }} — {{ item.label }}</v-btn></td>
                             <td>{{ priceQuantityLabel(item.quantity, item.unit_name) }}</td>
                             <td>{{ packagePriceLabel(item) }}</td>
                             <td>{{ packageBasePriceLabel(item) }}</td>
@@ -79,7 +79,7 @@
                 </v-table>
                 <div v-if="packages.length" class="package-cards">
                     <v-card v-for="item in packages" :key="`mobile-${item.id}`" variant="outlined" class="mb-3">
-                        <v-card-title class="text-body-1 text-wrap">{{ item.food_name }} — {{ item.label }}</v-card-title>
+                        <v-card-title class="text-body-1 text-wrap"><v-btn variant="text" class="format-name" min-height="44" :disabled="savingPrice" @click="selectPackage(item.id)">{{ item.food_name }} — {{ item.label }}</v-btn></v-card-title>
                         <v-card-text>
                             <dl class="package-values">
                                 <div><dt>Contenido</dt><dd>{{ priceQuantityLabel(item.quantity, item.unit_name) }}</dd></div>
@@ -97,8 +97,9 @@
             </v-card-text>
         </v-card>
 
-        <v-card v-if="selectedPackage" class="mt-4">
-            <v-card-title>{{ selectedPackage.food_name }} — {{ selectedPackage.label }}</v-card-title>
+        <v-dialog :model-value="!!selectedPackage" max-width="800" aria-labelledby="selected-format-title" scrollable :persistent="savingPrice" @update:model-value="value => { if (!value) selectPackage(null) }">
+        <v-card v-if="selectedPackage">
+            <v-card-title id="selected-format-title" class="text-wrap">{{ selectedPackage.food_name }} — {{ selectedPackage.label }}</v-card-title>
             <v-card-text>
                 <template v-if="canOperate">
                     <p class="text-body-2 mb-4">Añade el precio que entra en vigor ahora. Este formulario no programa fechas futuras.</p>
@@ -131,7 +132,9 @@
                 </template>
                 <price-history-panel :package-id="selectedPackage.id" :refresh-token="historyRefreshToken" />
             </v-card-text>
+            <v-card-actions><v-spacer /><v-btn min-height="44" :disabled="savingPrice" @click="selectPackage(null)">Cerrar</v-btn></v-card-actions>
         </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -345,6 +348,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.format-name { text-transform: none; height: auto; justify-content: flex-start; max-width: 100%; }
+.format-name :deep(.v-btn__content) { white-space: normal; text-align: start; overflow-wrap: anywhere; }
 .package-row {
     min-height: 64px;
 }

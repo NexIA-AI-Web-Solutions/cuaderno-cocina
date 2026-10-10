@@ -1,0 +1,26 @@
+[
+  {
+    "width": 390,
+    "height": 844,
+    "noOverflow": true,
+    "errors": []
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "noOverflow": true,
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "noOverflow": true,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "noOverflow": true,
+    "errors": []
+  }
+]

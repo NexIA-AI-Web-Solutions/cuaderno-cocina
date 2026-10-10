@@ -55,7 +55,7 @@ async function mount(role = 'user', custom) {
     const deps = new Map([['vue', import.meta.resolve('vue')], ['@/cuaderno/api', api], ['@/cuaderno/operationalRoleUi', helper('./operationalRoleUi.ts')], ['@/cuaderno/reservationsUi', helper('./reservationsUi.ts')]]);
     code = code.replace(/from (["'])([^"']+)\1/g, (o, q, name) => { assert.ok(deps.has(name), name); return `from ${JSON.stringify(deps.get(name))}`; });
     const component = (await import(moduleUrl(code))).default, root = { type: 'root', props: {}, children: [], parent: null }, app = renderer().createApp(component);
-    for (const name of ['v-container', 'v-alert', 'v-progress-linear', 'v-btn', 'v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-text', 'v-card-actions', 'v-chip', 'v-text-field', 'v-textarea', 'v-select', 'v-dialog'])
+    for (const name of ['router-link', 'v-container', 'v-alert', 'v-progress-linear', 'v-btn', 'v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-text', 'v-card-actions', 'v-chip', 'v-text-field', 'v-textarea', 'v-select', 'v-dialog'])
         app.component(name, Vue.defineComponent({ inheritAttrs: false, props: name === 'v-dialog' ? { modelValue: { default: undefined } } : {}, setup(p, c) { return () => { if (name === 'v-dialog' && !p.modelValue)
                 return null; const type = name === 'v-btn' ? 'button' : ['v-text-field', 'v-textarea', 'v-select'].includes(name) ? 'input' : name; return Vue.h(type, { ...c.attrs }, c.slots.default?.()); }; } }));
     app.mount(root);
@@ -99,4 +99,20 @@ test('two frozen versions of one menu remain separately visible when summary ord
 });
 test('no assigned household disables creation for both Cocina and Responsable with useful explanation',async()=>{
     for(const role of ['user','admin']){const m=await mount(role,(url)=>url.includes('/reservations/?')?{ok:true,status:200,data:{count:0,results:[],can_operate:false,can_manage:role==='admin'}}:null);assert.equal(button(m.root,'Nueva reserva'),undefined);assert.match(textOf(m.root),/Necesitas un hogar operativo asignado/);assert.equal(m.calls.some(call=>call.options.method==='POST'),false);m.close()}
+});
+test('changing the reservation date reloads the new day without a second button click',async()=>{
+ const m=await mount('guest');const before=m.calls.length;change(m.root,'Fecha de las reservas','2026-10-12');await flush();
+ assert.ok(m.calls.slice(before).some(c=>c.url.includes('reservations/?date=2026-10-12&offset=0')));assert.equal(m.calls.some(c=>c.options.method),false);m.close();
+});
+test('reservation dishes open native recipes directly, missing recipe identity remains readable',async()=>{
+ const m=await mount('guest');const links=all(m.root,n=>n.type==='router-link');assert.ok(links.some(n=>n.props.to?.name==='RecipeViewPage'&&n.props.to.params.id===7&&textOf(n).includes('Arroz')));m.close();
+ const missing=await mount('guest',url=>url.includes('/summary/')?{ok:true,status:200,data:{...summary,groups:[{...summary.groups[0],dishes:[{...summary.groups[0].dishes[0],recipe_id:null,recipe_name:'Plato histórico'}]}]}}:null);assert.match(textOf(missing.root),/Plato histórico/);assert.equal(all(missing.root,n=>n.type==='router-link'&&n.props.to?.params?.id===null).length,0);missing.close();
+});
+test('a slow previous date cannot replace the latest selected day',async()=>{
+ let finishPrevious;
+ const m=await mount('guest',(url)=>url.includes('/reservations/?date=2026-10-12')?new Promise(resolve=>{finishPrevious=resolve}):null);
+ change(m.root,'Fecha de las reservas','2026-10-12');await flush();assert.equal(typeof finishPrevious,'function');
+ change(m.root,'Fecha de las reservas','2026-10-13');await flush();
+ finishPrevious({ok:true,status:200,data:{count:1,results:[{...row,customer_name:'Día anterior obsoleto'}]}});await flush();
+ assert.equal(input(m.root,'Fecha de las reservas').props.modelValue,'2026-10-13');assert.doesNotMatch(textOf(m.root),/Día anterior obsoleto/);assert.match(textOf(m.root),/Ana/);m.close();
 });

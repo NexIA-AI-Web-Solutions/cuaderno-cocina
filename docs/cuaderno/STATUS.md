@@ -616,3 +616,16 @@ registrados aquí. La admisión exige nueva CI con nueve jobs verdes, G7 del
 mismo candidato, aceptación pública de nueve cuentas y administrador, y
 backup/restauración de la imagen nueva. El backup cifrado y la restauración
 verificados de V12 conservan su alcance anterior y no cierran esos gates.
+
+## 2026-10-11 — candidato de mejoras UI/UX desde navegador
+
+Trabajo en `cuaderno/ux-refresh-20261011`, basado en la fuente productiva
+`a7b3f79`. Tres agentes revisaron cocina/reservas, compras/catálogo y navegación;
+se implementaron búsqueda visible en inicio, navegación móvil más clara,
+servicios antes de formularios expandidos, enlaces útiles, filtro de fecha
+automático y detalles de precios en diálogo. Evidencia y alcance en
+`evidence/ux-refresh-20261011/README.md`; decisión ADR 0014.
+
+Candidato local: no modifica la imagen que Caddy sirve en producción. No se
+han ejecutado escrituras de negocio ni migraciones sobre producción. No se
+extienden los resultados a Firefox, WebKit o iPad físico.

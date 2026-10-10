@@ -259,3 +259,16 @@ locales se conservan en [STATUS](STATUS.md#resizeobserver-nativo-y-evidencia-ret
 Los seis casos Chromium V5 aprobados pertenecen a fuente `2abd98b` y tests
 `309d809`. No sustituyen la aceptación del candidato siguiente. No se ha
 publicado `42c420d` ni esta nueva fuente; V12 sigue en producción.
+
+## Candidato UI/UX 2026-10-11
+
+- [x] Auditoría con tres agentes, navegador real y cuentas sintéticas autorizadas.
+- [x] Cambios limitados a Vue/Vuetify; permisos y contratos de API conservados.
+- [x] Pruebas funcionales con rojo/verde y compilación de producción.
+- [x] Recorridos de inicio, cocina/reservas, compras y precios en cuatro tamaños.
+- [x] Revisión independiente y corrección de cierre fijo en navegación móvil.
+- [ ] Autorización y despliegue real del candidato; producción sigue sin cambios.
+- [ ] Aceptación posterior en URL pública del candidato desplegado.
+- [ ] Firefox/WebKit y dispositivo iPad físico (fuera de esta comprobación).
+
+Evidencia específica: `evidence/ux-refresh-20261011/README.md`.

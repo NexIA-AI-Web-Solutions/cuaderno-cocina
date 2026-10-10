@@ -102,7 +102,6 @@ export function useNavigation() {
         loadNavigationEdition(preferenceStore.activeSpace.id)
         const cuaderno = cuadernoNavigationCapabilities({edition: navigationEdition.value})
         let navigation = [
-            {component: VListItem, prependIcon: 'fa-solid fa-sliders', title: t('Settings'), to: {name: 'SettingsPage', params: {}}},
             ...(cuaderno.prices ? [{component: VListItem, prependIcon: 'fa-solid fa-heart', title: 'Favoritas', to: {name: 'CuadernoFavoritasPage', params: {}}}] : []),
             ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-calendar-days', title: 'Planificación', to: {name: 'CuadernoPlanificacionPage', params: {}}}] : []),
             ...(cuaderno.production ? [{component: VListItem, prependIcon: 'fa-solid fa-address-book', title: 'Reservas', to: {name: 'CuadernoReservasPage', params: {}}}] : []),
@@ -114,6 +113,7 @@ export function useNavigation() {
             {component: VListItem, prependIcon: '$search', title: t('Search'), to: {name: 'SearchPage', params: {}}},
             {component: VListItem, prependIcon: '$pantry', title: t('Pantry'), to: {name: 'PantryPage', params: {}}},
             {component: VListItem, prependIcon: '$books', title: t('Books'), to: {name: 'BooksPage', params: {}}},
+            {component: VListItem, prependIcon: 'fa-solid fa-sliders', title: t('Settings'), to: {name: 'SettingsPage', params: {}}},
         ]
 
         TANDOOR_PLUGINS.forEach(plugin => {

@@ -11,6 +11,9 @@
         <v-alert v-if="notice" type="info" class="mb-4" role="status">{{ notice }}</v-alert>
         <v-alert v-if="productionEnabled && !canOperate" type="info" variant="tonal" class="mb-4" role="status">Modo Consulta: las fichas están disponibles solo para lectura.</v-alert>
         <div v-if="productionEnabled">
+        <details class="production-tools no-print mb-4">
+            <summary>Nuevo servicio y herramientas de cocina</summary>
+            <p class="text-body-2 text-medium-emphasis ma-4">Anota un servicio, calcula necesidades o actualiza rendimientos y alérgenos.</p>
         <v-row class="no-print">
             <v-col cols="12" md="6">
                 <v-card class="print-card">
@@ -105,18 +108,19 @@
                 </v-card>
             </v-col>
         </v-row>
-        <section class="mt-6" aria-labelledby="service-list-title">
+        </details>
+        <section class="mt-3" aria-labelledby="service-list-title">
             <div class="d-flex flex-wrap align-center ga-3 mb-3 no-print">
                 <h2 id="service-list-title" class="text-h6">Servicios guardados (últimos 100)</h2>
                 <v-btn variant="text" :loading="loadingServices" min-height="44" @click="loadServices">Actualizar servicios</v-btn>
                 <v-btn variant="text" prepend-icon="fa-solid fa-print" min-height="44" @click="printServices">Imprimir fichas</v-btn>
             </div>
             <p v-if="listMessage" role="status">{{ listMessage }}</p>
-            <p v-if="!loadingServices && !services.length && !listMessage">Aún no hay servicios en tu hogar. Anota uno arriba para preparar su ficha.</p>
+            <p v-if="!loadingServices && !services.length && !listMessage">Aún no hay servicios en tu hogar. Abre «Nuevo servicio y herramientas de cocina» para preparar su ficha.</p>
             <v-row>
                 <v-col v-for="plan in services" :key="plan.id" cols="12" md="6">
                     <v-card class="print-card">
-                        <v-card-title><h2 class="text-h6">{{ plan.title }}</h2></v-card-title>
+                        <v-card-title><h2 class="text-h6"><router-link v-if="plan.snapshot?.recipe_id" :to="{name: 'RecipeViewPage', params: {id: plan.snapshot.recipe_id}}" class="service-recipe-link" :aria-label="`Abrir receta de ${plan.title}`">{{ plan.title }}</router-link><template v-else>{{ plan.title }}</template></h2></v-card-title>
                         <v-card-text>
                             <div class="d-flex flex-wrap align-center ga-3 mb-3"><p>{{ plan.service_date || 'Fecha heredada desconocida' }} · {{ plan.covers }} comensales</p><v-chip class="cuaderno-service-state" variant="tonal" :color="plan.state === 'produced' ? 'success' : plan.state === 'cancelled' ? 'error' : 'secondary'">{{ stateLabel(plan.state) }}</v-chip></div>
                             <p v-if="plan.snapshot?.cost" class="mt-2">
@@ -710,6 +714,12 @@ async function saveAllergen() {
 </script>
 
 <style scoped>
+.production-tools { border: 1px solid rgba(var(--v-theme-on-surface), .16); border-radius: 12px; }
+.production-tools :deep(*) { box-sizing: border-box; }
+.production-tools > :deep(.v-row) { margin-inline: 0; }
+.production-tools summary { min-height: 48px; padding: 14px 20px; cursor: pointer; font-weight: 600; }
+.production-tools summary:focus-visible, .service-recipe-link:focus-visible { outline: 2px solid rgb(var(--v-theme-primary)); outline-offset: 3px; }
+.service-recipe-link { display: inline-flex; align-items: center; min-height: 44px; color: rgb(var(--v-theme-primary)); text-underline-offset: 3px; }
 @media screen {
     .cuaderno-production-page :deep(.v-card-title) { padding: 18px 20px; border-bottom: 1px solid rgba(var(--v-theme-on-surface), .12); background: rgba(var(--v-theme-secondary), .06); }
     .cuaderno-production-page :deep(.v-card-text) { padding: 20px; }

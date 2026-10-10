@@ -16,14 +16,14 @@
                                 <v-list-item class="text-center">
                                     <div class="d-flex ">
                                         <div class="flex-col align-self-start">
-                                            <v-btn @click="currentWindowIndex--" v-if="currentWindowIndex != 0" icon="fa-solid fa-chevron-left" size="small"></v-btn>
+                                            <v-btn @click="currentWindowIndex--" v-if="currentWindowIndex != 0" icon="fa-solid fa-chevron-left" aria-label="Ver días anteriores" min-width="44" min-height="44" size="small"></v-btn>
                                         </div>
                                         <div class="flex-col flex-grow-1 mt-auto mb-auto">
                                             {{ mealPlanGridItem.date_label }}
                                         </div>
                                         <div class="flex-col align-self-end">
                                             <v-btn @click="currentWindowIndex++" v-if="currentWindowIndex + 1 < mealPlanWindows.length" icon="fa-solid fa-chevron-right"
-                                                   size="small"></v-btn>
+                                                   aria-label="Ver días siguientes" min-width="44" min-height="44" size="small"></v-btn>
                                         </div>
                                     </div>
                                 </v-list-item>
@@ -43,7 +43,7 @@
                                     </v-list-item-subtitle>
                                     <model-edit-dialog model="MealPlan" :item="p" v-if="!p.recipe"></model-edit-dialog>
                                     <template #append>
-                                        <v-btn icon variant="plain">
+                                        <v-btn icon variant="plain" :aria-label="`${$t('More')}: ${p.recipe?.name || p.title}`" min-width="44" min-height="44">
                                             <v-icon icon="$menu"></v-icon>
                                             <v-menu activator="parent">
                                                 <v-list>

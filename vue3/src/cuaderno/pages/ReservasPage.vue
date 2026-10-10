@@ -24,7 +24,7 @@
                             <p>En cocina: {{ group.in_kitchen_covers }}</p>
                             <p class="font-weight-bold">Pendientes de cocina: {{ group.pending_covers }} · total activo: {{ group.total_active_covers }}</p>
                             <h4 class="mt-3">Raciones por plato</h4>
-                            <ul class="ml-5"><li v-for="(dish,index) in group.dishes || []" :key="index">{{ dish.course_name ? dish.course_name + ': ' : '' }}{{ dish.recipe_name }} — pendientes {{ dish.pending_servings }}, en cocina {{ dish.in_kitchen_servings }}, total {{ dish.total_active_servings }}</li></ul>
+                            <ul class="ml-5"><li v-for="(dish,index) in group.dishes || []" :key="index">{{ dish.course_name ? dish.course_name + ': ' : '' }}<router-link v-if="dish.recipe_id" :to="{name: 'RecipeViewPage', params: {id: dish.recipe_id}}" class="reservation-recipe-link">{{ dish.recipe_name }}</router-link><template v-else>{{ dish.recipe_name }}</template> — pendientes {{ dish.pending_servings }}, en cocina {{ dish.in_kitchen_servings }}, total {{ dish.total_active_servings }}</li></ul>
                             <h4 class="mt-3">Ingredientes pendientes consolidados</h4>
                             <p class="text-body-2">Necesidades congeladas de las confirmadas. La producción ya iniciada queda fuera para evitar contar sus ingredientes dos veces.</p>
                             <ul class="ml-5"><li v-for="(need,index) in group.needs || []" :key="index">{{ need.food_name }}: {{ need.quantity }} {{ need.unit_name || '(sin unidad)' }}</li></ul>
@@ -48,7 +48,7 @@
                                 <p>{{ row.template_name }} · día {{ row.template_day + 1 }} · {{ row.meal_type_name }}</p>
                                 <p v-if="row.phone">Teléfono: {{ row.phone }}</p><p v-if="row.email">Correo: {{ row.email }}</p>
                                 <p v-if="row.note" class="reservation-wrap">{{ row.note }}</p>
-                                <ul v-if="row.menu_snapshot?.dishes?.length" class="ml-5 mt-2"><li v-for="(dish,index) in row.menu_snapshot.dishes" :key="index">{{ dish.course_name ? dish.course_name + ': ' : '' }}{{ dish.recipe_name }}</li></ul>
+                                <ul v-if="row.menu_snapshot?.dishes?.length" class="ml-5 mt-2"><li v-for="(dish,index) in row.menu_snapshot.dishes" :key="index">{{ dish.course_name ? dish.course_name + ': ' : '' }}<router-link v-if="dish.recipe_id" :to="{name: 'RecipeViewPage', params: {id: dish.recipe_id}}" class="reservation-recipe-link">{{ dish.recipe_name }}</router-link><template v-else>{{ dish.recipe_name }}</template></li></ul>
                                 <p v-if="row.services?.length" class="mt-3">Fichas de producción: {{ row.services.map(service => '#' + service.id).join(', ') }}</p>
                             </v-card-text>
                             <v-card-actions class="flex-wrap ga-2">
@@ -98,7 +98,7 @@
     </v-container>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { cuadernoFetch, readJson } from '@/cuaderno/api';
 import { editionOperationalRole } from '@/cuaderno/operationalRoleUi';
 import { menuKey, summaryGroupKey, reservationHistoryAction, reservationHistoryText, reservationHistoryDate, reservationActions, reservationBody, reservationStateLabel, type MenuChoice, type ReservationAction, type ReservationDraft, type ReservationRow, type ReservationSummary } from '@/cuaderno/reservationsUi';
@@ -246,8 +246,9 @@ onMounted(async () => { const response = await readJson(await cuadernoFetch('/ap
     message.value = 'Las reservas internas están disponibles en Profesional e Integral.';
     return;
 } await load(); });
+watch(date, () => { if (!busy.value) { offset.value = 0; void load(); } });
 onUnmounted(() => { generation++; controller?.abort(); });
 </script>
 <style scoped>
-.reservation-date{max-width:260px;min-width:200px}.reservation-wrap{overflow-wrap:anywhere;white-space:normal}.reservation-history{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;background:rgb(var(--v-theme-surface-variant));padding:12px;border-radius:6px} .cuaderno-reservations-page :deep(.v-card-title){white-space:normal;overflow-wrap:anywhere}
+.reservation-recipe-link{display:inline-flex;align-items:center;min-height:44px;color:rgb(var(--v-theme-primary));text-underline-offset:3px}.reservation-recipe-link:focus-visible{outline:2px solid rgb(var(--v-theme-primary));outline-offset:3px}.reservation-date{max-width:260px;min-width:200px}.reservation-wrap{overflow-wrap:anywhere;white-space:normal}.reservation-history{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;background:rgb(var(--v-theme-surface-variant));padding:12px;border-radius:6px} .cuaderno-reservations-page :deep(.v-card-title){white-space:normal;overflow-wrap:anywhere}
 </style>

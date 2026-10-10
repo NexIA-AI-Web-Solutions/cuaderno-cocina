@@ -1,0 +1,50 @@
+[
+  {
+    "width": 1440,
+    "height": 900,
+    "collapsedTools": true,
+    "toolsOpen": true,
+    "productionOverflow": false,
+    "recipeNavigation": true,
+    "dateAutoLoad": true,
+    "reservationRecipeLinks": true,
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "collapsedTools": true,
+    "toolsOpen": true,
+    "productionOverflow": false,
+    "recipeNavigation": true,
+    "dateAutoLoad": true,
+    "reservationRecipeLinks": true,
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "collapsedTools": true,
+    "toolsOpen": true,
+    "productionOverflow": false,
+    "recipeNavigation": true,
+    "dateAutoLoad": true,
+    "reservationRecipeLinks": true,
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "collapsedTools": true,
+    "toolsOpen": true,
+    "productionOverflow": false,
+    "recipeNavigation": true,
+    "dateAutoLoad": true,
+    "reservationRecipeLinks": true,
+    "overflow": false,
+    "pageErrors": []
+  }
+]

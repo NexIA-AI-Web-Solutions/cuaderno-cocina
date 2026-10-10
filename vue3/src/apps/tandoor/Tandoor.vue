@@ -109,11 +109,19 @@
             <v-btn value="more" :aria-label="$t('More')">
                 <v-icon icon="fa-fw fas fa-bars"></v-icon>
                 <span>{{ $t('More') }}</span>
-                <v-bottom-sheet activator="parent" close-on-content-click>
-                    <v-list nav>
-                        <menu-user-info></menu-user-info>
+                <v-bottom-sheet v-model="mobileNavigationOpen" activator="parent" close-on-content-click aria-label="Navegación">
+                    <v-card rounded="t-xl" class="cuaderno-navigation-sheet">
+                    <div class="cuaderno-navigation-heading d-flex align-center justify-space-between px-4 pt-3 pb-2">
+                        <h2 class="text-h6">Navegación</h2>
+                        <v-btn icon="fa-solid fa-xmark" variant="text" aria-label="Cerrar navegación" min-width="44" min-height="44" @click="mobileNavigationOpen = false"></v-btn>
+                    </div>
+                    <v-divider></v-divider>
+                    <nav class="cuaderno-navigation-sections" aria-label="Secciones de Cuaderno Cocina">
+                    <v-list nav class="py-2">
                         <component :is="item.component" :="item" :key="item.title" v-for="item in useNavigation().getBottomNavigation()"></component>
                     </v-list>
+                    </nav>
+                    </v-card>
                 </v-bottom-sheet>
             </v-btn>
         </v-bottom-navigation>
@@ -147,6 +155,7 @@ import MenuUserInfo from "@/components/display/MenuUserInfo.vue";
 
 const {lgAndUp} = useDisplay()
 const {t} = useI18n()
+const mobileNavigationOpen = ref(false)
 
 const router = useRouter()
 
@@ -520,6 +529,15 @@ onBeforeUnmount(removeNavigationHook)
 .multiselect-option.is-selected {
     background: #b55e4f !important;
 }
+
+.cuaderno-navigation-sheet {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 48px);
+    overflow: hidden;
+}
+.cuaderno-navigation-heading { flex: 0 0 auto; }
+.cuaderno-navigation-sections { min-height: 0; overflow-y: auto; }
 
 /* Browser printing also works without the dedicated ?print route. Vuetify's
    layout padding is inline, so reset it together with the hidden app shell. */

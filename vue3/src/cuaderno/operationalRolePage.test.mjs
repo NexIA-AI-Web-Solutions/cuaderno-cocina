@@ -100,7 +100,7 @@ async function mount(transport) {
     const root = {type: 'root', props: {}, children: [], parent: null}
     const app = renderer().createApp(component)
     for (const name of ['v-container', 'v-card', 'v-card-title', 'v-card-text', 'v-row', 'v-col',
-        'v-btn', 'v-alert', 'v-divider', 'v-progress-linear', 'v-list', 'v-list-item',
+        'v-dialog', 'v-card-actions', 'v-spacer', 'v-btn', 'v-alert', 'v-divider', 'v-progress-linear', 'v-list', 'v-list-item',
         'v-list-item-title', 'v-list-item-subtitle', 'v-text-field', 'v-checkbox', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false,
             setup(_props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name,
@@ -248,5 +248,25 @@ test('Cocina retains invalid and rejected price drafts while history remains sel
         assert.match(textOf(mounted.root), /HTTP 503/)
         assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 1)
         assert.equal(all(mounted.root, node => node.type === 'price-history-panel')[0].props.packageId, 8)
+    } finally {mounted.close()}
+})
+
+test('saved format names open a closable detail dialog without writing or losing the catalog', async () => {
+    const row = {id: 8, food: 2, food_name: 'Aceite', unit: 3, unit_name: 'L', label: 'Garrafa', quantity: '5', is_reference: true, current_price: null}
+    const mounted = await mount((url, options) => {
+        if (options.method) return assert.fail('Opening a format must not write')
+        return {ok: true, status: 200, data: url === '/api/cuaderno/packages/' ? [row] : {currency: 'EUR', operational_role: role('guest')}}
+    })
+    try {
+        const name = button(mounted.root, 'Aceite — Garrafa')
+        assert.ok(name, 'format name is an accessible action')
+        await name.props.onClick(); await flush()
+        const dialog = all(mounted.root, node => node.type === 'v-dialog')[0]
+        assert.equal(dialog.props['model-value'], true)
+        assert.equal(all(mounted.root, node => node.type === 'price-history-panel')[0].props.packageId, 8)
+        await button(mounted.root, 'Cerrar').props.onClick(); await flush()
+        assert.equal(all(mounted.root, node => node.type === 'price-history-panel').length, 0)
+        assert.ok(button(mounted.root, 'Aceite — Garrafa'))
+        assert.equal(mounted.calls.filter(call => call.options.method).length, 0)
     } finally {mounted.close()}
 })

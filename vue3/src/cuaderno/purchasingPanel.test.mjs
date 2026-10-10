@@ -49,8 +49,9 @@ test('pending receipt locks context controls and clears only its unchanged draft
     const calls = []
     globalThis.__purchasePanelTransport = (url, options = {}) => {
         calls.push({url, options})
-        if (url === '/api/cuaderno/packages/' || url === '/api/cuaderno/purchase-offers/') return {ok: true, status: 200, data: []}
-        if (url === '/api/cuaderno/purchase-orders/' && !options.method) return {ok: true, status: 200, data: [order(10), order(11)]}
+        if (url === '/api/cuaderno/packages/') return {ok: true, status: 200, data: [{id: 8, food: 2, food_name: 'Calabacín', unit: 5, unit_name: 'unidad 5', label: 'Saco', quantity: '10', is_reference: true, current_price: null}]}
+        if (url === '/api/cuaderno/purchase-offers/') return {ok: true, status: 200, data: []}
+        if (url === '/api/cuaderno/purchase-orders/' && !options.method) return {ok: true, status: 200, data: [{...order(10), package: 8}, order(11)]}
         if (url.includes('/receipts/') && options.method === 'POST') return new Promise(resolve => { releaseReceipt = resolve })
         if (url.includes('/receipts/')) return {ok: true, status: 200, data: []}
         return assert.fail(`Unexpected request ${url}`)
@@ -79,6 +80,13 @@ test('pending receipt locks context controls and clears only its unchanged draft
     }
     app.mount(root); await flush()
     try {
+        const orderTitle = buttons(root, 'Pedido #10')[0]
+        assert.ok(orderTitle, 'an identifiable order name opens its receipt history')
+        assert.match(textOf(orderTitle), /Calabacín · Saco · Pedido #10/)
+        assert.ok(buttons(root, 'Pedido #11')[0], 'orders without a catalog format still have an identity')
+        await orderTitle.props.onClick(); await flush()
+        assert.ok(calls.some(call => call.url === '/api/cuaderno/purchase-orders/10/receipts/'))
+        assert.match(textOf(root), /No hay recepciones en este pedido/)
         const suppliers = all(root, node => node.type === 'model-select' && node.props.label === 'Proveedor')
         assert.equal(suppliers.length, 2)
         for (const supplier of suppliers) assert.equal(supplier.props.searchOnLoad, true)

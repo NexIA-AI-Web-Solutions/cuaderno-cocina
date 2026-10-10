@@ -1,5 +1,5 @@
 <template>
-    <v-btn v-bind="props" icon="fa-solid fa-ellipsis-v" variant="plain" :size="props.size" class="d-print-none">
+    <v-btn v-bind="props" icon="fa-solid fa-ellipsis-v" variant="plain" :size="props.size" min-width="44" min-height="44" :aria-label="`${$t('More')}: ${props.recipe.name}`" :title="`${$t('More')}: ${props.recipe.name}`" class="d-print-none">
         <v-icon icon="fa-solid fa-ellipsis-v"></v-icon>
         <v-menu activator="parent" close-on-content-click>
             <v-list density="compact" class="pt-1 pb-1">
