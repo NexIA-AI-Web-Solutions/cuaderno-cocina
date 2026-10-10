@@ -1,5 +1,19 @@
 # Aceptación final
 
+## Reservas de clientes — candidata local del 10 de octubre
+
+- [x] Reservas en Profesional e Integral con roles según la aclaración del usuario.
+- [x] Historial, motivos, revisión concurrente y vínculo con producción nativa.
+- [x] Reposición por periodo; confirmar no mueve stock y producir registra movimientos.
+- [x] Migración aditiva, 87 regresiones backend dirigidas, 19 frontend de reservas, TypeScript, build, contrato y SDK reproducible.
+- [x] Revisión independiente: calendario antiguo, capacidades por hogar, precisión horaria y claves de menú corregidos.
+- [x] Tres agentes con navegador real: 27 comprobaciones Esencial, 22 Profesional y 11 Integral; ámbitos y huecos explícitos en los informes.
+- [x] Fallo de merma periódica detectado en navegador, corregido y repetido con la misma receta y reserva; 87 regresiones dirigidas PASS y revisión independiente.
+- [ ] Resolver los dos fallos frontend heredados de portadas y el presupuesto de rendimiento concurrente: suite backend final 668 PASS / 1 FAIL (669 casos).
+- [ ] CI completa y G7, imagen final vinculada a esta fuente, backup/restauración y autorización de despliegue.
+
+Evidencia y comandos: [reservas-20261010](evidence/reservations-20261010/README.md). No se atribuye al candidato un despliegue ni los gates de releases anteriores.
+
 ## Revisión de precios del 8 de octubre — candidata pendiente
 
 - [x] Etiquetas decimales exactas y legibles, sin convertir dinero a Float.

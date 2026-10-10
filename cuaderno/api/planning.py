@@ -103,6 +103,8 @@ class MealPlanCourseView(CuadernoAPIView):
         checked(fields, request.data, ("course",), ("course",))
         lock_space(request); require_professional(request.space)
         plan = get_object_or_404(visible_plans(request), pk=meal_plan_id)
+        from cuaderno.services.service_plans import require_independent_meal_plan
+        require_independent_meal_plan(plan)
         course_id = checked(integer, request.data["course"], nullable=True)
         course = None
         if course_id is not None:

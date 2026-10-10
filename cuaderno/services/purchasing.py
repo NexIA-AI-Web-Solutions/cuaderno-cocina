@@ -349,8 +349,15 @@ def reverse_receipt(*, request, receipt: PurchaseReceipt, raw_key: str):
 
 def replenishment(*, request, data) -> list[dict]:
     household = _membership_household(request, data.get("household"))
-    plans = accessible_service_plans(request).filter(state=ServicePlan.CONFIRMED, household=household)
     requested = data.get("service_plans")
+    filters = {"state": ServicePlan.CONFIRMED, "household": household}
+    if requested is not None:
+        filters["pk__in"] = requested
+    if data.get("from_date") is not None:
+        filters["service_date__gte"] = data["from_date"]
+    if data.get("to_date") is not None:
+        filters["service_date__lte"] = data["to_date"]
+    plans = accessible_service_plans(request, aggregate_filters=filters)
     if requested is not None:
         plans = plans.filter(pk__in=requested)
         if plans.count() != len(set(requested)):

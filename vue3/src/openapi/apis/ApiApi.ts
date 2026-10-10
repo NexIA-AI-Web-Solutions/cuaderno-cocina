@@ -178,6 +178,7 @@ import type {
   PatchedRecipeBookRequest,
   PatchedRecipeImportRequest,
   PatchedRecipeRequest,
+  PatchedReservationWriteRequest,
   PatchedSearchPreferenceRequest,
   PatchedShoppingListEntryRequest,
   PatchedShoppingListRecipeRequest,
@@ -235,6 +236,12 @@ import type {
   RecipeYieldWriteSchemaRequest,
   ReplenishmentQueryRequest,
   ReplenishmentSchema,
+  ReservationListResponse,
+  ReservationMenusResponse,
+  ReservationResponse,
+  ReservationSummaryResponse,
+  ReservationTransitionRequest,
+  ReservationWriteRequest,
   SearchFields,
   SearchPreference,
   ServerSettings,
@@ -615,6 +622,8 @@ import {
     PatchedRecipeImportRequestToJSON,
     PatchedRecipeRequestFromJSON,
     PatchedRecipeRequestToJSON,
+    PatchedReservationWriteRequestFromJSON,
+    PatchedReservationWriteRequestToJSON,
     PatchedSearchPreferenceRequestFromJSON,
     PatchedSearchPreferenceRequestToJSON,
     PatchedShoppingListEntryRequestFromJSON,
@@ -729,6 +738,18 @@ import {
     ReplenishmentQueryRequestToJSON,
     ReplenishmentSchemaFromJSON,
     ReplenishmentSchemaToJSON,
+    ReservationListResponseFromJSON,
+    ReservationListResponseToJSON,
+    ReservationMenusResponseFromJSON,
+    ReservationMenusResponseToJSON,
+    ReservationResponseFromJSON,
+    ReservationResponseToJSON,
+    ReservationSummaryResponseFromJSON,
+    ReservationSummaryResponseToJSON,
+    ReservationTransitionRequestFromJSON,
+    ReservationTransitionRequestToJSON,
+    ReservationWriteRequestFromJSON,
+    ReservationWriteRequestToJSON,
     SearchFieldsFromJSON,
     SearchFieldsToJSON,
     SearchPreferenceFromJSON,
@@ -2877,6 +2898,36 @@ export interface CuadernoRecipeYieldUpdateRequest {
 
 export interface CuadernoReplenishmentCalculateRequest {
     replenishmentQuery?: ReplenishmentQueryRequest;
+}
+
+export interface CuadernoReservationCreateRequest {
+    reservationWrite: ReservationWriteRequest;
+}
+
+export interface CuadernoReservationRetrieveRequest {
+    reservationId: number;
+}
+
+export interface CuadernoReservationTransitionRequest {
+    reservationId: number;
+    reservationTransition: ReservationTransitionRequest;
+}
+
+export interface CuadernoReservationUpdateRequest {
+    reservationId: number;
+    patchedReservationWrite?: PatchedReservationWriteRequest;
+}
+
+export interface CuadernoReservationsListRequest {
+    date?: Date;
+    fromDate?: Date;
+    limit?: number;
+    offset?: number;
+    toDate?: Date;
+}
+
+export interface CuadernoReservationsSummaryRequest {
+    date: Date;
 }
 
 export interface CuadernoServiceActionRequest {
@@ -21782,6 +21833,301 @@ export class ApiApi extends runtime.BaseAPI {
      */
     async cuadernoReplenishmentCalculate(requestParameters: CuadernoReplenishmentCalculateRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentSchema> {
         const response = await this.cuadernoReplenishmentCalculateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationCreateRaw(requestParameters: CuadernoReservationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationResponse>> {
+        if (requestParameters['reservationWrite'] == null) {
+            throw new runtime.RequiredError(
+                'reservationWrite',
+                'Required parameter "reservationWrite" was null or undefined when calling cuadernoReservationCreate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReservationWriteRequestToJSON(requestParameters['reservationWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationCreate(requestParameters: CuadernoReservationCreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationResponse> {
+        const response = await this.cuadernoReservationCreateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationMenusListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationMenusResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/menus/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationMenusResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationMenusList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationMenusResponse> {
+        const response = await this.cuadernoReservationMenusListRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationRetrieveRaw(requestParameters: CuadernoReservationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationResponse>> {
+        if (requestParameters['reservationId'] == null) {
+            throw new runtime.RequiredError(
+                'reservationId',
+                'Required parameter "reservationId" was null or undefined when calling cuadernoReservationRetrieve().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/{reservationId}/`;
+        urlPath = urlPath.replace(`{${"reservationId"}}`, encodeURIComponent(String(requestParameters['reservationId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationRetrieve(requestParameters: CuadernoReservationRetrieveRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationResponse> {
+        const response = await this.cuadernoReservationRetrieveRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationTransitionRaw(requestParameters: CuadernoReservationTransitionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationResponse>> {
+        if (requestParameters['reservationId'] == null) {
+            throw new runtime.RequiredError(
+                'reservationId',
+                'Required parameter "reservationId" was null or undefined when calling cuadernoReservationTransition().'
+            );
+        }
+
+        if (requestParameters['reservationTransition'] == null) {
+            throw new runtime.RequiredError(
+                'reservationTransition',
+                'Required parameter "reservationTransition" was null or undefined when calling cuadernoReservationTransition().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/{reservationId}/transition/`;
+        urlPath = urlPath.replace(`{${"reservationId"}}`, encodeURIComponent(String(requestParameters['reservationId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReservationTransitionRequestToJSON(requestParameters['reservationTransition']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationTransition(requestParameters: CuadernoReservationTransitionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationResponse> {
+        const response = await this.cuadernoReservationTransitionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationUpdateRaw(requestParameters: CuadernoReservationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationResponse>> {
+        if (requestParameters['reservationId'] == null) {
+            throw new runtime.RequiredError(
+                'reservationId',
+                'Required parameter "reservationId" was null or undefined when calling cuadernoReservationUpdate().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/{reservationId}/`;
+        urlPath = urlPath.replace(`{${"reservationId"}}`, encodeURIComponent(String(requestParameters['reservationId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PatchedReservationWriteRequestToJSON(requestParameters['patchedReservationWrite']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationUpdate(requestParameters: CuadernoReservationUpdateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationResponse> {
+        const response = await this.cuadernoReservationUpdateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationsListRaw(requestParameters: CuadernoReservationsListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationListResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['date'] != null) {
+            queryParameters['date'] = (requestParameters['date'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['fromDate'] != null) {
+            queryParameters['from_date'] = (requestParameters['fromDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['offset'] != null) {
+            queryParameters['offset'] = requestParameters['offset'];
+        }
+
+        if (requestParameters['toDate'] != null) {
+            queryParameters['to_date'] = (requestParameters['toDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationListResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationsList(requestParameters: CuadernoReservationsListRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationListResponse> {
+        const response = await this.cuadernoReservationsListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     */
+    async cuadernoReservationsSummaryRaw(requestParameters: CuadernoReservationsSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReservationSummaryResponse>> {
+        if (requestParameters['date'] == null) {
+            throw new runtime.RequiredError(
+                'date',
+                'Required parameter "date" was null or undefined when calling cuadernoReservationsSummary().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['date'] != null) {
+            queryParameters['date'] = (requestParameters['date'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = await this.configuration.apiKey("Authorization"); // ApiKeyAuth authentication
+        }
+
+
+        let urlPath = `/api/cuaderno/reservations/summary/`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReservationSummaryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     */
+    async cuadernoReservationsSummary(requestParameters: CuadernoReservationsSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationSummaryResponse> {
+        const response = await this.cuadernoReservationsSummaryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -121,10 +121,18 @@ class ReceiptReverseSerializer(serializers.Serializer):
 
 
 class ReplenishmentQuerySerializer(serializers.Serializer):
+    from_date = serializers.DateField(required=False)
+    to_date = serializers.DateField(required=False)
     service_plans = serializers.ListField(
         child=StrictIdentifierField(), allow_empty=False, max_length=100, required=False
     )
     household = StrictIdentifierField(required=False)
+
+    def validate(self, attrs):
+        start, end = attrs.get("from_date"), attrs.get("to_date")
+        if start and end and end < start:
+            raise serializers.ValidationError({"to_date": "El final del periodo no puede ser anterior al inicio."})
+        return attrs
 
 
 def _integral(space):

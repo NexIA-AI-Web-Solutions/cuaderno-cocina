@@ -1,0 +1,40 @@
+{
+  "suite": "cuaderno.tests",
+  "tests_run": 669,
+  "passed": 668,
+  "failures": 1,
+  "errors": 0,
+  "runner_exit_code": 1,
+  "duration_seconds": 568.823,
+  "database": "isolated PostgreSQL 16",
+  "container": "cuaderno-reservas-20261010-test",
+  "command": "docker exec -e LITELLM_LOCAL_MODEL_COST_MAP=True -e DJANGO_SETTINGS_MODULE=recipes.test_settings cuaderno-reservas-20261010-test /opt/recipes/venv/bin/python manage.py test cuaderno.tests --noinput --keepdb --verbosity 1",
+  "agent": "root",
+  "log": "backend-full-final.log",
+  "log_sha256": "76ad7d766af82be62bfc7dde3f9fc46b9e5d68dce6a4872287a4fabf71620526",
+  "failure_details": [
+    {
+      "test": "CuadernoPerformanceAcceptanceTests.test_documented_postgresql_dataset_meets_api_budgets",
+      "endpoint": "movements_100_of_100000",
+      "mode": "five_concurrent_users",
+      "p95_ms": 1704.959,
+      "budget_ms": 800
+    }
+  ],
+  "focused_regressions": {
+    "tests_run": 87,
+    "result": "PASS",
+    "log": "recurring-yield-green-final.log"
+  },
+  "previous_attempt": {
+    "tests_discovered": 666,
+    "tool_reported_exit_code": 0,
+    "result": "INCOMPLETE_EVIDENCE_NOT_PASS",
+    "log": "backend-full-suite.log",
+    "reason": "Missing unittest completion summary; log stops during visibility tests and performance measurement exceeds asserted budget. Cause unknown."
+  },
+  "limitations": [
+    "Performance acceptance fails under capped shared-host resources; no release gate claimed.",
+    "Initial attempts with missing fixtures/dependencies and exhausted host disk retained separately."
+  ]
+}

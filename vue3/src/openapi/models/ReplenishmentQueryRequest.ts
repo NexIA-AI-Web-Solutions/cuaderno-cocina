@@ -21,6 +21,18 @@ import { mapValues } from '../runtime';
 export interface ReplenishmentQueryRequest {
     /**
      * 
+     * @type {Date}
+     * @memberof ReplenishmentQueryRequest
+     */
+    fromDate?: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof ReplenishmentQueryRequest
+     */
+    toDate?: Date;
+    /**
+     * 
      * @type {Array<number>}
      * @memberof ReplenishmentQueryRequest
      */
@@ -50,6 +62,8 @@ export function ReplenishmentQueryRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'fromDate': json['from_date'] == null ? undefined : (new Date(json['from_date'])),
+        'toDate': json['to_date'] == null ? undefined : (new Date(json['to_date'])),
         'servicePlans': json['service_plans'] == null ? undefined : json['service_plans'],
         'household': json['household'] == null ? undefined : json['household'],
     };
@@ -66,6 +80,8 @@ export function ReplenishmentQueryRequestToJSONTyped(value?: ReplenishmentQueryR
 
     return {
         
+        'from_date': value['fromDate'] == null ? value['fromDate'] : value['fromDate'].toISOString().substring(0,10),
+        'to_date': value['toDate'] == null ? value['toDate'] : value['toDate'].toISOString().substring(0,10),
         'service_plans': value['servicePlans'],
         'household': value['household'],
     };

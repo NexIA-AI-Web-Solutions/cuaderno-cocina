@@ -1,5 +1,12 @@
 # Estado del producto
 
+## Despliegue de reservas autorizado — 10 de octubre
+
+El propietario autorizó desplegar en producción. Se prepara un candidato limpio para la CI completa. Los dos fallos frontend de portadas se corrigieron en fixtures que conservaban una fecha fija fuera del periodo consultado: 25 pruebas dirigidas y TypeScript PASS. No se ha relajado el límite de rendimiento; el listado de movimientos es idéntico al baseline y se validará en CI externa. Aún no hay activación de este candidato. [Diagnóstico](evidence/deployment-20261010/performance-baseline-review.md).
+
+## Reservas de clientes — implementación local del 10 de octubre de 2026
+Rama `cuaderno/reservas-20261010`: reservas de Profesional heredadas por Integral, historial y motivos, confirmación por Cocina/Responsable, menú y anulación solo Responsable. Reutiliza plantillas, MealPlan, ServicePlan y StockMovement. La migración 0020 es aditiva; no se ha desplegado. Guía: [RESERVAS_ES](RESERVAS_ES.md). Decisión: [ADR 0013](adr/0013-customer-reservations.md). [Validación de esta fuente](evidence/reservations-20261010/README.md): 87 regresiones backend dirigidas, 19 de reservas frontend, TypeScript explícito de la aplicación, build, OpenAPI/SDK y revisión independiente; la suite frontend mantiene dos fallos de portadas reproducidos en la fuente anterior y la ejecución backend final termina con 668 PASS y 1 FAIL de presupuesto concurrente. El registro anterior de 666 casos no acredita una suite aprobada. Los ensayos de navegador por plan y las limitaciones de rendimiento, CI y publicación constan en la evidencia. Los estados históricos siguientes conservan su fecha y no certifican esta ampliación.
+
 ## Imágenes y exportación: candidato rechazado y nueva corrección — 9 de octubre de 2026
 
 La [CI 37961329952](https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina/actions/runs/37961329952)

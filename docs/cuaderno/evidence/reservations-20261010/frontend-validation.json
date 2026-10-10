@@ -1,0 +1,68 @@
+{
+  "commands": [
+    {
+      "command": "./node_modules/.bin/vue-tsc --noEmit",
+      "cwd": "vue3",
+      "exit_code": 0,
+      "log": "frontend-typecheck.log",
+      "scope": "Default root tsconfig only; not app certification. Superseded by explicit app config below."
+    },
+    {
+      "command": "/root/.npm/_npx/387698761821791d/node_modules/node/bin/node --test src/cuaderno/reservationsUi.test.mjs src/cuaderno/reservationsPage.test.mjs",
+      "cwd": "vue3",
+      "exit_code": 0,
+      "tests": 19,
+      "passed": 19,
+      "log": "frontend-reservations-tests.log"
+    },
+    {
+      "command": "/root/.npm/_npx/387698761821791d/node_modules/node/bin/node ./node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p tsconfig.app.json",
+      "cwd": "vue3",
+      "exit_code": 0,
+      "node_version": "24.21.0",
+      "log": "frontend-app-typecheck.log"
+    }
+  ],
+  "scope": "19 targeted pure and compiled Vue SFC mounted tests with transport/widget unit boundaries; strict actual app typecheck; separate real Chromium acceptance against isolated native local preview.",
+  "files": [
+    "vue3/src/cuaderno/pages/ReservasPage.vue",
+    "vue3/src/cuaderno/reservationsUi.ts",
+    "vue3/src/cuaderno/reservationsUi.test.mjs",
+    "vue3/src/cuaderno/reservationsPage.test.mjs",
+    "vue3/src/cuaderno/pages/ProduccionPage.vue"
+  ],
+  "review_fixes": [
+    "Frozen summary group key includes menu fingerprint; menu dropdown identity unchanged.",
+    "Per-row can_operate required for transitions; household read-only honored.",
+    "Mounted tests cover other household Cocina, admin controls, missing per-row flag, versioned groups reorder.",
+    "History is Spanish labelled customer/contact/date/time/menu/dishes/covers/state/note text, no raw IDs/fingerprint/JSON; action names translated. Minute-only HH:MM validation.",
+    "Creation requires list.can_operate household capability as well as strict role; no household notice for operators/admin.",
+    "Explicit strict app config found23errors in initial code; typed concurrent Promise tuple and history Record guard fixed, actual app config now0. Original failure preserved in typecheck-final.log."
+  ],
+  "browser": {
+    "passed": true,
+    "checks_passed": 22,
+    "tier": "Profesional",
+    "results": "/home/kripta/cuaderno-informes-20261009/browser-audit-20261010/profesional/reservations-preview/results.json",
+    "report": "/home/kripta/cuaderno-informes-20261009/browser-audit-20261010/profesional/reservations-preview/report.md",
+    "final_bundle_main_scenario": {
+      "pending_covers": 75,
+      "covers": [
+        20,
+        15,
+        30,
+        10
+      ],
+      "rows": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "date": "2026-10-12",
+      "dishes": 2,
+      "reload_verified": true
+    },
+    "scope": "Composite resumed run; first12 checks preceding final type-only bundle; final remaining role/action checks and fresh four-row75 scenario final bundle. Zero instrumented primary-page errors; secondary stale409 tab console not instrumented."
+  }
+}

@@ -44,7 +44,7 @@ def visible_plans(request):
                   cuaderno_course__course__meal_type_id=F("meal_type_id")))
            & (Q(cuaderno_course__source_template__isnull=True)
               | Q(cuaderno_course__source_template__space=request.space))),
-    ).select_related("recipe", "meal_type", "cuaderno_course__course")
+    ).exclude(serviceplan__reservation_link__active=False).select_related("recipe", "meal_type", "cuaderno_course__course")
 
 
 def plan_rows(request, plans, diet=None):

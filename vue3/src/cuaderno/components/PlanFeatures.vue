@@ -42,6 +42,7 @@ const rows: FeatureRow[] = [
     {key: 'staff_absences', label: 'Ausencias del equipo', rank: 1},
     {key: 'menu_print', label: 'Impresión individual vertical u horizontal', rank: 1},
     {key: 'native_production', label: 'Producción, mermas y necesidades', rank: 1, native: true},
+    {key: 'customer_reservations', label: 'Reservas de clientes y producción por menú', rank: 1},
     {key: 'merged_menu_print', label: 'Varios menús en un documento', rank: 2},
     {key: 'native_stock', label: 'Pedidos, recepciones y existencias', rank: 2, native: true},
     {key: 'native_prices', label: 'Evolución de precios e impacto en costes', rank: 2, native: true},

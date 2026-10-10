@@ -1,0 +1,199 @@
+{
+  "environment": "isolated local preview http://127.0.0.1:18082",
+  "edition": "esencial",
+  "browser": "Chromium 1234",
+  "no_api_writes": true,
+  "no_trace": true,
+  "results": [
+    {
+      "role": "responsable",
+      "feature": "login-and-navigation",
+      "status": "PASS",
+      "steps": "UI login; verify identity and no Reservas navigation link",
+      "expected": "Esencial session with hidden Reservas navigation",
+      "observed": "Identity matched; zero navigation links",
+      "screenshot": "responsable-home.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-390",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "screenshot": "responsable-unavailable-390.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-768",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 768,
+        "scrollWidth": 768
+      },
+      "screenshot": "responsable-unavailable-768.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-1024",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1024,
+        "scrollWidth": 1024
+      },
+      "screenshot": "responsable-unavailable-1024.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-1440",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "screenshot": "responsable-unavailable-1440.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "commercial-comparison",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'No habilitado'\n- 'No incluido'\n      ^"
+    },
+    {
+      "role": "cocina",
+      "feature": "login-and-navigation",
+      "status": "PASS",
+      "steps": "UI login; verify identity and no Reservas navigation link",
+      "expected": "Esencial session with hidden Reservas navigation",
+      "observed": "Identity matched; zero navigation links",
+      "screenshot": "cocina-home.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-390",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "screenshot": "cocina-unavailable-390.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-768",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 768,
+        "scrollWidth": 768
+      },
+      "screenshot": "cocina-unavailable-768.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-1024",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1024,
+        "scrollWidth": 1024
+      },
+      "screenshot": "cocina-unavailable-1024.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-1440",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "screenshot": "cocina-unavailable-1440.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "commercial-comparison",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'No habilitado'\n- 'No incluido'\n      ^"
+    },
+    {
+      "role": "consulta",
+      "feature": "login-and-navigation",
+      "status": "PASS",
+      "steps": "UI login; verify identity and no Reservas navigation link",
+      "expected": "Esencial session with hidden Reservas navigation",
+      "observed": "Identity matched; zero navigation links",
+      "screenshot": "consulta-home.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-390",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "screenshot": "consulta-unavailable-390.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-768",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 768,
+        "scrollWidth": 768
+      },
+      "screenshot": "consulta-unavailable-768.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-1024",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1024,
+        "scrollWidth": 1024
+      },
+      "screenshot": "consulta-unavailable-1024.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-1440",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "screenshot": "consulta-unavailable-1440.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "commercial-comparison",
+      "status": "FAIL",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'No habilitado'\n- 'No incluido'\n      ^"
+    }
+  ],
+  "events": []
+}

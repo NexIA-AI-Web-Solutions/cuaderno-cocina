@@ -162,7 +162,9 @@
                             />
                             <service-preparation-panel class="mt-4" :service-id="plan.id" :service-state="plan.state" :can-operate="canOperate" />
                         </v-card-text>
-                        <v-card-actions class="flex-wrap ga-2 no-print">
+                        <v-alert v-if="plan.reservation_id" type="info" variant="tonal" class="ma-3">Ficha vinculada a la reserva #{{ plan.reservation_id }}. Sus estados se gestionan desde Reservas.</v-alert>
+                        <v-card-actions v-if="plan.reservation_id" class="no-print"><v-btn :to="{name: 'CuadernoReservasPage'}" min-height="44">Ver reserva</v-btn></v-card-actions>
+                        <v-card-actions v-else class="flex-wrap ga-2 no-print">
                             <v-btn v-if="plan.state === 'draft'" color="primary" :loading="busyPlan === plan.id" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="transition(plan, 'confirm')">Confirmar ficha</v-btn>
                             <v-btn v-if="plan.state === 'confirmed'" color="primary" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="openConfirmation(plan, 'produce')">Producir</v-btn>
                             <v-btn v-if="plan.state === 'produced'" color="primary" :disabled="!canOperate || busyPlan !== null" min-height="44" @click="openConfirmation(plan, 'reverse')">Revertir producción</v-btn>
@@ -245,7 +247,7 @@ const serviceCoversTotal = computed(() => {
     return (BigInt(values.base_covers) + BigInt(values.extra) - BigInt(values.cancelled)).toString()
 })
 type ServiceRow = {
-    id: number; title: string; covers: string; service_date: string | null; state: string;
+    id: number; reservation_id?: number | null; title: string; covers: string; service_date: string | null; state: string;
     snapshot?: {cost?: {status: string; total: string | null; display: string | null}; warnings?: unknown[];
         finance?: RecipeFinance;
         recipe_id?: number | null;
@@ -489,6 +491,7 @@ function confirmationTitle(action: ServiceAction) {
 }
 
 function openConfirmation(plan: ServiceRow, action: 'produce' | 'cancel' | 'reverse') {
+    if (plan.reservation_id) return
     if (!canOperate.value || busyPlan.value !== null) return
     confirmation.value = {plan, action}
 }
@@ -566,6 +569,7 @@ async function loadServices() {
 }
 
 async function transition(plan: ServiceRow, action: ServiceAction) {
+    if (plan.reservation_id) return
     if (!canOperate.value) return
     if (busyPlan.value !== null) return
     const submittedConfirmation = confirmation.value

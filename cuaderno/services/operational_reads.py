@@ -119,9 +119,10 @@ SERVICE_ROWS_SQL = AUTH_SQL.rstrip() + """
 SELECT plan.id, plan.title, plan.covers, plan.service_date, plan.state,
        plan.meal_plan_id, plan.household_id, plan.snapshot,
        plan.confirmed_at, plan.produced_at, plan.created_by_id,
-       meal.recipe_id
+       meal.recipe_id, reservation_link.reservation_id
 FROM "cuaderno_serviceplan" plan
 LEFT JOIN "cookbook_mealplan" meal ON meal.id = plan.meal_plan_id
+LEFT JOIN "cuaderno_reservationservice" reservation_link ON reservation_link.service_id = plan.id
 WHERE plan.space_id = %(space)s
   AND EXISTS (SELECT 1 FROM auth)
   AND (
@@ -171,7 +172,7 @@ def service_plan_rows(request):
     columns = (
         "pk", "title", "covers", "service_date", "state", "meal_plan_id",
         "household_id", "snapshot", "confirmed_at", "produced_at",
-        "created_by_id", "meal_plan__recipe_id",
+        "created_by_id", "meal_plan__recipe_id", "reservation_id",
     )
     with connection.cursor() as cursor:
         cursor.execute(SERVICE_ROWS_SQL, {"space": request.space.pk, "user": request.user.pk})

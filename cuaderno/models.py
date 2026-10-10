@@ -459,6 +459,80 @@ class MenuTemplateEntry(models.Model):
         ]
 
 
+class CustomerReservation(models.Model):
+    """An internal customer commitment backed by existing production services."""
+
+    REQUESTED = "requested"
+    CONFIRMED = "confirmed"
+    IN_KITCHEN = "in_kitchen"
+    SERVED = "served"
+    CANCELLED = "cancelled"
+    STATES = ((REQUESTED, "Solicitada"), (CONFIRMED, "Confirmada"),
+              (IN_KITCHEN, "En cocina"), (SERVED, "Servida"), (CANCELLED, "Anulada"))
+
+    space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)
+    household = models.ForeignKey("cookbook.Household", on_delete=models.PROTECT, null=True, blank=True)
+    customer_name = models.CharField(max_length=160)
+    phone = models.CharField(max_length=64, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    service_date = models.DateField(db_index=True)
+    service_time = models.TimeField()
+    template = models.ForeignKey(MenuTemplate, on_delete=models.PROTECT)
+    template_day = models.PositiveSmallIntegerField(default=0)
+    meal_type = models.ForeignKey("cookbook.MealType", on_delete=models.PROTECT)
+    covers = models.PositiveIntegerField()
+    note = models.TextField(blank=True, default="")
+    state = models.CharField(max_length=16, choices=STATES, default=REQUESTED, db_index=True)
+    menu_snapshot = models.JSONField(default=dict)
+    revision = models.PositiveIntegerField(default=1)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="cuaderno_reservations_created")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="cuaderno_reservations_updated")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("service_date", "service_time", "pk")
+        indexes = [models.Index(fields=["space", "service_date", "state"], name="cuaderno_reservation_day")]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(covers__gte=1, covers__lte=9999), name="cuaderno_reservation_covers"),
+            models.CheckConstraint(condition=models.Q(template_day__lte=34), name="cuaderno_reservation_menu_day"),
+            models.CheckConstraint(condition=models.Q(revision__gte=1), name="cuaderno_reservation_revision"),
+            models.CheckConstraint(condition=~models.Q(phone="", email=""), name="cuaderno_reservation_contact"),
+            models.CheckConstraint(condition=models.Q(state__in=("requested", "confirmed", "in_kitchen", "served", "cancelled")), name="cuaderno_reservation_state"),
+        ]
+
+
+class ReservationRevision(models.Model):
+    """Append-only application history; previous commitments remain reviewable."""
+
+    reservation = models.ForeignKey(CustomerReservation, on_delete=models.PROTECT, related_name="history")
+    revision = models.PositiveIntegerField()
+    action = models.CharField(max_length=32)
+    reason = models.CharField(max_length=1000, blank=True, default="")
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("revision", "pk")
+        constraints = [models.UniqueConstraint(fields=["reservation", "revision"], name="cuaderno_reservation_history")]
+
+
+class ReservationService(models.Model):
+    """Versioned links, never a second stock or production ledger."""
+
+    reservation = models.ForeignKey(CustomerReservation, on_delete=models.PROTECT, related_name="service_links")
+    service = models.OneToOneField(ServicePlan, on_delete=models.PROTECT, related_name="reservation_link")
+    revision = models.PositiveIntegerField()
+    position = models.PositiveSmallIntegerField()
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("revision", "position", "pk")
+        constraints = [models.UniqueConstraint(fields=["reservation", "revision", "position"], name="cuaderno_reservation_dish")]
+
+
 class MealPlanCourse(models.Model):
     """Extend the native calendar; do not copy its recipes or shopping rows."""
     space = models.ForeignKey("cookbook.Space", on_delete=models.CASCADE)

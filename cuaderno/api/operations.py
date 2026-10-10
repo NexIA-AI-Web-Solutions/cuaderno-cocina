@@ -192,6 +192,8 @@ class ServicePlanView(APIView):
             if request.data.get("action") == "reverse":
                 type(request.space).objects.select_for_update().only("pk").get(pk=request.space.pk)
             plan = get_object_or_404(accessible_service_plans(request, plan_id).select_related("space"), pk=plan_id)
+            from cuaderno.services.service_plans import require_independent_service
+            require_independent_service(plan)
             action = request.data.get("action")
             if action == "confirm":
                 plan = confirm_service_plan(plan, request.user)
@@ -317,6 +319,8 @@ class ProductionSheetView(APIView):
                 pk=data.get("service_plan"),
             )
             if data.get("action") == "produce":
+                from cuaderno.services.service_plans import require_independent_service
+                require_independent_service(plan)
                 try:
                     plan, movement_ids, stock_changed = produce_service_plan(
                         plan, request.user, data.get("idempotency_key")

@@ -10,6 +10,10 @@ from cuaderno.api.operations import (
     ServicePlanView,
 )
 from cuaderno.api.views import EditionView, PackageListView, PriceCreateView, RecipeCostView
+from cuaderno.api.reservations import (
+    ReservationListView, ReservationDetailView, ReservationTransitionView,
+    ReservationSummaryView, ReservationMenusView,
+)
 from cuaderno.api.purchasing import (
     PurchaseOfferView,
     PurchaseOrderView as PurchasingOrderView,
@@ -37,6 +41,11 @@ from cuaderno.api.planning import (
 apply_schema_annotations()
 
 urlpatterns = [
+    path("api/cuaderno/reservations/", ReservationListView.as_view()),
+    path("api/cuaderno/reservations/menus/", ReservationMenusView.as_view()),
+    path("api/cuaderno/reservations/summary/", ReservationSummaryView.as_view()),
+    path("api/cuaderno/reservations/<int:reservation_id>/", ReservationDetailView.as_view()),
+    path("api/cuaderno/reservations/<int:reservation_id>/transition/", ReservationTransitionView.as_view()),
     path("api/cuaderno/foods/<int:food_id>/image/", FoodImageView.as_view()),
     path("api/cuaderno/foods/<int:food_id>/image/content/", FoodImageContentView.as_view(), name="cuaderno-food-image-content"),
     path("api/cuaderno/planning/templates/<int:template_id>/image/", MenuTemplateImageView.as_view()),

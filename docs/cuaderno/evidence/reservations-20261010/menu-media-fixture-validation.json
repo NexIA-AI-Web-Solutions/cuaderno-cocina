@@ -1,0 +1,32 @@
+{
+  "cause": "Both cover tests returned a static meal dated2026-10-09 while MenuPlanningPage initial loadedStart is DateTime.local().toISODate(). On2026-10-10 templateEntriesFromPlans correctly rejects the meal outside the requested interval before any POST. The tests incorrectly modeled the planning endpoint, not a product regression.",
+  "review": "Root approved deriving fixture meal date from the planning request from_date; all existing assertions retained.",
+  "files_changed": [
+    "vue3/src/cuaderno/menuMediaPage.test.mjs"
+  ],
+  "implementation_changes": false,
+  "change": "Two cover fixtures return the meal on the requested period first day. Added assertions that submitted entries day_index is0; duplicate/retry/panel image assertions unchanged.",
+  "before": {
+    "tests": 4,
+    "passed": 2,
+    "failed": 2,
+    "log": "menu-media-before.log"
+  },
+  "after": {
+    "command": "/root/.npm/_npx/387698761821791d/node_modules/node/bin/node --test src/cuaderno/menuMediaPage.test.mjs src/cuaderno/menuMediaRequests.test.mjs src/cuaderno/menuPlanningPage.test.mjs src/cuaderno/planningUi.test.mjs",
+    "cwd": "vue3",
+    "tests": 25,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "log": "menu-media-after.log"
+  },
+  "typecheck": {
+    "command": "/root/.npm/_npx/387698761821791d/node_modules/node/bin/node ./node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p tsconfig.app.json",
+    "cwd": "vue3",
+    "exit_code": 0,
+    "log": "menu-media-app-typecheck.log"
+  },
+  "diff": "menu-media-fixture.diff",
+  "deployment": "No deploy or push performed by this agent."
+}

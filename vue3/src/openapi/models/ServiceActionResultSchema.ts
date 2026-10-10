@@ -24,6 +24,12 @@ export interface ServiceActionResultSchema {
      * @type {number}
      * @memberof ServiceActionResultSchema
      */
+    reservationId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ServiceActionResultSchema
+     */
     id: number;
     /**
      * 
@@ -134,6 +140,7 @@ export function ServiceActionResultSchemaFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'reservationId': json['reservation_id'] == null ? undefined : json['reservation_id'],
         'id': json['id'],
         'title': json['title'],
         'covers': json['covers'],
@@ -162,6 +169,7 @@ export function ServiceActionResultSchemaToJSONTyped(value?: ServiceActionResult
 
     return {
         
+        'reservation_id': value['reservationId'],
         'id': value['id'],
         'title': value['title'],
         'covers': value['covers'],

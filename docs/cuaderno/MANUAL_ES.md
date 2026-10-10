@@ -1,5 +1,7 @@
 # Cuaderno Cocina — uso local
 
+Ampliación local del 10 de octubre: [guía de reservas de clientes](RESERVAS_ES.md), para Profesional e Integral. Su publicación y aceptación se registran por separado en STATUS; los ensayos históricos siguientes no certifican esta ampliación.
+
 **Estado actual, 4 de octubre:** el preview local se ha reanudado para completar la aceptación. Abre http://127.0.0.1:18081 después de comprobar `ready=true`. El resultado y las limitaciones del candidato están en `.cuaderno-runs/RELEASE_REPORT.md`. Los comandos siguientes permiten reanudarlo después de una parada; conservan imagen, base y media.
 
 ## Reanudar solo el preview existente

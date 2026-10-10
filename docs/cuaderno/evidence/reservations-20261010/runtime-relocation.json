@@ -1,0 +1,10 @@
+{
+  "old_container": "cuaderno-reservas-20261010-db-rootdisk",
+  "old_volume": "9f11ea6f898b74eed804d13bff98e2667ac22516f47f4075fac8932fef3a0d71",
+  "new_directory": "/srv/mail/cuaderno-reservas-runtime-20261010/postgres",
+  "physical_hash_comparison": "equal before startup",
+  "preview_counts_before": "9|12|0",
+  "query": "SELECT (SELECT count(*) FROM cookbook_userspace), (SELECT count(*) FROM cuaderno_customerreservation), (SELECT count(*) FROM cuaderno_stockmovement)",
+  "preview_counts_after": "9|12|0",
+  "old_duplicate_removed_after_verification": true
+}

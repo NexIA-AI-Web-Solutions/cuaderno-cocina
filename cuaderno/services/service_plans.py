@@ -6,7 +6,7 @@ import hashlib
 import re
 from copy import deepcopy
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING, localcontext
 
 from django.db import transaction
 from django.db.models import F, Q
@@ -37,10 +37,12 @@ def _snapshot_identifier(value):
     return value
 
 
-def accessible_service_plans(request, plan_id=None, *, as_list=False):
+def accessible_service_plans(request, plan_id=None, *, as_list=False, aggregate_filters=None):
     rows = ServicePlan.objects.filter(space=request.space)
     if plan_id is not None:
         rows = rows.filter(pk=plan_id)
+    if aggregate_filters is not None:
+        rows = rows.filter(**aggregate_filters)
     if not has_group_permission(request, ["admin"]):
         membership = getattr(request, "user_space", None)
         if membership is None:
@@ -67,7 +69,11 @@ def accessible_service_plans(request, plan_id=None, *, as_list=False):
             for plan in materialized
         ]
     else:
-        candidates = list(rows.order_by("-pk")[:100].values("pk", "meal_plan__recipe_id", "snapshot"))
+        candidate_limit = 2000 if aggregate_filters is not None else 100
+        candidates = list(rows.order_by("-pk")[:candidate_limit + 1].values("pk", "meal_plan__recipe_id", "snapshot"))
+        if aggregate_filters is not None and len(candidates) > candidate_limit:
+            raise ValidationError({"service_plans": "Hay más de 2000 servicios confirmados. Reduce el periodo o selecciona los servicios para calcular todas las necesidades."})
+        candidates = candidates[:candidate_limit]
     required_by_plan: dict[int, set[int] | None] = {}
     all_recipe_ids: set[int] = set()
 
@@ -120,7 +126,7 @@ def accessible_service_plans(request, plan_id=None, *, as_list=False):
 
 
 def serialize_service_plan(plan: ServicePlan) -> dict:
-    return {
+    payload = {
         "id": plan.pk,
         "title": plan.title,
         "covers": decimal_string(plan.covers),
@@ -133,6 +139,21 @@ def serialize_service_plan(plan: ServicePlan) -> dict:
         "produced_at": plan.produced_at.isoformat() if plan.produced_at else None,
         "created_by": plan.created_by_id,
     }
+    if hasattr(plan, "reservation_link"):
+        payload["reservation_id"] = plan.reservation_link.reservation_id
+    return payload
+
+
+def require_independent_service(plan):
+    """The reservation owns all transitions of its generated service rows."""
+    if hasattr(plan, "reservation_link"):
+        raise ValidationError({"reservation": "Gestiona este servicio desde su reserva para conservar el estado y el historial."})
+
+
+def require_independent_meal_plan(plan):
+    from cuaderno.models import ReservationService
+    if ReservationService.objects.filter(service__meal_plan=plan).exists():
+        raise ValidationError({"reservation": "Modifica el menú o las raciones desde su reserva."})
 
 
 def _snapshot_needs(sheet: dict, space) -> list[dict]:
@@ -322,9 +343,19 @@ def _locked_allocations(plan: ServicePlan) -> list[tuple[InventoryEntry, Decimal
                     entry_quantity = convert_native_quantity(remaining, required_unit, entry.unit, food, plan.space)
                 except DomainError:
                     continue
+                # Yield and unit conversion can produce recurring decimals.
+                # Preserve the theoretical need in its snapshot, but record a
+                # representable consumption in the lot's unit. Round positive
+                # allocations upward so production never under-consumes; the
+                # compensating movement restores this exact stored quantity.
+                with localcontext() as context:
+                    context.prec = 64
+                    entry_quantity = entry_quantity.quantize(Decimal("1e-16"), rounding=ROUND_CEILING)
                 used_required = remaining
             allocations.append((entry, entry_quantity))
-            remaining -= used_required
+            with localcontext() as context:
+                context.prec = 64
+                remaining -= used_required
         if remaining > 0:
             raise ValidationError(
                 {"insufficient_stock": {"food": need.get("food_name"), "missing": decimal_string(remaining), "unit": need.get("unit_name")}}
@@ -627,7 +658,7 @@ def accessible_service_plan_rows(request):
     )
 
 def serialize_service_plan_row(row):
-    return {
+    payload = {
         "id": row["pk"],
         "title": row["title"],
         "covers": decimal_string(row["covers"]),
@@ -640,4 +671,7 @@ def serialize_service_plan_row(row):
         "produced_at": row["produced_at"].isoformat() if row["produced_at"] else None,
         "created_by": row["created_by_id"],
     }
+    if row.get("reservation_id"):
+        payload["reservation_id"] = row["reservation_id"]
+    return payload
 

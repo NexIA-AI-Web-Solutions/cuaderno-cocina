@@ -5030,6 +5030,320 @@
                 }
             }
         },
+        "/api/cuaderno/reservations/": {
+            "get": {
+                "operationId": "cuadernoReservationsList",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "from_date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "to_date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationListResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "cuadernoReservationCreate",
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReservationWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReservationWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReservationWriteRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "reservationWrite"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/reservations/{reservationId}/": {
+            "get": {
+                "operationId": "cuadernoReservationRetrieve",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "reservationId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "cuadernoReservationUpdate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "reservationId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedReservationWriteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedReservationWriteRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedReservationWriteRequest"
+                            }
+                        }
+                    },
+                    "x-codegen-request-body-name": "patchedReservationWrite"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/reservations/{reservationId}/transition/": {
+            "post": {
+                "operationId": "cuadernoReservationTransition",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "reservationId",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReservationTransitionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReservationTransitionRequest"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ReservationTransitionRequest"
+                            }
+                        }
+                    },
+                    "required": true,
+                    "x-codegen-request-body-name": "reservationTransition"
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/reservations/menus/": {
+            "get": {
+                "operationId": "cuadernoReservationMenusList",
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationMenusResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/cuaderno/reservations/summary/": {
+            "get": {
+                "operationId": "cuadernoReservationsSummary",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "date",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "api"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReservationSummaryResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/cuaderno/services/": {
             "get": {
                 "operationId": "cuadernoServicesList",
@@ -29394,6 +29708,70 @@
                     }
                 }
             },
+            "PatchedReservationWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "customer_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                    },
+                    "phone": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 64
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "default": "",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "service_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "service_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "template": {
+                        "type": "integer"
+                    },
+                    "template_day": {
+                        "type": "integer",
+                        "maximum": 34,
+                        "minimum": 0
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "covers": {
+                        "type": "integer"
+                    },
+                    "note": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 1000
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                    }
+                }
+            },
             "PatchedSearchPreferenceRequest": {
                 "type": "object",
                 "description": "Adds nested create feature",
@@ -32302,6 +32680,14 @@
             "ReplenishmentQueryRequest": {
                 "type": "object",
                 "properties": {
+                    "from_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "to_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
                     "service_plans": {
                         "type": "array",
                         "items": {
@@ -32326,6 +32712,282 @@
                 },
                 "required": [
                     "items"
+                ]
+            },
+            "ReservationListResponse": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer"
+                    },
+                    "offset": {
+                        "type": "integer"
+                    },
+                    "limit": {
+                        "type": "integer"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ReservationResponse"
+                        }
+                    },
+                    "can_operate": {
+                        "type": "boolean"
+                    },
+                    "can_manage": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "can_manage",
+                    "can_operate",
+                    "count",
+                    "limit",
+                    "offset",
+                    "results"
+                ]
+            },
+            "ReservationMenusResponse": {
+                "type": "object",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "results"
+                ]
+            },
+            "ReservationResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "customer_name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "service_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "service_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "template": {
+                        "type": "integer"
+                    },
+                    "template_name": {
+                        "type": "string"
+                    },
+                    "template_day": {
+                        "type": "integer"
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "meal_type_name": {
+                        "type": "string"
+                    },
+                    "covers": {
+                        "type": "integer"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "menu_snapshot": {},
+                    "services": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "history": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "can_operate": {
+                        "type": "boolean"
+                    },
+                    "can_edit": {
+                        "type": "boolean"
+                    },
+                    "can_change_menu": {
+                        "type": "boolean"
+                    },
+                    "can_cancel": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "can_cancel",
+                    "can_change_menu",
+                    "can_edit",
+                    "can_operate",
+                    "covers",
+                    "customer_name",
+                    "email",
+                    "id",
+                    "meal_type",
+                    "meal_type_name",
+                    "menu_snapshot",
+                    "note",
+                    "phone",
+                    "revision",
+                    "service_date",
+                    "service_time",
+                    "services",
+                    "state",
+                    "template",
+                    "template_day",
+                    "template_name"
+                ]
+            },
+            "ReservationSummaryResponse": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "pending_covers": {
+                        "type": "integer"
+                    },
+                    "in_kitchen_covers": {
+                        "type": "integer"
+                    },
+                    "total_active_covers": {
+                        "type": "integer"
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "date",
+                    "groups",
+                    "in_kitchen_covers",
+                    "pending_covers",
+                    "total_active_covers"
+                ]
+            },
+            "ReservationTransitionActionEnum": {
+                "enum": [
+                    "confirm",
+                    "start_kitchen",
+                    "serve",
+                    "cancel"
+                ],
+                "type": "string",
+                "description": "* `confirm` - confirm\n* `start_kitchen` - start_kitchen\n* `serve` - serve\n* `cancel` - cancel"
+            },
+            "ReservationTransitionRequest": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "$ref": "#/components/schemas/ReservationTransitionActionEnum"
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "action",
+                    "reason",
+                    "revision"
+                ]
+            },
+            "ReservationWriteRequest": {
+                "type": "object",
+                "properties": {
+                    "customer_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                    },
+                    "phone": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 64
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "default": "",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    },
+                    "service_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "service_time": {
+                        "type": "string",
+                        "format": "time"
+                    },
+                    "template": {
+                        "type": "integer"
+                    },
+                    "template_day": {
+                        "type": "integer",
+                        "maximum": 34,
+                        "minimum": 0
+                    },
+                    "meal_type": {
+                        "type": "integer"
+                    },
+                    "covers": {
+                        "type": "integer"
+                    },
+                    "note": {
+                        "type": "string",
+                        "default": "",
+                        "maxLength": 1000
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "covers",
+                    "customer_name",
+                    "meal_type",
+                    "reason",
+                    "service_date",
+                    "service_time",
+                    "template",
+                    "template_day"
                 ]
             },
             "SearchEnum": {
@@ -32524,6 +33186,9 @@
             "ServiceActionResultSchema": {
                 "type": "object",
                 "properties": {
+                    "reservation_id": {
+                        "type": "integer"
+                    },
                     "id": {
                         "type": "integer"
                     },
@@ -32736,6 +33401,9 @@
             "ServicePlanSchema": {
                 "type": "object",
                 "properties": {
+                    "reservation_id": {
+                        "type": "integer"
+                    },
                     "id": {
                         "type": "integer"
                     },

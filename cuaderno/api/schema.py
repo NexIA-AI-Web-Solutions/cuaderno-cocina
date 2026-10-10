@@ -204,6 +204,7 @@ class StockMinimumSchema(serializers.Serializer):
 
 
 class ServicePlanSchema(serializers.Serializer):
+    reservation_id = serializers.IntegerField(required=False)
     id = serializers.IntegerField(); title = serializers.CharField(); covers = DecimalText(); service_date = serializers.DateField(allow_null=True)
     state = serializers.CharField(); meal_plan = serializers.IntegerField(allow_null=True); household = serializers.IntegerField(allow_null=True)
     snapshot = serializers.JSONField(allow_null=True, help_text="Versioned historical service snapshot; schema_version is authoritative")

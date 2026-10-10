@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "checks_passed": 22,
+  "tier": "Profesional",
+  "results": "/home/kripta/cuaderno-informes-20261009/browser-audit-20261010/profesional/reservations-preview/results.json",
+  "report": "/home/kripta/cuaderno-informes-20261009/browser-audit-20261010/profesional/reservations-preview/report.md",
+  "final_bundle_main_scenario": {
+    "pending_covers": 75,
+    "covers": [
+      20,
+      15,
+      30,
+      10
+    ],
+    "rows": [
+      5,
+      6,
+      7,
+      8
+    ],
+    "date": "2026-10-12",
+    "dishes": 2,
+    "reload_verified": true
+  },
+  "scope": "Composite resumed run; first12 checks preceding final type-only bundle; final remaining role/action checks and fresh four-row75 scenario final bundle. Zero instrumented primary-page errors; secondary stale409 tab console not instrumented."
+}

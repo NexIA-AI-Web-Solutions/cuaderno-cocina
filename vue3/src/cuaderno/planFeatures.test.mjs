@@ -4,7 +4,7 @@ import {mountFunctional, all, textOf} from './functionalComponentHarness.mjs'
 const minimum = {
     recipe_gallery: 0, recipe_favorites: 0, recipe_variants: 0, diet_declarations: 0, menu_five_weeks: 0,
     menu_courses: 1, menu_templates: 1, menu_diet_filter: 1, calendar_events: 1, staff_absences: 1, menu_print: 1,
-    merged_menu_print: 2,
+    customer_reservations: 1, merged_menu_print: 2,
 }
 const editions = ['esencial', 'profesional', 'integral']
 const flagsFor = rank => Object.fromEntries(Object.entries(minimum).map(([key, needed]) => [key, rank >= needed]))

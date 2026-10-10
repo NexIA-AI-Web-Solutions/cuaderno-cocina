@@ -1,0 +1,427 @@
+{
+  "environment": "isolated local preview http://127.0.0.1:18082",
+  "edition": "esencial",
+  "browser": "Chromium 1234",
+  "no_api_writes": true,
+  "no_trace": true,
+  "results": [
+    {
+      "role": "responsable",
+      "feature": "login-and-navigation",
+      "status": "PASS",
+      "steps": "UI login; verify identity and no Reservas navigation link",
+      "expected": "Esencial session with hidden Reservas navigation",
+      "observed": "Identity matched; zero navigation links",
+      "screenshot": "responsable-home.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-390",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "screenshot": "responsable-unavailable-390.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-768",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 768,
+        "scrollWidth": 768
+      },
+      "screenshot": "responsable-unavailable-768.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-1024",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1024,
+        "scrollWidth": 1024
+      },
+      "screenshot": "responsable-unavailable-1024.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "unavailable-route-1440",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "screenshot": "responsable-unavailable-1440.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "commercial-reservations-390",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 390,
+          "scrollWidth": 390
+        }
+      },
+      "screenshot": "responsable-comparison-390.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "commercial-reservations-768",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 768,
+          "scrollWidth": 768
+        }
+      },
+      "screenshot": "responsable-comparison-768.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "commercial-reservations-1024",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 1024,
+          "scrollWidth": 1024
+        }
+      },
+      "screenshot": "responsable-comparison-1024.png"
+    },
+    {
+      "role": "responsable",
+      "feature": "commercial-reservations-1440",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 1440,
+          "scrollWidth": 1440
+        }
+      },
+      "screenshot": "responsable-comparison-1440.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "login-and-navigation",
+      "status": "PASS",
+      "steps": "UI login; verify identity and no Reservas navigation link",
+      "expected": "Esencial session with hidden Reservas navigation",
+      "observed": "Identity matched; zero navigation links",
+      "screenshot": "cocina-home.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-390",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "screenshot": "cocina-unavailable-390.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-768",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 768,
+        "scrollWidth": 768
+      },
+      "screenshot": "cocina-unavailable-768.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-1024",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1024,
+        "scrollWidth": 1024
+      },
+      "screenshot": "cocina-unavailable-1024.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "unavailable-route-1440",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "screenshot": "cocina-unavailable-1440.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "commercial-reservations-390",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 390,
+          "scrollWidth": 390
+        }
+      },
+      "screenshot": "cocina-comparison-390.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "commercial-reservations-768",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 768,
+          "scrollWidth": 768
+        }
+      },
+      "screenshot": "cocina-comparison-768.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "commercial-reservations-1024",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 1024,
+          "scrollWidth": 1024
+        }
+      },
+      "screenshot": "cocina-comparison-1024.png"
+    },
+    {
+      "role": "cocina",
+      "feature": "commercial-reservations-1440",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 1440,
+          "scrollWidth": 1440
+        }
+      },
+      "screenshot": "cocina-comparison-1440.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "login-and-navigation",
+      "status": "PASS",
+      "steps": "UI login; verify identity and no Reservas navigation link",
+      "expected": "Esencial session with hidden Reservas navigation",
+      "observed": "Identity matched; zero navigation links",
+      "screenshot": "consulta-home.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-390",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 390,
+        "scrollWidth": 390
+      },
+      "screenshot": "consulta-unavailable-390.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-768",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 768,
+        "scrollWidth": 768
+      },
+      "screenshot": "consulta-unavailable-768.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-1024",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1024,
+        "scrollWidth": 1024
+      },
+      "screenshot": "consulta-unavailable-1024.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "unavailable-route-1440",
+      "status": "PASS",
+      "steps": "Load direct route and set viewport",
+      "expected": "Unavailable notice, no reservation form/actions, no document overflow",
+      "observed": {
+        "width": 1440,
+        "scrollWidth": 1440
+      },
+      "screenshot": "consulta-unavailable-1440.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "commercial-reservations-390",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 390,
+          "scrollWidth": 390
+        }
+      },
+      "screenshot": "consulta-comparison-390.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "commercial-reservations-768",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 768,
+          "scrollWidth": 768
+        }
+      },
+      "screenshot": "consulta-comparison-768.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "commercial-reservations-1024",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 1024,
+          "scrollWidth": 1024
+        }
+      },
+      "screenshot": "consulta-comparison-1024.png"
+    },
+    {
+      "role": "consulta",
+      "feature": "commercial-reservations-1440",
+      "status": "PASS",
+      "steps": "Expand commercial comparison; assert new reservation row and unchanged prices; set viewport",
+      "expected": "Esencial not included; Pro/Integral included; original prices; no overflow",
+      "observed": {
+        "inclusion": {
+          "esencial": "No habilitado",
+          "profesional": "Incluido",
+          "integral": "Incluido"
+        },
+        "headers": "Función\tEsencial\n500 €\n+ 17 €/mes\nTu edición\n\tProfesional\n1000 €\n+ 20 €/mes\n\tIntegral\n1500 €\n+ 30 €/mes\n\n",
+        "geometry": {
+          "width": 1440,
+          "scrollWidth": 1440
+        }
+      },
+      "screenshot": "consulta-comparison-1440.png"
+    }
+  ],
+  "events": [],
+  "attempt_notes": [
+    "Initial commercial label assertion expected No incluido; actual correct copy No habilitado. Preserved in harness-initial-label-mismatch.json.",
+    "Second attempt Responsable/Cocina UI login hit HTTP 429 native account login rate limiter; preserved in retry-with-login-throttle.json. Consulta passed.",
+    "Final targeted Responsable/Cocina run passed. No additional login requested or made after completion."
+  ],
+  "browser_closed": true
+}

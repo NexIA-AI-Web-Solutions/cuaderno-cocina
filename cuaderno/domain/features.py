@@ -10,7 +10,7 @@ ESSENTIAL_FEATURES = frozenset({
 })
 PROFESSIONAL_FEATURES = ESSENTIAL_FEATURES | frozenset({
     "menu_courses", "menu_templates", "menu_diet_filter",
-    "calendar_events", "staff_absences", "menu_print",
+    "calendar_events", "staff_absences", "menu_print", "customer_reservations",
 })
 INTEGRAL_FEATURES = PROFESSIONAL_FEATURES | frozenset({"merged_menu_print"})
 EDITION_FEATURES = {

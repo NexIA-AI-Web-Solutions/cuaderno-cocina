@@ -47,6 +47,7 @@ let routes: RouteRecordRaw[] = [
     {path: '/cuaderno/favoritas', component: () => import("@/cuaderno/pages/FavoriteRecipesPage.vue"), name: 'CuadernoFavoritasPage', meta: {title: 'Recetas favoritas'}},
     {path: '/cuaderno/planificacion', component: () => import("@/cuaderno/pages/MenuPlanningPage.vue"), name: 'CuadernoPlanificacionPage', meta: {title: 'Planificación'}},
     {path: '/cuaderno/produccion', component: () => import("@/cuaderno/pages/ProduccionPage.vue"), name: 'CuadernoProduccionPage', meta: {title: 'Producción'}},
+    {path: '/cuaderno/reservas', component: () => import("@/cuaderno/pages/ReservasPage.vue"), name: 'CuadernoReservasPage', meta: {title: 'Reservas'}},
     {path: '/cuaderno/almacen', component: () => import("@/cuaderno/pages/AlmacenPage.vue"), name: 'CuadernoAlmacenPage', meta: {title: 'Almacén'}},
 
     {path: '/space-setup', component: () => import("@/pages/SpaceSetupPage.vue"), name: 'SpaceSetupPage'},

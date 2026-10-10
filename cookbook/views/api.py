@@ -1643,6 +1643,8 @@ class MealPlanViewSet(LoggingMixin, viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         from cuaderno.services.functional_access import lock_space
         lock_space(request)
+        from cuaderno.services.service_plans import require_independent_meal_plan
+        require_independent_meal_plan(self.get_object())
         return super().update(request, *args, **kwargs)
 
     def perform_update(self, serializer):
@@ -1659,12 +1661,17 @@ class MealPlanViewSet(LoggingMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         from cuaderno.services.functional_access import lock_space
         lock_space(request)
+        from cuaderno.services.service_plans import require_independent_meal_plan
+        require_independent_meal_plan(self.get_object())
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = self.queryset.filter(Q(created_by=self.request.user) |
                                         Q(created_by_id__in=get_household_user_ids(self.request.user_space))).filter(
             space=self.request.space).distinct().all()
+        # Superseded/cancelled reservation projections remain as audit evidence,
+        # but must not look like scheduled meals in the calendar or its export.
+        queryset = queryset.exclude(serviceplan__reservation_link__active=False)
 
         from_date = self.request.query_params.get('from_date', timezone.now() - datetime.timedelta(days=90))
         if from_date is not None:

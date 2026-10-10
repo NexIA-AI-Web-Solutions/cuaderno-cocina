@@ -24,6 +24,12 @@ export interface ServicePlanSchema {
      * @type {number}
      * @memberof ServicePlanSchema
      */
+    reservationId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ServicePlanSchema
+     */
     id: number;
     /**
      * 
@@ -115,6 +121,7 @@ export function ServicePlanSchemaFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
+        'reservationId': json['reservation_id'] == null ? undefined : json['reservation_id'],
         'id': json['id'],
         'title': json['title'],
         'covers': json['covers'],
@@ -140,6 +147,7 @@ export function ServicePlanSchemaToJSONTyped(value?: ServicePlanSchema | null, i
 
     return {
         
+        'reservation_id': value['reservationId'],
         'id': value['id'],
         'title': value['title'],
         'covers': value['covers'],

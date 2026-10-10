@@ -5,14 +5,21 @@ import {parse, compileStyle} from '@vue/compiler-sfc'
 import {mountFunctional,button,field,textOf,flush} from './functionalComponentHarness.mjs'
 const meal={id:7,title:'Sopa gástrica',recipe:null,meal_type:{id:1,name:'Almuerzo'},course:null,servings:'4',from_date:'2026-10-09T12:00:00Z',to_date:null,note:'',diet_status:'unknown'}
 const data={courses:[],meal_plans:[meal],events:[],can_edit:true,can_manage_absences:false,can_merge_print:false}
+// The planning endpoint returns meals inside the requested period. Keep that
+// contract as the page's initial date advances, rather than using yesterday's meal.
+const planningForPeriod = path => {
+    const start = new URLSearchParams(path.split('?')[1]).get('from_date')
+    assert.match(start, /^\d{4}-\d{2}-\d{2}$/)
+    return {...data, meal_plans: [{...meal, from_date: `${start}T12:00:00Z`}]}
+}
 test('a saved template survives rejected cover and retry never creates a duplicate',async()=>{
     let posts=0,rejected=true
     const saved={id:2,name:'Semana',weeks:1,revision:'a',entries:[]},file=new File([new Uint8Array(100)],'cover.png',{type:'image/png'})
-    const mounted=await mountFunctional('./pages/MenuPlanningPage.vue',{},(path,method)=>{
+    const mounted=await mountFunctional('./pages/MenuPlanningPage.vue',{},(path,method,body)=>{
         if(path==='edition/') return {edition:'profesional'}
-        if(path.startsWith('planning/?')) return data
+        if(path.startsWith('planning/?')) return planningForPeriod(path)
         if(path==='planning/templates/?offset=0&limit=50') return {count:posts,results:posts?[saved]:[]}
-        if(path==='planning/templates/' && method==='POST') {posts++;return saved}
+        if(path==='planning/templates/' && method==='POST') {assert.equal(body.entries[0].day_index,0);posts++;return saved}
         assert.equal(path,'planning/templates/2/image/');assert.equal(method,'GET');return {can_edit:true,image:null}
     },async(path,selected,caption)=>{assert.equal(path,'planning/templates/2/image/');assert.equal(selected,file);assert.equal(caption,'Portada española');if(rejected)throw new Error('Formato inválido');return {image:{url:'/cover/',caption},can_edit:true,revision:'b'}})
     try{
@@ -45,11 +52,11 @@ test('creating a template with a cover refreshes the real image panel after its 
     let savedImage = null, posts = 0, imageReads = 0
     const saved = {id: 2, name: 'Semana con portada', weeks: 1, revision: 'a', entries: []}
     const image = {url: '/api/cuaderno/planning/templates/2/image/content/?v=0123456789abcdef', caption: 'Portada recién guardada'}
-    const mounted = await mountFunctional('./pages/MenuPlanningPage.vue', {}, async (path, method) => {
+    const mounted = await mountFunctional('./pages/MenuPlanningPage.vue', {}, async (path, method, body) => {
         if(path === 'edition/') return {edition: 'profesional'}
-        if(path.startsWith('planning/?')) return data
+        if(path.startsWith('planning/?')) return planningForPeriod(path)
         if(path === 'planning/templates/?offset=0&limit=50') return {count: posts, results: posts ? [{...saved, image: savedImage}] : []}
-        if(path === 'planning/templates/' && method === 'POST') {posts++; return saved}
+        if(path === 'planning/templates/' && method === 'POST') {assert.equal(body.entries[0].day_index, 0); posts++; return saved}
         assert.equal(path, 'planning/templates/2/image/'); assert.equal(method, 'GET'); imageReads++
         return {can_edit: true, image: savedImage, revision: savedImage ? 'b' : 'a'}
     }, async () => {await flush(); savedImage = image; return {can_edit: true, image, revision: 'b'}}, {actualImagePanel: true})

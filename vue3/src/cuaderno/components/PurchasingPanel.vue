@@ -193,8 +193,12 @@
                         Calcular desde servicios confirmados
                     </v-btn>
                 </v-card-title>
-                <v-card-subtitle>Necesidades confirmadas menos stock utilizable del hogar; no crea pedidos.</v-card-subtitle>
+                <v-card-subtitle>Incluye reservas y otros servicios confirmados, menos stock utilizable del hogar; no crea pedidos.</v-card-subtitle>
                 <v-card-text>
+                    <div class="d-flex flex-wrap ga-3 mb-3">
+                        <v-text-field v-model="replenishmentFrom" type="date" label="Necesidades desde" :disabled="loadingReplenishment" hide-details />
+                        <v-text-field v-model="replenishmentTo" type="date" label="Necesidades hasta" :disabled="loadingReplenishment" hide-details />
+                    </div>
                     <v-alert v-if="replenishmentMessage" type="error" variant="tonal" class="mb-3">{{ replenishmentMessage }}</v-alert>
                     <v-table v-if="replenishment.length" density="comfortable" class="replenishment-table">
                         <thead><tr><th>Alimento</th><th>Necesario</th><th>Disponible</th><th>Mínimo</th><th>Objetivo</th><th>Falta</th><th>Compra propuesta</th><th>Exceso</th><th>Precio ref.</th></tr></thead>
@@ -269,6 +273,8 @@ const packages = ref<Package[]>([])
 const offers = ref<Offer[]>([])
 const orders = ref<Order[]>([])
 const replenishment = ref<ReplenishmentRow[]>([])
+const replenishmentFrom = ref('')
+const replenishmentTo = ref('')
 const receiptsByOrder = reactive<Record<number, ReceiptDocument[]>>({})
 const foods = reactive<Record<number, string>>({})
 const offer = reactive({package: null as Package | null, supplier: null as any, amount: '', explicitFree: false})
@@ -480,8 +486,16 @@ async function reverseReceipt(order: Order, document: ReceiptDocument) {
 
 async function loadReplenishment() {
     if (!props.canOperate) return
+    if (replenishmentFrom.value && replenishmentTo.value && replenishmentTo.value < replenishmentFrom.value) {
+        replenishmentMessage.value = 'El final del periodo no puede ser anterior al inicio.'
+        return
+    }
     loadingReplenishment.value = true; replenishmentMessage.value = ''
-    const result = await readJson(await cuadernoFetch('/api/cuaderno/replenishment/', {method: 'POST', body: JSON.stringify({})}))
+    const range = {
+        ...(replenishmentFrom.value ? {from_date: replenishmentFrom.value} : {}),
+        ...(replenishmentTo.value ? {to_date: replenishmentTo.value} : {}),
+    }
+    const result = await readJson(await cuadernoFetch('/api/cuaderno/replenishment/', {method: 'POST', body: JSON.stringify(range)}))
     loadingReplenishment.value = false
     if (!result.ok) {
         replenishmentMessage.value = apiError(result.status, result.data)
