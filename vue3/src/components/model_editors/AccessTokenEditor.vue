@@ -14,14 +14,14 @@
             <v-form :disabled="loading">
                 <v-row>
                     <v-col cols="10">
-                        <v-text-field label="Token" v-model="editingObj.token" disabled></v-text-field>
+                        <v-text-field label="Clave de acceso" v-model="editingObj.token" disabled></v-text-field>
                     </v-col>
                     <v-col cols="2">
                         <btn-copy :copy-value="editingObj.token" class="me-1"></btn-copy>
                     </v-col>
                 </v-row>
 
-                <v-text-field label="Scope" v-model="editingObj.scope"></v-text-field>
+                <v-text-field label="Ámbito de acceso" v-model="editingObj.scope"></v-text-field>
                 <v-date-input :label="$t('Valid Until')" v-model="editingObj.expires"></v-date-input>
             </v-form>
         </v-card-text>

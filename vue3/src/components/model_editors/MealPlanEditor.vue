@@ -281,7 +281,7 @@ function updateDate() {
         }
         applyTimeToEditingDates()
     } else {
-        useMessageStore().addMessage(MessageType.WARNING, 'Missing Date', 7000)
+        useMessageStore().addMessage(MessageType.WARNING, 'Indica una fecha', 7000)
     }
 }
 

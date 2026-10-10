@@ -302,7 +302,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
+    'recipes.middleware.CuadernoLocaleMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'cookbook.helper.scope_middleware.ScopeMiddleware',
     'allauth.account.middleware.AccountMiddleware',
@@ -604,7 +604,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
-LANGUAGE_CODE = os.getenv('CUADERNO_LANGUAGE', 'en')
+LANGUAGE_CODE = os.getenv('CUADERNO_LANGUAGE', 'es')
 
 if os.getenv('TIMEZONE') is not None:
     print('DEPRECATION WARNING: Environment var "TIMEZONE" is deprecated. Please use "TZ" instead.')

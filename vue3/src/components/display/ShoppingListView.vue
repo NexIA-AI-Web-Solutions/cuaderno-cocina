@@ -61,10 +61,10 @@
                     <v-switch color="primary" hide-details :label="$t('CreatedBy')" v-model="useUserPreferenceStore().deviceSettings.shopping_item_info_created_by"></v-switch>
                 </v-list-item>
                 <v-list-item>
-                    <v-switch color="primary" hide-details label="New Input" v-model="useUserPreferenceStore().deviceSettings.shopping_input_autocomplete"></v-switch>
+                    <v-switch color="primary" hide-details label="Entrada con autocompletado" v-model="useUserPreferenceStore().deviceSettings.shopping_input_autocomplete"></v-switch>
                 </v-list-item>
                 <v-list-item v-if="useUserPreferenceStore().serverSettings.debug">
-                    <v-switch color="primary" hide-details label="Show Debug Info" v-model="useUserPreferenceStore().deviceSettings.shopping_show_debug"></v-switch>
+                    <v-switch color="primary" hide-details label="Mostrar información de diagnóstico" v-model="useUserPreferenceStore().deviceSettings.shopping_show_debug"></v-switch>
                 </v-list-item>
 
             </v-list>
@@ -238,24 +238,24 @@
                 <v-row v-if="useUserPreferenceStore().deviceSettings.shopping_show_debug">
                     <v-col cols="12" md="4">
                         <v-card>
-                            <v-card-title>Auto Sync Debug</v-card-title>
-                            <v-btn @click="useShoppingStore().autoSync()">Run Sync</v-btn>
+                            <v-card-title>Diagnóstico de sincronización automática</v-card-title>
+                            <v-btn @click="useShoppingStore().autoSync()">Sincronizar ahora</v-btn>
                             <v-card-text>
                                 <v-list>
-                                    <v-list-item>currentlyUpdating: {{ useShoppingStore().currentlyUpdating }}</v-list-item>
-                                    <v-list-item>hasFocus: {{ useShoppingStore().autoSyncHasFocus }}</v-list-item>
-                                    <v-list-item>autoSyncTimeoutId: {{ useShoppingStore().autoSyncTimeoutId }}</v-list-item>
-                                    <v-list-item>autoSyncLastTimestamp: {{ useShoppingStore().autoSyncLastTimestamp }}</v-list-item>
+                                    <v-list-item>Actualizando: {{ useShoppingStore().currentlyUpdating }}</v-list-item>
+                                    <v-list-item>Ventana activa: {{ useShoppingStore().autoSyncHasFocus }}</v-list-item>
+                                    <v-list-item>Identificador del temporizador: {{ useShoppingStore().autoSyncTimeoutId }}</v-list-item>
+                                    <v-list-item>Última sincronización: {{ useShoppingStore().autoSyncLastTimestamp }}</v-list-item>
                                 </v-list>
                             </v-card-text>
                         </v-card>
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-card>
-                            <v-card-title>Sync Queue Debug</v-card-title>
+                            <v-card-title>Cola de sincronización</v-card-title>
                             <v-card-text>
-                                Length: {{ useShoppingStore().itemCheckSyncQueue.length }} <br/>
-                                Has Failed Items: {{ useShoppingStore().hasFailedItems() }}
+                                Elementos: {{ useShoppingStore().itemCheckSyncQueue.length }} <br/>
+                                Hay elementos fallidos: {{ useShoppingStore().hasFailedItems() }}
                                 <v-list>
                                      <v-list-item v-for="i in useShoppingStore().itemCheckSyncQueue" :key="`${i.checked}:${i.ids.join(',')}`">{{ i }}</v-list-item>
                                 </v-list>
@@ -264,7 +264,7 @@
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-card>
-                            <v-card-title>Undo Debug</v-card-title>
+                            <v-card-title>Historial para deshacer</v-card-title>
                             <v-card-text>
                                 <v-list>
                                     <v-list-item v-for="(i, index) in useShoppingStore().undoStack" :key="`${i.type}:${index}`">{{ i.type }} {{

@@ -3,7 +3,7 @@
 <template>
     <template v-if="allowCreate">
         <v-combobox
-            label="Combobox"
+            label="Seleccionar o crear"
             v-model="selected_items"
             v-model:search="search_query"
             :items="items"
@@ -42,7 +42,7 @@
     <template v-else>
 
         <v-autocomplete
-            label="Autocomplete"
+            label="Buscar y seleccionar"
             v-model="selected_items"
             v-model:search="search_query"
             :items="items"

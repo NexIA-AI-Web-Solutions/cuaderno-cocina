@@ -12,7 +12,7 @@
         :editing-object="editingObj">
         <v-card-text>
             <v-form>
-                <v-select :label="$t('Role')" :items="groups" item-value="id" item-title="name" return-object multiple v-model="editingObj.groups"></v-select>
+                <v-select :label="$t('Role')" :items="groups" item-value="id" :item-title="groupLabel" return-object multiple v-model="editingObj.groups"></v-select>
                 <v-model-select model="Household" v-model="editingObj.household" create></v-model-select>
 
                 <v-spacer class="mt-10"></v-spacer>
@@ -56,6 +56,11 @@ watch([() => props.item, () => props.itemId], () => {
 
 // object specific data (for selects/display)
 const groups = ref([] as Group[])
+
+function groupLabel(group: Group) {
+    const labels: Record<string, string> = {guest: 'Consulta', user: 'Cocina', admin: 'Responsable'}
+    return labels[group.name.toLowerCase()] ?? group.name
+}
 
 onMounted(() => {
     initializeEditor()

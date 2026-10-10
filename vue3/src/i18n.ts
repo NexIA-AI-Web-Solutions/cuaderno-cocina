@@ -5,6 +5,7 @@ import type {
 
 import {createI18n} from "vue-i18n";
 import en from "@/locales/en.json";
+import es from "@/locales/es.json";
 import {TANDOOR_PLUGINS} from "@/types/Plugins.ts";
 import {qualified as qualifiedLocales, coverage as localeCoverage, minCoverage as LOCALE_MIN_COVERAGE} from 'virtual:locale-coverage'
 import {Settings} from "luxon";
@@ -30,7 +31,7 @@ function buildLocaleMap(localeFiles = import.meta.glob('@/locales/*.json'), chec
         if (!file) continue
         const filename = file.split('.')[0]
         if (!filename) continue
-        if (checkCoverage && filename !== 'en' && !qualifiedLocales.has(filename)) {
+        if (checkCoverage && filename !== 'en' && filename !== 'es' && !qualifiedLocales.has(filename)) {
             continue
         }
         const djangoCode = filename.split('_').join('-').toLowerCase()
@@ -69,18 +70,20 @@ export function setupI18n() {
     const htmlLang = document.querySelector('html')!.getAttribute('lang')
     let locale = htmlLang ? resolveLocale(htmlLang) : null
     if (!locale) {
-        if (htmlLang && htmlLang !== 'en') {
-            console.warn('Falling back to locale en because', htmlLang, 'is not supported.')
+        if (htmlLang && htmlLang !== 'es') {
+            console.warn('Se utilizará el español; el idioma no está disponible:', htmlLang)
         }
-        locale = 'en'
+        locale = 'es'
     }
 
-    // load i18n with locale en by default (Legacy mode — locale is a plain string, not a Ref)
+    // Spanish is bundled synchronously so the first render cannot flash English.
+    Settings.defaultLocale = 'es'
     const i18n = createI18n({
-        locale: 'en',
-        fallbackLocale: 'en',
+        locale: 'es',
+        fallbackLocale: 'es',
         messages: {
             en,
+            es,
         },
     }) as I18n
 
@@ -92,7 +95,9 @@ export function setupI18n() {
     })
 
     // async load user locale into existing i18n instance
-    loadLocaleMessages(i18n, locale).catch(console.error)
+    if (locale !== 'es') {
+        loadLocaleMessages(i18n, locale).catch(console.error)
+    }
 
     return i18n
 }

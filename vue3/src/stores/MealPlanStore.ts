@@ -41,7 +41,7 @@ export const useMealPlanStore = defineStore(_STORE_ID, () => {
             servings: 1,
             shared: [],
             title: "",
-            title_placeholder: "Title", // meal plan edit modal should be improved to not need this
+            title_placeholder: "Título", // meal plan edit modal should be improved to not need this
         }
     })
 

@@ -10,8 +10,8 @@
                     <div class="d-flex keyword-row">
                         <v-model-select model="Keyword" v-model="keywordIds" multiple chips :return-object="false" class="flex-grow-1 keyword-select" hide-details></v-model-select>
                         <v-btn-toggle v-model="keywordMode" mandatory divided border class="keyword-toggle">
-                            <v-btn value="and">AND</v-btn>
-                            <v-btn value="or">OR</v-btn>
+                            <v-btn value="and">Y</v-btn>
+                            <v-btn value="or">O</v-btn>
                         </v-btn-toggle>
                     </div>
 

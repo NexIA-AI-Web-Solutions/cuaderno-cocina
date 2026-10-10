@@ -13,7 +13,7 @@
         <v-card-text>
             <v-form :disabled="loading">
                 <v-text-field :label="$t('Email')" v-model="editingObj.email"></v-text-field>
-                <v-select :label="$t('Role')" :items="groups" item-value="id" item-title="name" return-object v-model="editingObj.group"></v-select>
+                <v-select :label="$t('Role')" :items="groups" item-value="id" :item-title="groupLabel" return-object v-model="editingObj.group"></v-select>
                 <v-model-select model="Household" v-model="editingObj.household" create></v-model-select>
                 <v-date-input :label="$t('Valid Until')" v-model="editingObj.validUntil">
                     <template #append-inner>
@@ -70,6 +70,11 @@ watch([() => props.item, () => props.itemId], () => {
 
 // object specific data (for selects/display)
 const groups = ref([] as Group[])
+
+function groupLabel(group: Group) {
+    const labels: Record<string, string> = {guest: 'Consulta', user: 'Cocina', admin: 'Responsable'}
+    return labels[group.name.toLowerCase()] ?? group.name
+}
 
 onMounted(() => {
     initializeEditor()

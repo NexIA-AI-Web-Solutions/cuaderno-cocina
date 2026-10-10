@@ -3,7 +3,7 @@
         <v-card :loading="loading">
             <v-closable-card-title
                 :title="$t('BatchEdit')"
-                :sub-title="$t('BatchEditUpdatingItemsCount', {type: TUserSpace.localizationKey, count: updateItems.length})"
+                :sub-title="$t('BatchEditUpdatingItemsCount', {type: $t(TUserSpace.localizationKey), count: updateItems.length})"
                 :icon="TUserSpace.icon"
                 v-model="dialog"
             ></v-closable-card-title>

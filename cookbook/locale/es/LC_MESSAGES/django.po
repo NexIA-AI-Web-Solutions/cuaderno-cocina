@@ -184,7 +184,7 @@ msgstr "espiralizador"
 
 #: .\cookbook\helper\recipe_url_import.py:330
 msgid "sous-vide"
-msgstr "sous-vide"
+msgstr "Cocción al vacío"
 
 #: .\cookbook\helper\shopping_helper.py:154
 msgid "You must supply a servings size"
@@ -453,7 +453,7 @@ msgstr "Web"
 
 #: .\cookbook\models.py:1624 .\cookbook\templates\search_info.html:47
 msgid "Raw"
-msgstr "Crudo"
+msgstr "Avanzada"
 
 #: .\cookbook\models.py:1682
 msgid "Food Alias"
@@ -773,7 +773,7 @@ msgstr "Cambiar contraseña"
 
 #: .\cookbook\templates\account\password_change.html:16
 msgid "Forgot Password?"
-msgstr ""
+msgstr "¿Has olvidado tu contraseña?"
 
 #: .\cookbook\templates\account\password_reset.html:7
 #: .\cookbook\templates\account\password_reset.html:13
@@ -786,7 +786,7 @@ msgstr "Restablecer contraseña"
 msgid ""
 "Forgotten your password? Enter your e-mail address below, and we'll send you "
 "an e-mail allowing you to reset it."
-msgstr ""
+msgstr "¿Has olvidado tu contraseña? Introduce tu correo electrónico y te enviaremos un mensaje para restablecerla."
 
 #: .\cookbook\templates\account\password_reset.html:32
 msgid "Password reset is disabled on this instance."
@@ -796,13 +796,12 @@ msgstr "Restablecimiento de contraseña no está implementado de momento."
 msgid ""
 "We have sent you an e-mail. Please contact us if you do not receive it "
 "within a few minutes."
-msgstr ""
+msgstr "Te hemos enviado un correo electrónico. Contacta con nosotros si no lo recibes en unos minutos."
 
 #: .\cookbook\templates\account\password_reset_from_key.html:13
-#, fuzzy
 #| msgid "API Token"
 msgid "Bad Token"
-msgstr "Token API"
+msgstr "Código no válido"
 
 #: .\cookbook\templates\account\password_reset_from_key.html:25
 #, python-format
@@ -811,7 +810,7 @@ msgid ""
 "used.\n"
 "                    Please request a <a href=\"%(passwd_reset_url)s\">new "
 "password reset</a>."
-msgstr ""
+msgstr "El enlace para restablecer la contraseña no es válido; puede que ya se haya utilizado.\n                    Solicita <a href=\"%(passwd_reset_url)s\">un nuevo enlace para restablecerla</a>."
 
 #: .\cookbook\templates\account\password_reset_from_key.html:33
 msgid "change password"
@@ -820,44 +819,42 @@ msgstr "Cambiar contraseña"
 #: .\cookbook\templates\account\password_reset_from_key.html:36
 #: .\cookbook\templates\account\password_reset_from_key_done.html:19
 msgid "Your password is now changed."
-msgstr ""
+msgstr "Tu contraseña se ha cambiado."
 
 #: .\cookbook\templates\account\password_set.html:6
 #: .\cookbook\templates\account\password_set.html:10
 #: .\cookbook\templates\account\password_set.html:15
-#, fuzzy
 #| msgid "Password Reset"
 msgid "Set Password"
-msgstr "Restablecer contraseña"
+msgstr "Establecer contraseña"
 
 #: .\cookbook\templates\account\signup.html:5
 msgid "Register"
 msgstr "Registrar"
 
 #: .\cookbook\templates\account\signup.html:11
-#, fuzzy
 #| msgid "Create your Account"
 msgid "Create an Account"
-msgstr "Crea tu Cuenta"
+msgstr "Crear una cuenta"
 
 #: .\cookbook\templates\account\signup.html:41
 msgid "I accept the follwoing"
-msgstr ""
+msgstr "Acepto lo siguiente"
 
 #: .\cookbook\templates\account\signup.html:44
 #: .\cookbook\templates\socialaccount\signup.html:35
 msgid "Terms and Conditions"
-msgstr ""
+msgstr "Términos y condiciones"
 
 #: .\cookbook\templates\account\signup.html:47
 #: .\cookbook\templates\socialaccount\signup.html:38
 msgid "and"
-msgstr ""
+msgstr "y"
 
 #: .\cookbook\templates\account\signup.html:51
 #: .\cookbook\templates\socialaccount\signup.html:42
 msgid "Privacy Policy"
-msgstr ""
+msgstr "Política de privacidad"
 
 #: .\cookbook\templates\account\signup.html:64
 msgid "Create User"
@@ -865,22 +862,21 @@ msgstr "Crear Usuario"
 
 #: .\cookbook\templates\account\signup.html:68
 msgid "Already have an account?"
-msgstr ""
+msgstr "¿Ya tienes una cuenta?"
 
 #: .\cookbook\templates\account\signup_closed.html:5
 #: .\cookbook\templates\account\signup_closed.html:11
 msgid "Sign Up Closed"
-msgstr ""
+msgstr "Registro cerrado"
 
 #: .\cookbook\templates\account\signup_closed.html:13
 msgid "We are sorry, but the sign up is currently closed."
-msgstr ""
+msgstr "El registro de nuevas cuentas está cerrado actualmente."
 
 #: .\cookbook\templates\frontend\tandoor.html:15
-#, fuzzy
 #| msgid "Tandoor Recipes Invite"
 msgid "Tandoor Recipe Manager"
-msgstr "Invitación para Tandoor Recipes"
+msgstr "Gestor de recetas Cuaderno Cocina"
 
 #: .\cookbook\templates\index.html:28
 msgid "Search recipe ..."
@@ -961,10 +957,9 @@ msgstr ""
 
 #: .\cookbook\templates\markdown_info.html:57
 #: .\cookbook\templates\markdown_info.html:73
-#, fuzzy
 #| msgid "or by leaving a blank line inbetween."
 msgid "or by leaving a blank line in between."
-msgstr "o dejando una línea en blanco entre ellos."
+msgstr "o dejando una línea en blanco entre ellas."
 
 #: .\cookbook\templates\markdown_info.html:59
 #: .\cookbook\templates\markdown_info.html:74
@@ -986,16 +981,13 @@ msgid "Lists"
 msgstr "Listas"
 
 #: .\cookbook\templates\markdown_info.html:85
-#, fuzzy
 #| msgid ""
 #| "Lists can ordered or unorderd. It is <b>important to leave a blank line "
 #| "before the list!</b>"
 msgid ""
 "Lists can ordered or unordered. It is <b>important to leave a blank line "
 "before the list!</b>"
-msgstr ""
-"Las listas pueden ser ordenadas o no ordenadas. <b>¡Es importante dejar una "
-"línea en blanco antes de la lista!</b>"
+msgstr "Las listas pueden ser ordenadas o no ordenadas. <b>¡Es importante dejar una línea en blanco antes de la lista!</b>"
 
 #: .\cookbook\templates\markdown_info.html:87
 #: .\cookbook\templates\markdown_info.html:108
@@ -1079,26 +1071,22 @@ msgid "No Permissions"
 msgstr "Sin permisos"
 
 #: .\cookbook\templates\no_groups_info.html:17
-#, fuzzy
 #| msgid ""
 #| "You do not have any groups and therefor cannot use this application. "
 #| "Please contact your administrator."
 msgid "You do not have any groups and therefor cannot use this application."
-msgstr ""
-"No tienes ningún grupo y por eso no puedes usar esta aplicación. Por favor, "
-"contacta con tu administrador."
+msgstr "No perteneces a ningún grupo y por eso no puedes usar esta aplicación."
 
 #: .\cookbook\templates\no_groups_info.html:18
 #: .\cookbook\templates\no_perm_info.html:15
 msgid "Please contact your administrator."
-msgstr ""
+msgstr "Contacta con la persona administradora."
 
 #: .\cookbook\templates\no_perm_info.html:5
 #: .\cookbook\templates\no_perm_info.html:12
-#, fuzzy
 #| msgid "No Permissions"
 msgid "No Permission"
-msgstr "Sin permisos"
+msgstr "Sin permiso"
 
 #: .\cookbook\templates\no_perm_info.html:15
 msgid ""
@@ -1113,7 +1101,7 @@ msgstr "Desconectado"
 #: .\cookbook\templates\openid\login.html:27
 #: .\cookbook\templates\socialaccount\authentication_error.html:27
 msgid "Back"
-msgstr ""
+msgstr "Volver"
 
 #: .\cookbook\templates\rest_framework\api.html:5
 msgid "Recipe Home"
@@ -1125,10 +1113,9 @@ msgstr "Documentación de API"
 
 #: .\cookbook\templates\search_info.html:5
 #: .\cookbook\templates\search_info.html:9
-#, fuzzy
 #| msgid "Search String"
 msgid "Search Settings"
-msgstr "Cadena de búsqueda"
+msgstr "Ajustes de búsqueda"
 
 #: .\cookbook\templates\search_info.html:10
 msgid ""
@@ -1140,13 +1127,12 @@ msgid ""
 "        Search Methods, Trigrams and Full Text Search configurations are "
 "only available if you are using Postgres for your database.\n"
 "    "
-msgstr ""
+msgstr "La configuración personal influye en la búsqueda. Cambiar los ajustes puede afectar a la velocidad y a la calidad de los resultados. Los métodos de búsqueda, los trigramas y la búsqueda de texto completo solo están disponibles con una base de datos PostgreSQL."
 
 #: .\cookbook\templates\search_info.html:19
-#, fuzzy
 #| msgid "Search"
 msgid "Search Methods"
-msgstr "Buscar"
+msgstr "Métodos de búsqueda"
 
 #: .\cookbook\templates\search_info.html:23
 msgid ""
@@ -1161,7 +1147,7 @@ msgid ""
 "href=https://www.postgresql.org/docs/current/textsearch-controls."
 "html#TEXTSEARCH-PARSING-QUERIES>Postgresql's website.</a>\n"
 "            "
-msgstr ""
+msgstr "La búsqueda de texto completo normaliza las palabras para encontrar variantes comunes. Por ejemplo, distintas formas de una palabra pueden compartir la misma raíz. Los métodos siguientes determinan cómo se combinan varias palabras. Consulta los detalles técnicos en <a href=\"https://www.postgresql.org/docs/current/textsearch-controls.html#TEXTSEARCH-PARSING-QUERIES\">la documentación de PostgreSQL</a>."
 
 #: .\cookbook\templates\search_info.html:29
 msgid ""
@@ -1172,7 +1158,7 @@ msgid ""
 "includes both 'apple' and 'flour' anywhere in the fields that have been "
 "selected for a full text search.\n"
 "            "
-msgstr ""
+msgstr "La búsqueda simple ignora la puntuación y las palabras comunes, como artículos y conjunciones. Exige que aparezcan todas las palabras relevantes. Buscar «manzana o harina» devuelve recetas que contienen tanto «manzana» como «harina» en los campos seleccionados para la búsqueda de texto completo."
 
 #: .\cookbook\templates\search_info.html:34
 msgid ""
@@ -1183,7 +1169,7 @@ msgid ""
 "includes the exact phrase 'apple or flour' in any of the fields that have "
 "been selected for a full text search.\n"
 "            "
-msgstr ""
+msgstr "La búsqueda de frases ignora la puntuación, pero exige el orden exacto de las palabras. Buscar «manzana o harina» devuelve recetas que contienen esa frase en los campos seleccionados para la búsqueda de texto completo."
 
 #: .\cookbook\templates\search_info.html:39
 msgid ""
@@ -1202,7 +1188,7 @@ msgid ""
 "            in any field included in the full text search but exclude any "
 "recipe that has the word 'butter' in any field included.\n"
 "            "
-msgstr ""
+msgstr "La búsqueda web admite sintaxis especial. Las comillas agrupan palabras en una frase. El operador «or» busca la palabra o frase anterior o posterior. El signo «-» excluye la palabra o frase que le sigue. Por ejemplo, «\"tarta de manzana\" or cereza -mantequilla» encuentra la frase «tarta de manzana» o la palabra «cereza», pero excluye las recetas que contienen «mantequilla» en los campos seleccionados."
 
 #: .\cookbook\templates\search_info.html:48
 msgid ""
@@ -1210,7 +1196,7 @@ msgid ""
 "            Raw search is similar to Web except will take puncuation "
 "operators such as '|', '&' and '()'\n"
 "            "
-msgstr ""
+msgstr "La búsqueda avanzada es similar a la búsqueda web, pero admite operadores como «|», «&» y «()»."
 
 #: .\cookbook\templates\search_info.html:59
 msgid ""
@@ -1225,13 +1211,12 @@ msgid ""
 "will find misspelled words such as 'sandwhich' that would be missed by other "
 "methods.\n"
 "            "
-msgstr ""
+msgstr "La búsqueda aproximada utiliza la similitud entre trigramas y requiere PostgreSQL. Un trigrama es un grupo de tres caracteres consecutivos. Por ejemplo, «sopa» genera «sop» y «opa». Se calcula la similitud con los términos buscados, lo que permite encontrar palabras con pequeños errores de escritura que otros métodos omitirían."
 
 #: .\cookbook\templates\search_info.html:69
-#, fuzzy
 #| msgid "Search Recipe"
 msgid "Search Fields"
-msgstr "Buscar Receta"
+msgstr "Campos de búsqueda"
 
 #: .\cookbook\templates\search_info.html:73
 msgid ""
@@ -1266,13 +1251,12 @@ msgid ""
 "search will return the recipe Apple Pie.  Though it is not included in the "
 "full text results, it does match the trigram results.\n"
 "            "
-msgstr ""
+msgstr "La opción de ignorar acentos permite buscar sin distinguir caracteres acentuados. Por ejemplo, al activarla en el nombre, se aplica a las búsquedas por inicio, contenido y trigramas.\n\nLos campos habilitados se combinan mediante una condición «O»: una receta aparece si coincide en cualquiera de ellos. Por ejemplo, al buscar «manzana», pueden aparecer recetas cuyo nombre empieza por esa palabra, cuyo nombre o descripción la contienen, o cuyos ingredientes o palabras clave coinciden en la búsqueda de texto completo.\n\nCombinar demasiados campos y métodos puede ralentizar la búsqueda, duplicar resultados o producir coincidencias inesperadas. La búsqueda aproximada y las coincidencias parciales pueden interferir con las exclusiones de la búsqueda web: una receta excluida por el texto completo podría aparecer por su similitud de trigramas."
 
 #: .\cookbook\templates\search_info.html:95
-#, fuzzy
 #| msgid "Search"
 msgid "Search Index"
-msgstr "Buscar"
+msgstr "Índice de búsqueda"
 
 #: .\cookbook\templates\search_info.html:99
 msgid ""
@@ -1285,7 +1269,7 @@ msgid ""
 "            You can also rebuild indexes at the command line by executing "
 "the management command 'python manage.py rebuildindex'\n"
 "            "
-msgstr ""
+msgstr "La búsqueda por trigramas y la búsqueda de texto completo necesitan índices de base de datos para funcionar con rapidez. Puedes reconstruirlos en la administración de recetas: selecciona las recetas y ejecuta la acción de reconstruir el índice. También puedes usar el comando de administración «python manage.py rebuildindex»."
 
 #: .\cookbook\templates\setup.html:6
 msgid "Cookbook Setup"
@@ -1308,19 +1292,18 @@ msgstr "Crear cuenta de Superusuario"
 
 #: .\cookbook\templates\socialaccount\authentication_error.html:7
 #: .\cookbook\templates\socialaccount\authentication_error.html:23
-#, fuzzy
 #| msgid "Social Login"
 msgid "Social Network Login Failure"
-msgstr "Inicio de sesión social"
+msgstr "Error de inicio de sesión con una cuenta externa"
 
 #: .\cookbook\templates\socialaccount\authentication_error.html:25
 msgid ""
 "An error occurred while attempting to login via your social network account."
-msgstr ""
+msgstr "Se ha producido un error al iniciar sesión con tu cuenta externa."
 
 #: .\cookbook\templates\socialaccount\authentication_error.html:30
 msgid "If this problem persists, please contact your administrator."
-msgstr ""
+msgstr "Si el problema continúa, contacta con la persona administradora."
 
 #: .\cookbook\templates\socialaccount\connections.html:4
 #: .\cookbook\templates\socialaccount\connections.html:7
@@ -1346,34 +1329,33 @@ msgstr "Añadir una cuenta de terceros"
 
 #: .\cookbook\templates\socialaccount\login.html:5
 #: .\cookbook\templates\socialaccount\signup.html:5
-#, fuzzy
 #| msgid "Sign In"
 msgid "Signup"
-msgstr "Iniciar sesión"
+msgstr "Registrarse"
 
 #: .\cookbook\templates\socialaccount\login.html:9
 #, python-format
 msgid "Connect %(provider)s"
-msgstr ""
+msgstr "Conectar %(provider)s"
 
 #: .\cookbook\templates\socialaccount\login.html:11
 #, python-format
 msgid "You are about to connect a new third party account from %(provider)s."
-msgstr ""
+msgstr "Vas a conectar una cuenta externa de %(provider)s."
 
 #: .\cookbook\templates\socialaccount\login.html:13
 #, python-format
 msgid "Sign In Via %(provider)s"
-msgstr ""
+msgstr "Iniciar sesión con %(provider)s"
 
 #: .\cookbook\templates\socialaccount\login.html:15
 #, python-format
 msgid "You are about to sign in using a third party account from %(provider)s."
-msgstr ""
+msgstr "Vas a iniciar sesión con una cuenta externa de %(provider)s."
 
 #: .\cookbook\templates\socialaccount\login.html:20
 msgid "Continue"
-msgstr ""
+msgstr "Continuar"
 
 #: .\cookbook\templates\socialaccount\signup.html:10
 #, python-format
@@ -1381,11 +1363,11 @@ msgid ""
 "You are about to use your\n"
 "        %(provider_name)s account to login to\n"
 "        %(site_name)s. As a final step, please complete the following form:"
-msgstr ""
+msgstr "Vas a utilizar tu cuenta de %(provider_name)s para iniciar sesión en %(site_name)s. Para terminar, completa este formulario:"
 
 #: .\cookbook\templates\socialaccount\signup.html:32
 msgid "I accept the following"
-msgstr ""
+msgstr "Acepto lo siguiente"
 
 #: .\cookbook\templates\socialaccount\snippets\provider_list.html:23
 #: .\cookbook\templates\socialaccount\snippets\provider_list.html:31
@@ -1401,76 +1383,72 @@ msgstr ""
 #: .\cookbook\templates\socialaccount\snippets\provider_list.html:111
 #: .\cookbook\templates\socialaccount\snippets\provider_list.html:119
 #: .\cookbook\templates\socialaccount\snippets\provider_list.html:127
-#, fuzzy
 #| msgid "Sign In"
 msgid "Sign in using"
-msgstr "Iniciar sesión"
+msgstr "Iniciar sesión con"
 
 #: .\cookbook\templates\space_overview.html:6
 msgid "Overview"
-msgstr ""
+msgstr "Resumen"
 
 #: .\cookbook\templates\space_overview.html:13
 msgid "Space"
-msgstr ""
+msgstr "Espacio"
 
 #: .\cookbook\templates\space_overview.html:17
 msgid ""
 "Recipes, foods, shopping lists and more are organized in spaces of one or "
 "more people."
-msgstr ""
+msgstr "Las recetas, los alimentos, las listas de compra y otros datos se organizan en espacios de una o varias personas."
 
 #: .\cookbook\templates\space_overview.html:18
 msgid ""
 "You can either be invited into an existing space or create your own one."
-msgstr ""
+msgstr "Puedes recibir una invitación a un espacio existente o crear uno propio."
 
 #: .\cookbook\templates\space_overview.html:25
-#, fuzzy
 #| msgid "Create User"
 msgid "Your Spaces"
-msgstr "Crear Usuario"
+msgstr "Tus espacios"
 
 #: .\cookbook\templates\space_overview.html:53
 msgid "Owner"
-msgstr ""
+msgstr "Propietario"
 
 #: .\cookbook\templates\space_overview.html:73
 #: .\cookbook\templates\space_overview.html:83
 msgid "Join Space"
-msgstr ""
+msgstr "Unirse a un espacio"
 
 #: .\cookbook\templates\space_overview.html:76
 msgid "Join an existing space."
-msgstr ""
+msgstr "Únete a un espacio existente."
 
 #: .\cookbook\templates\space_overview.html:78
 msgid ""
 "To join an existing space either enter your invite token or click on the "
 "invite link the space owner send you."
-msgstr ""
+msgstr "Para unirte a un espacio, introduce el código de invitación o abre el enlace que te haya enviado su propietario."
 
 #: .\cookbook\templates\space_overview.html:91
 #: .\cookbook\templates\space_overview.html:100
-#, fuzzy
 #| msgid "Create User"
 msgid "Create Space"
-msgstr "Crear Usuario"
+msgstr "Crear espacio"
 
 #: .\cookbook\templates\space_overview.html:94
 msgid "Create your own recipe space."
-msgstr ""
+msgstr "Crea tu propio espacio de recetas."
 
 #: .\cookbook\templates\space_overview.html:96
 msgid "Start your own recipe space and invite other users to it."
-msgstr ""
+msgstr "Crea tu espacio de recetas e invita a otras personas."
 
 #: .\cookbook\templates\system.html:23
 msgid "System"
 msgstr "Sistema"
 
 #: .\cookbook\templates\system.html:24
-#, fuzzy
 #| msgid ""
 #| "\n"
 #| "        Django Recipes is an open source free software application. It "
@@ -1487,14 +1465,7 @@ msgid ""
 "        Changelogs can be found <a href=\"https://github.com/TandoorRecipes/"
 "recipes/releases\">here</a>.\n"
 "    "
-msgstr ""
-"\n"
-"        Django Recipes es una aplicación de software libre de código "
-"abierto. Se puede encontrar en\n"
-"        <a href=\"https://github.com/vabene1111/recipes\">GitHub</a>.\n"
-"        Los registros de cambios se pueden encontrar <a href=\"https://"
-"github.com/vabene1111/recipes/releases\">aquí</a>.\n"
-"    "
+msgstr "Cuaderno Cocina es una aplicación de código abierto para gestionar recetas. El código y el historial de cambios están disponibles en <a href=\"https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina\">GitHub</a>."
 
 #: .\cookbook\templates\system.html:30
 msgid "System Information"
@@ -1506,11 +1477,11 @@ msgid ""
 "            You need to execute <code>version.py</code> in your update "
 "script to generate version information (done automatically in docker).\n"
 "        "
-msgstr ""
+msgstr "Ejecuta <code>version.py</code> en el proceso de actualización para generar la información de versión. En Docker se hace automáticamente."
 
 #: .\cookbook\templates\system.html:56
 msgid "Plugins"
-msgstr ""
+msgstr "Complementos"
 
 #: .\cookbook\templates\system.html:67
 msgid "Media Serving"
@@ -1526,7 +1497,7 @@ msgstr "Advertencia"
 #: .\cookbook\templates\system.html:96 .\cookbook\templates\system.html:109
 #: .\cookbook\templates\system.html:125 .\cookbook\templates\system.html:134
 msgid "Ok"
-msgstr "Ok"
+msgstr "Correcto"
 
 #: .\cookbook\templates\system.html:70
 msgid ""
@@ -1601,7 +1572,7 @@ msgstr ""
 
 #: .\cookbook\templates\system.html:107
 msgid "Allowed Hosts"
-msgstr ""
+msgstr "Servidores permitidos"
 
 #: .\cookbook\templates\system.html:111
 msgid ""
@@ -1610,7 +1581,7 @@ msgid ""
 "might be ok in some setups but should be avoided. Please see the docs about "
 "this.\n"
 "        "
-msgstr ""
+msgstr "La configuración permite cualquier servidor. Puede ser válido en ciertos entornos, pero se recomienda limitarlo. Consulta la documentación."
 
 #: .\cookbook\templates\system.html:118
 msgid "Database"
@@ -1621,10 +1592,9 @@ msgid "Info"
 msgstr "Información"
 
 #: .\cookbook\templates\system.html:131 .\cookbook\templates\system.html:148
-#, fuzzy
 #| msgid "Use fractions"
 msgid "Migrations"
-msgstr "Usar fracciones"
+msgstr "Migraciones"
 
 #: .\cookbook\templates\system.html:137
 msgid ""
@@ -1636,11 +1606,11 @@ msgid ""
 "if so please post the migration log and the overview below in a GitHub "
 "issue.\n"
 "        "
-msgstr ""
+msgstr "Las migraciones deben completarse correctamente. Un fallo puede impedir que funcione parte de la aplicación. Si ocurre, comprueba que usas la última versión y comunica la incidencia en GitHub con el registro de la migración y el resumen siguiente."
 
 #: .\cookbook\templates\system.html:230
 msgid "Configured Providers"
-msgstr ""
+msgstr "Proveedores configurados"
 
 #: .\cookbook\templates\system.html:239
 msgid "Name"
@@ -1648,21 +1618,20 @@ msgstr "Nombre"
 
 #: .\cookbook\templates\system.html:240 .\cookbook\templates\system.html:270
 msgid "Provider"
-msgstr ""
+msgstr "Proveedor"
 
 #: .\cookbook\templates\system.html:241
 msgid "Client ID"
-msgstr ""
+msgstr "Identificador de cliente"
 
 #: .\cookbook\templates\system.html:243
-#, fuzzy
 #| msgid "Account"
 msgid "Linked Accounts"
-msgstr "Cuenta"
+msgstr "Cuentas vinculadas"
 
 #: .\cookbook\templates\system.html:259
 msgid "Recent Login Errors"
-msgstr ""
+msgstr "Errores recientes de inicio de sesión"
 
 #: .\cookbook\templates\system.html:269
 msgid "Time"
@@ -1670,39 +1639,37 @@ msgstr "Tiempo"
 
 #: .\cookbook\templates\system.html:271
 msgid "Error Code"
-msgstr ""
+msgstr "Código de error"
 
 #: .\cookbook\templates\system.html:272
-#, fuzzy
 #| msgid "Settings"
 msgid "Details"
-msgstr "Opciones"
+msgstr "Detalles"
 
 #: .\cookbook\templates\system.html:286
 msgid "Errors are cached for 24 hours. Maximum 50 entries stored."
-msgstr ""
+msgstr "Los errores se conservan en caché durante 24 horas, hasta un máximo de 50 registros."
 
 #: .\cookbook\templates\system.html:288
 msgid "No recent social login errors."
-msgstr ""
+msgstr "No hay errores recientes de inicio de sesión con cuentas externas."
 
 #: .\cookbook\templates\system.html:303
 msgid "False"
-msgstr ""
+msgstr "Falso"
 
 #: .\cookbook\templates\system.html:303
 msgid "True"
-msgstr ""
+msgstr "Verdadero"
 
 #: .\cookbook\templates\system.html:333
 msgid "Hide"
-msgstr ""
+msgstr "Ocultar"
 
 #: .\cookbook\templates\system.html:336
-#, fuzzy
 #| msgid "Show Links"
 msgid "Show"
-msgstr "Mostrar Enlaces"
+msgstr "Mostrar"
 
 #: .\cookbook\templates\test2.html:6
 msgid "Export Recipes"
@@ -1714,57 +1681,51 @@ msgstr "Exportar"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:5
 #: .\cookbook\templates\usersessions\usersession_list.html:8
-#, fuzzy
 #| msgid "No Permissions"
 msgid "Sessions"
-msgstr "Sin permisos"
+msgstr "Sesiones"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:9
-#, fuzzy
 #| msgid "Click the following link to activate your account: "
 msgid "The following sessions are currently active on your account."
-msgstr "Haz click en el siguiente enlace para activar tu cuenta: "
+msgstr "Estas sesiones están activas en tu cuenta."
 
 #: .\cookbook\templates\usersessions\usersession_list.html:16
-#, fuzzy
 #| msgid "Starts With"
 msgid "Started At"
-msgstr "Comienza Con"
+msgstr "Inicio"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:17
 msgid "IP Address"
-msgstr ""
+msgstr "Dirección IP"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:18
-#, fuzzy
 #| msgid "API Browser"
 msgid "Browser"
-msgstr "Explorador de API"
+msgstr "Navegador"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:20
-#, fuzzy
 #| msgid "Last viewed"
 msgid "Last Seen"
-msgstr "Visto por última vez"
+msgstr "Última actividad"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:36
 msgid "Current"
-msgstr ""
+msgstr "Actual"
 
 #: .\cookbook\templates\usersessions\usersession_list.html:45
 msgid "Sign Out Other Sessions"
-msgstr ""
+msgstr "Cerrar las demás sesiones"
 
 #: .\cookbook\views\api.py:205 .\cookbook\views\api.py:334
-#, fuzzy
 #| msgid "Parameter filter_list incorrectly formatted"
 msgid "Parameter updated_at incorrectly formatted"
-msgstr "Parámetro filter_list formateado incorrectamente"
+msgstr "El parámetro updated_at tiene un formato incorrecto"
 
 #: .\cookbook\views\api.py:359 .\cookbook\views\api.py:497
 #, python-brace-format
 msgid "No {self.basename} with id {pk} exists"
-msgstr ""
+msgstr "No existe ningún elemento {self.basename} con el identificador {pk}"
 
 #: .\cookbook\views\api.py:363
 msgid "Cannot merge with the same object!"
@@ -1773,355 +1734,352 @@ msgstr "¡No se puede unir con el mismo objeto!"
 #: .\cookbook\views\api.py:370
 #, python-brace-format
 msgid "No {self.basename} with id {target} exists"
-msgstr ""
+msgstr "No existe ningún elemento {self.basename} con el identificador {target}"
 
 #: .\cookbook\views\api.py:375
-#, fuzzy
 #| msgid "Cannot merge with the same object!"
 msgid "Cannot merge with child object!"
-msgstr "¡No se puede unir con el mismo objeto!"
+msgstr "No se puede fusionar con un elemento descendiente."
 
 #: .\cookbook\views\api.py:418
 #, python-brace-format
 msgid "{source.name} was merged successfully with {target.name}"
-msgstr ""
+msgstr "{source.name} se ha fusionado correctamente con {target.name}"
 
 #: .\cookbook\views\api.py:424
 #, python-brace-format
 msgid "An error occurred attempting to merge {source.name} with {target.name}"
-msgstr ""
+msgstr "Se ha producido un error al fusionar {source.name} con {target.name}"
 
 #: .\cookbook\views\api.py:506
 #, python-brace-format
 msgid "{child.name} was moved successfully to the root."
-msgstr ""
+msgstr "{child.name} se ha movido correctamente al nivel principal."
 
 #: .\cookbook\views\api.py:509 .\cookbook\views\api.py:527
 msgid "An error occurred attempting to move "
-msgstr ""
+msgstr "Se ha producido un error al mover "
 
 #: .\cookbook\views\api.py:512
 msgid "Cannot move an object to itself!"
-msgstr ""
+msgstr "No se puede mover un elemento dentro de sí mismo."
 
 #: .\cookbook\views\api.py:518
 #, python-brace-format
 msgid "No {self.basename} with id {parent} exists"
-msgstr ""
+msgstr "No existe ningún elemento {self.basename} con el identificador {parent}"
 
 #: .\cookbook\views\api.py:524
 #, python-brace-format
 msgid "{child.name} was moved successfully to parent {parent.name}"
-msgstr ""
+msgstr "{child.name} se ha movido correctamente dentro de {parent.name}"
 
 #: .\cookbook\views\api.py:867
 msgid ""
 "If true also return empty entries, if false (default) only return entries "
 "with amount > 0."
-msgstr ""
+msgstr "Si es verdadero, incluye entradas vacías; si es falso (por defecto), solo devuelve entradas con cantidad mayor que 0."
 
 #: .\cookbook\views\api.py:868
 msgid ""
 "Returns all entries with the same food as the given code. If code is given "
 "food parameter is ignored"
-msgstr ""
+msgstr "Devuelve las entradas del alimento asociado al código. Si se indica un código, se ignora el parámetro de alimento."
 
 #: .\cookbook\views\api.py:869 .\cookbook\views\api.py:902
 msgid "Returns all entries with the given food id"
-msgstr ""
+msgstr "Devuelve las entradas con el identificador de alimento indicado."
 
 #: .\cookbook\views\api.py:870
 msgid "Returns all entries with the given inventory location id"
-msgstr ""
+msgstr "Devuelve las entradas con el identificador de ubicación de inventario indicado."
 
 #: .\cookbook\views\api.py:903
 msgid "Returns all entries with the given entry id"
-msgstr ""
+msgstr "Devuelve las entradas con el identificador indicado."
 
 #: .\cookbook\views\api.py:1106
 #, python-brace-format
 msgid "{obj.name} was removed from the shopping list."
-msgstr ""
+msgstr "Se ha quitado {obj.name} de la lista de compra."
 
 #: .\cookbook\views\api.py:1111 .\cookbook\views\api.py:1912
 #, python-brace-format
 msgid "{obj.name} was added to the shopping list."
-msgstr ""
+msgstr "Se ha añadido {obj.name} a la lista de compra."
 
 #: .\cookbook\views\api.py:1228 .\cookbook\views\api.py:2030
 #: .\cookbook\views\api.py:2710 .\cookbook\views\api.py:2871
 msgid "You must select an AI provider to perform your request."
-msgstr ""
+msgstr "Selecciona un proveedor de inteligencia artificial para realizar la solicitud."
 
 #: .\cookbook\views\api.py:1235 .\cookbook\views\api.py:2037
 #: .\cookbook\views\api.py:2717 .\cookbook\views\api.py:2878
 msgid ""
 "You don't have any credits remaining to use AI or AI features are not "
 "enabled for your space."
-msgstr ""
+msgstr "No quedan créditos para utilizar inteligencia artificial o estas funciones no están habilitadas en tu espacio."
 
 #: .\cookbook\views\api.py:1479
 msgid ""
 "Filter meal plans from date (inclusive). If nothing is given its today - 90 "
 "days."
-msgstr ""
+msgstr "Filtra la planificación desde la fecha indicada, incluida. Por defecto, desde hace 90 días."
 
 #: .\cookbook\views\api.py:1481
 msgid ""
 "Filter meal plans to date (inclusive). If nothing is given its today + 360 "
 "days."
-msgstr ""
+msgstr "Filtra la planificación hasta la fecha indicada, incluida. Por defecto, hasta dentro de 360 días."
 
 #: .\cookbook\views\api.py:1484
 msgid "Filter meal plans with MealType ID. For multiple repeat parameter."
-msgstr ""
+msgstr "Filtra la planificación por identificador de tipo de comida. Repite el parámetro para indicar varios."
 
 #: .\cookbook\views\api.py:1573
-#, fuzzy
 #| msgid "No recipes selected"
 msgid "No recipes found."
-msgstr "No hay recetas seleccionadas"
+msgstr "No se han encontrado recetas."
 
 #: .\cookbook\views\api.py:1670
 msgid "ID of recipe a step is part of. For multiple repeat parameter."
-msgstr ""
+msgstr "Identificador de la receta a la que pertenece un paso. Repite el parámetro para indicar varias."
 
 #: .\cookbook\views\api.py:1672
 msgid "Query string matched (fuzzy) against object name."
-msgstr ""
+msgstr "Texto que se compara de forma aproximada con el nombre del elemento."
 
 #: .\cookbook\views\api.py:1708
 msgid ""
 "Query string matched (fuzzy) against recipe name. In the future also "
 "fulltext search."
-msgstr ""
+msgstr "Texto que se compara de forma aproximada con el nombre de la receta. En el futuro también permitirá búsqueda de texto completo."
 
 #: .\cookbook\views\api.py:1710
 msgid ""
 "ID of keyword a recipe should have. For multiple repeat parameter. "
 "Equivalent to keywords_or"
-msgstr ""
+msgstr "Identificador de una palabra clave que debe tener la receta. Repite el parámetro para indicar varias. Equivale a keywords_or."
 
 #: .\cookbook\views\api.py:1711
 msgid ""
 "Keyword IDs, repeat for multiple. Return recipes with any of the keywords"
-msgstr ""
+msgstr "Identificadores de palabras clave; repite el parámetro para indicar varias. Devuelve recetas con cualquiera de ellas."
 
 #: .\cookbook\views\api.py:1712
 msgid ""
 "Keyword IDs, repeat for multiple. Return recipes with all of the keywords."
-msgstr ""
+msgstr "Identificadores de palabras clave; repite el parámetro para indicar varias. Devuelve recetas con todas ellas."
 
 #: .\cookbook\views\api.py:1713
 msgid ""
 "Keyword IDs, repeat for multiple. Exclude recipes with any of the keywords."
-msgstr ""
+msgstr "Identificadores de palabras clave; repite el parámetro para indicar varias. Excluye recetas con cualquiera de ellas."
 
 #: .\cookbook\views\api.py:1714
 msgid ""
 "Keyword IDs, repeat for multiple. Exclude recipes with all of the keywords."
-msgstr ""
+msgstr "Identificadores de palabras clave; repite el parámetro para indicar varias. Excluye recetas con todas ellas."
 
 #: .\cookbook\views\api.py:1716
 msgid "ID of food a recipe should have. For multiple repeat parameter."
-msgstr ""
+msgstr "Identificador de un alimento que debe tener la receta. Repite el parámetro para indicar varios."
 
 #: .\cookbook\views\api.py:1717
 msgid "Food IDs, repeat for multiple. Return recipes with any of the foods"
-msgstr ""
+msgstr "Identificadores de alimentos; repite el parámetro para indicar varios. Devuelve recetas con cualquiera de ellos."
 
 #: .\cookbook\views\api.py:1718
 msgid "Food IDs, repeat for multiple. Return recipes with all of the foods."
-msgstr ""
+msgstr "Identificadores de alimentos; repite el parámetro para indicar varios. Devuelve recetas con todos ellos."
 
 #: .\cookbook\views\api.py:1719
 msgid "Food IDs, repeat for multiple. Exclude recipes with any of the foods."
-msgstr ""
+msgstr "Identificadores de alimentos; repite el parámetro para indicar varios. Excluye recetas con cualquiera de ellos."
 
 #: .\cookbook\views\api.py:1720
 msgid "Food IDs, repeat for multiple. Exclude recipes with all of the foods."
-msgstr ""
+msgstr "Identificadores de alimentos; repite el parámetro para indicar varios. Excluye recetas con todos ellos."
 
 #: .\cookbook\views\api.py:1722
 msgid "ID of book a recipe should be in. For multiple repeat parameter."
-msgstr ""
+msgstr "Identificador del libro al que debe pertenecer la receta. Repite el parámetro para indicar varios."
 
 #: .\cookbook\views\api.py:1723
 msgid "Book IDs, repeat for multiple. Return recipes with any of the books"
-msgstr ""
+msgstr "Identificadores de libros; repite el parámetro para indicar varios. Devuelve recetas de cualquiera de ellos."
 
 #: .\cookbook\views\api.py:1724
 msgid "Book IDs, repeat for multiple. Return recipes with all of the books."
-msgstr ""
+msgstr "Identificadores de libros; repite el parámetro para indicar varios. Devuelve recetas presentes en todos ellos."
 
 #: .\cookbook\views\api.py:1725
 msgid "Book IDs, repeat for multiple. Exclude recipes with any of the books."
-msgstr ""
+msgstr "Identificadores de libros; repite el parámetro para indicar varios. Excluye recetas de cualquiera de ellos."
 
 #: .\cookbook\views\api.py:1726
 msgid "Book IDs, repeat for multiple. Exclude recipes with all of the books."
-msgstr ""
+msgstr "Identificadores de libros; repite el parámetro para indicar varios. Excluye recetas presentes en todos ellos."
 
 #: .\cookbook\views\api.py:1728
 msgid "ID of unit a recipe should have."
-msgstr ""
+msgstr "Identificador de una unidad que debe tener la receta."
 
 #: .\cookbook\views\api.py:1730
 msgid "Exact rating of recipe"
-msgstr ""
+msgstr "Valoración exacta de la receta."
 
 #: .\cookbook\views\api.py:1731
 msgid "Rating a recipe should have or greater."
-msgstr ""
+msgstr "Valoración mínima de la receta."
 
 #: .\cookbook\views\api.py:1732
 msgid "Rating a recipe should have or smaller."
-msgstr ""
+msgstr "Valoración máxima de la receta."
 
 #: .\cookbook\views\api.py:1734
 msgid "Filter recipes cooked X times."
-msgstr ""
+msgstr "Filtra recetas cocinadas X veces."
 
 #: .\cookbook\views\api.py:1735
 msgid "Filter recipes cooked X times or more."
-msgstr ""
+msgstr "Filtra recetas cocinadas X veces o más."
 
 #: .\cookbook\views\api.py:1736
 msgid "Filter recipes cooked X times or less."
-msgstr ""
+msgstr "Filtra recetas cocinadas X veces o menos."
 
 #: .\cookbook\views\api.py:1738
 msgid "Filter recipes created on the given date."
-msgstr ""
+msgstr "Filtra recetas creadas en la fecha indicada."
 
 #: .\cookbook\views\api.py:1739
 msgid "Filter recipes created on the given date or after."
-msgstr ""
+msgstr "Filtra recetas creadas en la fecha indicada o después."
 
 #: .\cookbook\views\api.py:1740
 msgid "Filter recipes created on the given date or before."
-msgstr ""
+msgstr "Filtra recetas creadas en la fecha indicada o antes."
 
 #: .\cookbook\views\api.py:1742 .\cookbook\views\api.py:1743
 #: .\cookbook\views\api.py:1744
 msgid "Filter recipes updated on the given date."
-msgstr ""
+msgstr "Filtra recetas actualizadas en la fecha indicada."
 
 #: .\cookbook\views\api.py:1746
 msgid "Filter recipes last cooked on the given date or after."
-msgstr ""
+msgstr "Filtra recetas cocinadas por última vez en la fecha indicada o después."
 
 #: .\cookbook\views\api.py:1747
 msgid "Filter recipes last cooked on the given date or before."
-msgstr ""
+msgstr "Filtra recetas cocinadas por última vez en la fecha indicada o antes."
 
 #: .\cookbook\views\api.py:1749 .\cookbook\views\api.py:1750
 msgid "Filter recipes lasts viewed on the given date."
-msgstr ""
+msgstr "Filtra recetas consultadas por última vez en la fecha indicada."
 
 #: .\cookbook\views\api.py:1752
 msgid "Filter recipes for ones created by the given user ID"
-msgstr ""
+msgstr "Filtra recetas creadas por el usuario con el identificador indicado."
 
 #: .\cookbook\views\api.py:1753
 msgid "If only internal recipes should be returned. [true/<b>false</b>]"
-msgstr ""
+msgstr "Indica si solo se devuelven recetas internas. [true (sí)/<b>false (no)</b>]"
 
 #: .\cookbook\views\api.py:1754
 msgid "Returns the results in randomized order. [true/<b>false</b>]"
-msgstr ""
+msgstr "Devuelve los resultados en orden aleatorio. [true (sí)/<b>false (no)</b>]"
 
 #: .\cookbook\views\api.py:1756
 msgid ""
 "Determines the order of the results. Options are: score,-score,name,-name,"
 "lastcooked,-lastcooked,rating,-rating,times_cooked,-times_cooked,created_at,-"
 "created_at,lastviewed,-lastviewed"
-msgstr ""
+msgstr "Determina el orden de los resultados. Opciones: score,-score,name,-name,lastcooked,-lastcooked,rating,-rating,times_cooked,-times_cooked,created_at,-created_at,lastviewed,-lastviewed"
 
 #: .\cookbook\views\api.py:1758
 msgid "Returns new results first in search results. [true/<b>false</b>]"
-msgstr ""
+msgstr "Muestra primero los resultados nuevos. [true (sí)/<b>false (no)</b>]"
 
 #: .\cookbook\views\api.py:1759
 msgid ""
 "Returns the given number of recently viewed recipes before search results "
 "(if given)"
-msgstr ""
+msgstr "Devuelve el número indicado de recetas consultadas recientemente antes de los resultados de búsqueda."
 
 #: .\cookbook\views\api.py:1760
 msgid "ID of a custom filter. Returns all recipes matched by that filter."
-msgstr ""
+msgstr "Identificador de un filtro personalizado. Devuelve las recetas que coinciden con él."
 
 #: .\cookbook\views\api.py:1761
 msgid "Filter recipes that can be made with OnHand food. [true/<b>false</b>]"
-msgstr ""
+msgstr "Filtra recetas que se pueden preparar con los alimentos disponibles. [true (sí)/<b>false (no)</b>]"
 
 #: .\cookbook\views\api.py:1762
 msgid "Include child keywords and foods in search results. [<b>true</b>/false]"
-msgstr ""
+msgstr "Incluye palabras clave y alimentos descendientes en los resultados. [<b>true (sí)</b>/false (no)]"
 
 #: .\cookbook\views\api.py:2147
 msgid ""
 "Return the PropertyTypes matching the property category.  Repeat for "
 "multiple."
-msgstr ""
+msgstr "Devuelve los tipos de propiedad de la categoría indicada. Repite el parámetro para indicar varias."
 
 #: .\cookbook\views\api.py:2178 .\cookbook\views\api.py:2256
 msgid "Returns only entries associated with the given mealplan id"
-msgstr ""
+msgstr "Devuelve solo entradas asociadas al identificador de planificación indicado."
 
 #: .\cookbook\views\api.py:2254
 msgid ""
 "Returns only elements updated after the given timestamp in ISO 8601 format."
-msgstr ""
+msgstr "Devuelve solo elementos actualizados después de la fecha y hora indicadas en formato ISO 8601."
 
 #: .\cookbook\views\api.py:2454
 msgid ""
 "Return the Automations matching the automation type.  Repeat for multiple."
-msgstr ""
+msgstr "Devuelve las automatizaciones del tipo indicado. Repite el parámetro para indicar varios."
 
 #: .\cookbook\views\api.py:2471
 msgid ""
 "Text field to store data that gets carried over to the UserSpace created "
 "from the InviteLink"
-msgstr ""
+msgstr "Campo de texto cuyos datos se trasladan a la pertenencia al espacio creada mediante el enlace de invitación."
 
 #: .\cookbook\views\api.py:2472
 msgid "Only return InviteLinks that have not been used yet."
-msgstr ""
+msgstr "Devuelve solo enlaces de invitación que aún no se han utilizado."
 
 #: .\cookbook\views\api.py:2499
 msgid "Return the CustomFilters matching the model type.  Repeat for multiple."
-msgstr ""
+msgstr "Devuelve los filtros personalizados del tipo de modelo indicado. Repite el parámetro para indicar varios."
 
 #: .\cookbook\views\api.py:2599
 msgid "Nothing to do."
-msgstr ""
+msgstr "No hay nada que hacer."
 
 #: .\cookbook\views\api.py:2644
-#, fuzzy, python-format
+#, python-format
 #| msgid "The requested page could not be found."
 msgid ""
 "The requested page could not be loaded. The server returned %(status_code)s."
-msgstr "La página solicitada no pudo ser encontrada."
+msgstr "No se pudo cargar la página solicitada. El servidor devolvió el código %(status_code)s."
 
 #: .\cookbook\views\api.py:2652
 msgid "Connection Refused."
-msgstr ""
+msgstr "Conexión rechazada."
 
 #: .\cookbook\views\api.py:2656
 msgid "Bad URL Schema."
-msgstr ""
+msgstr "El esquema de la dirección no es válido."
 
 #: .\cookbook\views\api.py:2681
-#, fuzzy
 #| msgid "The requested page could not be found."
 msgid "No usable data could be found."
-msgstr "La página solicitada no pudo ser encontrada."
+msgstr "No se han encontrado datos utilizables."
 
 #: .\cookbook\views\api.py:2950 .\cookbook\views\api.py:3119
 msgid "File is above space limit"
-msgstr ""
+msgstr "El archivo supera el límite de almacenamiento del espacio."
 
 #: .\cookbook\views\api.py:2973 .\cookbook\views\api.py:3136
 msgid "Importing is not implemented for this provider"
@@ -2131,13 +2089,12 @@ msgstr "La importación no está implementada para este proveedor"
 msgid ""
 "PDF export is no longer available. Use your browser's print function (Ctrl"
 "+P) to save recipes as PDF."
-msgstr ""
+msgstr "La exportación de recetas a PDF ya no está disponible aquí. Utiliza la función de impresión del navegador (Ctrl+P) para guardarlas en PDF."
 
 #: .\cookbook\views\api.py:3335
-#, fuzzy
 #| msgid "This feature is not available in the demo version!"
 msgid "This feature is not yet available in the hosted version of tandoor!"
-msgstr "¡Esta funcionalidad no está disponible en la versión demo!"
+msgstr "Esta función aún no está disponible en la versión alojada de Cuaderno Cocina."
 
 #: .\cookbook\views\api.py:3356
 msgid "Sync successful!"
@@ -2155,24 +2112,23 @@ msgstr "¡Esta funcionalidad no está disponible en la versión demo!"
 msgid ""
 "You have successfully created your own recipe space. Start by adding some "
 "recipes or invite other people to join you."
-msgstr ""
+msgstr "Has creado tu espacio de recetas. Puedes empezar añadiendo recetas o invitando a otras personas."
 
 #: .\cookbook\views\views.py:182
 #, python-format
 msgid "PostgreSQL %(v)s is deprecated.  Upgrade to a fully supported version!"
-msgstr ""
+msgstr "PostgreSQL %(v)s ya no tiene soporte. Actualiza a una versión compatible."
 
 #: .\cookbook\views\views.py:185
 #, python-format
 msgid "You are running PostgreSQL %(v1)s.  PostgreSQL %(v2)s is recommended"
-msgstr ""
+msgstr "Utilizas PostgreSQL %(v1)s. Se recomienda PostgreSQL %(v2)s."
 
 #: .\cookbook\views\views.py:189
 msgid "Unable to determine PostgreSQL version."
-msgstr ""
+msgstr "No se ha podido determinar la versión de PostgreSQL."
 
 #: .\cookbook\views\views.py:193
-#, fuzzy
 #| msgid ""
 #| "\n"
 #| "            This application is not running with a Postgres database "
@@ -2182,15 +2138,9 @@ msgstr ""
 msgid ""
 "This application is not running with a Postgres database backend. This is ok "
 "but not recommended as some features only work with postgres databases."
-msgstr ""
-"\n"
-"            Esta aplicación no se ejecuta con un backend de base de datos "
-"Postgres. Esto es válido pero no es recomendado ya que algunas\n"
-"            características sólo funcionan con bases de datos Postgres.\n"
-"        "
+msgstr "La aplicación no utiliza una base de datos PostgreSQL. Puede funcionar así, pero algunas funciones solo están disponibles con PostgreSQL."
 
 #: .\cookbook\views\views.py:354
-#, fuzzy
 #| msgid ""
 #| "The setup page can only be used to create the first user! If you have "
 #| "forgotten your superuser credentials please consult the django "
@@ -2199,10 +2149,7 @@ msgid ""
 "The setup page can only be used to create the first "
 "user!                     If you have forgotten your superuser credentials "
 "please consult the django documentation on how to reset passwords."
-msgstr ""
-"La página de configuración sólo puede ser utilizada para crear el primer "
-"usuario. Si has olvidado tus credenciales de superusuario, por favor "
-"consulta la documentación de django sobre cómo restablecer las contraseñas."
+msgstr "La página de configuración solo permite crear el primer usuario. Si has olvidado las credenciales de superusuario, consulta la documentación de Django para restablecer la contraseña."
 
 #: .\cookbook\views\views.py:362
 msgid "Passwords dont match!"
@@ -2216,17 +2163,17 @@ msgstr "El usuario ha sido creado, ¡inicie sesión!"
 msgid ""
 "Reporting share links is not enabled for this instance. Please notify the "
 "page administrator to report problems."
-msgstr ""
+msgstr "La notificación de enlaces compartidos no está habilitada en esta instancia. Contacta con la persona administradora para comunicar problemas."
 
 #: .\cookbook\views\views.py:418
 msgid ""
 "Recipe sharing link has been disabled! For additional information please "
 "contact the page administrator."
-msgstr ""
+msgstr "El enlace para compartir la receta se ha desactivado. Contacta con la persona administradora para obtener más información."
 
 #: .\cookbook\views\views.py:444
 msgid "Manage recipes, shopping list, meal plans and more."
-msgstr ""
+msgstr "Gestiona recetas, listas de compra, planificación de comidas y mucho más."
 
 #: .\cookbook\views\views.py:458 .\cookbook\views\views.py:459
 msgid "Plan"
@@ -2234,13 +2181,12 @@ msgstr "Menú"
 
 #: .\cookbook\views\views.py:460
 msgid "View your meal Plan"
-msgstr ""
+msgstr "Consulta tu planificación de comidas"
 
 #: .\cookbook\views\views.py:479
-#, fuzzy
 #| msgid "Shopping List"
 msgid "View your shopping lists"
-msgstr "Lista de la Compra"
+msgstr "Consulta tus listas de compra"
 
 #~ msgid "Cannot modify Space owner permission."
 #~ msgstr "No puedes modificar los permisos del propietario de la Instancia."

@@ -121,7 +121,7 @@ const tableHeaders = [
     {title: t('Food'), key: 'food'},
     {title: t('Expires'), key: 'expires',},
     {title: t('InventoryLocation'), key: 'inventoryLocation',},
-    {title: 'Actions', key: 'action', align: 'end' as const},
+    {title: t('Actions'), key: 'action', align: 'end' as const},
 ]
 
 const entryLogDialog = ref(false)

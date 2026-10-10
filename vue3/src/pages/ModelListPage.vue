@@ -89,7 +89,10 @@
                         <v-chip label v-else color="info">{{ $t('Space') }}</v-chip>
                     </template>
                     <template v-slot:item.groups="{ item }" v-if="genericModel.model.name == 'UserSpace'">
-                        {{ item.groups.flatMap((x: Group) => x.name).join(', ') }}
+                        {{ item.groups.flatMap((x: Group) => roleLabel(x.name)).join(', ') }}
+                    </template>
+                    <template v-slot:item.group.name="{ value }" v-if="genericModel.model.name == 'InviteLink'">
+                        {{ roleLabel(value) }}
                     </template>
                     <template v-slot:item.active="{ item }" v-if="genericModel.model.name == 'Space'">
                         <v-chip label v-if="item.id == useUserPreferenceStore().activeSpace.id!" color="success">{{ $t('Active') }}</v-chip>
@@ -182,6 +185,11 @@ import {useDebouncedSearch} from "@/composables/useDebouncedSearch";
 import BatchEditUserSpaceDialog from "@/components/dialogs/BatchEditUserSpaceDialog.vue";
 
 const {t} = useI18n()
+
+function roleLabel(name: string) {
+    const labels: Record<string, string> = {guest: 'Consulta', user: 'Cocina', admin: 'Responsable'}
+    return labels[name?.toLowerCase()] ?? name
+}
 const router = useRouter()
 const title = useTitle()
 

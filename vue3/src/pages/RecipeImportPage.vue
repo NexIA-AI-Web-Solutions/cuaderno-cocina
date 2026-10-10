@@ -804,7 +804,7 @@ function loadRecipeFromAiImport() {
     let request = null
 
     if (selectedAiProvider.value == undefined) {
-        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, "No AI Provider selected")
+        useMessageStore().addError(ErrorMessageType.CREATE_ERROR, "No se ha seleccionado un proveedor de IA")
         return
     }
 

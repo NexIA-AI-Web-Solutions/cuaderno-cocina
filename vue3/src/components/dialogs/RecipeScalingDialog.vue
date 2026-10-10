@@ -54,7 +54,7 @@ const emit = defineEmits({
 const props = defineProps({
     recipe: {type: {} as PropType<Recipe>, required: true},
     number: {type: Number, default: 0},
-    title: {type: String, default: 'Number'},
+    title: {type: String, default: 'Cantidad'},
     text: {type: String, default: ''},
 })
 

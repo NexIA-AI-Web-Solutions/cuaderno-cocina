@@ -7,7 +7,7 @@
         autocomplete="suppress"
         no-filter
         :items="items"
-        :item-title="itemLabelAttribute"
+        :item-title="displayOptionLabel"
         item-value="id"
         :label="label"
         :hint="props.hint"
@@ -479,6 +479,15 @@ function updateModelValue(newValue: ModelOption | ModelOption[] | undefined | nu
     } else {
         emit('update:modelValue', newValue)
     }
+}
+
+function displayOptionLabel(item: ModelOption): string {
+    const label = optionLabel(item)
+    if (props.model === 'Group') {
+        const roles: Record<string, string> = {guest: 'Consulta', user: 'Cocina', admin: 'Responsable'}
+        return roles[label.toLowerCase()] ?? label
+    }
+    return props.model === 'SearchFields' ? t(label) : label
 }
 
 function optionLabel(item: ModelOption): string {

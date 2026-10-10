@@ -3,6 +3,18 @@ from os import getenv
 from django.conf import settings
 from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.db import connection
+from django.middleware.locale import LocaleMiddleware
+from django.utils import translation
+
+
+class CuadernoLocaleMiddleware(LocaleMiddleware):
+    """Use the deployment language consistently, including login and errors."""
+
+    def process_request(self, request):
+        # Browser preferences and legacy language cookies must not switch the
+        # Spanish product UI back to English on the next request.
+        translation.activate(settings.LANGUAGE_CODE)
+        request.LANGUAGE_CODE = translation.get_language()
 
 
 class CustomRemoteUser(RemoteUserMiddleware):

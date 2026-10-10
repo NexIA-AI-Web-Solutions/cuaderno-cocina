@@ -37,6 +37,61 @@ import {computed, nextTick, onMounted, useTemplateRef} from "vue";
 
 const step = defineModel<Step>({required: true})
 
+const spanishEditorWords = {
+    "start_editor": "Escribe la preparación…",
+    "navigation_title": "Navegación",
+    "tl_bold": "Negrita",
+    "tl_italic": "Cursiva",
+    "tl_header": "Encabezado",
+    "tl_header_one": "Encabezado 1",
+    "tl_header_two": "Encabezado 2",
+    "tl_header_three": "Encabezado 3",
+    "tl_header_four": "Encabezado 4",
+    "tl_header_five": "Encabezado 5",
+    "tl_header_six": "Encabezado 6",
+    "tl_underline": "Subrayado",
+    "tl_strikethrough": "Tachado",
+    "tl_mark": "Resaltado",
+    "tl_superscript": "Superíndice",
+    "tl_subscript": "Subíndice",
+    "tl_quote": "Cita",
+    "tl_ol": "Lista numerada",
+    "tl_ul": "Lista con viñetas",
+    "tl_link": "Enlace",
+    "tl_image": "Enlace de imagen",
+    "tl_code": "Código",
+    "tl_table": "Tabla",
+    "tl_undo": "Deshacer",
+    "tl_redo": "Rehacer",
+    "tl_trash": "Eliminar",
+    "tl_save": "Guardar",
+    "tl_navigation_on": "Mostrar navegación",
+    "tl_navigation_off": "Ocultar navegación",
+    "tl_preview": "Vista previa",
+    "tl_aligncenter": "Centrar texto",
+    "tl_alignleft": "Alinear a la izquierda",
+    "tl_alignright": "Alinear a la derecha",
+    "tl_edit": "Editar",
+    "tl_single_column": "Una columna",
+    "tl_double_column": "Dos columnas",
+    "tl_fullscreen_on": "Pantalla completa",
+    "tl_fullscreen_off": "Salir de pantalla completa",
+    "tl_read": "Modo lectura",
+    "tl_html_on": "Mostrar HTML",
+    "tl_html_off": "Ocultar HTML",
+    "tl_help": "Guía de formato",
+    "tl_upload": "Subir imágenes",
+    "tl_upload_remove": "Eliminar",
+    "tl_popup_link_title": "Añadir enlace",
+    "tl_popup_link_text": "Texto del enlace",
+    "tl_popup_link_addr": "Dirección del enlace",
+    "tl_popup_img_link_title": "Añadir imagen",
+    "tl_popup_img_link_text": "Descripción de la imagen",
+    "tl_popup_img_link_addr": "Dirección de la imagen",
+    "tl_popup_link_sure": "Confirmar",
+    "tl_popup_link_cancel": "Cancelar"
+}
+
 function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Backspace' && (e.ctrlKey || e.metaKey)) {
         e.stopPropagation()
@@ -44,6 +99,8 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+    // This editor version has no Spanish catalog; localize its visible labels.
+    if (markdownEditor.value) markdownEditor.value.d_words = spanishEditorWords
     const textarea = markdownEditor.value?.getTextareaDom()
     if (textarea) {
         textarea.addEventListener('keydown', handleKeydown, true)

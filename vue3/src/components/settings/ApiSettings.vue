@@ -13,30 +13,27 @@
             <v-col>
 
                 <v-alert color="error" variant="tonal">
-                    The API is made for developers to interact with the application.
-                    It is possible to break things using the API so be careful and create a backup first.
-                    The API definition can and will change in the future, make sure to read the changelog to spot changes early
-                    on.
+                    La API permite a los desarrolladores interactuar con la aplicación.
+                    Su uso puede modificar datos; crea una copia de seguridad antes de realizar cambios.
+                    La definición de la API puede cambiar en futuras versiones. Consulta el registro de cambios antes de actualizar tus integraciones.
                 </v-alert>
             </v-col>
         </v-row>
 
         <v-row>
             <v-col>
-                Authentication works by proving the word <code>Bearer</code> followed by an API Token as a request Authorization
-                header as shown below. <br/>
-                <code>Authorization: Bearer TOKEN</code> -or-<br/>
+                Para autenticarte, utiliza la palabra <code>Bearer</code> seguida de una clave de API en la cabecera
+                <code>Authorization</code> de la petición, como en estos ejemplos. <br/>
+                <code>Authorization: Bearer TOKEN</code> o bien:<br/>
                 <code>curl -X GET http://your.domain.com/api/recipe/ -H 'Authorization:
                     Bearer TOKEN'</code>
 
                 <br/>
                 <br/>
-                You can have multiple tokens and each token can have its own scope. Currently there is <code>read</code>, <code>write</code>
-                and <code>bookmarklet</code>.
-                Read and write do what the name says, the bookmarklet scope is only used for the bookmarklet to limit access to
-                it.
+                Puedes crear varias claves y asignar a cada una su ámbito de acceso: <code>read</code> para lectura,
+                <code>write</code> para escritura y <code>bookmarklet</code> para el marcador de importación del navegador.
 
-                <v-alert color="warning" variant="tonal">Make sure to save your token after creation as they cannot be viewed afterwards.</v-alert>
+                <v-alert color="warning" variant="tonal">Guarda la clave al crearla, ya que después no podrás volver a consultarla.</v-alert>
             </v-col>
 
         </v-row>
@@ -48,11 +45,11 @@
         <v-list class="mt-2" border>
             <v-list-item v-for="at in accessTokenList">
                 <v-list-item-title>{{ at.token }}</v-list-item-title>
-                <v-list-item-subtitle>Scope {{ at.scope }}
-                    Expires {{ DateTime.fromJSDate(at.expires).toLocaleString(DateTime.DATE_FULL) }}
+                <v-list-item-subtitle>Ámbito: {{ at.scope }}
+                    Caduca: {{ DateTime.fromJSDate(at.expires).toLocaleString(DateTime.DATE_FULL) }}
                 </v-list-item-subtitle>
                 <template #append>
-                    <v-chip color="error" class="me-2" v-if="at.expires < DateTime.now().toJSDate()">Expired</v-chip>
+                    <v-chip color="error" class="me-2" v-if="at.expires < DateTime.now().toJSDate()">Caducada</v-chip>
                     <v-btn color="edit">
                         <v-icon icon="$edit"></v-icon>
                         <model-edit-dialog model="AccessToken" :item="at" class="mt-2" @delete="loadAccessTokens()"></model-edit-dialog>

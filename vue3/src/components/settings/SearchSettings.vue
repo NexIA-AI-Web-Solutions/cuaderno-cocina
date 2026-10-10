@@ -52,10 +52,10 @@ import ModelSelect from "@/components/inputs/ModelSelect.vue";
 import VModelSelect from "@/components/inputs/VModelSelect.vue";
 
 const searchMethods = ref([
-    {title: 'Simple', value: 'plain'},
-    {title: 'Phrase', value: 'phrase'},
-    {title: 'Web', value: 'websearch'},
-    {title: 'Raw', value: 'raw'},
+    {title: 'Sencilla', value: 'plain'},
+    {title: 'Frase exacta', value: 'phrase'},
+    {title: 'Búsqueda web', value: 'websearch'},
+    {title: 'Expresión avanzada', value: 'raw'},
 ])
 
 const loading = ref(false)

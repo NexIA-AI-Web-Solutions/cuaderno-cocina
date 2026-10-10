@@ -3,6 +3,8 @@
             :label="$t('Language')"
             v-model="$i18n.locale"
             :items="availableLocalizations"
+            readonly
+            menu-icon=""
             item-title="display"
             item-value="code"
             :hint="currentCoverage < 100 ? currentCoverage + '% ' + $t('translated') : ''"
@@ -90,7 +92,8 @@ onMounted(() => {
     const api = new ApiApi()
 
     api.apiLocalizationList().then(r => {
-        availableLocalizations.value = r.filter(l => l.code && resolveLocale(l.code) !== null)
+        const deploymentLocale = resolveLocale(document.documentElement.lang) || 'es'
+        availableLocalizations.value = r.filter(l => l.code && resolveLocale(l.code) === deploymentLocale)
             .map(l => {
                 const resolved = resolveLocale(l.code!)!
                 // Find FE coverage for this locale

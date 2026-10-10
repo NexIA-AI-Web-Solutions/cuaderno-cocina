@@ -38,9 +38,9 @@
                                 <h5 class="mb-1">{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}Cuaderno Cocina{% else %}{{ v.name }}{% endif %} ({{ v.branch }}) {% if v.tag %}- {{ v.tag }}{% endif %}</h5>
                             </div>
                             <pre class="card-text p-2" style="border: 1px solid lightgrey; border-radius: 5px" target="_blank">{{ v.version }}</pre>
-                            <a href="{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina{% else %}{{ v.website }}{% endif %}">Website</a>
+                            <a href="{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina{% else %}{{ v.website }}{% endif %}">Sitio web</a>
                             {% if v.commit_link %}
-                                - <a href="{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina{% else %}{{ v.commit_link }}{% endif %}" target="_blank">Commit</a>
+                                - <a href="{% if v.name == 'Tandoor ' or v.name == 'Tandoor' or v.name == 'Tandoor Recipes' %}https://github.com/NexIA-AI-Web-Solutions/cuaderno-cocina{% else %}{{ v.commit_link }}{% endif %}" target="_blank">Cambio de código</a>
                             {% endif %}
                         </div>
                     {% endfor %}
@@ -54,12 +54,12 @@
     {% endif %}
 
     <h3 class="mt-5">{% trans 'Plugins' %}</h3>
-    Clone the plugin using git into the <code>recipe/plugin/</code> folder (Docker mount <code>/opt/recipe/recipes/plugins</code> to the host system and clone into it).
+    Clona el complemento con Git en la carpeta <code>recipe/plugin/</code>. En Docker, monta <code>/opt/recipe/recipes/plugins</code> en el sistema anfitrión y clónalo allí.
     <table class="table table-bordered">
         {% for p in plugins %}
             <tr>
                 <td><a href="{{ p.github }}">{{ p.name }}</a> <br/>{{ p.base_path }}</td>
-                <td><a href="{% url 'view_plugin_update' %}?module={{ p.module }}" class="btn btn-primary">Git Pull</a></td>
+                <td><a href="{% url 'view_plugin_update' %}?module={{ p.module }}" class="btn btn-primary">Actualizar complemento</a></td>
             </tr>
         {% endfor %}
     </table>
@@ -81,10 +81,9 @@
         {% trans 'Warning' %}{% else %}{% trans 'Ok' %}{% endif %}</span></h4>
     {% if secret_key %}
         {% blocktrans %}
-            You do not have a <code>SECRET_KEY</code> configured in your <code>.env</code> file. The application defaulted to the
-            standard key
-            provided with the installation which is publicly know and insecure! Please set
-            <code>SECRET_KEY</code> int the <code>.env</code> configuration file.
+            No hay una <code>SECRET_KEY</code> configurada en el archivo <code>.env</code>.
+            La aplicación utiliza la clave predeterminada de la instalación, que es pública e insegura.
+            Configura una <code>SECRET_KEY</code> propia en el archivo <code>.env</code>.
         {% endblocktrans %}
     {% else %}
         {% trans 'Everything is fine!' %}
@@ -143,7 +142,7 @@
     <table class="table mt-3">
         <thead>
         <tr>
-            <th>App</th>
+            <th>Aplicación</th>
             <th class="text-right">{% trans 'Migrations' %}</th>
         </tr>
         </thead>
@@ -196,8 +195,8 @@
     {#{% endfor %}#}
     {#    </textarea>#}
     {% if api_space_stats %}
-        <h4 class="mt-3">API Stats</h4>
-        <h6>Space Stats</h6>
+        <h4 class="mt-3">Estadísticas de la API</h4>
+        <h6>Estadísticas por espacio</h6>
         <table class="table table-bordered table-striped">
             {% for r in api_space_stats %}
                 <tr>
@@ -210,7 +209,7 @@
             {% endfor %}
         </table>
 
-        <h6>Endpoint Stats</h6>
+        <h6>Estadísticas por punto de acceso</h6>
         <table class="table table-bordered table-striped">
             {% for r in api_stats %}
                 <tr>
@@ -248,7 +247,7 @@
                 <td>{{ p.name }}</td>
                 <td><code>{{ p.provider_id|default:p.provider }}</code></td>
                 <td><code>{{ p.client_id }}</code></td>
-                <td><span class="badge text-bg-{% if p.source == 'settings' %}info{% else %}secondary{% endif %}">{{ p.source }}</span></td>
+                <td><span class="badge text-bg-{% if p.source == 'settings' %}info{% else %}secondary{% endif %}">{% if p.source == 'settings' %}Configuración{% elif p.source == 'database' %}Base de datos{% else %}{{ p.source }}{% endif %}</span></td>
                 <td>{{ p.account_count }}</td>
             </tr>
             {% endfor %}
@@ -288,20 +287,20 @@
     {% endif %}
     {% endif %}
 
-    <h4 class="mt-3">Cache Test</h4>
-    On first load this should be None, on second load it should be the time of the first load. Expiration is set to 10 seconds after that it should be None again. <br/>
+    <h4 class="mt-3">Comprobación de caché</h4>
+    En la primera carga no debe haber ningún valor; en la segunda debe aparecer la hora de la primera carga. El valor caduca a los 10 segundos y vuelve a quedar vacío. <br/>
     {% if cache_response %}
 
-        <span class="badge text-bg-success">Cache entry from {{ cache_response|date:" d m Y H:i:s" }}</span>
+        <span class="badge text-bg-success">Entrada de caché del {{ cache_response|date:" d m Y H:i:s" }}</span>
     {% else %}
-        <span class="badge text-bg-info">No cache entry before load</span>
+        <span class="badge text-bg-info">Sin entrada de caché antes de la carga</span>
     {% endif %}
-    <h4 class="mt-3">Debug</h4>
+    <h4 class="mt-3">Depuración</h4>
     <textarea class="form-control" rows="20">
-Gunicorn Media: {{ gunicorn_media }}
+Archivos multimedia con Gunicorn: {{ gunicorn_media }}
 Sqlite: {% if postgres %} {% trans 'False' %} {% else %} {% trans 'True' %} {% endif %}
         {% if postgres %}PostgreSQL: {{ postgres_version }} {% endif %}
-        Debug: {{ debug }}
+        Depuración: {{ debug }}
 
 {% for key,value in request.META.items %}{% if key in 'SERVER_PORT,REMOTE_HOST,REMOTE_ADDR,SERVER_PROTOCOL' %}{{ key }}:{{ value }}
 {% endif %}{% endfor %}

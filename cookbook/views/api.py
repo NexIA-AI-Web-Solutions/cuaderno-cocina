@@ -364,7 +364,7 @@ class MergeMixin(ViewSetMixin):
         try:
             source = available.get(pk=pk)
         except (self.model.DoesNotExist):
-            content = {'error': True, 'msg': _(f'No {self.basename} with id {pk} exists')}
+            content = {'error': True, 'msg': _(f'No existe un elemento con el identificador {pk}')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
 
         if int(target) == source.id:
@@ -375,7 +375,7 @@ class MergeMixin(ViewSetMixin):
             try:
                 target = available.get(pk=target)
             except (self.model.DoesNotExist):
-                content = {'error': True, 'msg': _(f'No {self.basename} with id {target} exists')}
+                content = {'error': True, 'msg': _(f'No existe un elemento con el identificador {target}')}
                 return Response(content, status=status.HTTP_404_NOT_FOUND)
 
             try:
@@ -449,14 +449,14 @@ class MergeMixin(ViewSetMixin):
                     children = source.get_children().exclude(id=target.id)
                     for c in children:
                         c.move(target, node_location)
-                content = {'msg': _(f'{source.name} was merged successfully with {target.name}')}
+                content = {'msg': _(f'{source.name} se ha combinado con {target.name}')}
                 source.delete()
                 return Response(content, status=status.HTTP_200_OK)
             except Exception:
                 transaction.set_rollback(True)
                 traceback.print_exc()
                 content = {'error': True,
-                           'msg': _(f'An error occurred attempting to merge {source.name} with {target.name}')}
+                           'msg': _(f'No se ha podido combinar {source.name} con {target.name}')}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -539,7 +539,7 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
         try:
             child = available.get(pk=pk)
         except (self.model.DoesNotExist):
-            content = {'error': True, 'msg': _(f'No {self.basename} with id {pk} exists')}
+            content = {'error': True, 'msg': _(f'No existe un elemento con el identificador {pk}')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
 
         if self.model is Food and Food.objects.filter(
@@ -552,7 +552,7 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
             try:
                 with scopes_disabled():
                     child.move(self.model.get_first_root_node(), f'{node_location}-sibling')
-                content = {'msg': _(f'{child.name} was moved successfully to the root.')}
+                content = {'msg': _(f'{child.name} se ha movido al nivel principal.')}
                 return Response(content, status=status.HTTP_200_OK)
             except (PathOverflow, InvalidMoveToDescendant, InvalidPosition):
                 content = {'error': True, 'msg': _('An error occurred attempting to move ') + child.name}
@@ -564,7 +564,7 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
         try:
             parent = available.get(pk=parent)
         except (self.model.DoesNotExist):
-            content = {'error': True, 'msg': _(f'No {self.basename} with id {parent} exists')}
+            content = {'error': True, 'msg': _(f'No existe un elemento con el identificador {parent}')}
             return Response(content, status=status.HTTP_404_NOT_FOUND)
 
         if self.model is Food and Food.objects.filter(
@@ -574,7 +574,7 @@ class TreeMixin(MergeMixin, FuzzyFilterMixin):
         try:
             with scopes_disabled():
                 child.move(parent, f'{node_location}-child')
-            content = {'msg': _(f'{child.name} was moved successfully to parent {parent.name}')}
+            content = {'msg': _(f'{child.name} se ha movido bajo {parent.name}')}
             return Response(content, status=status.HTTP_200_OK)
         except (PathOverflow, InvalidMoveToDescendant, InvalidPosition):
             content = {'error': True, 'msg': _('An error occurred attempting to move ') + child.name}
@@ -735,7 +735,7 @@ class UserViewSet(LoggingMixin, viewsets.ModelViewSet):
             if filter_list is not None:
                 queryset = queryset.filter(pk__in=json.loads(filter_list))
         except ValueError:
-            raise APIException('Parameter filter_list incorrectly formatted')
+            raise APIException('El parámetro filter_list tiene un formato incorrecto.')
 
         return queryset
 
@@ -789,7 +789,7 @@ class UserSpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         userspace = UserSpace.objects.get(pk=kwargs['pk'])
         if userspace.space.created_by == userspace.user:
-            raise APIException('Cannot delete Space owner permission.')
+            raise APIException('No se pueden retirar los permisos del propietario del espacio.')
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -818,7 +818,7 @@ class UserSpaceViewSet(LoggingMixin, viewsets.ModelViewSet):
     @decorators.action(detail=False, methods=['PUT'], serializer_class=UserSpaceBatchUpdateSerializer)
     def batch_update(self, request):
         if self.request.space.created_by != self.request.user:
-            return Response({"msg": "No Permission"}, 403)
+            return Response({"msg": "Sin permiso"}, 403)
 
         serializer = self.serializer_class(data=request.data, partial=True)
 
@@ -1201,27 +1201,27 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
     # # TODO DRF only allows one action in a decorator action without overriding get_operation_id_base() this should be PUT and DELETE probably
     def shopping(self, request, pk):
         if self.request.space.demo:
-            raise PermissionDenied(detail='Not available in demo', code=None)
+            raise PermissionDenied(detail='No está disponible en la demostración.', code=None)
         obj = self.get_object()
         if request.data.get('_delete', False) == 'true':
             ShoppingListEntry.objects.filter(food=obj, checked=False, space=request.space,
                                              created_by__in=self._shared_users).delete()
-            content = {'msg': _(f'{obj.name} was removed from the shopping list.')}
+            content = {'msg': _(f'{obj.name} se ha retirado de la lista de compra.')}
             return Response(content, status=status.HTTP_204_NO_CONTENT)
 
         amount = request.data.get('amount', 1)
         unit = request.data.get('unit', None)
-        content = {'msg': _(f'{obj.name} was added to the shopping list.')}
+        content = {'msg': _(f'{obj.name} se ha añadido a la lista de compra.')}
 
         try:
             amount = Decimal(str(amount))
         except (InvalidOperation, ValueError):
-            raise APIException({'error': 'Invalid amount — must be a numeric value'}, code=status.HTTP_400_BAD_REQUEST)
+            raise APIException({'error': 'La cantidad no es válida: debe ser un número.'}, code=status.HTTP_400_BAD_REQUEST)
 
         if unit is not None:
             unit = Unit.objects.filter(pk=unit, space=request.space).first()
             if unit and unit is None:
-                raise APIException({'error': 'Unit not found in current space'}, code=status.HTTP_400_BAD_REQUEST)
+                raise APIException({'error': 'No se ha encontrado la unidad en este espacio.'}, code=status.HTTP_400_BAD_REQUEST)
 
         ShoppingListEntry.objects.create(food=obj, amount=amount, unit=unit, space=request.space,
                                          created_by=request.user)
@@ -1239,21 +1239,21 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
             food.fdc_id = request.data['fdc_id']
 
         if not food.fdc_id:
-            return JsonResponse({'msg': 'Food has no FDC ID associated.'}, status=400, json_dumps_params={'indent': 4})
+            return JsonResponse({'msg': 'El alimento no tiene un identificador FDC asociado.'}, status=400, json_dumps_params={'indent': 4})
 
         response = safe_request('GET', f'https://api.nal.usda.gov/fdc/v1/food/{food.fdc_id}?api_key={FDC_API_KEY}')
         if response.status_code == 429:
             return JsonResponse(
                 {
                     'msg':
-                        'API Key Rate Limit reached/exceeded, see https://api.data.gov/docs/rate-limits/ for more information. \
-                                Configure your key in Cuaderno Cocina using environment FDC_API_KEY variable.'
+                        'Se ha alcanzado el límite de solicitudes de la clave API. Consulta https://api.data.gov/docs/rate-limits/ para obtener más información. \
+                                Configura tu clave en Cuaderno Cocina mediante la variable de entorno FDC_API_KEY.'
                 },
                 status=429,
                 json_dumps_params={'indent': 4})
         if response.status_code != 200:
             return JsonResponse({
-                'msg': f'Error while requesting FDC data using url https://api.nal.usda.gov/fdc/v1/food/{food.fdc_id}?api_key=****'},
+                'msg': f'Error al solicitar datos FDC mediante la dirección https://api.nal.usda.gov/fdc/v1/food/{food.fdc_id}?api_key=****'},
                 status=response.status_code,
                 json_dumps_params={'indent': 4})
 
@@ -1312,7 +1312,7 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
             return self.retrieve(request, pk)
         except Exception:
             traceback.print_exc()
-            return JsonResponse({'msg': 'there was an error parsing the FDC data, please check the server logs'},
+            return JsonResponse({'msg': 'No se han podido interpretar los datos FDC. Consulta los registros del servidor.'},
                                 status=500, json_dumps_params={'indent': 4})
 
     @extend_schema(
@@ -1388,20 +1388,20 @@ class FoodViewSet(LoggingMixin, TreeMixin, DeleteRelationMixing):
             except LitellmTimeout:
                 response = {
                     'error': True,
-                    'msg': 'The AI request timed out. Please try again later.',
+                    'msg': 'La solicitud a la inteligencia artificial ha tardado demasiado. Inténtalo de nuevo más tarde.',
                 }
                 return Response(response, status=status.HTTP_408_REQUEST_TIMEOUT)
             except BadRequestError as err:
                 response = {
                     'error': True,
-                    'msg': 'The AI could not process your request. \n\n' + err.message,
+                    'msg': 'La inteligencia artificial no ha podido procesar tu solicitud. \n\n' + err.message,
                 }
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': 'An unexpected error occurred while processing your AI request. \n\n' + str(err),
+                    'msg': 'Se ha producido un error inesperado al procesar tu solicitud de inteligencia artificial. \n\n' + str(err),
                 }
                 return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2073,7 +2073,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         obj = self.get_object()
 
         if obj.get_space() != request.space:
-            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+            raise PermissionDenied(detail='No tienes los permisos necesarios para realizar esta acción.', code=403)
 
         serializer = self.serializer_class(obj, data=request.data, partial=True)
 
@@ -2122,7 +2122,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         from cuaderno.services.functional_access import lock_space
         lock_space(request)
         if self.request.space.demo:
-            raise PermissionDenied(detail='Not available in demo', code=None)
+            raise PermissionDenied(detail='No está disponible en la demostración.', code=None)
         obj = self.get_object()
         ingredients = request.data.get('ingredients', None)
 
@@ -2149,10 +2149,10 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
             result = SLR.create(servings=servings, ingredients=ingredients)
 
         if not result:
-            content = {'msg': ('An error occurred')}
+            content = {'msg': ('Se ha producido un error.')}
             http_status = status.HTTP_500_INTERNAL_SERVER_ERROR
         else:
-            content = {'msg': _(f'{obj.name} was added to the shopping list.')}
+            content = {'msg': _(f'{obj.name} se ha añadido a la lista de compra.')}
             http_status = status.HTTP_200_OK
 
         return Response(content, status=http_status)
@@ -2162,7 +2162,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
     def related(self, request, pk):
         obj = self.get_object()
         if obj.get_space() != request.space:
-            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+            raise PermissionDenied(detail='No tienes los permisos necesarios para realizar esta acción.', code=403)
         try:
             levels = int(request.query_params.get('levels', 1))
         except (ValueError, TypeError):
@@ -2336,20 +2336,20 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
             except LitellmTimeout:
                 response = {
                     'error': True,
-                    'msg': 'The AI request timed out. Please try again later.',
+                    'msg': 'La solicitud a la inteligencia artificial ha tardado demasiado. Inténtalo de nuevo más tarde.',
                 }
                 return Response(response, status=status.HTTP_408_REQUEST_TIMEOUT)
             except BadRequestError as err:
                 response = {
                     'error': True,
-                    'msg': 'The AI could not process your request. \n\n' + err.message,
+                    'msg': 'La inteligencia artificial no ha podido procesar tu solicitud. \n\n' + err.message,
                 }
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': 'An unexpected error occurred while processing your AI request. \n\n' + str(err),
+                    'msg': 'Se ha producido un error inesperado al procesar tu solicitud de inteligencia artificial. \n\n' + str(err),
                 }
                 return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2361,7 +2361,7 @@ class RecipeViewSet(LoggingMixin, viewsets.ModelViewSet, DeleteRelationMixing):
         Space.objects.select_for_update().get(pk=request.space.pk)
         obj = self.get_object()
         if obj.get_space() != request.space and has_group_permission(request, ['user']):
-            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+            raise PermissionDenied(detail='No tienes los permisos necesarios para realizar esta acción.', code=403)
 
         from cuaderno.services.visibility import native_recipe_read_policy
         native_recipe_read_policy(obj, request)
@@ -2516,7 +2516,7 @@ class ShoppingListRecipeViewSet(LoggingMixin, viewsets.ModelViewSet):
     def bulk_create_entries(self, request, pk):
         obj = self.get_object()
         if obj.get_space() != request.space:
-            raise PermissionDenied(detail='You do not have the required permission to perform this action', code=403)
+            raise PermissionDenied(detail='No tienes los permisos necesarios para realizar esta acción.', code=403)
 
         serializer = self.serializer_class(data=request.data)
 
@@ -3213,7 +3213,7 @@ class AiImportView(APIView):
             if len(messages) == 0:
                 response = {
                     'error': True,
-                    'msg': 'You must provide either a file or text for the AI to import',
+                    'msg': 'Añade un archivo o un texto para importarlo con inteligencia artificial.',
                 }
                 return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_400_BAD_REQUEST)
 
@@ -3232,13 +3232,13 @@ class AiImportView(APIView):
             except LitellmTimeout:
                 response = {
                     'error': True,
-                    'msg': 'The AI request timed out. Please try again later.',
+                    'msg': 'La solicitud a la inteligencia artificial ha tardado demasiado. Inténtalo de nuevo más tarde.',
                 }
                 return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_408_REQUEST_TIMEOUT)
             except BadRequestError as err:
                 response = {
                     'error': True,
-                    'msg': 'The AI could not process your request. \n\n' + err.message,
+                    'msg': 'La inteligencia artificial no ha podido procesar tu solicitud. \n\n' + err.message,
                 }
                 return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_400_BAD_REQUEST)
             response_text = ai_response.choices[0].message.content
@@ -3274,20 +3274,20 @@ class AiImportView(APIView):
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': "Error parsing AI results. Response Text:\n\n" + response_text
+                    'msg': "No se han podido interpretar los resultados de la inteligencia artificial. Texto recibido:\n\n" + response_text
                 }
                 return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_400_BAD_REQUEST)
             except Exception:
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': "Error processing AI results. Response Text:\n\n" + response_text + "\n\n" + traceback.format_exc()
+                    'msg': "No se han podido procesar los resultados de la inteligencia artificial. Texto recibido:\n\n" + response_text + "\n\n" + traceback.format_exc()
                 }
                 return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_400_BAD_REQUEST)
         else:
             response = {
                 'error': True,
-                'msg': "Error parsing input:\n\n" + str(serializer.errors)
+                'msg': "No se han podido interpretar los datos introducidos:\n\n" + str(serializer.errors)
             }
             return Response(RecipeFromSourceResponseSerializer(context={'request': request}).to_representation(response), status=status.HTTP_400_BAD_REQUEST)
 
@@ -3363,20 +3363,20 @@ class AiStepSortView(APIView):
             except LitellmTimeout:
                 response = {
                     'error': True,
-                    'msg': 'The AI request timed out. Please try again later.',
+                    'msg': 'La solicitud a la inteligencia artificial ha tardado demasiado. Inténtalo de nuevo más tarde.',
                 }
                 return Response(response, status=status.HTTP_408_REQUEST_TIMEOUT)
             except BadRequestError as err:
                 response = {
                     'error': True,
-                    'msg': 'The AI could not process your request. \n\n' + err.message,
+                    'msg': 'La inteligencia artificial no ha podido procesar tu solicitud. \n\n' + err.message,
                 }
                 return Response(response, status=status.HTTP_400_BAD_REQUEST)
             except Exception as err:
                 traceback.print_exc()
                 response = {
                     'error': True,
-                    'msg': 'An unexpected error occurred while processing your AI request. \n\n' + str(err),
+                    'msg': 'Se ha producido un error inesperado al procesar tu solicitud de inteligencia artificial. \n\n' + str(err),
                 }
                 return Response(response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -3477,14 +3477,14 @@ class FdcSearchView(APIView):
                 return JsonResponse(
                     {
                         'msg':
-                            'API Key Rate Limit reached/exceeded, see https://api.data.gov/docs/rate-limits/ for more information. \
-                                Configure your key in Cuaderno Cocina using environment FDC_API_KEY variable.'
+                            'Se ha alcanzado el límite de solicitudes de la clave API. Consulta https://api.data.gov/docs/rate-limits/ para obtener más información. \
+                                Configura tu clave en Cuaderno Cocina mediante la variable de entorno FDC_API_KEY.'
                     },
                     status=429,
                     json_dumps_params={'indent': 4})
             if response.status_code != 200:
                 return JsonResponse({
-                    'msg': f'Error while requesting FDC data using url https://api.nal.usda.gov/fdc/v1/foods/search?api_key=*****&query={quote(query)}'})
+                    'msg': f'Error al solicitar datos FDC mediante la dirección https://api.nal.usda.gov/fdc/v1/foods/search?api_key=*****&query={quote(query)}'})
             return Response(FdcQuerySerializer(context={'request': request}).to_representation(json.loads(response.content)), status=status.HTTP_200_OK)
 
 
@@ -3530,7 +3530,7 @@ def switch_active_space(request, space_id):
         if user_space:
             return Response(UserSpaceSerializer().to_representation(instance=user_space), status=status.HTTP_200_OK)
         else:
-            return Response("not found", status=status.HTTP_404_NOT_FOUND)
+            return Response("No encontrado", status=status.HTTP_404_NOT_FOUND)
     except Exception:
         traceback.print_exc()
         return Response({}, status=status.HTTP_400_BAD_REQUEST)

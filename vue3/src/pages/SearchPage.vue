@@ -434,9 +434,9 @@ function loadSelectedCustomFilter() {
     try {
         customFilterParams = JSON.parse(selectedCustomFilter.value.search)
         if (!customFilterParams || typeof customFilterParams !== 'object' || Array.isArray(customFilterParams)) {
-            throw new Error('Invalid saved filter')
+            throw new Error('Filtro guardado no válido')
         }
-        if (customFilterParams['query'] != null && typeof customFilterParams['query'] !== 'string') throw new Error('Invalid saved query')
+        if (customFilterParams['query'] != null && typeof customFilterParams['query'] !== 'string') throw new Error('Búsqueda guardada no válida')
         if (customFilterParams['version'] == null) customFilterParams = transformTandoor1Filter(customFilterParams)
     } catch (err) {
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
@@ -772,7 +772,7 @@ const filters = ref({
         enabled: false,
         default: undefined,
         is: markRaw(VSelect),
-        items: [{value: true, title: 'Yes'}, {value: false, title: 'No'}],
+        items: [{value: true, title: t('Yes')}, {value: false, title: t('No')}],
         modelValue: useRouteQuery('internal', undefined, {transform: boolOrUndefinedTransformer})
     },
     // random: {
@@ -818,7 +818,7 @@ const filters = ref({
     timescooked: {
         id: 'timescooked',
         label: `${t('times_cooked')} (${t('exact')})`,
-        hint: 'Recipes that were cooked at least X times',
+        hint: 'Recetas cocinadas exactamente este número de veces',
         enabled: false,
         default: undefined,
         clearable: true,
@@ -852,7 +852,7 @@ const filters = ref({
         enabled: false,
         default: "false",
         is: markRaw(VSelect),
-        items: [{value: "true", title: 'Yes'}, {value: "false", title: 'No'}],
+        items: [{value: "true", title: t('Yes')}, {value: "false", title: t('No')}],
         modelValue: useRouteQuery<string>('makenow', "false"),
     },
     cookedonGte: {
@@ -952,7 +952,7 @@ const filters = ref({
         enabled: false,
         default: "true",  // Default enabled like v1
         is: markRaw(VSelect),
-        items: [{value: "true", title: 'Yes'}, {value: "false", title: 'No'}],
+        items: [{value: "true", title: t('Yes')}, {value: "false", title: t('No')}],
         modelValue: useRouteQuery('includeChildren', 'true')
     },
 })

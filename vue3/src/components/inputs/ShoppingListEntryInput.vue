@@ -14,6 +14,9 @@
     <Multiselect
         v-if="useUserPreferenceStore().deviceSettings.shopping_input_autocomplete"
         :placeholder="$t('Shopping_input_placeholder')"
+        :no-options-text="$t('No_Results')"
+        :no-results-text="$t('No_Results')"
+        :aria="{label: $t('Shopping_input_placeholder')}"
         class="material-multiselect "
         v-model="ingredientModelInput"
         :options="search"

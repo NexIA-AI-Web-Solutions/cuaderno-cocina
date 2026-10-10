@@ -40,8 +40,8 @@ export default createVuetify({
         }
     },
     locale: {
-        locale: 'en',
-        fallback: 'en',
+        locale: 'es',
+        fallback: 'es',
         messages: vuetifyLocales,
     },
     theme: {
@@ -157,5 +157,5 @@ const VUETIFY_LOCALE_MAP: Record<string, string> = {
 export function toVuetifyLocale(djangoCode: string): string {
     const lc = djangoCode.toLowerCase()
     const mapped = VUETIFY_LOCALE_MAP[lc] || lc
-    return VUETIFY_LOCALES.has(mapped) ? mapped : 'en'
+    return VUETIFY_LOCALES.has(mapped) ? mapped : 'es'
 }

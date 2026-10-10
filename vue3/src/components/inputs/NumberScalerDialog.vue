@@ -44,7 +44,7 @@ const emit = defineEmits({
 
 const props = defineProps({
     number: {type: Number, default: 0},
-    title: {type: String, default: 'Number'},
+    title: {type: String, default: 'Cantidad'},
     text: {type: String, default: ''},
 })
 

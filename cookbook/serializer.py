@@ -147,7 +147,7 @@ class CustomDecimalField(serializers.Field):
             try:
                 return float(data.replace(',', '.'))
             except ValueError:
-                raise ValidationError('A valid number is required')
+                raise ValidationError('Introduce un número válido.')
 
 
 @extend_schema_field(str)
@@ -273,7 +273,7 @@ class UserSerializer(WritableNestedModelSerializer):
 
 class GroupSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     def update(self, instance, validated_data):
         return instance  # cannot update group
@@ -289,7 +289,7 @@ class FoodInheritFieldSerializer(UniqueFieldsMixin, WritableNestedModelSerialize
     field = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     def update(self, instance, validated_data):
         return instance
@@ -381,7 +381,7 @@ class UserFileViewSerializer(serializers.ModelSerializer):
             return ""
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create File over this view')
+        raise ValidationError('No se pueden crear archivos desde esta vista.')
 
     def update(self, instance, validated_data):
         return instance
@@ -546,7 +546,7 @@ class UserSpaceSerializer(WritableNestedModelSerializer):
         return super().validate(data)
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     class Meta:
         model = UserSpace
@@ -611,7 +611,7 @@ class UserPreferenceSerializer(WritableNestedModelSerializer):
             return super().update(instance, validated_data)
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     class Meta:
         model = UserPreference
@@ -634,7 +634,7 @@ class SearchFieldsSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
     field = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     def update(self, instance, validated_data):
         return instance
@@ -655,7 +655,7 @@ class SearchPreferenceSerializer(WritableNestedModelSerializer):
     fulltext = SearchFieldsSerializer(many=True, allow_null=True, required=False)
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     class Meta:
         model = SearchPreference
@@ -2283,10 +2283,10 @@ class InventoryLogSerializer(SpacedModelSerializer):
     entry = InventoryEntrySerializer()
 
     def create(self, validated_data):
-        raise ValidationError('Cannot create using this endpoint')
+        raise ValidationError('No se puede crear un elemento desde esta operación.')
 
     def update(self, instance, validated_data):
-        raise ValidationError('Cannot update using this endpoint')
+        raise ValidationError('No se puede actualizar un elemento desde esta operación.')
 
     class Meta:
         model = InventoryLog

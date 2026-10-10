@@ -42,7 +42,7 @@ const tableHeaders = ref([
     {title: t('Food'), key: 'food'},
     {title: t('Expires'), key: 'expires',},
     {title: t('InventoryLocation'), key: 'inventoryLocation',},
-    {title: 'Actions', key: 'action', align: 'end'},
+    {title: t('Actions'), key: 'action', align: 'end'},
 ])
 
 

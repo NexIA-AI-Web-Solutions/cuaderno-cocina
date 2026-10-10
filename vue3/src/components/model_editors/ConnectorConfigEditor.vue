@@ -19,7 +19,7 @@
                 <v-text-field :label="$t('Url')" v-model="editingObj.url"></v-text-field>
                 <v-text-field :label="$t('Access_Token')" v-model="editingObj.token"></v-text-field>
 
-                <v-text-field label="Todo entity" v-model="editingObj.todoEntity"></v-text-field>
+                <v-text-field label="Entidad de tareas" v-model="editingObj.todoEntity"></v-text-field>
                 <v-checkbox :label="$t('SupportsDescriptionField')" hide-details v-model="editingObj.supportsDescriptionField"></v-checkbox>
 
                 <v-checkbox :label="$t('Enabled')"  v-model="editingObj.enabled"></v-checkbox>

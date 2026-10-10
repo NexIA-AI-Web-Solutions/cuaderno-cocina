@@ -34,11 +34,11 @@
                             <div class="card">
                                 {% if us.space.image and us.space.image.is_image %}
                                     <img style="height: 15vh; object-fit: cover" src="{{ us.space.image.file.url }}"
-                                         class="card-img-top" alt="Image">
+                                         class="card-img-top" alt="Imagen del espacio">
                                 {% else %}
 
                                     <img style="height: 15vh; object-fit: cover" src="{% static 'assets/recipe_no_image.svg' %}"
-                                         class="card-img-top" alt="Image">
+                                         class="card-img-top" alt="Imagen del espacio">
                                 {% endif %}
                                 <div class="card-body">
                                     <h5 class="card-title"><a

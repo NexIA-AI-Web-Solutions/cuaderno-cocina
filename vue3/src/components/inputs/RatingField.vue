@@ -1,5 +1,5 @@
 <template>
-    <v-input label="Test" hint="Test hint" persistent-hint>
+    <v-input :label="$t('Rating')">
         <template #prepend v-if="$slots.prepend">
             <slot name="prepend">
             </slot>

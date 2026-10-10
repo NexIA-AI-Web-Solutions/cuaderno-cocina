@@ -7,12 +7,12 @@
                 </v-card-title>
 
                 <v-card-text>
-                    <h4>Filter</h4>
+                    <h4>{{ $t('Filter') }}</h4>
 
                     <v-text-field
                         class="mt-2"
                         v-model="search"
-                        label="Search"
+                        :label="$t('Search')"
                         prepend-inner-icon="$search"
                         variant="outlined"
                         clearable
@@ -57,7 +57,7 @@
 
                         <template v-slot:item.type="{ value }">
                             <v-chip :color="value">
-                                {{ value }}
+                                {{ messageTypeLabel(value) }}
                             </v-chip>
                         </template>
 
@@ -96,7 +96,7 @@
             <v-card-text>
                 <v-label>{{ $t('Type')}}</v-label>
                 <br/>
-                <v-chip :color="detailItem.type">{{ detailItem.type }}</v-chip>
+                <v-chip :color="detailItem.type">{{ messageTypeLabel(detailItem.type) }}</v-chip>
                 <br/>
 
                 <v-label class="mt-2">{{$t('Messages')}}</v-label>
@@ -112,7 +112,7 @@
                 <v-spacer></v-spacer>
 
                 <v-btn
-                    text="Close Dialog"
+                    :text="$t('Close')"
                     @click="showDetailDialog = false"
                 ></v-btn>
             </v-card-actions>
@@ -130,6 +130,11 @@ import {useI18n} from "vue-i18n";
 
 const {copy} = useClipboard()
 const {t} = useI18n()
+
+function messageTypeLabel(type: string) {
+    const labels: Record<string, string> = {success: t('Success'), info: t('Information'), warning: t('Warning'), error: t('Error')}
+    return labels[type] ?? type
+}
 
 const props = defineProps({
     activator: {type: [String, Object] as PropType<string | ComponentPublicInstance | null>, default: 'parent'}
