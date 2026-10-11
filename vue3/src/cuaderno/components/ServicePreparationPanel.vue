@@ -58,8 +58,9 @@
                     <template v-if="payload.state === 'confirmed'">Los servicios históricos permanecen sin reconstrucción automática.</template>
                 </v-alert>
 
-                <v-row v-else dense class="mt-1">
-                    <v-col v-for="item in payload.items" :key="item.id" cols="12" md="6">
+                <p v-if="payload.items.length" role="status" class="mt-3">{{ completedCount }} de {{ payload.items.length }} pasos completados.</p><v-progress-linear v-if="payload.items.length" :model-value="completedCount / payload.items.length * 100" :aria-label="`${completedCount} de ${payload.items.length} pasos completados`" class="my-2" />
+                <v-row v-if="payload.items.length" dense class="mt-1">
+                    <v-col v-for="item in visibleItems" :key="item.id" cols="12" md="6">
                         <v-card variant="outlined" class="h-100 preparation-item">
                             <v-card-text>
                                 <div class="d-flex align-start ga-2">
@@ -87,6 +88,7 @@
                         </v-card>
                     </v-col>
                 </v-row>
+                <v-btn v-if="payload.items.length > 6" variant="text" :aria-expanded="showAll" @click="showAll = !showAll">{{ showAll ? 'Mostrar solo los primeros 6 pasos' : `Ver los ${payload.items.length} pasos` }}</v-btn>
             </template>
         </template>
     </section>
@@ -107,7 +109,9 @@ import {
 } from '@/cuaderno/servicePreparationUi'
 
 const props = withDefaults(defineProps<{serviceId: number; serviceState: string; canOperate?: boolean}>(), {canOperate: true})
-const opened = ref(false)
+const opened = ref(false), showAll = ref(false)
+const completedCount = computed(() => payload.value?.items.filter(item => item.checked).length || 0)
+const visibleItems = computed(() => showAll.value ? payload.value?.items || [] : (payload.value?.items || []).slice(0, 6))
 const payload = ref<ServicePreparationEnvelope | null>(null)
 const loading = ref(false)
 const message = ref('')
@@ -216,6 +220,7 @@ watch(
         loadGeneration += 1
         loadController?.abort()
         opened.value = false
+        showAll.value = false
         payload.value = null
         loading.value = false
         savingItem.value = null

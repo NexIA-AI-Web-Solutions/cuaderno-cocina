@@ -7,9 +7,13 @@
         <template v-if="warehouseEnabled">
         <v-alert v-if="!canOperate" type="info" variant="tonal" class="mb-4" role="status">Modo Consulta: puedes revisar compras y movimientos, pero no modificarlos.</v-alert>
 
-        <purchasing-panel class="mb-6" :can-operate="canOperate" />
+        <nav aria-label="Secciones del almacén" class="d-flex flex-wrap ga-2 mb-4">
+            <v-btn :to="{hash: '#warehouse-purchases'}" @click="jumpTo('warehouse-purchases')" variant="tonal" min-height="44">Ir a compras</v-btn>
+            <v-btn :to="{hash: '#warehouse-movements'}" @click="jumpTo('warehouse-movements')" variant="tonal" min-height="44">Ir a movimientos</v-btn>
+        </nav>
+        <div id="warehouse-purchases" class="mb-6"><purchasing-panel :can-operate="canOperate" /></div>
 
-        <v-row>
+        <v-row id="warehouse-movements">
             <v-col cols="12" md="6">
                 <v-card class="print-card h-100">
                     <v-card-title><h2 class="text-h6">Movimiento manual</h2></v-card-title>
@@ -39,8 +43,11 @@
                 <v-card class="h-100">
                     <v-card-title><h2 class="text-h6">Historial de existencias</h2></v-card-title>
                     <v-card-text>
-                        <v-list v-if="history.length">
-                            <v-list-item v-for="row in history" :key="row.id">
+                        <v-select v-model="historyKind" label="Filtrar movimientos por tipo" :items="historyKinds" item-title="title" item-value="value" clearable />
+                        <v-checkbox v-model="onlySelectedEntry" label="Solo la existencia seleccionada" :disabled="!move.entry?.id" hide-details class="mb-3" />
+                        <p v-if="history.length && !filteredHistory.length" role="status">No hay movimientos con estos filtros.</p>
+                        <v-list v-if="filteredHistory.length">
+                            <v-list-item v-for="row in filteredHistory" :key="row.id">
                                 <v-list-item-title>{{ kindLabel(row.kind) }} · {{ row.quantity }}</v-list-item-title>
                                 <v-list-item-subtitle class="text-wrap">
                                     existencia {{ row.entry }} · saldo {{ row.balance }}
@@ -83,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import PurchasingPanel from '@/cuaderno/components/PurchasingPanel.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
@@ -107,6 +114,12 @@ const kinds = [
     {title: 'Consumo', value: 'consume'},
     {title: 'Desperdicio', value: 'waste'},
 ]
+const historyKind = ref<string | null>(null)
+const onlySelectedEntry = ref(false)
+const historyKinds = [...kinds, {title: 'Reversión', value: 'reversal'}]
+const filteredHistory = computed(() => history.value.filter(row =>
+    (!historyKind.value || row.kind === historyKind.value)
+    && (!onlySelectedEntry.value || !move.entry?.id || row.entry === move.entry.id)))
 const editionError = ref('')
 const moveMessage = ref('')
 const history = ref<any[]>([])
@@ -118,6 +131,8 @@ const reversal = ref<any>(null)
 const pendingMovement = inventoryRequests()
 const canOperate = ref(false)
 const warehouseEnabled = ref(false)
+
+function jumpTo(section: string) { document.getElementById(section)?.scrollIntoView({block: 'start'}) }
 
 function movementKey(payload: unknown) {
     return pendingMovement.key('cuaderno-stock', payload)
@@ -240,6 +255,7 @@ onMounted(loadEdition)
     .cuaderno-warehouse-page :deep(.v-list-item) { margin-block: 8px; border-inline-start: 3px solid rgba(var(--v-theme-primary), .4); border-radius: 8px; }
 }
 
+#warehouse-purchases, #warehouse-movements { scroll-margin-top: 5rem; }
 .movement-detail { font-size: .875rem; line-height: 1.6; padding: 6px 10px; background: rgba(var(--v-theme-secondary), .08); border-radius: 6px; }
 
 .movement-detail { overflow-wrap: anywhere; }

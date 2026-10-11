@@ -52,14 +52,14 @@
                                 <p v-if="row.services?.length" class="mt-3">Fichas de producción: {{ row.services.map(service => '#' + service.id).join(', ') }}</p>
                             </v-card-text>
                             <v-card-actions class="flex-wrap ga-2">
-                                <v-btn min-height="44" :disabled="busy" @click="inspect(row)">Ver detalles e historial</v-btn>
+                                <v-btn min-height="44" :disabled="busy || inspecting !== null" :loading="inspecting === row.id" @click="inspect(row)">Ver detalles e historial</v-btn>
                                 <v-btn v-if="canOperate && row.can_edit && ['requested','confirmed'].includes(row.state)" min-height="44" :disabled="busy" @click="edit(row)">Editar</v-btn>
                                 <v-btn v-for="action in actions(row)" :key="action" min-height="44" :disabled="busy" @click="openTransition(row, action)">{{ actionLabel(action) }}</v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-col>
                 </v-row>
-                <div class="d-flex flex-wrap ga-3 mt-4"><v-btn :disabled="offset === 0 || loading || busy" @click="offset = Math.max(0, offset - limit); load()">Anterior</v-btn><p class="align-self-center">{{ count ? offset + 1 : 0 }}–{{ Math.min(offset + rows.length, count) }} de {{ count }}</p><v-btn :disabled="offset + rows.length >= count || loading || busy" @click="offset += limit; load()">Siguiente</v-btn></div>
+                <div v-if="count > limit" class="d-flex flex-wrap ga-3 mt-4"><v-btn :disabled="offset === 0 || loading || busy" @click="offset = Math.max(0, offset - limit); load()">Anterior</v-btn><p class="align-self-center">{{ count ? offset + 1 : 0 }}–{{ Math.min(offset + rows.length, count) }} de {{ count }}</p><v-btn :disabled="offset + rows.length >= count || loading || busy" @click="offset += limit; load()">Siguiente</v-btn></div>
             </section>
         </template>
         <v-dialog v-model="editorOpen" max-width="760" :persistent="busy">
@@ -71,7 +71,7 @@
                 <p class="text-body-2 mb-3">Indica al menos un teléfono o un correo.</p>
                 <v-row dense><v-col cols="12" sm="6"><v-text-field v-model="draft.service_date" label="Fecha del servicio" type="date" :disabled="busy" /></v-col><v-col cols="12" sm="6"><v-text-field v-model="draft.service_time" label="Hora del servicio" type="time" :disabled="busy" /></v-col></v-row>
                 <v-select v-model="chosenMenu" :items="menuItems" label="Menú guardado, día y servicio" item-title="title" item-value="value" :disabled="busy || (selected !== null && (!canManage || !selected.can_change_menu))" />
-                <p v-if="selected && !canManage" class="text-body-2 mb-3">El menú solo lo cambia Responsable.</p>
+                <div v-if="chosenMenuDishes.length" class="mb-3"><h3 class="text-subtitle-1">Platos del menú seleccionado</h3><ul class="ml-5"><li v-for="(dish,index) in chosenMenuDishes" :key="index">{{ dish.course_name ? dish.course_name + ': ' : '' }}{{ dish.recipe_name }}</li></ul></div><p v-if="selected && !canManage" class="text-body-2 mb-3">El menú solo lo cambia Responsable.</p>
                 <p v-if="!menus.length" class="text-body-2 mb-3">Guarda una plantilla con platos en Planificación para disponer de menús.</p>
                 <v-text-field v-model="draft.covers" label="Número de comensales" inputmode="numeric" :disabled="busy" />
                 <v-textarea v-model="draft.note" label="Nota de organización" maxlength="1000" :disabled="busy" />
@@ -114,6 +114,8 @@ const transition = ref<{
 const blank = (): ReservationDraft => ({ customer_name: '', phone: '', email: '', service_date: date.value, service_time: '13:00', covers: '', note: '', reason: '', menu: null });
 const draft = reactive<ReservationDraft>(blank());
 const chosenMenu = ref<string | null>(null);
+const inspecting = ref<number | null>(null);
+const chosenMenuDishes = computed(() => {const menu = menus.value.find(menu => menuKey(menu) === chosenMenu.value); return menu?.dishes || (selected.value && menuKey(selected.value) === chosenMenu.value ? selected.value.menu_snapshot?.dishes || [] : [])});
 const menuItems = computed(() => { const choices = [...menus.value]; if (selected.value && !choices.some(menu => menuKey(menu) === menuKey(selected.value!)))
     choices.push(selected.value); return choices.map(menu => ({ title: `${menu.template_name} · día ${menu.template_day + 1} · ${menu.meal_type_name}`, value: menuKey(menu) })); });
 let generation = 0, controller: AbortController | null = null;
@@ -125,10 +127,14 @@ function create() { if (!canCreate.value || busy.value)
     return; selected.value = null; Object.assign(draft, blank()); chosenMenu.value = null; errors.value = []; conflict.value = false; editorOpen.value = true; }
 function edit(row: ReservationRow) { if (!canOperate.value || !row.can_edit || !['requested', 'confirmed'].includes(row.state) || busy.value)
     return; fill(row); editorOpen.value = true; }
-async function inspect(row: ReservationRow) { const response = await readJson(await cuadernoFetch(`/api/cuaderno/reservations/${row.id}/`)); if (!response.ok) {
-    fail(response.status, response.data);
-    return;
-} detail.value = response.data; detailOpen.value = true; }
+async function inspect(row: ReservationRow) {
+    if (busy.value || inspecting.value !== null) return;
+    inspecting.value = row.id;
+    try { const response = await readJson(await cuadernoFetch(`/api/cuaderno/reservations/${row.id}/`));
+        if (!response.ok) { fail(response.status, response.data); return; }
+        detail.value = response.data; detailOpen.value = true;
+    } finally { inspecting.value = null; }
+}
 async function reloadSelected() { if (!selected.value || busy.value)
     return; busy.value = true; try {
     const response = await readJson(await cuadernoFetch(`/api/cuaderno/reservations/${selected.value.id}/`));
@@ -148,7 +154,7 @@ async function reloadSelected() { if (!selected.value || busy.value)
 finally {
     busy.value = false;
 } }
-async function load() { if (!enabled.value)
+async function load() { if (!date.value) {generation++; controller?.abort(); loading.value = false; rows.value = []; summary.value = null; count.value = 0; listLoaded.value = false; canCreate.value = false; message.value = 'Selecciona una fecha para consultar las reservas.'; return;} if (!enabled.value)
     return; const current = ++generation; controller?.abort(); controller = new AbortController(); loading.value = true; const options = { signal: controller.signal }; try {
     const request = async (path: string) => readJson(await cuadernoFetch(path, options));
     const responses = await Promise.all([

@@ -79,6 +79,14 @@ test('Consulta can refresh minimums but cannot enter or submit changes', async (
     }
     app.mount(root); await flush()
     try {
+        const search = field(root, 'Buscar mínimos por alimento o ubicación')
+        assert.ok(search)
+        search.props['onUpdate:modelValue']('inexistente'); await flush()
+        assert.equal(button(root, 'Editar'), undefined)
+        assert.match(textOf(root), /No hay mínimos que coincidan/)
+        assert.doesNotMatch(textOf(root), /No hay mínimos definidos/)
+        search.props['onUpdate:modelValue'](null); await flush()
+        assert.ok(button(root, 'Editar'))
         assert.equal(button(root, 'Actualizar').props.disabled, false)
         for (const label of ['Alimento', 'Unidad', 'Ubicación (opcional)', 'Cantidad mínima']) assert.equal(field(root, label).props.disabled, true, label)
         assert.equal(button(root, 'Guardar mínimo').props.disabled, true)

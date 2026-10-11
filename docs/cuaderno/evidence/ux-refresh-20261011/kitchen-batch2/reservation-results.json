@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "chosen-menu-dish-preview",
+    "reservation-save-reload",
+    "detail-progress-duplicate-guard",
+    "empty-date-removes-old-rows-and-creation"
+  ]
+}

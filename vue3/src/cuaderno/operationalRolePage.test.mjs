@@ -104,7 +104,7 @@ async function mount(transport) {
         'v-list-item-title', 'v-list-item-subtitle', 'v-text-field', 'v-checkbox', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false,
             setup(_props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name,
-                context.attrs, [context.slots.default?.(), context.slots.append?.()]) }}))
+                {...context.attrs, 'onUpdate:modelValue':value=>context.attrs['onUpdate:modelValue']?.(value)}, [context.slots.default?.(), context.slots.append?.()]) }}))
     }
     const instance = app.mount(root)
     await flush()
@@ -163,7 +163,18 @@ test('Consulta and unverified roles show reads first and cannot submit price wri
         })
         try {
             if (expectedDisabled) assert.equal(Boolean(button(mounted.root, 'Guardar formato')), false, 'read-only roles must not mount a creation form')
-            else assert.equal(button(mounted.root, 'Guardar formato').props.disabled, false)
+            else {
+                assert.equal(button(mounted.root, 'Guardar formato'), undefined, 'catalog appears before creation')
+                await button(mounted.root, 'Nuevo formato').props.onClick(); await flush()
+                assert.equal(button(mounted.root, 'Guardar formato').props.disabled, false)
+                const price = all(mounted.root, node => node.props?.label === 'Precio EUR')[0]
+                price.props['onUpdate:modelValue']('12,50')
+                all(mounted.root, node => node.props?.label === 'Gratis explícitamente')[0].props['onUpdate:modelValue'](true); await flush()
+                assert.equal(price.props.disabled, true)
+                assert.equal(price.props.modelValue, '0')
+                all(mounted.root, node => node.props?.label === 'Gratis explícitamente')[0].props['onUpdate:modelValue'](false); await flush()
+                assert.equal(price.props.modelValue, '12,50', 'unchecking free restores the typed draft')
+            }
             if (expectedDisabled) {
                 await mounted.submit()
                 await flush()
@@ -268,5 +279,22 @@ test('saved format names open a closable detail dialog without writing or losing
         assert.equal(all(mounted.root, node => node.type === 'price-history-panel').length, 0)
         assert.ok(button(mounted.root, 'Aceite — Garrafa'))
         assert.equal(mounted.calls.filter(call => call.options.method).length, 0)
+    } finally {mounted.close()}
+})
+
+test('catalog search matches Spanish names and can be cleared without loading or writing', async () => {
+    const rows = ['Calabacín','Cebolla'].map((food_name,index)=>({id:index+8, food:index+2, food_name, unit:3, unit_name:'g', label:'Saco',quantity:'1000',is_reference:true,current_price:null}))
+    const mounted = await mount(url => ({ok:true,status:200,data:url==='/api/cuaderno/packages/'?rows:{currency:'EUR',operational_role:role('guest')}}))
+    try {
+        const search=all(mounted.root,node=>node.props?.label==='Buscar ingrediente o formato')[0]
+        assert.ok(search)
+        search.props['onUpdate:modelValue']('calabacin');await flush()
+        assert.ok(button(mounted.root,'Calabacín — Saco'))
+        assert.equal(button(mounted.root,'Cebolla — Saco'),undefined)
+        search.props['onUpdate:modelValue']('sin resultados');await flush()
+        assert.match(textOf(mounted.root),/No hay formatos que coincidan/)
+        search.props['onUpdate:modelValue'](null);await flush()
+        assert.ok(button(mounted.root,'Cebolla — Saco'))
+        assert.equal(mounted.calls.length,2)
     } finally {mounted.close()}
 })

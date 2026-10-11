@@ -70,6 +70,7 @@ test('a concurrent remote diet change returned by gallery cannot silently rebase
         await button(mounted.root, 'Descartar cambios y actualizar').props.onClick(); await flush()
         assert.equal(field(mounted.root, 'Nota: celiacos').props.modelValue, 'Cambio de otra persona')
         assert.equal(field(mounted.root, 'Declaración: celiacos').props.modelValue, 'unsuitable')
-        assert.equal(button(mounted.root, 'Guardar declaraciones').props.disabled, false)
+        assert.equal(button(mounted.root, 'Guardar declaraciones').props.disabled, true, 'discarding edits restores the baseline; unchanged declarations cannot be submitted')
     } finally {mounted.close()}
 })
+test('untouched diets cannot be saved and edits announce an unsaved declaration',async()=>{const m=await mountFunctional('./components/RecipeExtrasPanel.vue',{recipeId:9},()=>extras(true));try{assert.equal(button(m.root,'Guardar declaraciones').props.disabled,true);field(m.root,'Nota: celiacos').props['onUpdate:modelValue']('Revisar');await flush();assert.match(textOf(m.root),/Declaraciones con cambios sin guardar/);assert.equal(button(m.root,'Guardar declaraciones').props.disabled,false)}finally{m.close()}});

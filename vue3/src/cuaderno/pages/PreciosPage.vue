@@ -13,29 +13,30 @@
                 <v-alert v-if="operationalRole?.code === 'guest'" type="info" variant="tonal" class="mb-4" role="status">
                     Modo Consulta: puedes revisar formatos, precios e historial, pero no modificarlos.
                 </v-alert>
-                <v-row v-if="canOperate">
+                <v-btn v-if="canOperate" variant="tonal" min-height="44" class="mb-4" :aria-expanded="showCreate" :disabled="saving" @click="showCreate = !showCreate">{{ showCreate ? 'Ocultar nuevo formato' : 'Nuevo formato' }}</v-btn>
+                <v-row v-if="canOperate && showCreate">
                     <v-col cols="12" md="4">
-                        <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load :disabled="!canOperate" />
+                        <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load :disabled="!canOperate || saving" />
                     </v-col>
                     <v-col cols="12" md="4">
-                        <v-model-select v-model="unit" model="Unit" label="Unidad del contenido" search-on-load :disabled="!canOperate" />
+                        <v-model-select v-model="unit" model="Unit" label="Unidad del contenido" search-on-load :disabled="!canOperate || saving" />
                     </v-col>
-                    <v-col cols="12" md="4"><v-text-field v-model="label" label="Formato" placeholder="Garrafa 5 L" :disabled="!canOperate" /></v-col>
-                    <v-col cols="12" md="4"><v-text-field v-model="quantity" label="Contenido" placeholder="5" inputmode="decimal" :disabled="!canOperate" /></v-col>
+                    <v-col cols="12" md="4"><v-text-field v-model="label" label="Formato" placeholder="Garrafa 5 L" :disabled="!canOperate || saving" /></v-col>
+                    <v-col cols="12" md="4"><v-text-field v-model="quantity" label="Contenido" placeholder="5" inputmode="decimal" :disabled="!canOperate || saving" /></v-col>
                     <v-col cols="12" md="4">
                         <v-text-field
-                            v-model="price"
+                            v-model="effectiveNewPrice"
                             :label="currency ? `Precio ${currency}` : 'Precio (moneda no disponible)'"
                             placeholder="32,00"
                             inputmode="decimal"
-                            :disabled="!canOperate"
+                            :disabled="!canOperate || saving || newPackageExplicitFree"
                             hint="Déjalo vacío si todavía no conoces el precio."
                             persistent-hint
                         />
-                        <v-checkbox v-model="newPackageExplicitFree" label="Gratis explícitamente" density="compact" hide-details="auto" :disabled="!canOperate" />
+                        <v-checkbox v-model="newPackageExplicitFree" label="Gratis explícitamente" density="compact" hide-details="auto" :disabled="!canOperate || saving" />
                     </v-col>
                     <v-col cols="12" md="4" class="d-flex align-center">
-                        <v-btn color="primary" :loading="saving" :disabled="!canOperate" min-height="44" @click="save">Guardar formato</v-btn>
+                        <v-btn color="primary" :loading="saving" :disabled="!canOperate || saving" min-height="44" @click="save">Guardar formato</v-btn>
                     </v-col>
                 </v-row>
                 <v-alert v-if="createMessage" :type="createSucceeded ? 'success' : 'error'" variant="tonal" class="mt-2" role="status">
@@ -59,10 +60,12 @@
                     <span v-if="canOperate">Selecciona un ingrediente y su unidad para guardar el primero.</span>
                     <span v-else>Pide a Cocina o Responsable que guarde el primer formato para poder consultarlo aquí.</span>
                 </p>
-                <v-table v-if="packages.length" class="package-table">
+                <v-text-field v-if="packages.length" v-model="catalogSearch" label="Buscar ingrediente o formato" clearable hide-details class="mb-3" prepend-inner-icon="fa-solid fa-magnifying-glass" />
+                <p v-if="packages.length && !filteredPackages.length" role="status" class="my-4">No hay formatos que coincidan. Borra la búsqueda para verlos todos.</p>
+                <v-table v-if="filteredPackages.length" class="package-table">
                     <thead><tr><th>Ingrediente y formato</th><th>Contenido</th><th>Precio del envase</th><th>Precio por unidad base</th><th>Vigente desde</th><th><span class="sr-only">Acciones</span></th></tr></thead>
                     <tbody>
-                        <tr v-for="item in packages" :key="item.id">
+                        <tr v-for="item in filteredPackages" :key="item.id">
                             <td><v-btn variant="text" class="format-name" min-height="44" :disabled="savingPrice" @click="selectPackage(item.id)">{{ item.food_name }} — {{ item.label }}</v-btn></td>
                             <td>{{ priceQuantityLabel(item.quantity, item.unit_name) }}</td>
                             <td>{{ packagePriceLabel(item) }}</td>
@@ -77,8 +80,8 @@
                         </tr>
                     </tbody>
                 </v-table>
-                <div v-if="packages.length" class="package-cards">
-                    <v-card v-for="item in packages" :key="`mobile-${item.id}`" variant="outlined" class="mb-3">
+                <div v-if="filteredPackages.length" class="package-cards">
+                    <v-card v-for="item in filteredPackages" :key="`mobile-${item.id}`" variant="outlined" class="mb-3">
                         <v-card-title class="text-body-1 text-wrap"><v-btn variant="text" class="format-name" min-height="44" :disabled="savingPrice" @click="selectPackage(item.id)">{{ item.food_name }} — {{ item.label }}</v-btn></v-card-title>
                         <v-card-text>
                             <dl class="package-values">
@@ -101,6 +104,7 @@
         <v-card v-if="selectedPackage">
             <v-card-title id="selected-format-title" class="text-wrap">{{ selectedPackage.food_name }} — {{ selectedPackage.label }}</v-card-title>
             <v-card-text>
+                <v-alert variant="tonal" type="info" class="mb-4">Contenido: {{ priceQuantityLabel(selectedPackage.quantity, selectedPackage.unit_name) }} · Precio vigente: {{ packagePriceLabel(selectedPackage) }}</v-alert>
                 <template v-if="canOperate">
                     <p class="text-body-2 mb-4">Añade el precio que entra en vigor ahora. Este formulario no programa fechas futuras.</p>
                     <v-row align="start">
@@ -164,6 +168,8 @@ import {
 
 type NativeChoice = {id: number; name?: string}
 
+const showCreate = ref(false)
+const catalogSearch = ref<string | null>('')
 const food = ref<NativeChoice | null>(null)
 const unit = ref<NativeChoice | null>(null)
 const saving = ref(false)
@@ -172,12 +178,17 @@ const label = ref('')
 const quantity = ref('')
 const price = ref('')
 const newPackageExplicitFree = ref(false)
+const effectiveNewPrice = computed({get: () => newPackageExplicitFree.value ? '0' : price.value, set: (value: string) => { price.value = value }})
 const createMessage = ref('')
 const createSucceeded = ref(false)
 const loadError = ref('')
 const currency = ref<string | null>(null)
 const operationalRole = ref<OperationalRole | null>(null)
 const packages = ref<PackageSummary[]>([])
+const filteredPackages = computed(() => {
+    const query = (catalogSearch.value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim()
+    return packages.value.filter(item => `${item.food_name} ${item.label}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').includes(query))
+})
 const selectedPackageId = ref<number | null>(null)
 const updatedPrice = ref('')
 const updatedExplicitFree = ref(false)
@@ -245,7 +256,7 @@ async function save() {
     createSucceeded.value = false
     if (saving.value || !canOperate.value) return
     const content = decimalInput(quantity.value)
-    const packagePrice = optionalPackagePrice(price.value, newPackageExplicitFree.value)
+    const packagePrice = optionalPackagePrice(newPackageExplicitFree.value ? '0' : price.value, newPackageExplicitFree.value)
     if (!food.value?.id || !unit.value?.id || !label.value.trim() || !content || packagePrice.error) {
         createMessage.value = packagePrice.error
             || 'Selecciona ingrediente y unidad; indica un formato, contenido positivo y un precio válido o desconocido.'

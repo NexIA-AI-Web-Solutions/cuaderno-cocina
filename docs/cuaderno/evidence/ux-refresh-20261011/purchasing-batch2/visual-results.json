@@ -1,0 +1,126 @@
+[
+  {
+    "w": 390,
+    "h": 844,
+    "route": "precios",
+    "notes": [
+      {
+        "text": "Vigencia: 11 oct 2026, 6:02 · creado: 11 oct 2026, 6:02",
+        "height": 32,
+        "scroll": 32,
+        "clamp": "none"
+      },
+      {
+        "text": "Nota sintética de prueba: formato recibido en almacén para la comprobación del historial. Revisar el contenido completo, la fecha de vigencia y el criterio de precio antes de usarlo en la receta. Este texto no contiene información de clientes.",
+        "height": 128,
+        "scroll": 128,
+        "clamp": "none"
+      }
+    ]
+  },
+  {
+    "w": 390,
+    "h": 844,
+    "route": "lista",
+    "overflow": false
+  },
+  {
+    "w": 390,
+    "h": 844,
+    "route": "almacen",
+    "overflow": false
+  },
+  {
+    "w": 768,
+    "h": 1024,
+    "route": "precios",
+    "notes": [
+      {
+        "text": "Vigencia: 11 oct 2026, 6:02 · creado: 11 oct 2026, 6:02",
+        "height": 16,
+        "scroll": 16,
+        "clamp": "3"
+      },
+      {
+        "text": "Nota sintética de prueba: formato recibido en almacén para la comprobación del historial. Revisar el contenido completo, la fecha de vigencia y el criterio de precio antes de usarlo en la receta. Este texto no contiene información de clientes.",
+        "height": 48,
+        "scroll": 48,
+        "clamp": "3"
+      }
+    ]
+  },
+  {
+    "w": 768,
+    "h": 1024,
+    "route": "lista",
+    "overflow": false
+  },
+  {
+    "w": 768,
+    "h": 1024,
+    "route": "almacen",
+    "overflow": false
+  },
+  {
+    "w": 1024,
+    "h": 768,
+    "route": "precios",
+    "notes": [
+      {
+        "text": "Vigencia: 11 oct 2026, 6:02 · creado: 11 oct 2026, 6:02",
+        "height": 16,
+        "scroll": 16,
+        "clamp": "3"
+      },
+      {
+        "text": "Nota sintética de prueba: formato recibido en almacén para la comprobación del historial. Revisar el contenido completo, la fecha de vigencia y el criterio de precio antes de usarlo en la receta. Este texto no contiene información de clientes.",
+        "height": 48,
+        "scroll": 48,
+        "clamp": "3"
+      }
+    ]
+  },
+  {
+    "w": 1024,
+    "h": 768,
+    "route": "lista",
+    "overflow": false
+  },
+  {
+    "w": 1024,
+    "h": 768,
+    "route": "almacen",
+    "overflow": false
+  },
+  {
+    "w": 1440,
+    "h": 900,
+    "route": "precios",
+    "notes": [
+      {
+        "text": "Vigencia: 11 oct 2026, 6:02 · creado: 11 oct 2026, 6:02",
+        "height": 16,
+        "scroll": 16,
+        "clamp": "3"
+      },
+      {
+        "text": "Nota sintética de prueba: formato recibido en almacén para la comprobación del historial. Revisar el contenido completo, la fecha de vigencia y el criterio de precio antes de usarlo en la receta. Este texto no contiene información de clientes.",
+        "height": 48,
+        "scroll": 48,
+        "clamp": "3"
+      }
+    ]
+  },
+  {
+    "w": 1440,
+    "h": 900,
+    "route": "lista",
+    "overflow": false
+  },
+  {
+    "w": 1440,
+    "h": 900,
+    "route": "almacen",
+    "overflow": false
+  }
+]

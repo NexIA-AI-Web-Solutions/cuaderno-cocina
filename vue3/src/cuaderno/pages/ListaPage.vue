@@ -7,41 +7,43 @@
             Son las mismas listas de la compra del espacio. Aquí puedes añadir y marcar alimentos rápidamente.
             Necesitas conexión para guardar los cambios.
         </p>
+        <v-btn variant="text" min-height="44" class="mb-3" :loading="loading" :disabled="busy || loading" @click="refreshList">Actualizar lista</v-btn>
         <v-row>
             <v-col cols="12" md="4">
-                <v-text-field v-model="listName" label="Nueva lista" :disabled="!canOperate" />
+                <v-text-field v-model="listName" label="Nueva lista" :disabled="!canOperate || busy" @keydown.enter.prevent="createList" />
                 <v-btn color="primary" :loading="busy" :disabled="!canOperate" min-height="44" @click="createList">Crear</v-btn>
             </v-col>
             <v-col cols="12" md="8">
-                <v-select v-model="listId" :items="lists" item-title="name" item-value="id" label="Lista" :disabled="busy" @update:model-value="undo = null; loadEntries()" />
+                <v-select v-model="listId" :items="lists" item-title="name" item-value="id" label="Lista" clearable :disabled="busy" @update:model-value="undo = null; loadEntries()" />
             </v-col>
             <v-col cols="12" md="4">
-                <v-text-field v-model="foodName" label="Alimento" :disabled="!canOperate" />
+                <v-text-field v-model="foodName" label="Alimento" :disabled="!canOperate || busy || !listId || loading" @keydown.enter.prevent="addEntry" />
             </v-col>
             <v-col cols="12" md="4">
-                <v-text-field v-model="amount" label="Cantidad" inputmode="decimal" :disabled="!canOperate" />
+                <v-text-field v-model="amount" label="Cantidad" inputmode="decimal" :disabled="!canOperate || busy || !listId || loading" @keydown.enter.prevent="addEntry" />
             </v-col>
             <v-col cols="12" md="4" class="d-flex align-center">
-                <v-btn color="primary" class="mr-2" :loading="busy" :disabled="!canOperate || !listId" min-height="44" @click="addEntry">Añadir</v-btn>
-                <v-btn variant="text" :disabled="!canOperate || !undo || busy" min-height="44" @click="undoLast">Deshacer</v-btn>
+                <v-btn color="primary" class="mr-2" :loading="busy" :disabled="!canOperate || !listId || loading" min-height="44" @click="addEntry">Añadir</v-btn>
+                <v-btn variant="text" :disabled="!canOperate || !undo || busy || loading || loadFailed" min-height="44" @click="undoLast">Deshacer</v-btn>
             </v-col>
         </v-row>
-        <p v-if="message" role="status">{{ message }}</p>
+        <p v-if="message" role="status" aria-live="polite">{{ message }}</p>
         <v-progress-linear v-if="loading" indeterminate aria-label="Cargando lista" />
-        <p v-else-if="!entries.length" class="my-4">{{ listId ? 'La lista está vacía. Añade el primer alimento.' : 'Crea una lista para empezar.' }}</p>
+        <p v-else-if="!entries.length && !loadFailed" class="my-4">{{ listId ? 'La lista está vacía. Añade el primer alimento.' : 'Crea una lista para empezar.' }}</p>
         <v-list class="cuaderno-quick-list">
             <v-list-subheader><h2 class="text-h6">Pendiente</h2><v-chip class="ms-3" size="small" color="secondary" variant="tonal">{{ pending.length }}</v-chip></v-list-subheader>
             <v-list-item v-for="entry in pending" :key="entry.id">
                 <template #prepend>
-                    <v-checkbox-btn :model-value="false" :disabled="!canOperate || busy" :aria-label="`Marcar ${label(entry)}`" @update:model-value="toggle(entry, true)" />
+                    <v-checkbox-btn :model-value="false" :disabled="!canOperate || busy || loading || loadFailed" :aria-label="`Marcar ${label(entry)}`" @update:model-value="toggle(entry, true)" />
                 </template>
                 <v-list-item-title>{{ label(entry) }}</v-list-item-title>
                 <v-list-item-subtitle>{{ sourceLabel(entry) }} · {{ syncingEntry === entry.id ? 'Guardando…' : 'Sincronizado' }}</v-list-item-subtitle>
             </v-list-item>
-            <v-list-subheader><h2 class="text-h6">Hecho</h2><v-chip class="ms-3" size="small" variant="tonal">{{ done.length }}</v-chip></v-list-subheader>
-            <v-list-item v-for="entry in done" :key="entry.id" class="cuaderno-completed-entry">
+            <v-btn v-if="done.length" variant="text" min-height="44" :aria-expanded="showDone" @click="showDone = !showDone">{{ showDone ? 'Ocultar completados' : `Mostrar completados (${done.length})` }}</v-btn>
+            <v-list-subheader v-if="showDone || !done.length"><h2 class="text-h6">Hecho</h2><v-chip class="ms-3" size="small" variant="tonal">{{ done.length }}</v-chip></v-list-subheader>
+            <v-list-item v-for="entry in visibleDone" :key="entry.id" class="cuaderno-completed-entry">
                 <template #prepend>
-                    <v-checkbox-btn :model-value="true" :disabled="!canOperate || busy" :aria-label="`Desmarcar ${label(entry)}`" @update:model-value="toggle(entry, false)" />
+                    <v-checkbox-btn :model-value="true" :disabled="!canOperate || busy || loading || loadFailed" :aria-label="`Desmarcar ${label(entry)}`" @update:model-value="toggle(entry, false)" />
                 </template>
                 <v-list-item-title>{{ label(entry) }}</v-list-item-title>
                 <v-list-item-subtitle>{{ sourceLabel(entry) }} · {{ syncingEntry === entry.id ? 'Guardando…' : 'Sincronizado' }}</v-list-item-subtitle>
@@ -74,12 +76,24 @@ const amount = ref("1")
 const message = ref("")
 const busy = ref(false)
 const loading = ref(false)
+const loadFailed = ref(false)
+let entriesGeneration = 0
+let loadedListId: number | null = null
+const showDone = ref(true)
 const undo = ref<{id: number; checked: boolean; revision: string} | null>(null)
 const syncingEntry = ref<number | null>(null)
 const canOperate = ref(false)
 
 const pending = computed(() => entries.value.filter((entry) => !entry.checked))
 const done = computed(() => entries.value.filter((entry) => entry.checked))
+
+const visibleDone = computed(() => showDone.value ? done.value : [])
+
+async function refreshList() {
+    if (busy.value || loading.value) return
+    await loadLists()
+    if (listId.value) await loadEntries()
+}
 
 function label(entry: ShoppingEntry) {
     const unit = entry.unit?.name ? ` ${entry.unit.name}` : ''
@@ -136,21 +150,27 @@ async function createList() {
 }
 
 async function loadEntries() {
-    if (!listId.value) return
+    const generation = ++entriesGeneration
+    if (!listId.value) { entries.value = []; loadedListId = null; undo.value = null; loading.value = false; loadFailed.value = false; return }
+    loadFailed.value = false
     const selected = listId.value
+    if (selected !== loadedListId) { entries.value = []; undo.value = null }
     loading.value = true
     const {ok, status, data} = await readJson(await cuadernoFetch(`/api/shopping-list-entry/?shoppinglist=${selected}`))
-    if (selected !== listId.value) return
+    if (generation !== entriesGeneration || selected !== listId.value) return
     loading.value = false
     if (!ok) {
+        loadFailed.value = true
         message.value = apiError(status, data)
         return
     }
     const rows = shoppingEntries(data)
     if (rows === null) {
+        loadFailed.value = true
         message.value = 'El servidor devolvió líneas incompletas. Conservamos la lista anterior.'
         return
     }
+    loadedListId = selected
     entries.value = rows.filter(entry => {
         const ids = entry.shopping_lists.map(item => typeof item === 'number' ? item : item.id)
         return ids.includes(selected)
@@ -159,7 +179,7 @@ async function loadEntries() {
 
 async function addEntry() {
     if (!canOperate.value) return
-    if (busy.value) return
+    if (busy.value || loading.value) return
     if (!listId.value || !foodName.value.trim()) {
         message.value = "Elige lista y alimento."
         return
@@ -190,7 +210,7 @@ async function addEntry() {
 
 async function toggle(entry: ShoppingEntry, checked: boolean) {
     if (!canOperate.value) return
-    if (busy.value) return
+    if (busy.value || loading.value || loadFailed.value) return
     const revision = ifMatchRevision(entry.updated_at)
     if (revision === null) {
         message.value = 'Esta línea no tiene una revisión válida. Actualiza la lista antes de cambiarla.'
@@ -199,7 +219,7 @@ async function toggle(entry: ShoppingEntry, checked: boolean) {
     busy.value = true
     syncingEntry.value = entry.id
     const previous = entry.checked
-    const {ok, status, data} = await readJson(await cuadernoFetch(`/api/shopping-list-entry/${entry.id}/?autosync=1`, {
+    const {ok, status, data} = await readJson(await cuadernoFetch(`/api/shopping-list-entry/${entry.id}/`, {
         method: "PATCH",
         headers: {'If-Match': revision},
         body: JSON.stringify(shoppingCheckBody(checked)),
@@ -222,13 +242,13 @@ async function toggle(entry: ShoppingEntry, checked: boolean) {
 
 async function undoLast() {
     if (!canOperate.value) return
-    if (!undo.value || busy.value) return
+    if (!undo.value || busy.value || loading.value || loadFailed.value) return
     const target = undo.value
     const revision = ifMatchRevision(target.revision)
     if (revision === null) { message.value = 'No se puede deshacer sin una revisión válida. Actualiza la lista.'; return }
     busy.value = true
     syncingEntry.value = target.id
-    const {ok, status, data} = await readJson(await cuadernoFetch(`/api/shopping-list-entry/${target.id}/?autosync=1`, {
+    const {ok, status, data} = await readJson(await cuadernoFetch(`/api/shopping-list-entry/${target.id}/`, {
         method: "PATCH",
         headers: {'If-Match': revision},
         body: JSON.stringify(shoppingCheckBody(target.checked)),

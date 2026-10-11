@@ -216,3 +216,8 @@ test('late PUT from prior service cannot replace newly opened service context', 
         assert.equal(mounted.calls.at(-1).url, '/api/cuaderno/services/13/preparation/')
     } finally { mounted.close() }
 })
+
+test('completion progress covers all tasks while long checklists expand on demand',async()=>{
+ const data=payload();data.items=Array.from({length:9},(_,i)=>({...data.items[0],id:120+i,position:i,name:`Paso ${i+1}`,checked:i<2,checked_at:i<2?'2026-09-30T10:15:30+02:00':null,updated_by:i<2?7:null}));
+ const m=await mount(()=>({ok:true,status:200,data}));try{button(m.root,'Ver preparación').props.onClick();await flush();assert.match(textOf(m.root),/2 de 9 pasos completados/);assert.equal(all(m.root,n=>n.type==='checkbox').length,6);button(m.root,'Ver los 9 pasos').props.onClick();await flush();assert.equal(all(m.root,n=>n.type==='checkbox').length,9);button(m.root,'Mostrar solo los primeros').props.onClick();await flush();assert.equal(all(m.root,n=>n.type==='checkbox').length,6)}finally{m.close()}
+});

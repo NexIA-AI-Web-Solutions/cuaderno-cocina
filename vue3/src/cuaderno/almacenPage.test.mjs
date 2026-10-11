@@ -142,7 +142,7 @@ async function mount(transport, {edition = 'integral', role = 'user'} = {}) {
     const app = virtualRenderer().createApp(component)
     const widgets = [
         'v-container', 'v-btn', 'v-alert', 'v-row', 'v-col', 'v-card', 'v-card-title',
-        'v-card-subtitle', 'v-card-text', 'v-model-select', 'v-select', 'v-text-field',
+        'v-card-subtitle', 'v-card-text', 'v-model-select', 'v-select', 'v-text-field', 'v-checkbox',
         'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-dialog',
         'v-card-actions', 'purchasing-panel',
     ]
@@ -289,5 +289,28 @@ test('history exposes author and date, marks unknown legacy values and directs c
             && textOf(node).includes('Movimiento de producción'))[0]
         assert.ok(consumed)
         assert.equal(button(consumed, 'Revertir'), undefined)
+    } finally { mounted.close() }
+})
+
+
+test('movement history combines kind and selected existence filters and jump destinations exist', async () => {
+    const rows = [
+        {id: 71, kind: 'consume', quantity: '1', entry: 17, balance: '0'},
+        {id: 72, kind: 'receipt', quantity: '2', entry: 17, balance: '2'},
+        {id: 73, kind: 'receipt', quantity: '3', entry: 18, balance: '3'},
+    ]
+    const mounted = await mount(() => ({ok: true, status: 200, data: rows}))
+    try {
+        assert.deepEqual(button(mounted.root, 'Ir a movimientos').props.to, {hash:'#warehouse-movements'})
+        assert.ok(all(mounted.root, node => node.props?.id === 'warehouse-movements').length)
+        field(mounted.root, 'Filtrar movimientos por tipo').props['onUpdate:modelValue']('receipt'); await flush()
+        assert.doesNotMatch(textOf(mounted.root), /Consumo · 1/)
+        field(mounted.root, 'Existencia del inventario').props['onUpdate:modelValue']({id:17}); await flush()
+        field(mounted.root, 'Solo la existencia seleccionada').props['onUpdate:modelValue'](true); await flush()
+        assert.match(textOf(mounted.root), /Recepción sin pedido · 2/)
+        assert.doesNotMatch(textOf(mounted.root), /Recepción sin pedido · 3/)
+        field(mounted.root, 'Filtrar movimientos por tipo').props['onUpdate:modelValue']('waste'); await flush()
+        assert.match(textOf(mounted.root), /No hay movimientos con estos filtros/)
+        assert.equal(mounted.calls.some(call => call.options.method), false)
     } finally { mounted.close() }
 })

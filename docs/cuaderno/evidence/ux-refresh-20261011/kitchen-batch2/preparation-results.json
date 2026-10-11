@@ -1,0 +1,9 @@
+{
+  "fixture": "synthetic read-only nine-item checklist response",
+  "checks": [
+    "whole-list-completion-progress",
+    "six-items-collapsed",
+    "nine-items-expanded",
+    "collapse-restores-six"
+  ]
+}

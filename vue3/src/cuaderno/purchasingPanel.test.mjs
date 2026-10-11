@@ -57,7 +57,7 @@ test('pending receipt locks context controls and clears only its unchanged draft
         return assert.fail(`Unexpected request ${url}`)
     }
     const api = moduleUrl(`export const cuadernoFetch = (url, options = {}) => globalThis.__purchasePanelTransport(url, options); export const readJson = async value => value;`)
-    const forms = moduleUrl(`export const apiError = status => \`HTTP \${status}\`; export const decimalInput = value => /^\\d+(?:[.,]\\d+)?$/.test(String(value)) && /[1-9]/.test(String(value)) ? String(value).replace(',', '.') : null;`)
+    const forms = helperUrl('./forms.ts')
     const empty = moduleUrl('export default {render: () => null}')
     const modelSelect = moduleUrl(`import {defineComponent,h} from ${JSON.stringify(import.meta.resolve('vue'))}; export default defineComponent({inheritAttrs:false, props:{modelValue:{default:null},label:String,disabled:Boolean,searchOnLoad:Boolean}, emits:['update:modelValue'], setup:(props,ctx)=>()=>h('model-select',{...ctx.attrs,...props,'onUpdate:modelValue':v=>ctx.emit('update:modelValue',v)})})`)
     const filename = 'PurchasingPanel.vue'
@@ -73,7 +73,7 @@ test('pending receipt locks context controls and clears only its unchanged draft
     const component = (await import(moduleUrl(code))).default
     const root = {type: 'root', props: {}, children: [], parent: null}
     const app = renderer().createApp(component)
-    for (const name of ['v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-subtitle', 'v-card-text', 'v-select', 'v-text-field', 'v-checkbox',
+    for (const name of ['v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-subtitle', 'v-card-text', 'v-select', 'v-autocomplete', 'v-text-field', 'v-checkbox',
         'v-btn', 'v-alert', 'v-spacer', 'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-progress-linear', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false, props: {modelValue: {default: null}, label: String, disabled: Boolean, loading: Boolean}, emits: ['update:modelValue'],
             setup(props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name, {...context.attrs, ...props, 'onUpdate:modelValue': value => context.emit('update:modelValue', value)}, [context.slots.default?.(), context.slots.append?.()]) }}))
@@ -90,13 +90,23 @@ test('pending receipt locks context controls and clears only its unchanged draft
         const suppliers = all(root, node => node.type === 'model-select' && node.props.label === 'Proveedor')
         assert.equal(suppliers.length, 2)
         for (const supplier of suppliers) assert.equal(supplier.props.searchOnLoad, true)
+        field(root, 'Estado de pedido').props['onUpdate:modelValue']('received'); await flush()
+        assert.equal(buttons(root, 'Pedido #10').length, 0)
+        assert.match(textOf(root), /No hay pedidos con este estado/)
+        field(root, 'Estado de pedido').props['onUpdate:modelValue'](null); await flush()
+        assert.equal(field(root, 'Formato de compra').type, 'v-autocomplete')
+        assert.equal(field(root, 'Formato').type, 'v-autocomplete')
         buttons(root, 'Recibir')[0].props.onClick(); await flush()
+        buttons(root, 'Recibir todo lo pendiente')[0].props.onClick(); await flush()
+        assert.equal(field(root, 'Cantidad recibida (unidad 5)').props.modelValue, '10')
+        assert.deepEqual(buttons(root, 'Consultar destinos en la despensa')[0].props.to, {name:'PantryPage'})
         field(root, 'Existencia de destino').props['onUpdate:modelValue']({id: 17})
         field(root, 'Cantidad recibida (unidad 5)').props['onUpdate:modelValue']('2,5')
         const pending = buttons(root, 'Confirmar recepción')[0].props.onClick()
         for (let index = 0; index < 20 && !releaseReceipt; index += 1) await Vue.nextTick()
         await flush()
         assert.equal(buttons(root, 'Cerrar')[0].props.disabled, true)
+        assert.equal(field(root, 'Estado de pedido').props.disabled, true)
         for (const receive of buttons(root, 'Recibir')) assert.equal(receive.props.disabled, true)
         assert.equal(field(root, 'Existencia de destino').props.disabled, true)
         releaseReceipt({ok: true, status: 201, data: {id: 20, quantity: '2.5', movement: 21, reversed_by: null}})
@@ -136,7 +146,7 @@ test('Consulta keeps purchase history readable while every write control is disa
     const component = (await import(moduleUrl(code))).default
     const root = {type: 'root', props: {}, children: [], parent: null}
     const app = renderer().createApp(component, {canOperate: false})
-    for (const name of ['v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-subtitle', 'v-card-text', 'v-select', 'v-text-field', 'v-checkbox',
+    for (const name of ['v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-subtitle', 'v-card-text', 'v-select', 'v-autocomplete', 'v-text-field', 'v-checkbox',
         'v-btn', 'v-alert', 'v-spacer', 'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-progress-linear', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false, props: {modelValue: {default: null}, label: String, disabled: Boolean, loading: Boolean}, emits: ['update:modelValue'],
             setup(props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name, {...context.attrs, ...props, 'onUpdate:modelValue': value => context.emit('update:modelValue', value)}, [context.slots.default?.(), context.slots.append?.()]) }}))

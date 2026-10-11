@@ -1,0 +1,78 @@
+[
+  {
+    "edition": "esencial",
+    "role": "responsable",
+    "homeCreation": true,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": [],
+    "run": "initial; before final layout-only correction"
+  },
+  {
+    "edition": "esencial",
+    "role": "cocina",
+    "homeCreation": true,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": [],
+    "run": "initial; before final layout-only correction"
+  },
+  {
+    "edition": "esencial",
+    "role": "consulta",
+    "homeCreation": false,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": [],
+    "run": "initial; before final layout-only correction"
+  },
+  {
+    "edition": "profesional",
+    "role": "responsable",
+    "homeCreation": true,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": [],
+    "run": "initial; before final layout-only correction"
+  },
+  {
+    "edition": "profesional",
+    "role": "cocina",
+    "homeCreation": true,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": []
+  },
+  {
+    "edition": "profesional",
+    "role": "consulta",
+    "homeCreation": false,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": []
+  },
+  {
+    "edition": "integral",
+    "role": "responsable",
+    "homeCreation": true,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": []
+  },
+  {
+    "edition": "integral",
+    "role": "cocina",
+    "homeCreation": true,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": []
+  },
+  {
+    "edition": "integral",
+    "role": "consulta",
+    "homeCreation": false,
+    "editionNavigation": true,
+    "priceDialog": true,
+    "errors": []
+  }
+]

@@ -73,8 +73,10 @@
             </form>
 
             <v-progress-linear v-if="loading" indeterminate class="mb-3" />
-            <v-list v-if="rows.length" lines="three">
-                <v-list-item v-for="row in rows" :key="row.id" class="minimum-row px-0">
+            <v-text-field v-if="rows.length" v-model="minimumSearch" label="Buscar mínimos por alimento o ubicación" clearable hide-details class="mb-3" />
+            <p v-if="rows.length && !filteredRows.length" role="status">No hay mínimos que coincidan. Borra la búsqueda para verlos todos.</p>
+            <v-list v-if="filteredRows.length" lines="three">
+                <v-list-item v-for="row in filteredRows" :key="row.id" class="minimum-row px-0">
                     <v-list-item-title class="font-weight-medium">
                         {{ row.food_name }} · {{ row.quantity }} {{ row.unit_name }}
                     </v-list-item-title>
@@ -86,7 +88,7 @@
                     </template>
                 </v-list-item>
             </v-list>
-            <v-alert v-else-if="!loading && !loadError" type="info" variant="tonal">
+            <v-alert v-else-if="!rows.length && !loading && !loadError" type="info" variant="tonal">
                 No hay mínimos definidos para este hogar.
             </v-alert>
         </v-card-text>
@@ -94,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import {onBeforeUnmount, onMounted, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import VModelSelect from '@/components/inputs/VModelSelect.vue'
 import {cuadernoFetch, readJson} from '@/cuaderno/api'
 import {apiError} from '@/cuaderno/forms'
@@ -106,6 +108,12 @@ type SelectedModel = {id?: number; name?: string} | null
 const props = withDefaults(defineProps<{canOperate?: boolean}>(), {canOperate: true})
 const emit = defineEmits<{loaded: [foods: Record<number, string>]}>()
 const rows = ref<StockMinimumRow[]>([])
+const minimumSearch = ref<string | null>('')
+const searchable = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es')
+const filteredRows = computed(() => {
+    const query = searchable(minimumSearch.value || '').trim()
+    return rows.value.filter(row => searchable(`${row.food_name} ${minimumScopeLabel(row.location_name)}`).includes(query))
+})
 const householdName = ref('')
 const locations = ref<{id: number; name: string}[]>([])
 const draft = reactive({

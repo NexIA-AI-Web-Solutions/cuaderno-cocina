@@ -1,0 +1,10 @@
+{
+  "nativeMeal": 8,
+  "recipe": 7,
+  "checks": [
+    "template-save-from-native-calendar",
+    "reversed-event-local-validation",
+    "event-save-reload",
+    "diet-save-reload-unchanged-disabled"
+  ]
+}

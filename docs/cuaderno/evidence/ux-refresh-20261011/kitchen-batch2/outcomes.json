@@ -1,0 +1,122 @@
+[
+  {
+    "id": "019",
+    "outcome": "Conservar platos cargados si falla la actualización",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "failed period refresh retains loaded dishes"
+  },
+  {
+    "id": "020",
+    "outcome": "Avisar cuando filtros y periodo cargado difieren",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "failed period refresh retains loaded dishes"
+  },
+  {
+    "id": "021",
+    "outcome": "Limpiar selección, grupos y documento de impresión al cambiar periodo",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "loading another period clears stale print groups"
+  },
+  {
+    "id": "022",
+    "outcome": "Rechazar orden vacío o fraccionario del tipo de plato",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "blank course order; fractional course order"
+  },
+  {
+    "id": "023",
+    "outcome": "Validar fechas ordenadas de eventos antes de escribir",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "blank course order and reversed event dates"
+  },
+  {
+    "id": "024",
+    "outcome": "Enlazar recetas nativas desde platos de plantilla y calendario",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "template and calendar recipe identities link"
+  },
+  {
+    "id": "025",
+    "outcome": "Ofrecer acción al calendario en un periodo sin platos",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "planning empty states"
+  },
+  {
+    "id": "026",
+    "outcome": "Explicar estado sin tipos de plato",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "planning empty states"
+  },
+  {
+    "id": "027",
+    "outcome": "Explicar estado sin eventos ni ausencias",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "planning empty states"
+  },
+  {
+    "id": "028",
+    "outcome": "Seleccionar todos los platos imprimibles del periodo",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "print select-all"
+  },
+  {
+    "id": "029",
+    "outcome": "Mostrar capacidad utilizada y límite de menús para imprimir",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "print select-all"
+  },
+  {
+    "id": "030",
+    "outcome": "Mostrar errores dentro de diálogos de plantilla",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "rejected template action displays its error inside"
+  },
+  {
+    "id": "031",
+    "outcome": "Plegar campos opcionales de portada al guardar plantilla",
+    "file": "MenuPlanningPage.vue",
+    "unit_evidence": "template and calendar recipe identities link"
+  },
+  {
+    "id": "032",
+    "outcome": "Ocultar paginación de reservas sin páginas adicionales",
+    "file": "ReservasPage.vue",
+    "unit_evidence": "empty reservations hide pagination"
+  },
+  {
+    "id": "033",
+    "outcome": "Evitar peticiones sin fecha y limpiar reservas anteriores",
+    "file": "ReservasPage.vue",
+    "unit_evidence": "empty reservations; clearing a loaded date removes"
+  },
+  {
+    "id": "034",
+    "outcome": "Previsualizar platos del menú elegido antes de registrar reserva",
+    "file": "ReservasPage.vue",
+    "unit_evidence": "new reservation previews dishes"
+  },
+  {
+    "id": "035",
+    "outcome": "Indicar progreso y evitar consulta duplicada de historial",
+    "file": "ReservasPage.vue",
+    "unit_evidence": "pending reservation inspection prevents duplicate"
+  },
+  {
+    "id": "036",
+    "outcome": "Mostrar progreso completado de preparación",
+    "file": "ServicePreparationPanel.vue",
+    "unit_evidence": "completion progress covers all tasks"
+  },
+  {
+    "id": "037",
+    "outcome": "Plegar checklists largos y permitir ver todos los pasos",
+    "file": "ServicePreparationPanel.vue",
+    "unit_evidence": "completion progress covers all tasks"
+  },
+  {
+    "id": "038",
+    "outcome": "Indicar declaraciones dietéticas sin guardar y deshabilitar guardado sin cambios",
+    "file": "RecipeExtrasPanel.vue",
+    "unit_evidence": "untouched diets cannot be saved"
+  }
+]

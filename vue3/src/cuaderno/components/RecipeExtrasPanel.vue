@@ -50,8 +50,8 @@
                     </v-col>
                     <v-col cols="12" sm="5"><v-text-field v-if="extras.can_edit" v-model="diet.note" :label="'Nota: ' + diet.label" maxlength="500" :disabled="busy" hide-details /><p v-else>{{ diet.note || 'Sin notas' }}</p></v-col>
                 </v-row>
-                <div v-if="extras.can_edit" class="d-flex flex-wrap ga-2 mt-4 d-print-none">
-                    <v-btn color="primary" :loading="busy" :disabled="busy || dietConflict" min-height="44" @click="saveDiets">Guardar declaraciones</v-btn>
+                <p v-if="extras.can_edit && dietDirty" role="status" class="mt-3">Declaraciones con cambios sin guardar.</p><div v-if="extras.can_edit" class="d-flex flex-wrap ga-2 mt-4 d-print-none">
+                    <v-btn color="primary" :loading="busy" :disabled="busy || dietConflict || !dietDirty" min-height="44" @click="saveDiets">Guardar declaraciones</v-btn>
                     <v-btn variant="text" :disabled="busy" min-height="44" @click="load">Descartar cambios y actualizar</v-btn>
                 </div>
                 <p v-else class="mt-3">Tu acceso permite consultar esta receta y gestionar tus favoritas personales.</p>
@@ -72,6 +72,7 @@ const emit = defineEmits<{permissions: [canEdit: boolean]}>()
 const extras = ref<RecipeExtras | null>(null), drafts = ref<DietDeclaration[]>([])
 const draftRevision = ref(''), draftBaseline = ref(''), dietConflict = ref(false)
 function dietSignature(diets: DietDeclaration[]) {return JSON.stringify(diets.map(({slug, status, note}) => ({slug, status, note})).sort((a, b) => a.slug.localeCompare(b.slug)))}
+const dietDirty = computed(() => dietSignature(drafts.value) !== draftBaseline.value)
 const loading = ref(false), busy = ref(false), error = ref(''), notice = ref('')
 const photoFile = ref<File | File[] | null>(null), caption = ref(''), deletePhoto = ref<number | null>(null)
 const selectedFile = computed(() => Array.isArray(photoFile.value) ? photoFile.value[0] : photoFile.value)
@@ -105,7 +106,7 @@ function toggleFavorite() {
     return mutate(async () => {const result = await planningRequest<{is_favorite: boolean}>(`recipes/${props.recipeId}/favorite/`, 'PUT', {favorite}); if (extras.value) extras.value.is_favorite = result.is_favorite}, favorite ? 'Guardada en tus favoritas.' : 'Retirada de tus favoritas.')
 }
 function saveDiets() {
-    if (!extras.value?.can_edit || dietConflict.value) return
+    if (!extras.value?.can_edit || dietConflict.value || !dietDirty.value) return
     const revision = draftRevision.value
     return mutate(async () => accept(await planningRequest<RecipeExtras>(`recipes/${props.recipeId}/extras/`, 'PUT', {revision, diets: drafts.value.map(({slug, status, note}) => ({slug, status, note}))})), 'Declaraciones guardadas.')
 }

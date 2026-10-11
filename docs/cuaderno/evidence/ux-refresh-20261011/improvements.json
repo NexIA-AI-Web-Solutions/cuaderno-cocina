@@ -1,0 +1,709 @@
+{
+  "target": 100,
+  "accepted": 60,
+  "counting": "Un resultado observable distinto; tests, capturas y correcciones de la propia implementación no son mejoras extra.",
+  "items": [
+    {
+      "id": "001",
+      "area": "Inicio",
+      "before": "La búsqueda requería abrir otro control/pantalla.",
+      "after": "Campo de búsqueda visible que envía la consulta al buscador nativo.",
+      "file": "vue3/src/pages/StartPage.vue",
+      "evidence": "home-check.cjs; modernPresentation.test.mjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "002",
+      "area": "Inicio",
+      "before": "Crear receta se ocultaba tras el menú +.",
+      "after": "Acceso directo con texto, conservando permisos de escritura.",
+      "file": "vue3/src/pages/StartPage.vue",
+      "evidence": "visual-check.cjs; roles-check.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "003",
+      "area": "Inicio",
+      "before": "Importar requería buscar la opción en la navegación.",
+      "after": "Importación accesible junto a creación en el inicio.",
+      "file": "vue3/src/pages/StartPage.vue",
+      "evidence": "home-after-1440.png; gates de permiso",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "004",
+      "area": "Inicio",
+      "before": "Encabezado disperso sin agrupación visual de la tarea.",
+      "after": "Cabecera adaptable con jerarquía, tonos del producto y acciones agrupadas.",
+      "file": "vue3/src/pages/StartPage.vue",
+      "evidence": "home-after-{390,768,1024,1440}.png",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "005",
+      "area": "Navegación",
+      "before": "Opciones se anteponía a módulos operativos móviles.",
+      "after": "Navegación móvil prioriza el trabajo diario.",
+      "file": "vue3/src/composables/useNavigation.ts",
+      "evidence": "home-check.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "006",
+      "area": "Navegación",
+      "before": "Hoja sin nombre y sin cierre explícito.",
+      "after": "Título accesible y cierre visible incluso al desplazar lista.",
+      "file": "vue3/src/apps/tandoor/Tandoor.vue",
+      "evidence": "audit/final-review.md; review-nav-short.png",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "007",
+      "area": "Calendario",
+      "before": "Flechas y menú de comidas sin nombre accesible y objetivos pequeños.",
+      "after": "Controles identificables de al menos44px.",
+      "file": "vue3/src/components/display/HorizontalMealPlanWindow.vue",
+      "evidence": "revisión código; capturas móviles",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "008",
+      "area": "Recetas",
+      "before": "Menú de tarjeta sin etiqueta contextual y objetivo pequeño.",
+      "after": "Menú accesible identificado por receta, objetivo44px.",
+      "file": "vue3/src/components/inputs/RecipeContextMenu.vue",
+      "evidence": "revisión código; capturas móviles",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "009",
+      "area": "Producción",
+      "before": "Cinco formularios empujaban los servicios fuera de la vista.",
+      "after": "Herramientas plegadas y servicios inmediatamente accesibles.",
+      "file": "vue3/src/cuaderno/pages/ProduccionPage.vue",
+      "evidence": "productionWorkflow.test.mjs; kitchen/browser-checks.json",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "010",
+      "area": "Producción",
+      "before": "Título de servicio no abría su receta.",
+      "after": "Enlace nativo desde título conservando instantánea.",
+      "file": "vue3/src/cuaderno/pages/ProduccionPage.vue",
+      "evidence": "productionWorkflow.test.mjs; kitchen/browser-checks.json",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "011",
+      "area": "Reservas",
+      "before": "Nombres de platos no permitían abrir receta.",
+      "after": "Enlaces desde resumen y menú reservado.",
+      "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
+      "evidence": "reservationsPage.test.mjs; kitchen/browser-checks.json",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "012",
+      "area": "Reservas",
+      "before": "Cambiar fecha exigía pulsar actualizar.",
+      "after": "Carga automática y protección de respuestas fuera de orden.",
+      "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
+      "evidence": "reservationsPage.test.mjs; kitchen/browser-checks.json",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "013",
+      "area": "Compras",
+      "before": "Pedidos del mismo proveedor resultaban indistinguibles.",
+      "after": "Ingrediente, formato e identificador visibles.",
+      "file": "vue3/src/cuaderno/components/PurchasingPanel.vue",
+      "evidence": "purchasingPanel.test.mjs; purchasing/verify.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "014",
+      "area": "Compras",
+      "before": "Título de pedido no abría detalle relacionado.",
+      "after": "Título abre historial de recepciones existente.",
+      "file": "vue3/src/cuaderno/components/PurchasingPanel.vue",
+      "evidence": "purchasingPanel.test.mjs; purchasing/verify.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "015",
+      "area": "Compras",
+      "before": "Acciones móviles comprimían el contenido del pedido.",
+      "after": "Acciones debajo del texto, sin truncado.",
+      "file": "vue3/src/cuaderno/components/PurchasingPanel.vue",
+      "evidence": "purchasing/after-order-receipt-390.png",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "016",
+      "area": "Compras",
+      "before": "Selector remitía a formatos sin ruta directa.",
+      "after": "Enlace al catálogo de formatos y precios.",
+      "file": "vue3/src/cuaderno/components/PurchasingPanel.vue",
+      "evidence": "purchasing/verify.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "017",
+      "area": "Costes",
+      "before": "Nombres de formato eran texto inerte.",
+      "after": "Nombre abre el detalle tanto en tabla como tarjeta.",
+      "file": "vue3/src/cuaderno/pages/PreciosPage.vue",
+      "evidence": "operationalRolePage.test.mjs; purchasing/verify.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "018",
+      "area": "Costes",
+      "before": "Detalle se abría después de toda la lista, fuera de contexto.",
+      "after": "Diálogo de precio/historial con cierre, scroll y bloqueo al guardar.",
+      "file": "vue3/src/cuaderno/pages/PreciosPage.vue",
+      "evidence": "operationalRolePage.test.mjs; purchasing/verify.cjs",
+      "status": "accepted",
+      "commit": "02938e1"
+    },
+    {
+      "id": "019",
+      "area": "Cocina y planificación",
+      "after": "Conservar platos cargados si falla la actualización",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "failed period refresh retains loaded dishes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "020",
+      "area": "Cocina y planificación",
+      "after": "Avisar cuando filtros y periodo cargado difieren",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "failed period refresh retains loaded dishes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "021",
+      "area": "Cocina y planificación",
+      "after": "Limpiar selección, grupos y documento de impresión al cambiar periodo",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "loading another period clears stale print groups; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "022",
+      "area": "Cocina y planificación",
+      "after": "Rechazar orden vacío o fraccionario del tipo de plato",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "blank course order; fractional course order; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "023",
+      "area": "Cocina y planificación",
+      "after": "Validar fechas ordenadas de eventos antes de escribir",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "blank course order and reversed event dates; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "024",
+      "area": "Cocina y planificación",
+      "after": "Enlazar recetas nativas desde platos de plantilla y calendario",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "template and calendar recipe identities link; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "025",
+      "area": "Cocina y planificación",
+      "after": "Ofrecer acción al calendario en un periodo sin platos",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "planning empty states; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "026",
+      "area": "Cocina y planificación",
+      "after": "Explicar estado sin tipos de plato",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "planning empty states; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "027",
+      "area": "Cocina y planificación",
+      "after": "Explicar estado sin eventos ni ausencias",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "planning empty states; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "028",
+      "area": "Cocina y planificación",
+      "after": "Seleccionar todos los platos imprimibles del periodo",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "print select-all; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "029",
+      "area": "Cocina y planificación",
+      "after": "Mostrar capacidad utilizada y límite de menús para imprimir",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "print select-all; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "030",
+      "area": "Cocina y planificación",
+      "after": "Mostrar errores dentro de diálogos de plantilla",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "rejected template action displays its error inside; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "031",
+      "area": "Cocina y planificación",
+      "after": "Plegar campos opcionales de portada al guardar plantilla",
+      "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
+      "evidence": "template and calendar recipe identities link; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "032",
+      "area": "Cocina y planificación",
+      "after": "Ocultar paginación de reservas sin páginas adicionales",
+      "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
+      "evidence": "empty reservations hide pagination; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "033",
+      "area": "Cocina y planificación",
+      "after": "Evitar peticiones sin fecha y limpiar reservas anteriores",
+      "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
+      "evidence": "empty reservations; clearing a loaded date removes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "034",
+      "area": "Cocina y planificación",
+      "after": "Previsualizar platos del menú elegido antes de registrar reserva",
+      "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
+      "evidence": "new reservation previews dishes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "035",
+      "area": "Cocina y planificación",
+      "after": "Indicar progreso y evitar consulta duplicada de historial",
+      "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
+      "evidence": "pending reservation inspection prevents duplicate; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "036",
+      "area": "Cocina y planificación",
+      "after": "Mostrar progreso completado de preparación",
+      "file": "vue3/src/cuaderno/components/ServicePreparationPanel.vue",
+      "evidence": "completion progress covers all tasks; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "037",
+      "area": "Cocina y planificación",
+      "after": "Plegar checklists largos y permitir ver todos los pasos",
+      "file": "vue3/src/cuaderno/components/ServicePreparationPanel.vue",
+      "evidence": "completion progress covers all tasks; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "038",
+      "area": "Cocina y planificación",
+      "after": "Indicar declaraciones dietéticas sin guardar y deshabilitar guardado sin cambios",
+      "file": "vue3/src/cuaderno/components/RecipeExtrasPanel.vue",
+      "evidence": "untouched diets cannot be saved; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "039",
+      "title": "Buscar formatos por ingrediente o nombre",
+      "before": "Catálogo completo sin filtro",
+      "after": "Búsqueda local tolera tildes, vacío específico y borrado",
+      "files": [
+        "vue3/src/cuaderno/pages/PreciosPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/operationalRolePage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "040",
+      "title": "Consultar catálogo antes de crear",
+      "before": "Formulario de alta siempre abierto",
+      "after": "Nuevo formato expande el alta explícitamente",
+      "files": [
+        "vue3/src/cuaderno/pages/PreciosPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/operationalRolePage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "041",
+      "title": "Precio coherente con gratis",
+      "before": "Gratis podía mantener un importe incompatible",
+      "after": "Muestra cero y bloquea importe; desmarcar restaura borrador original",
+      "files": [
+        "vue3/src/cuaderno/pages/PreciosPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/operationalRolePage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "042",
+      "title": "Contexto del formato seleccionado",
+      "before": "Detalle no repetía contenido y precio actual",
+      "after": "Detalle muestra contenido exacto y precio vigente",
+      "files": [
+        "vue3/src/cuaderno/pages/PreciosPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/operationalRolePage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "043",
+      "title": "Proteger alta pendiente",
+      "before": "Campos de alta podían cambiar durante POST",
+      "after": "Ingrediente/unidad/formato/contenido/precio/gratis bloqueados durante guardado",
+      "files": [
+        "vue3/src/cuaderno/pages/PreciosPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/operationalRolePage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "044",
+      "title": "Actualizar lista explícitamente",
+      "before": "Sin actualización manual de vista rápida",
+      "after": "Actualizar lista recupera líneas persistidas",
+      "files": [
+        "vue3/src/cuaderno/pages/ListaPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/listaPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "045",
+      "title": "Plegar completados reales",
+      "before": "Sección completada fija; autosync descartaba datos de finalización",
+      "after": "Mostrar/ocultar completados; PATCH completo preserva finalización y revisión para deshacer",
+      "files": [
+        "vue3/src/cuaderno/pages/ListaPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/listaPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "046",
+      "title": "Crear y añadir con Enter",
+      "before": "Solo botones en alta y añadido rápido",
+      "after": "Enter en nombre crea lista; en alimento/cantidad añade línea",
+      "files": [
+        "vue3/src/cuaderno/pages/ListaPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/listaPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-run-final.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "047",
+      "title": "Bloquear añadido durante carga de lista",
+      "before": "Añadir seguía habilitado durante GET",
+      "after": "Campos/acción y handler bloquean añadido pendiente",
+      "files": [
+        "vue3/src/cuaderno/pages/ListaPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/listaPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-continue.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "048",
+      "title": "Distinguir fallo de lista vacía",
+      "before": "Fallo GET podía mostrar afirmación de lista vacía",
+      "after": "Error sin falso vacío; líneas de otra lista se retiran y acciones antiguas no operan",
+      "files": [
+        "vue3/src/cuaderno/pages/ListaPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/listaPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-continue.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "049",
+      "title": "Limpiar selección y rechazar respuestas antiguas",
+      "before": "Selección no limpiable y estado anterior conservado",
+      "after": "Borrar selección limpia líneas; generación invalida incluso A→borrar→A",
+      "files": [
+        "vue3/src/cuaderno/pages/ListaPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/listaPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/local-continue.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "050",
+      "title": "Filtrar movimientos por tipo",
+      "before": "Historial mezclaba recepción/consumo/desperdicio/reversión",
+      "after": "Selector de tipo con vacío de filtro y borrado",
+      "files": [
+        "vue3/src/cuaderno/pages/AlmacenPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/almacenPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "051",
+      "title": "Acotar historial a existencia seleccionada",
+      "before": "Historial mezclaba existencias",
+      "after": "Casilla muestra solo movimientos de la existencia seleccionada",
+      "files": [
+        "vue3/src/cuaderno/pages/AlmacenPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/almacenPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "052",
+      "title": "Saltar a compras o movimientos",
+      "before": "Página larga sin accesos a secciones",
+      "after": "Enlaces VueRouter conservan ruta/base y desplazan a sección real",
+      "files": [
+        "vue3/src/cuaderno/pages/AlmacenPage.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/almacenPage.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "053",
+      "title": "Filtrar pedidos por estado",
+      "before": "Pedidos de todos los estados mezclados",
+      "after": "Selector separa estado, vacío específico y borrado; bloqueado durante mutaciones",
+      "files": [
+        "vue3/src/cuaderno/components/PurchasingPanel.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/purchasingPanel.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "054",
+      "title": "Buscar formatos en compras",
+      "before": "Selectores de formato solo desplegables",
+      "after": "Autocomplete busca en oferta y borrador",
+      "files": [
+        "vue3/src/cuaderno/components/PurchasingPanel.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/purchasingPanel.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "055",
+      "title": "Rellenar recepción pendiente",
+      "before": "Cantidad de recepción siempre manual",
+      "after": "Atajo copia resto exacto calculado sin Number",
+      "files": [
+        "vue3/src/cuaderno/components/PurchasingPanel.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/purchasingPanel.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "056",
+      "title": "Consultar destinos desde recepción",
+      "before": "Formulario de destino sin acceso a despensa",
+      "after": "Acceso nativo a despensa junto a selector de destino",
+      "files": [
+        "vue3/src/cuaderno/components/PurchasingPanel.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/purchasingPanel.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "057",
+      "title": "Buscar mínimos por alimento o ubicación",
+      "before": "Todos los mínimos mezclados",
+      "after": "Búsqueda tolera tildes y alcance global, conserva vacío real vs filtro",
+      "files": [
+        "vue3/src/cuaderno/components/StockMinimumPanel.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/stockMinimumPanel.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/warehouse-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "058",
+      "title": "Leer historial de precios completo en móvil",
+      "before": "Fechas/notas sujetas a truncamiento de Vuetify",
+      "after": "Subtítulos sin clamp móvil; estado debajo y nota larga íntegra",
+      "files": [
+        "vue3/src/cuaderno/components/PriceHistoryPanel.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/priceHistoryUi.test.mjs"
+      ],
+      "browser_evidence": "purchasing-batch2/visual-run.txt",
+      "area": "Compras, almacén y costes",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "099",
+      "area": "Recuperación de navegación",
+      "after": "Página no encontrada en español con navegación de recuperación",
+      "file": "vue3/src/pages/404Page.vue",
+      "evidence": "functional/recipeRecoveryFunctional.test.mjs; root/recipe-recovery-green.log; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    },
+    {
+      "id": "100",
+      "area": "Recuperación de navegación",
+      "after": "Estado visible de receta no disponible, carga/error/reintento y descarte de respuestas anteriores",
+      "file": "vue3/src/pages/RecipeViewPage.vue",
+      "evidence": "functional/recipeRecoveryFunctional.test.mjs; root/recipe-recovery-green.log; final-review-batch2.md",
+      "status": "accepted",
+      "commit": null
+    }
+  ],
+  "reserved": {
+    "059-081": "kitchen_continue, nativo libros/despensa/búsqueda",
+    "082-098": "purchasing_continue, nativo compras/export/editor"
+  }
+}

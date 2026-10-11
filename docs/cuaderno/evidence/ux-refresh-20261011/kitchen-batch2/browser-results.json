@@ -1,0 +1,66 @@
+[
+  {
+    "width": 390,
+    "overflow": false,
+    "writesIntercepted": 1,
+    "checks": [
+      "optional-cover-toggle",
+      "pending-period-warning",
+      "failed-refresh-preserves-loaded-period",
+      "dialog-error",
+      "print-select-all-control",
+      "empty-date-guard",
+      "zero-pagination-hidden",
+      "unchanged-diet-disabled",
+      "unsaved-diet-announced"
+    ]
+  },
+  {
+    "width": 768,
+    "overflow": false,
+    "writesIntercepted": 1,
+    "checks": [
+      "optional-cover-toggle",
+      "pending-period-warning",
+      "failed-refresh-preserves-loaded-period",
+      "dialog-error",
+      "print-select-all-control",
+      "empty-date-guard",
+      "zero-pagination-hidden",
+      "unchanged-diet-disabled",
+      "unsaved-diet-announced"
+    ]
+  },
+  {
+    "width": 1024,
+    "overflow": false,
+    "writesIntercepted": 1,
+    "checks": [
+      "optional-cover-toggle",
+      "pending-period-warning",
+      "failed-refresh-preserves-loaded-period",
+      "dialog-error",
+      "print-select-all-control",
+      "empty-date-guard",
+      "zero-pagination-hidden",
+      "unchanged-diet-disabled",
+      "unsaved-diet-announced"
+    ]
+  },
+  {
+    "width": 1440,
+    "overflow": false,
+    "writesIntercepted": 1,
+    "checks": [
+      "optional-cover-toggle",
+      "pending-period-warning",
+      "failed-refresh-preserves-loaded-period",
+      "dialog-error",
+      "print-select-all-control",
+      "empty-date-guard",
+      "zero-pagination-hidden",
+      "unchanged-diet-disabled",
+      "unsaved-diet-announced"
+    ]
+  }
+]

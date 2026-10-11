@@ -23,10 +23,10 @@
                         <v-icon :icon="item.is_current ? 'mdi-check-circle' : 'mdi-history'" class="me-3" />
                     </template>
                     <v-list-item-title>{{ priceAmountLabel(item.amount, payload.currency) }}</v-list-item-title>
-                    <v-list-item-subtitle>
+                    <v-list-item-subtitle class="text-wrap">
                         Vigencia: {{ dateLabel(item.valid_from) }} · creado: {{ dateLabel(item.created_at) }}
                     </v-list-item-subtitle>
-                    <v-list-item-subtitle v-if="item.note">{{ item.note }}</v-list-item-subtitle>
+                    <v-list-item-subtitle v-if="item.note" class="text-wrap">{{ item.note }}</v-list-item-subtitle>
                     <template #append>
                         <div class="d-flex flex-column align-end ga-1 ms-2">
                             <v-chip size="small" :color="item.is_current ? 'success' : undefined" variant="tonal">
@@ -149,5 +149,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .price-row {
     min-height: 64px;
+}
+@media (max-width: 700px) {
+    .price-row { grid-template-columns: auto 1fr; grid-template-areas: "prepend content" "prepend append"; padding-block: 0.75rem; }
+    .price-row :deep(.v-list-item-subtitle) { -webkit-line-clamp: unset; max-height: none; overflow-wrap: anywhere; }
+    .price-row :deep(.v-list-item__append) { margin-top: 0.5rem; margin-inline-start: 0; justify-content: flex-start; }
+    .price-row :deep(.v-list-item__append > div) { align-items: flex-start !important; margin-inline-start: 0 !important; }
 }
 </style>

@@ -218,3 +218,33 @@ test('event success is announced only after the updated period finishes loading'
         assert.match(textOf(mounted.root), /Anotación sintética/)
     } finally {mounted.close()}
 })
+const planningTransport=(custom)=> (path,method,body)=> {const result=custom?.(path,method,body);if(result!==undefined)return result;if(path==='edition/')return {edition:'integral'};if(path.startsWith('planning/templates/'))return {count:0,results:[]};return {...data,can_edit:true,can_merge_print:true,meal_plans:[courseMeal]}};
+test('failed period refresh retains loaded dishes and clearly identifies pending filters',async()=>{
+ let fail=false;const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport(path=>{if(fail&&path.startsWith('planning/?'))throw new Error('Sin conexión')}));
+ try{field(m.root,'Primer día').props['onUpdate:modelValue']('2026-12-01');await flush();assert.match(textOf(m.root),/Actualiza el periodo para ver/);fail=true;await button(m.root,'Actualizar periodo').props.onClick();await flush();assert.ok(field(m.root,'Tipo de plato'));assert.match(textOf(m.root),/Sin conexión/)}finally{m.close()}
+});
+test('loading another period clears stale print groups and selection',async()=>{
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport());try{field(m.root,'Platos del periodo').props['onUpdate:modelValue']([7]);await flush();await button(m.root,'Añadir menú a la impresión').props.onClick();await flush();assert.ok(button(m.root,'Quitar'));field(m.root,'Primer día').props['onUpdate:modelValue']('2026-12-01');await flush();await button(m.root,'Actualizar periodo').props.onClick();await flush();assert.equal(button(m.root,'Quitar'),undefined);assert.deepEqual(field(m.root,'Platos del periodo').props.modelValue,[])}finally{m.close()}
+});
+test('blank course order and reversed event dates show local errors without writes',async()=>{
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport());try{field(m.root,'Nombre').props['onUpdate:modelValue']('Primero');field(m.root,'Comida').props['onUpdate:modelValue']({id:1});field(m.root,'Orden').props['onUpdate:modelValue']('');await flush();await button(m.root,'Añadir tipo de plato').props.onClick();await flush();assert.match(textOf(m.root),/orden debe ser/);field(m.root,'Título').props['onUpdate:modelValue']('Evento');field(m.root,'Desde').props['onUpdate:modelValue']('2026-12-03');field(m.root,'Hasta').props['onUpdate:modelValue']('2026-12-01');await flush();await button(m.root,'Guardar anotación').props.onClick();await flush();assert.match(textOf(m.root),/fecha final/);assert.equal(m.calls.some(c=>c.method!=='GET'),false)}finally{m.close()}
+});
+test('planning empty states point to the calendar, types and event workflows',async()=>{
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport(path=>path.startsWith('planning/?')?{...data,can_edit:true}:undefined));try{assert.match(textOf(m.root),/No hay platos en el periodo/);assert.match(textOf(m.root),/Todavía no hay tipos de plato/);assert.match(textOf(m.root),/No hay eventos ni ausencias/);assert.ok(button(m.root,'Añadir platos en el calendario'))}finally{m.close()}
+});
+test('print select-all uses authorized meals and reports exhausted menu capacity',async()=>{
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport(path=>path.startsWith('planning/?')?{...data,can_edit:true,meal_plans:[courseMeal]}:undefined));try{await button(m.root,'Seleccionar todos los platos').props.onClick();await flush();assert.deepEqual(field(m.root,'Platos del periodo').props.modelValue,[7]);await button(m.root,'Añadir menú a la impresión').props.onClick();await flush();assert.match(textOf(m.root),/Has alcanzado el máximo de 1 menú/)}finally{m.close()}
+});
+
+test('fractional course order cannot reach the server', async()=>{
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport());try{field(m.root,'Nombre').props['onUpdate:modelValue']('Primero');field(m.root,'Comida').props['onUpdate:modelValue']({id:1});field(m.root,'Orden').props['onUpdate:modelValue']('1.5');await flush();await button(m.root,'Añadir tipo de plato').props.onClick();await flush();assert.match(textOf(m.root),/orden debe ser/);assert.equal(m.calls.some(c=>c.method!=='GET'),false)}finally{m.close()}
+});
+test('template and calendar recipe identities link to native recipe pages',async()=>{
+ const meal={...courseMeal,recipe:{id:9,name:'Sopa con receta'}};
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport(path=>path.startsWith('planning/templates/')?{count:1,results:[{id:2,name:'Semana',weeks:1,entries:[{recipe:9,recipe_name:'Sopa con receta',day_index:0,meal_type:1,servings:'4'}]}]}:path.startsWith('planning/?')?{...data,can_edit:true,meal_plans:[meal]}:undefined));
+ try{assert.ok(all(m.root,n=>n.type==='router-link'&&n.props.to?.params?.id===9).length);assert.ok(all(m.root,n=>n.type==='v-list-item'&&n.props.to?.params?.id===9).length);assert.ok(all(m.root,n=>n.type==='details').length)}finally{m.close()}
+});
+test('rejected template action displays its error inside the open dialog',async()=>{
+ const m=await mountFunctional('./pages/MenuPlanningPage.vue',{},planningTransport((path,method)=>method==='POST'?Promise.reject(new Error('Conflicto local')):path.startsWith('planning/templates/')?{count:1,results:[{id:2,name:'Semana',weeks:1,revision:'a'.repeat(64),entries:[]}]}:undefined));
+ try{button(m.root,'Aplicar al calendario').props.onClick();await flush();await button(m.root,'Aplicar plantilla').props.onClick();await flush();const dialog=all(m.root,n=>n.type==='v-dialog')[0];assert.match(textOf(dialog),/Conflicto local/)}finally{m.close()}
+});

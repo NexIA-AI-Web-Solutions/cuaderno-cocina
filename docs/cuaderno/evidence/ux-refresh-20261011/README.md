@@ -49,3 +49,11 @@ El test existente de renderizado Markdown requiere su contenedor aislado `cuader
 Revisión independiente final: **SHIP**, tras corregir el cierre fijo del menú y el desbordamiento de herramientas en móvil. Bundle compilado: `/home/kripta/cuaderno-ux-evidence-20261011/cuaderno-ux-frontend.tar.gz`, SHA-256 `319de745bc84a0987a2f84f3b6d7f324696a374a54148f18e3d1e7215c7753cf`.
 
 Candidato local compilado y probado; producción conserva su imagen original. El despliegue real requiere autorización según `AGENTS.md`. Esta entrega no sustituye los gates históricos de CI, restauración o aceptación de otros cambios documentados en el repositorio.
+
+## Ampliación a 100 mejoras — segundo lote
+
+Se han aceptado 60 resultados distintos en `improvements.json`: los 18 del primer lote, 20 de planificación/reservas/preparación, 20 de compras/almacén/costes y 2 de recuperación de navegación. Los 40 nativos restantes siguen en implementación y revisión. No se cuentan pruebas, capturas ni correcciones introducidas por este trabajo como resultados adicionales.
+
+El segundo lote conserva borradores y datos al fallar peticiones, evita respuestas obsoletas, simplifica filtros y navegación y permite leer datos completos en móvil. Las pruebas funcionales acumuladas pasaron 411/411; la corrección posterior de recuperación de receta pasó sus 9 pruebas específicas. El build Vite pasó. Se verificaron los cuatro tamaños 390×844, 768×1024, 1024×768 y 1440×900 y las nueve combinaciones de edición/rol.
+
+Las escrituras de prueba (plantillas, eventos, dietas, reservas, listas, formatos y mínimos) se ejecutaron contra una base sintética aislada en localhost:18092. La aplicación publicada no recibió escrituras de negocio ni despliegue. Credenciales y sesiones permanecen fuera de Git. Véase `final-review-batch2.md` para revisión independiente y sus límites. El aviso técnico redundante de receta403/404 mencionado allí se suprimió después con prueba roja/verde.

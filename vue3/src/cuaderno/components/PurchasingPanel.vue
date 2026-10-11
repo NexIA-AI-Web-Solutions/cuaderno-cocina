@@ -7,7 +7,7 @@
                 <v-card-title>Oferta de proveedor</v-card-title>
                 <v-card-subtitle>El precio queda en el historial del proveedor y no cambia el precio de referencia.</v-card-subtitle>
                 <v-card-text>
-                    <v-select
+                    <v-autocomplete
                         v-model="offer.package"
                         :items="packages"
                         :item-title="packageLabel"
@@ -15,7 +15,7 @@
                         label="Formato de compra"
                         :loading="loadingCatalog"
                         :disabled="!props.canOperate"
-                        no-data-text="Crea primero un formato en Ingredientes y precios"
+                        no-data-text="No hay formatos que coincidan. Puedes crearlos en Ingredientes y precios"
                     />
                     <v-btn :to="{name: 'CuadernoPreciosPage'}" variant="text" min-height="44" prepend-icon="fa-solid fa-tags" class="mb-3">Ver o crear formatos y precios</v-btn>
                     <v-model-select v-model="offer.supplier" model="Supermarket" label="Proveedor" :search-on-load="props.canOperate" create :disabled="!props.canOperate" />
@@ -38,7 +38,7 @@
                 <v-card-title>Nuevo pedido</v-card-title>
                 <v-card-subtitle>Un pedido no aumenta las existencias. Recíbelo cuando llegue.</v-card-subtitle>
                 <v-card-text>
-                    <v-select
+                    <v-autocomplete
                         v-model="draft.package"
                         :items="packages"
                         :item-title="packageLabel"
@@ -81,8 +81,10 @@
                 </v-card-title>
                 <v-card-text>
                     <v-alert v-if="ordersMessage" type="error" variant="tonal" class="mb-3" role="alert">{{ ordersMessage }}</v-alert>
-                    <v-list v-if="orders.length" lines="three">
-                        <v-list-item v-for="order in orders" :key="order.id" class="order-row px-0">
+                    <v-select v-model="orderState" :items="orderStates" item-title="title" item-value="value" label="Estado de pedido" :disabled="receiving || busyOrder !== null || reversingReceipt !== null" clearable />
+                    <p v-if="orders.length && !filteredOrders.length" role="status">No hay pedidos con este estado.</p>
+                    <v-list v-if="filteredOrders.length" lines="three">
+                        <v-list-item v-for="order in filteredOrders" :key="order.id" class="order-row px-0">
                             <v-list-item-title class="font-weight-medium text-wrap">
                                 <v-btn variant="text" class="order-name" min-height="44" :aria-expanded="expandedReceipts === order.id" @click="toggleReceipts(order)">{{ orderName(order) }}</v-btn>
                             </v-list-item-title>
@@ -140,12 +142,14 @@
                                     search-on-load
                                     :disabled="receiving || !props.canOperate"
                                 />
+                                <v-btn :to="{name: 'PantryPage'}" variant="text" min-height="44" class="mb-2">Consultar destinos en la despensa</v-btn>
                                 <v-text-field
                                     v-model="receipt.quantity"
                                     :label="`Cantidad recibida (${unitName(order)})`"
                                     inputmode="decimal"
                                     :disabled="receiving || !props.canOperate"
                                 />
+                                <v-btn variant="tonal" min-height="44" class="mb-3" :disabled="receiving || !props.canOperate" @click="receipt.quantity = remaining(order)">Recibir todo lo pendiente ({{ remaining(order) }} {{ unitName(order) }})</v-btn>
                                 <div class="d-flex flex-wrap ga-2">
                                     <v-btn color="primary" min-height="44" :loading="receiving" :disabled="!props.canOperate" @click="receive(order)">Confirmar recepción</v-btn>
                                     <v-btn variant="text" min-height="44" :disabled="receiving" @click="closeReceipt">Cerrar</v-btn>
@@ -179,7 +183,7 @@
                             </div>
                         </v-list-item>
                     </v-list>
-                    <v-alert v-else-if="!loadingOrders && !ordersMessage" type="info" variant="tonal">
+                    <v-alert v-else-if="!orders.length && !loadingOrders && !ordersMessage" type="info" variant="tonal">
                         Todavía no hay pedidos. Guarda una oferta si quieres congelar proveedor y precio, y crea el primer borrador.
                     </v-alert>
                 </v-card-text>
@@ -274,6 +278,13 @@ type Package = {id: number; food: number; food_name: string; unit: number; unit_
 const packages = ref<Package[]>([])
 const offers = ref<Offer[]>([])
 const orders = ref<Order[]>([])
+const orderState = ref<string | null>(null)
+const orderStates = [
+    {title: 'Borrador', value: 'draft'}, {title: 'Pedido', value: 'ordered'},
+    {title: 'Recibido parcialmente', value: 'part_received'}, {title: 'Recibido', value: 'received'},
+    {title: 'Cancelado', value: 'cancelled'},
+]
+const filteredOrders = computed(() => orders.value.filter(order => !orderState.value || order.state === orderState.value))
 const replenishment = ref<ReplenishmentRow[]>([])
 const replenishmentFrom = ref('')
 const replenishmentTo = ref('')
