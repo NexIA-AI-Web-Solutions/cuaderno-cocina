@@ -272,3 +272,12 @@ publicado `42c420d` ni esta nueva fuente; V12 sigue en producción.
 - [ ] Firefox/WebKit y dispositivo iPad físico (fuera de esta comprobación).
 
 Evidencia específica: `evidence/ux-refresh-20261011/README.md`.
+
+## Cierre del candidato de 100 mejoras UI/UX · 2026-10-11
+
+100 resultados distintos aceptados en `evidence/ux-refresh-20261011/100-mejoras.md`; ledger001–100 completo. Suite final430/430, tipos Vue y build aprobados. Revisiones independientes aprobadas; cuatro tamaños, nueve combinaciones de edición/rol y persistencia sintética verificadas. Detalles, alcance y límites en el README de evidencia.
+
+- [x] Código, pruebas, revisiones y evidencia de100 resultados.
+- [x] Candidato local compilado y empaquetado.
+- [ ] Autorización de despliegue y aceptación pública posterior.
+- [ ] Firefox/WebKit, iPad físico y gates históricos ajenos a esta campaña.

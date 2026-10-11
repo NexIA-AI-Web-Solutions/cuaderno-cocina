@@ -1,0 +1,267 @@
+{
+  "ids": "082–098",
+  "count": 17,
+  "entries": [
+    {
+      "id": "082",
+      "before": "Parsed fractional quantities were raised to at least1.",
+      "after": "Keep the exact positive parsed amount.",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Quickadd functionaltest; real native parser and POST persisted0.25.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ]
+    },
+    {
+      "id": "083",
+      "before": "Quickadd relied on external loading and allowed overlapping requests.",
+      "after": "Own pending state blocks duplicate parsing/creation and disables controls until settlement.",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Quickadd functionaltest exercises a second invocation during unresolved create; browser controls disabled and POSTcount1.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ]
+    },
+    {
+      "id": "084",
+      "before": "Draft and success state cleared before creation resolved; default autocomplete failed draft disappeared.",
+      "after": "Clear and mark success only on saved result; failed text/autocomplete draft stays editable with explicit retry.",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functionaltest undefined failedstore result preserves draft; browser503 textmode retention and autocomplete visible draft/retry saved.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ]
+    },
+    {
+      "id": "085",
+      "before": "Whitespace quickadd reached parser.",
+      "after": "Trim and reject empty input before requesting parser.",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functionaltest and browser parser-callcount0.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ]
+    },
+    {
+      "id": "086",
+      "before": "Relatedrecipe fetch failure could leave loading busy without retry.",
+      "after": "Catch related/main requests, release loading in finally, show explicit retry and block incomplete submission.",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional failure/retry test; browser related503 retry restored ingredient.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ]
+    },
+    {
+      "id": "087",
+      "before": "Failure of initial shopping-list-recipe creation could leave busy state locked.",
+      "after": "Await initial and bulk creates within try/catch/finally and release busy on either failure.",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional firstcreate failure and browser initialPOST503 restored enabled add button.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ]
+    },
+    {
+      "id": "088",
+      "before": "Ingredient checkboxes had no contextual accessible name.",
+      "after": "Name each checkbox with food and recipe; stop checkbox click bubbling to prevent double toggle.",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [],
+      "validation": "Browser contextual checkbox Incluir Aceite DEMO de NATIVE-P UX recipe20261011 present.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ]
+    },
+    {
+      "id": "089",
+      "before": "Serving input lacked a finite positive guard for submission.",
+      "after": "Validate finite positive servings, show error and disable add for invalid values.",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional zero/negative/nonfinite cases; real keyboard replacement to0 showed validation and disabled submit.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ]
+    },
+    {
+      "id": "090",
+      "before": "Failed export status requests could leave busy indefinitely.",
+      "after": "Show recoverable poll error, release busy and retry the existing export job.",
+      "files": [
+        "vue3/src/components/settings/ExportDataSettings.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional reject/retry test and browser503 followed retry samejob987.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ]
+    },
+    {
+      "id": "091",
+      "before": "Scheduled export polling continued after leaving component.",
+      "after": "Clear scheduled timer on unmount and ignore late responses via lifecycle generation.",
+      "files": [
+        "vue3/src/components/settings/ExportDataSettings.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional unmount timer test; browser navigation then1300ms observes no further polls.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ]
+    },
+    {
+      "id": "092",
+      "before": "CSV fields were concatenated without delimiter/quote/newline escaping.",
+      "after": "Quote affected fields and double embedded quotes for header/category/entry cells.",
+      "files": [
+        "vue3/src/components/dialogs/ShoppingExportDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Exact functional CSV tests; actual browser intercepted synthetic field withsemicolon/quotes/newline yielded correctly escaped preview and identical download bytes at4widths.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ]
+    },
+    {
+      "id": "093",
+      "before": "DataURI download could truncate fragments such as# and did not manage objectURL lifecycle.",
+      "after": "Download UTF8 Blob with temporary anchor and revoke objectURL after download.",
+      "files": [
+        "vue3/src/components/dialogs/ShoppingExportDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional realBlob test checks bytes/anchor removal/revoke; real Chromium download keeps# and multiline content.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ]
+    },
+    {
+      "id": "094",
+      "before": "Icon-only format choices and readonly export preview had no useful names/group.",
+      "after": "Contextually name and group all formats, label preview and give format buttons44px minimum targets.",
+      "files": [
+        "vue3/src/components/dialogs/ShoppingExportDialog.vue"
+      ],
+      "tests": [],
+      "validation": "Browser rolegroup, button and preview names checked; fourwidth screenshots.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ]
+    },
+    {
+      "id": "095",
+      "before": "Ingredient option activators were explicitly removed from keyboard tab order.",
+      "after": "Make ingredient/step menus keyboard reachable, contextually named, with44px targets.",
+      "files": [
+        "vue3/src/components/inputs/StepEditor.vue"
+      ],
+      "tests": [],
+      "validation": "Browser focus+Enter opens AceiteDEMO ingredient menu.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ]
+    },
+    {
+      "id": "096",
+      "before": "Mobile instruction alert responded only to pointer click.",
+      "after": "Add semanticbutton role, focusability, contextual name and Enter/Space activation.",
+      "files": [
+        "vue3/src/components/inputs/StepEditor.vue"
+      ],
+      "tests": [],
+      "validation": "Local mobile Space opens instructions editor; independent live readonly Enter verification.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ]
+    },
+    {
+      "id": "097",
+      "before": "Scale/step split/merge/add/order icon actions lacked names and coherent touch grouping.",
+      "after": "Name scale and every step action, group related controls and provide44px targets/wrapping.",
+      "files": [
+        "vue3/src/components/model_editors/RecipeEditor.vue"
+      ],
+      "tests": [],
+      "validation": "Browser namedbuttons and actiongroups;4width editor screenshots withno horizontaloverflow.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ]
+    },
+    {
+      "id": "098",
+      "before": "Time badge depended on workingTime and unsafe working+waiting arithmetic without units.",
+      "after": "Sum only finite positive work/wait values; display waiting-only totals withmin unit.",
+      "files": [
+        "vue3/src/components/display/RecipeCard.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional waiting-only/missing/nonfinite tests; browser card20min.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/card.txt"
+      ]
+    }
+  ],
+  "functionalEvidence": "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/native-green.txt",
+  "baselineRedEvidence": "/home/kripta/cuaderno-ux-evidence-20261011/purchasing-batch2/native-red.txt",
+  "widths": [
+    1440,
+    1024,
+    768,
+    390
+  ],
+  "note": "Before descriptions derive from inspected source and functional baseline; initial exploration screenshots are intermediate builds, not pre-change screenshots. IDs082–085 use clean successful scoped quickadd run (exit0). Other final validation combines scoped tail/remainder/card/visual evidence; zero servings was checked by real keyboard replacement because Playwright.fill concatenates values in VNumberInput.",
+  "visualEvidence": "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json",
+  "finalSourceConfirmed": true,
+  "quickaddScopedExitCode": 0
+}

@@ -1,0 +1,276 @@
+{
+  "outcomes": [
+    {
+      "id": "059",
+      "title": "Books heading and collection context",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-books-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "060",
+      "title": "Visible books loading progress",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "061",
+      "title": "Empty books offers first-book creation",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "062",
+      "title": "Unmatched book search offers clear recovery",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "063",
+      "title": "Named create-book action",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "064",
+      "title": "Book fetch failure preserves collection with inline retry",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "065",
+      "title": "Named Add stock action",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "066",
+      "title": "Contextual stock history/remove/move actions with 44px targets",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "067",
+      "title": "Responsive pantry cards and wrapping actions",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-pantry-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "068",
+      "title": "Latest pantry filter response wins over stale requests",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "069",
+      "title": "Add resets previously selected stock after Move",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "070",
+      "title": "Initial stock-load failure releases dialog and offers retry",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-pantry-error-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "071",
+      "title": "Move preselects current location and preserves untouched sublocation",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "072",
+      "title": "Add validates food, location and positive amount before write",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "073",
+      "title": "Task-specific accessible names on edit/stock/history dialogs",
+      "files": [
+        "vue3/src/components/dialogs/ModelEditDialog.vue",
+        "vue3/src/components/dialogs/PantryBookingDialog.vue",
+        "vue3/src/components/dialogs/InventoryEntryLogDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "074",
+      "title": "History resets and fetches current selected stock entry",
+      "files": [
+        "vue3/src/components/tables/InventoryEntryLogTable.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "075",
+      "title": "Explicit previous and new amount with units in stock history",
+      "files": [
+        "vue3/src/components/tables/InventoryEntryLogTable.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persisted-history.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "076",
+      "title": "Empty recipe search offers clear-search/filter recovery",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "077",
+      "title": "Advanced filter toggle has named expanded state",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "078",
+      "title": "Contextual names for remove/load/save filter controls",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "079",
+      "title": "Failed saved-filter creation retains open draft and inline error",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-filter-error-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "080",
+      "title": "Saved-filter name rejects blank and whitespace-only input",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    },
+    {
+      "id": "081",
+      "title": "Native keyboard-accessible recipe links in search table",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs"
+    }
+  ],
+  "count": 23,
+  "browserWidths": [
+    390,
+    768,
+    1024,
+    1440
+  ],
+  "unitTests": {
+    "passed": 13,
+    "failed": 0
+  },
+  "baseline": "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/local-reproduction.json",
+  "persistence": "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json",
+  "notes": [
+    "Adversarial stale-response and history-entry-change cases are covered by mounted actual-component tests. Browser verification includes four sizes and real local book/filter/stock writes.",
+    "Existing pending-mutation close/reopen race reported by reviewer predates this tranche; no new source regression found."
+  ]
+}

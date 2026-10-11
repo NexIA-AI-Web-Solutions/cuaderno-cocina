@@ -1,0 +1,33 @@
+[
+  {
+    "ids": [
+      85
+    ],
+    "text": "trimmed blank does not call parser"
+  },
+  {
+    "ids": [
+      83,
+      84
+    ],
+    "text": "pending add disables owninput/button; originaltext persists until store resolves"
+  },
+  {
+    "ids": [
+      82
+    ],
+    "text": "real native parser+store persisted0.25 rather than raising to1"
+  },
+  {
+    "ids": [
+      84
+    ],
+    "text": "failed text-mode store write preserves editable draft"
+  },
+  {
+    "ids": [
+      84
+    ],
+    "text": "default autocomplete failure restores visible draft and real retry succeeds"
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "width": 390,
+    "overflow": false,
+    "checks": [
+      "book-heading-query-clear-error-retention-retry",
+      "empty-recipe-search-recovery",
+      "expanded-filter-name-state",
+      "keyboard-recipe-link",
+      "blank-filter-name-no-write",
+      "failed-filter-name-dialog-preserved",
+      "contextual-stock-actions-44px",
+      "mobile-stock-cards-desktop-table",
+      "stock-initial-error-untrapped-retry",
+      "stock-add-required-food"
+    ]
+  },
+  {
+    "width": 768,
+    "overflow": false,
+    "checks": [
+      "book-heading-query-clear-error-retention-retry",
+      "empty-recipe-search-recovery",
+      "expanded-filter-name-state",
+      "keyboard-recipe-link",
+      "blank-filter-name-no-write",
+      "failed-filter-name-dialog-preserved",
+      "contextual-stock-actions-44px",
+      "mobile-stock-cards-desktop-table",
+      "stock-initial-error-untrapped-retry",
+      "stock-add-required-food"
+    ]
+  },
+  {
+    "width": 1024,
+    "overflow": false,
+    "checks": [
+      "book-heading-query-clear-error-retention-retry",
+      "empty-recipe-search-recovery",
+      "expanded-filter-name-state",
+      "keyboard-recipe-link",
+      "blank-filter-name-no-write",
+      "failed-filter-name-dialog-preserved",
+      "contextual-stock-actions-44px",
+      "mobile-stock-cards-desktop-table",
+      "stock-initial-error-untrapped-retry",
+      "stock-add-required-food"
+    ]
+  },
+  {
+    "width": 1440,
+    "overflow": false,
+    "checks": [
+      "book-heading-query-clear-error-retention-retry",
+      "empty-recipe-search-recovery",
+      "expanded-filter-name-state",
+      "keyboard-recipe-link",
+      "blank-filter-name-no-write",
+      "failed-filter-name-dialog-preserved",
+      "contextual-stock-actions-44px",
+      "mobile-stock-cards-desktop-table",
+      "stock-initial-error-untrapped-retry",
+      "stock-add-required-food"
+    ]
+  }
+]

@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "width": 390,
+      "path": "/recipe/999999999",
+      "heading": "Receta no disponible",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/ux-verification-unknown",
+      "heading": "Página no encontrada",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "homeSearch": true
+    },
+    {
+      "width": 768,
+      "path": "/recipe/999999999",
+      "heading": "Receta no disponible",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "path": "/ux-verification-unknown",
+      "heading": "Página no encontrada",
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "homeSearch": true
+    },
+    {
+      "width": 1024,
+      "path": "/recipe/999999999",
+      "heading": "Receta no disponible",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "path": "/ux-verification-unknown",
+      "heading": "Página no encontrada",
+      "overflow": false
+    },
+    {
+      "width": 1024,
+      "homeSearch": true
+    },
+    {
+      "width": 1440,
+      "path": "/recipe/999999999",
+      "heading": "Receta no disponible",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/ux-verification-unknown",
+      "heading": "Página no encontrada",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "homeSearch": true
+    }
+  ],
+  "errors": [],
+  "productionBusinessWrites": 0
+}

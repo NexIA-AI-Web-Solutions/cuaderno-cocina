@@ -1,6 +1,6 @@
 {
   "target": 100,
-  "accepted": 60,
+  "accepted": 100,
   "counting": "Un resultado observable distinto; tests, capturas y correcciones de la propia implementación no son mejoras extra.",
   "items": [
     {
@@ -190,7 +190,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "failed period refresh retains loaded dishes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "020",
@@ -199,7 +199,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "failed period refresh retains loaded dishes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "021",
@@ -208,7 +208,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "loading another period clears stale print groups; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "022",
@@ -217,7 +217,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "blank course order; fractional course order; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "023",
@@ -226,7 +226,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "blank course order and reversed event dates; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "024",
@@ -235,7 +235,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "template and calendar recipe identities link; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "025",
@@ -244,7 +244,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "planning empty states; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "026",
@@ -253,7 +253,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "planning empty states; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "027",
@@ -262,7 +262,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "planning empty states; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "028",
@@ -271,7 +271,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "print select-all; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "029",
@@ -280,7 +280,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "print select-all; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "030",
@@ -289,7 +289,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "rejected template action displays its error inside; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "031",
@@ -298,7 +298,7 @@
       "file": "vue3/src/cuaderno/pages/MenuPlanningPage.vue",
       "evidence": "template and calendar recipe identities link; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "032",
@@ -307,7 +307,7 @@
       "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
       "evidence": "empty reservations hide pagination; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "033",
@@ -316,7 +316,7 @@
       "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
       "evidence": "empty reservations; clearing a loaded date removes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "034",
@@ -325,7 +325,7 @@
       "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
       "evidence": "new reservation previews dishes; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "035",
@@ -334,7 +334,7 @@
       "file": "vue3/src/cuaderno/pages/ReservasPage.vue",
       "evidence": "pending reservation inspection prevents duplicate; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "036",
@@ -343,7 +343,7 @@
       "file": "vue3/src/cuaderno/components/ServicePreparationPanel.vue",
       "evidence": "completion progress covers all tasks; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "037",
@@ -352,7 +352,7 @@
       "file": "vue3/src/cuaderno/components/ServicePreparationPanel.vue",
       "evidence": "completion progress covers all tasks; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "038",
@@ -361,7 +361,7 @@
       "file": "vue3/src/cuaderno/components/RecipeExtrasPanel.vue",
       "evidence": "untouched diets cannot be saved; kitchen-batch2/browser-results.json; persistence-results.json; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "039",
@@ -377,7 +377,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "040",
@@ -393,7 +393,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "041",
@@ -409,7 +409,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "042",
@@ -425,7 +425,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "043",
@@ -441,7 +441,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "044",
@@ -457,7 +457,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "045",
@@ -473,7 +473,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "046",
@@ -489,7 +489,7 @@
       "browser_evidence": "purchasing-batch2/local-run-final.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "047",
@@ -505,7 +505,7 @@
       "browser_evidence": "purchasing-batch2/local-continue.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "048",
@@ -521,7 +521,7 @@
       "browser_evidence": "purchasing-batch2/local-continue.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "049",
@@ -537,7 +537,7 @@
       "browser_evidence": "purchasing-batch2/local-continue.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "050",
@@ -553,7 +553,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "051",
@@ -569,7 +569,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "052",
@@ -585,7 +585,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "053",
@@ -601,7 +601,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "054",
@@ -617,7 +617,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "055",
@@ -633,7 +633,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "056",
@@ -649,7 +649,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "057",
@@ -665,7 +665,7 @@
       "browser_evidence": "purchasing-batch2/warehouse-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "058",
@@ -681,7 +681,654 @@
       "browser_evidence": "purchasing-batch2/visual-run.txt",
       "area": "Compras, almacén y costes",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
+    },
+    {
+      "id": "059",
+      "title": "Books heading and collection context",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-books-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Cabecera y contexto de los libros de recetas",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "060",
+      "title": "Visible books loading progress",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Progreso visible mientras se cargan libros",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "061",
+      "title": "Empty books offers first-book creation",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Crear el primer libro desde la colección vacía",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "062",
+      "title": "Unmatched book search offers clear recovery",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Limpiar búsqueda de libros sin resultados",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "063",
+      "title": "Named create-book action",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Acción de crear libro identificada para lectores de pantalla",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "064",
+      "title": "Book fetch failure preserves collection with inline retry",
+      "files": [
+        "vue3/src/pages/BooksPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Error de carga de libros con reintento en contexto",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "065",
+      "title": "Named Add stock action",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Acción de añadir existencias identificada",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "066",
+      "title": "Contextual stock history/remove/move actions with 44px targets",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Historial, retirada y movimiento con nombres de alimento y objetivos de44px",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "067",
+      "title": "Responsive pantry cards and wrapping actions",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-pantry-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Tarjetas de despensa adaptadas al móvil",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "068",
+      "title": "Latest pantry filter response wins over stale requests",
+      "files": [
+        "vue3/src/pages/PantryPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Descartar respuestas de filtros de despensa anteriores",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "069",
+      "title": "Add resets previously selected stock after Move",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Añadir existencias empieza limpio tras mover otra entrada",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "070",
+      "title": "Initial stock-load failure releases dialog and offers retry",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-pantry-error-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Recuperar diálogo si falla la carga inicial de existencias",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "071",
+      "title": "Move preselects current location and preserves untouched sublocation",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Mover conserva ubicación y sububicación actuales",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "072",
+      "title": "Add validates food, location and positive amount before write",
+      "files": [
+        "vue3/src/components/dialogs/PantryBookingDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persistence-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Validar alimento, ubicación y cantidad positiva antes de crear existencias",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "073",
+      "title": "Task-specific accessible names on edit/stock/history dialogs",
+      "files": [
+        "vue3/src/components/dialogs/ModelEditDialog.vue",
+        "vue3/src/components/dialogs/PantryBookingDialog.vue",
+        "vue3/src/components/dialogs/InventoryEntryLogDialog.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Identificar diálogos de edición, existencias e historial por su tarea",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "074",
+      "title": "History resets and fetches current selected stock entry",
+      "files": [
+        "vue3/src/components/tables/InventoryEntryLogTable.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Recargar historial y reiniciar página al cambiar de existencia",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "075",
+      "title": "Explicit previous and new amount with units in stock history",
+      "files": [
+        "vue3/src/components/tables/InventoryEntryLogTable.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/persisted-history.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Mostrar cantidad anterior, nueva y unidades en el historial",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "076",
+      "title": "Empty recipe search offers clear-search/filter recovery",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Recuperar búsqueda de recetas sin resultados limpiando filtros",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "077",
+      "title": "Advanced filter toggle has named expanded state",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Identificar filtro avanzado y comunicar su estado abierto",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "078",
+      "title": "Contextual names for remove/load/save filter controls",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/green.txt"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Identificar acciones de quitar, cargar y guardar filtros",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "079",
+      "title": "Failed saved-filter creation retains open draft and inline error",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/after-filter-error-390.png"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Conservar nombre y diálogo cuando falla guardar filtro",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "080",
+      "title": "Saved-filter name rejects blank and whitespace-only input",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Rechazar nombres de filtro vacíos",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "081",
+      "title": "Native keyboard-accessible recipe links in search table",
+      "files": [
+        "vue3/src/pages/SearchPage.vue"
+      ],
+      "evidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-kitchen/browser-results.json"
+      ],
+      "tests": "vue3/src/cuaderno/nativeKitchenUx.test.mjs",
+      "after": "Abrir recetas de la tabla con enlaces accesibles por teclado",
+      "area": "Libros, despensa y búsqueda",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "082",
+      "before": "Parsed fractional quantities were raised to at least1.",
+      "after": "Conservar cantidades fraccionarias al añadir a la compra",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Quickadd functionaltest; real native parser and POST persisted0.25.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "083",
+      "before": "Quickadd relied on external loading and allowed overlapping requests.",
+      "after": "Bloquear envíos duplicados mientras se guarda un alimento",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Quickadd functionaltest exercises a second invocation during unresolved create; browser controls disabled and POSTcount1.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "084",
+      "before": "Draft and success state cleared before creation resolved; default autocomplete failed draft disappeared.",
+      "after": "Conservar borrador fallido y permitir editarlo y reintentarlo",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functionaltest undefined failedstore result preserves draft; browser503 textmode retention and autocomplete visible draft/retry saved.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "085",
+      "before": "Whitespace quickadd reached parser.",
+      "after": "Rechazar entradas vacías antes de interpretar alimentos",
+      "files": [
+        "vue3/src/components/inputs/ShoppingListEntryInput.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functionaltest and browser parser-callcount0.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd.txt",
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/quickadd-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "086",
+      "before": "Relatedrecipe fetch failure could leave loading busy without retry.",
+      "after": "Recuperar la carga de ingredientes relacionados con reintento",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional failure/retry test; browser related503 retry restored ingredient.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "087",
+      "before": "Failure of initial shopping-list-recipe creation could leave busy state locked.",
+      "after": "Liberar estado ocupado si falla crear la receta de compra",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional firstcreate failure and browser initialPOST503 restored enabled add button.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "088",
+      "before": "Ingredient checkboxes had no contextual accessible name.",
+      "after": "Identificar casillas de ingredientes por alimento y receta",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [],
+      "validation": "Browser contextual checkbox Incluir Aceite DEMO de NATIVE-P UX recipe20261011 present.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "089",
+      "before": "Serving input lacked a finite positive guard for submission.",
+      "after": "Validar raciones finitas y positivas antes de añadir",
+      "files": [
+        "vue3/src/components/dialogs/AddToShoppingDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional zero/negative/nonfinite cases; real keyboard replacement to0 showed validation and disabled submit.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-remainder.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "090",
+      "before": "Failed export status requests could leave busy indefinitely.",
+      "after": "Recuperar consultas fallidas del estado de exportación",
+      "files": [
+        "vue3/src/components/settings/ExportDataSettings.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional reject/retry test and browser503 followed retry samejob987.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "091",
+      "before": "Scheduled export polling continued after leaving component.",
+      "after": "Cancelar consultas periódicas de exportación al salir",
+      "files": [
+        "vue3/src/components/settings/ExportDataSettings.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional unmount timer test; browser navigation then1300ms observes no further polls.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "092",
+      "before": "CSV fields were concatenated without delimiter/quote/newline escaping.",
+      "after": "Escapar separadores, comillas y saltos de línea en CSV",
+      "files": [
+        "vue3/src/components/dialogs/ShoppingExportDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Exact functional CSV tests; actual browser intercepted synthetic field withsemicolon/quotes/newline yielded correctly escaped preview and identical download bytes at4widths.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "093",
+      "before": "DataURI download could truncate fragments such as# and did not manage objectURL lifecycle.",
+      "after": "Descargar contenido completo mediante Blob, incluidos caracteres #",
+      "files": [
+        "vue3/src/components/dialogs/ShoppingExportDialog.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional realBlob test checks bytes/anchor removal/revoke; real Chromium download keeps# and multiline content.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "094",
+      "before": "Icon-only format choices and readonly export preview had no useful names/group.",
+      "after": "Identificar y agrupar formatos y vista previa de exportación",
+      "files": [
+        "vue3/src/components/dialogs/ShoppingExportDialog.vue"
+      ],
+      "tests": [],
+      "validation": "Browser rolegroup, button and preview names checked; fourwidth screenshots.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "095",
+      "before": "Ingredient option activators were explicitly removed from keyboard tab order.",
+      "after": "Abrir menús de ingredientes por teclado",
+      "files": [
+        "vue3/src/components/inputs/StepEditor.vue"
+      ],
+      "tests": [],
+      "validation": "Browser focus+Enter opens AceiteDEMO ingredient menu.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "096",
+      "before": "Mobile instruction alert responded only to pointer click.",
+      "after": "Editar instrucciones móviles con Enter o espacio",
+      "files": [
+        "vue3/src/components/inputs/StepEditor.vue"
+      ],
+      "tests": [],
+      "validation": "Local mobile Space opens instructions editor; independent live readonly Enter verification.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/browser-tail.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "097",
+      "before": "Scale/step split/merge/add/order icon actions lacked names and coherent touch grouping.",
+      "after": "Identificar y agrupar acciones de escalar, dividir, unir y ordenar pasos",
+      "files": [
+        "vue3/src/components/model_editors/RecipeEditor.vue"
+      ],
+      "tests": [],
+      "validation": "Browser namedbuttons and actiongroups;4width editor screenshots withno horizontaloverflow.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/visual-csv-results.json"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
+    },
+    {
+      "id": "098",
+      "before": "Time badge depended on workingTime and unsafe working+waiting arithmetic without units.",
+      "after": "Mostrar tiempo total válido, incluida espera sin preparación, con minutos",
+      "files": [
+        "vue3/src/components/display/RecipeCard.vue"
+      ],
+      "tests": [
+        "vue3/src/cuaderno/nativePurchasingUx.test.mjs"
+      ],
+      "validation": "Functional waiting-only/missing/nonfinite tests; browser card20min.",
+      "browserEvidence": [
+        "/home/kripta/cuaderno-ux-evidence-20261011/native-purchasing/card.txt"
+      ],
+      "area": "Compra nativa, exportación y edición",
+      "status": "accepted",
+      "commit": "525c6f0"
     },
     {
       "id": "099",
@@ -690,7 +1337,7 @@
       "file": "vue3/src/pages/404Page.vue",
       "evidence": "functional/recipeRecoveryFunctional.test.mjs; root/recipe-recovery-green.log; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     },
     {
       "id": "100",
@@ -699,11 +1346,8 @@
       "file": "vue3/src/pages/RecipeViewPage.vue",
       "evidence": "functional/recipeRecoveryFunctional.test.mjs; root/recipe-recovery-green.log; final-review-batch2.md",
       "status": "accepted",
-      "commit": null
+      "commit": "9cd9c98"
     }
   ],
-  "reserved": {
-    "059-081": "kitchen_continue, nativo libros/despensa/búsqueda",
-    "082-098": "purchasing_continue, nativo compras/export/editor"
-  }
+  "reserved": {}
 }

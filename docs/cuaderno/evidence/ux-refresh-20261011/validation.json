@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-10-11T04:38:25.210051+00:00",
+  "frontend_tests": {
+    "passed": 430,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node --test src/cuaderno/*.test.mjs src/cuaderno/functional/*.test.mjs",
+    "runtime": "Node v24.19.0"
+  },
+  "typecheck": {
+    "result": "PASS",
+    "command": "node node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p tsconfig.app.json"
+  },
+  "build": {
+    "result": "PASS",
+    "command": "node node_modules/vite/bin/vite.js build --emptyOutDir",
+    "final_assets_sha256_verified": 306
+  },
+  "root_browser_checks": {
+    "recovery_and_home": 12,
+    "prefix_pages": 20,
+    "page_errors": 0
+  },
+  "role_edition_combinations": 9,
+  "production_deployed": false,
+  "production_business_writes": 0,
+  "accepted_improvements": 100,
+  "source_commit": "525c6f0",
+  "native_targeted_followup": {
+    "passed": 25,
+    "failed": 0
+  },
+  "browser_sizes": [
+    [
+      390,
+      844
+    ],
+    [
+      768,
+      1024
+    ],
+    [
+      1024,
+      768
+    ],
+    [
+      1440,
+      900
+    ]
+  ],
+  "persisted_writes": "Isolated synthetic PostgreSQL only",
+  "candidate_image_browser": {
+    "checks": 5,
+    "page_errors": 0,
+    "overlay": false
+  },
+  "release": "release.json"
+}

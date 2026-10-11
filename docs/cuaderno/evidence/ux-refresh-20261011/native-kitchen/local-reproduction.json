@@ -1,0 +1,19 @@
+{
+  "move": " Mover\nEntrada de inventario\n#ACEITE-DEMO - 5.00 (L) Aceite DEMO\nAlmacén\nSub-ubicación\n\nSi se utilizan códigos de barras, su valor se puede introducir aquí. De lo contrario, se generará automáticamente un código que se podrá escribir en los artículos (por ejemplo, bolsas con cierre hermético, etiquetas, etc.).\n\nGUARDAR",
+  "moveInputs": [
+    {
+      "value": "",
+      "placeholder": ""
+    },
+    {
+      "value": "",
+      "placeholder": ""
+    },
+    {
+      "value": "",
+      "placeholder": ""
+    }
+  ],
+  "addAfterMove": " Añadir\nAlimento\nAceite DEMO\nAlmacén\nCantidad\nUnidad\nL\nL\nCUADERNO-E2E L\nVence\nSub-ubicación\n\nSi se utilizan códigos de barras, su valor se puede introducir aquí. De lo contrario, se generará automáticamente un código que se podrá escribir en los artículos (por ejemplo, bolsas con cierre hermético, etiquetas, etc.).\n\nCódigo\nGUARDAR",
+  "failedInitialLoad": " Añadir\nAlimento\nAceite DEMO\nAlmacén\nCantidad\nUnidad\nL\nL\nCUADERNO-E2E L\nVence\nSub-ubicación\n\nSi se utilizan códigos de barras, su valor se puede introducir aquí. De lo contrario, se generará automáticamente un código que se podrá escribir en los artículos (por ejemplo, bolsas con cierre hermético, etiquetas, etc.).\n\nCódigo\nGUARDAR"
+}

@@ -629,3 +629,12 @@ automático y detalles de precios en diálogo. Evidencia y alcance en
 Candidato local: no modifica la imagen que Caddy sirve en producción. No se
 han ejecutado escrituras de negocio ni migraciones sobre producción. No se
 extienden los resultados a Firefox, WebKit o iPad físico.
+
+## Cierre del candidato de 100 mejoras UI/UX · 2026-10-11
+
+100 resultados distintos aceptados en `evidence/ux-refresh-20261011/100-mejoras.md`; ledger001–100 completo. Suite final430/430, tipos Vue y build aprobados. Revisiones independientes aprobadas; cuatro tamaños, nueve combinaciones de edición/rol y persistencia sintética verificadas. Detalles, alcance y límites en el README de evidencia.
+
+- [x] Código, pruebas, revisiones y evidencia de100 resultados.
+- [x] Candidato local compilado y empaquetado.
+- [ ] Autorización de despliegue y aceptación pública posterior.
+- [ ] Firefox/WebKit, iPad físico y gates históricos ajenos a esta campaña.

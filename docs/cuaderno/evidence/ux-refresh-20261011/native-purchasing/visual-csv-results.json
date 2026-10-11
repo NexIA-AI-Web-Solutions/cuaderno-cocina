@@ -1,0 +1,26 @@
+[
+  {
+    "width": 1440,
+    "csvPreviewExact": true,
+    "downloadBytesExact": true,
+    "editorOverflow": false
+  },
+  {
+    "width": 1024,
+    "csvPreviewExact": true,
+    "downloadBytesExact": true,
+    "editorOverflow": false
+  },
+  {
+    "width": 768,
+    "csvPreviewExact": true,
+    "downloadBytesExact": true,
+    "editorOverflow": false
+  },
+  {
+    "width": 390,
+    "csvPreviewExact": true,
+    "downloadBytesExact": true,
+    "editorOverflow": false
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "home-built-assets",
+    "books-heading",
+    "format-search",
+    "recipe-recovery",
+    "404-recovery"
+  ],
+  "errors": [],
+  "overlay": false,
+  "isolated": true
+}

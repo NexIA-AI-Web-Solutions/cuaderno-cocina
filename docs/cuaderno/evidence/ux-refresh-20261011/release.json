@@ -1,0 +1,19 @@
+{
+  "source_commit": "525c6f09aa67e9dae2ae23f7696bbc51480d6b8b",
+  "baseline_commit": "a7b3f79",
+  "improvements": 100,
+  "created_at": "2026-10-11T04:41:55.714963+00:00",
+  "frontend_bundle": "/home/kripta/cuaderno-ux-evidence-20261011/cuaderno-ux-frontend.tar.gz",
+  "frontend_sha256": "02384fa3828d4c8aba065d9e8914947d36cb00cdae30cdf7fa60021ff698f48b",
+  "frontend_bytes": 2411082,
+  "verified_final_asset_hashes": 306,
+  "candidate_image": "cuaderno-ux-candidate:20261011-525c6f0",
+  "candidate_image_id": "sha256:1093b2c6629b6de96b31531fdc699513353c970635007890aaf519c238390bdf",
+  "baseline_image_id": "sha256:c16fd5a58da2eddf79f64588098e56d0c905b6e2b2e679dbafc15dd7596d11ba",
+  "dockerfile": "/home/kripta/cuaderno-ux-evidence-20261011/release/Dockerfile",
+  "image_browser_smoke": "root/image-smoke.json",
+  "preview": "http://127.0.0.1:18093/",
+  "preview_scope": "VPS localhost, isolated synthetic database; not public deployment",
+  "production_deployed": false,
+  "rollback_image": "cuaderno-local:spanish-a7b3f79"
+}

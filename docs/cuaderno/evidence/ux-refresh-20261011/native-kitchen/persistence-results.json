@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "book-create-reload",
+    "saved-filter-persisted-real-api",
+    "stock-add-validates-food-location-positive-before-write",
+    "stock-add-reload",
+    "untouched-move-makes-no-write",
+    "move-close-add-resets-entry",
+    "move-destination-save-reload-preserves-sublocation",
+    "persisted-history-previous-new-amount-units"
+  ],
+  "persisted": {
+    "code": "NATIVE-A-UX",
+    "amount": 2,
+    "location": "NATIVE-A almacén UX",
+    "subLocation": "Estante A"
+  },
+  "note": "Main persistence run completed all writes and failed only because history included multiple legitimate previous-3 log rows; read-only final history verification uses first match."
+}

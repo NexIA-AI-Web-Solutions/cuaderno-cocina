@@ -1,0 +1,106 @@
+{
+  "checks": [
+    {
+      "width": 390,
+      "path": "/books",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/pantry",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/advanced-search",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/shopping",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/settings/export",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/cuaderno/planificacion",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/cuaderno/precios",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/cuaderno/almacen",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/cuaderno/reservas",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/cuaderno/lista",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/books",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/pantry",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/advanced-search",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/shopping",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/settings/export",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/cuaderno/planificacion",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/cuaderno/precios",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/cuaderno/almacen",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/cuaderno/reservas",
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/cuaderno/lista",
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "productionBusinessWrites": 0
+}
