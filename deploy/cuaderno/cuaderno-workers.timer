@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Cuaderno Cocina report schedules every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Unit=cuaderno-workers.service
+
+[Install]
+WantedBy=timers.target

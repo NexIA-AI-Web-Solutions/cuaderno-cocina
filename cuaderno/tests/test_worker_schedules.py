@@ -78,3 +78,9 @@ class WorkerScheduleTests(PurchasingFixtureMixin,TestCase):
         self.assertEqual(self.create().status_code,201)
         duplicate=self.client.post(f"{self.url}{first.data['id']}/",{'enabled':True},format='json')
         self.assertEqual(duplicate.status_code,400)
+
+    @override_settings(CUADERNO_WORKERS_RUNNER_ACTIVE=True)
+    def test_configured_runner_is_exposed_to_the_interface(self):
+        response=self.client.get(self.url)
+        self.assertEqual(response.status_code,200)
+        self.assertTrue(response.data['runner_active'])

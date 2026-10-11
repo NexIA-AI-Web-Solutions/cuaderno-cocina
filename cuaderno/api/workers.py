@@ -1,5 +1,6 @@
 """Authenticated local workers; all business actions require a saved proposal."""
 from django.http import Http404
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, NotFound, ValidationError
 from cookbook.helper.permission_helper import CustomTokenHasReadWriteScope, has_group_permission
@@ -62,7 +63,7 @@ class WorkerScheduleView(CuadernoAPIView):
         from cuaderno.services.worker_schedules import serialize_schedule
         rows=WorkerSchedule.objects.filter(space=request.space,created_by=request.user).order_by('-pk')[:20]
         return Response({'schedules':[serialize_schedule(row) for row in rows],
-            'scheduler_mode':'management_command','runner_active':False,
+            'scheduler_mode':'management_command','runner_active':bool(getattr(settings,'CUADERNO_WORKERS_RUNNER_ACTIVE',False)),
             'notice':'La ejecución requiere un temporizador local configurado por el administrador. Esta pantalla no instala uno.'})
 
     def post(self,request,schedule_id=None):

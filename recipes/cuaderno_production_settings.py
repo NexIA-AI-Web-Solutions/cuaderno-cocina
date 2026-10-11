@@ -29,3 +29,6 @@ ENABLE_SIGNUP = False
 SPACE_AI_ENABLED = False
 SPACE_DEFAULT_ALLOW_SHARING = False
 DISABLE_EXTERNAL_CONNECTORS = True
+
+# Deployment-owned local timer; disabled until explicitly installed.
+CUADERNO_WORKERS_RUNNER_ACTIVE = os.environ.get('CUADERNO_WORKERS_RUNNER_ACTIVE', '0') == '1'

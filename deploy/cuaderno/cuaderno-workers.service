@@ -1,0 +1,10 @@
+[Unit]
+Description=Cuaderno Cocina scheduled read-only reports
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec cuaderno-prod-web-1 /opt/recipes/venv/bin/python manage.py run_cuaderno_workers --limit 20
+TimeoutStartSec=300
+Nice=10
