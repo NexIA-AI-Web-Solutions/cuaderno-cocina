@@ -1,0 +1,59 @@
+{
+  "backup": "/var/backups/cuaderno-cocina/promo-20261011T140922",
+  "before": {
+    "index.html": "5b883ee1c83830340750d87e71dc6a482acc95c7d5037da66c70d13d5fa8bb43",
+    "Cuaderno-Cocina-Planes.pdf": "e9f8a164a7dba92567263624c6fb085babff7c1fa2dcfd2347a47e0ad5b02088"
+  },
+  "preserved_concurrent_video_revision": "20261011a",
+  "published_at": "2026-10-11T12:14:06.627411+00:00",
+  "after": {
+    "index.html": "11c360eef0b7c4cbde8c5cf0f1f683c961c737e0e3fd1bba20d79eb94b7fc6b1",
+    "Cuaderno-Cocina-Planes.pdf": "2abfdda97c61e22b58d2f19d55352785aa2c84a48a32d27bcd3cab615004dd9e"
+  },
+  "validation": {
+    "featureCount": 38,
+    "pages": [
+      {
+        "page": "1",
+        "contentBottom": 1027.09375,
+        "footerTop": 1071.5,
+        "width": 794,
+        "scrollWidth": 794,
+        "overflow": false
+      },
+      {
+        "page": "2",
+        "contentBottom": 2183.90625,
+        "footerTop": 2194.015625,
+        "width": 794,
+        "scrollWidth": 794,
+        "overflow": false
+      },
+      {
+        "page": "3",
+        "contentBottom": 3193.71875,
+        "footerTop": 3316.53125,
+        "width": 794,
+        "scrollWidth": 794,
+        "overflow": false
+      },
+      {
+        "page": "4",
+        "contentBottom": 4367.53125,
+        "footerTop": 4439.046875,
+        "width": 794,
+        "scrollWidth": 794,
+        "overflow": false
+      }
+    ],
+    "mobile": {
+      "width": 390,
+      "document": 390,
+      "table": 650,
+      "frame": 348
+    },
+    "browserErrors": [],
+    "pdfPages": 4
+  },
+  "pdf_text_verified": true
+}

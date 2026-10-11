@@ -689,3 +689,19 @@ Los límites de Firefox/WebKit, iPad físico y gates históricos siguen vigentes
 
 - [x] Aceptación pública Chromium aprobada: inicio, receta, ocho trabajadores,
   ejecutor activo y móvil 390 px; cero errores, sin escrituras de negocio.
+
+## Comparativa pública y PDF actualizados · 2026-10-11
+
+Publicación autorizada por el usuario en `/cuaderno-cocina/video/`: 38 apartados,
+ocho trabajadores, programación por edición (2/6/8), aprobación y fuentes.
+Precios conservados. Tabla y PDF usan `deploy/cuaderno/promo/comparison.json`;
+`build.py` genera ambas fuentes, `preview.py` sirve el candidato en loopback
+18879 y `render.mjs` compone el PDF con Chromium y verifica el contenido.
+
+PDF A4 de cuatro páginas, texto seleccionable y tres columnas completas;
+verificación de los 38 títulos y precios en el texto extraído y revisión visual.
+Navegador público: tabla por edición, descarga real del PDF con hash coincidente,
+anchos 1440/390/360 sin desbordamiento de página y cero errores. Evidencia:
+`evidence/comparison-20261011/publication.json` y `public-check.json`.
+Se conserva la revisión del vídeo publicada concurrentemente (`20261011a`).
+Copias de ambos estados previos en la ruta de backup del registro de publicación.

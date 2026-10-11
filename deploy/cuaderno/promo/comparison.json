@@ -1,0 +1,422 @@
+{
+  "updated": "11 de octubre de 2026",
+  "groups": [
+    {
+      "id": "recetario",
+      "title": "Tu recetario y la organización diaria",
+      "subtitle": "Desde Esencial · incluido también en Profesional e Integral",
+      "rows": [
+        {
+          "id": "recipes",
+          "title": "Recetas y raciones",
+          "detail": "Ingredientes, pasos, tiempos, notas y cantidades por comensal.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "costs",
+          "title": "Coste por receta y ración",
+          "detail": "Coste estimado de ingredientes. Los datos incompletos se señalan.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "catalog",
+          "title": "Ingredientes, formatos y unidades",
+          "detail": "Precios de referencia y conversiones declaradas, sin necesidad de registrar stock.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "organize",
+          "title": "Búsqueda, libros y favoritas",
+          "detail": "Organiza el recetario con categorías, filtros y favoritas personales.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "photos",
+          "title": "Fotos y variantes",
+          "detail": "Foto del ingrediente, hasta 20 fotos por receta y variantes vinculadas.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "diets",
+          "title": "8 declaraciones dietéticas",
+          "detail": "Estados y notas manuales. No declarado significa desconocido.",
+          "values": [
+            "Registro manual",
+            "Registro manual",
+            "Registro manual"
+          ]
+        },
+        {
+          "id": "calendar",
+          "title": "Calendario y lista de compra",
+          "detail": "Calendario de 1 a 5 semanas; lista con cantidades y recetas de origen.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "exchange",
+          "title": "Importación, exportación e impresión",
+          "detail": "Formatos compatibles. La migración desde otro programa requiere revisar una muestra.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "roles",
+          "title": "Trabajo en equipo por roles",
+          "detail": "Consulta, Cocina y Responsable, con acceso según permisos.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "servicio",
+      "title": "Menús, reservas y producción",
+      "subtitle": "Desde Profesional · incluido también en Integral",
+      "rows": [
+        {
+          "id": "menus",
+          "title": "Plantillas de menú reutilizables",
+          "detail": "Planifica de 1 a 5 semanas con tipos de plato y filtros según declaraciones dietéticas.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "reservations",
+          "title": "Reservas de clientes y grupos",
+          "detail": "Cliente, contacto, fecha, hora, menú, comensales y notas.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "history",
+          "title": "Seguimiento e historial de reservas",
+          "detail": "Solicitud, confirmación, cocina, servicio y anulación; cambios con motivo.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "production",
+          "title": "Producción diaria por menú",
+          "detail": "Consolida comensales e ingredientes de las reservas confirmadas.",
+          "values": [
+            null,
+            "Raciones e ingredientes",
+            "También consumo de stock"
+          ]
+        },
+        {
+          "id": "prep",
+          "title": "Fichas y checklist de preparación",
+          "detail": "Conserva el cálculo confirmado y organiza las tareas del servicio.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "yield",
+          "title": "Subelaboraciones, rendimientos y mermas",
+          "detail": "Incorpora rendimientos y mermas declaradas al cálculo profesional.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "finance",
+          "title": "Presupuesto y coste frente a venta",
+          "detail": "Compara el coste de ingredientes por ración; la diferencia no es beneficio neto.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "allergens",
+          "title": "Revisión de alérgenos declarados",
+          "detail": "Información registrada y desconocidos explícitos; no certifica aptitud.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "events",
+          "title": "Eventos y ausencias del equipo",
+          "detail": "Anotaciones de organización; las ausencias las gestiona Responsable.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "menu_export",
+          "title": "Menús con portada, PDF y PNG",
+          "detail": "A4 vertical u horizontal y varias plantillas guardadas.",
+          "values": [
+            null,
+            "1 menú por documento",
+            "Hasta 5 menús juntos"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "almacen",
+      "title": "Compras y existencias conectadas",
+      "subtitle": "Integral · todo Profesional más el control operativo del almacén",
+      "rows": [
+        {
+          "id": "needs",
+          "title": "Propuesta de compra por periodo",
+          "detail": "Cruza servicios pendientes con existencias utilizables y calcula envases.",
+          "values": [
+            null,
+            null,
+            "Según servicios y stock"
+          ]
+        },
+        {
+          "id": "suppliers",
+          "title": "Proveedores, ofertas y pedidos",
+          "detail": "Formatos y condiciones registrados. Crear un pedido no aumenta las existencias.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "receipts",
+          "title": "Recepciones parciales o completas",
+          "detail": "El stock aumenta al confirmar lo recibido; admite corrección de recepciones.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "inventory",
+          "title": "Ubicaciones, caducidades y movimientos",
+          "detail": "Consulta las existencias registradas, sus ubicaciones y su historial.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "minimums",
+          "title": "Mínimos y reposición",
+          "detail": "Combina necesidades de producción y mínimos con el stock disponible.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "consumption",
+          "title": "Consumo al pasar a cocina",
+          "detail": "Producir registra el consumo; planificar o confirmar no descuenta stock.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "waste",
+          "title": "Desperdicios y correcciones",
+          "detail": "Registra cantidad y causa; las correcciones conservan el historial.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trabajadores",
+      "title": "Trabajadores digitales y revisiones automáticas",
+      "subtitle": "Tu cocina organizada. Revisiones automáticas. Tú decides.",
+      "rows": [
+        {
+          "id": "cost_completion",
+          "title": "Completar costes",
+          "detail": "Detecta y agrupa precios, cantidades, rendimientos o conversiones pendientes.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "price_watch",
+          "title": "Vigilar precios",
+          "detail": "Revisa variaciones y simula una tarifa antes de aplicarla a tus recetas.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "service_briefing",
+          "title": "Preparar el servicio",
+          "detail": "Reúne reservas, fichas, necesidades y preparación de una fecha.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "requirements_review",
+          "title": "Revisar requisitos",
+          "detail": "Señala declaraciones desconocidas y menciones que necesitan confirmación.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "menu_candidates",
+          "title": "Proponer platos",
+          "detail": "Compara recetas existentes con el presupuesto por ración.",
+          "values": [
+            null,
+            "Recetas y costes",
+            "También stock registrado"
+          ]
+        },
+        {
+          "id": "service_learning",
+          "title": "Revisar la actividad registrada",
+          "detail": "Trabajador «Aprender del registro»: frecuencias, producción y cancelaciones; sin predicciones.",
+          "values": [
+            null,
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "purchase_review",
+          "title": "Preparar compras",
+          "detail": "Revisa necesidades y pedidos pendientes; prepara una propuesta de borrador.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "receipt_review",
+          "title": "Revisar entregas",
+          "detail": "Contrasta pedidos, recepciones y movimientos ya registrados; no lee albaranes PDF.",
+          "values": [
+            null,
+            null,
+            "Incluido"
+          ]
+        },
+        {
+          "id": "schedules",
+          "title": "Informes diarios o semanales",
+          "detail": "Programación voluntaria, con pausa y reanudación. Siempre informes de solo lectura.",
+          "values": [
+            "2 trabajadores",
+            "6 trabajadores",
+            "8 trabajadores"
+          ]
+        },
+        {
+          "id": "csv",
+          "title": "Tarifas por formulario o CSV",
+          "detail": "Prepara cambios de precios indicando su fuente; IDs de formato y revisión explícita.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        },
+        {
+          "id": "approval",
+          "title": "Aprobación por Responsable",
+          "detail": "Confirma los efectos. Una propuesta desactualizada exige nueva revisión.",
+          "values": [
+            "Precios",
+            "Precios",
+            "Precios y pedidos en borrador"
+          ]
+        },
+        {
+          "id": "evidence",
+          "title": "Fuentes, historial e informes descargables",
+          "detail": "Consulta el origen y el resultado de cada revisión. Reintentar no duplica la aplicación.",
+          "values": [
+            "Incluido",
+            "Incluido",
+            "Incluido"
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Cada edición incluye las anteriores. Los permisos de cada persona determinan qué puede consultar y modificar.",
+    "El coste de ingredientes es estimado; no representa beneficio neto. Las dietas y los alérgenos se basan en declaraciones registradas, sin garantía automática de aptitud.",
+    "Los informes automáticos son de solo lectura. Responsable puede aprobar precios y pedidos en borrador. Estas acciones no envían pedidos ni reciben mercancía; el stock cambia en los flujos de recepción y producción.",
+    "Las programaciones generan informes diarios o semanales, no acciones aprobadas. Estas automatizaciones no necesitan claves de IA ni servicios externos de pago.",
+    "Las reservas las registra el equipo. No se incluyen cobros, plano de mesas, reservas públicas, OCR de facturas ni predicción de demanda. Los platos se evalúan individualmente; no se reserva stock para un menú completo.",
+    "La impresión y exportación nativas de recetas se conservan en los tres planes. Los PDF de menú son visuales; esta comparativa sí contiene texto seleccionable.",
+    "Importes informativos. Esta página no tramita contrataciones ni cobros."
+  ]
+}

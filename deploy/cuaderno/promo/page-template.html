@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cuaderno Cocina · Tres ediciones</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { min-height: 100%; background: #1b1612; color: #f6f1e8; font-family: system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 32px 20px 64px; gap: 18px;
+         background: radial-gradient(900px 520px at 12% 0%, rgba(109,143,78,.35), transparent 60%), #1b1612; }
+  img.mark { width: 88px; height: 88px; background: #fff; border-radius: 22px; padding: 10px; }
+  h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -.03em; text-align: center; }
+  h1 span { color: #6d8f4e; }
+  video { width: min(1280px, 100%); aspect-ratio: 16 / 9; border-radius: 16px; background: #000; box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+  .prices { color: #e7d7c0; font-size: 18px; text-align: center; max-width: 920px; }
+  .wrap { width: min(1100px, 100%); margin-top: 8px; }
+  .wrap .plan-intro { margin-bottom: 18px; }
+  .wrap .plan-intro h2 { font-size: clamp(22px, 3vw, 30px); letter-spacing: -.025em; margin-bottom: 8px; }
+  .wrap .plan-intro p { color: #d2c4b2; line-height: 1.6; max-width: 760px; }
+  .wrap .plan-scroll { overflow-x: auto; border: 1px solid #5b5142; border-radius: 16px; scrollbar-color: #9cb47a #29231d; }
+  .wrap .plan-scroll:focus-visible { outline: 3px solid #c5dba7; outline-offset: 4px; }
+  .wrap table { width: 100%; min-width: 850px; table-layout: fixed; border-collapse: separate; border-spacing: 0; background: #241e19; }
+  .wrap caption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .wrap th, .wrap td { padding: 16px; text-align: center; border-bottom: 1px solid #463d32; font-size: 14px; line-height: 1.5; overflow-wrap: break-word; }
+  .wrap th:first-child { width: 31%; text-align: left; font-weight: 600; }
+  .wrap thead th { vertical-align: top; padding-top: 24px; padding-bottom: 24px; background: #2d2820; }
+  .wrap thead th:nth-child(3) { background: #35412b; }
+  .wrap thead th:nth-child(4) { background: #4b3b25; }
+  .wrap .plan-name { display: block; font-size: 22px; letter-spacing: -.02em; }
+  .wrap .plan-purpose { display: block; min-height: 44px; margin: 8px 0 16px; color: #ece2d2; font-weight: 450; }
+  .wrap .plan-price { display: block; font-size: 30px; font-weight: 750; letter-spacing: -.035em; white-space: nowrap; }
+  .wrap .plan-monthly { display: block; color: #f2e6d3; font-size: 15px; font-weight: 500; }
+  .wrap .plan-inherits { display: inline-block; margin-top: 16px; padding: 5px 9px; border: 1px solid #7b8269; border-radius: 6px; font-size: 12px; font-weight: 600; color: #f4efdf; }
+  .wrap thead th:nth-child(4) .plan-inherits { border-color: #ab8b57; }
+  .wrap .compare-label { display: block; margin-bottom: 9px; font-size: 19px; }
+  .wrap .compare-help { display: block; color: #cebfad; font-weight: 400; }
+  .wrap tbody td:nth-child(3) { background: #293021; }
+  .wrap .benefit td { text-align: left; vertical-align: top; color: #dcd1c2; }
+  .wrap .benefit strong { display: block; margin-bottom: 5px; color: #fff4e1; }
+  .wrap .group th { width: auto; padding: 11px 16px; background: #383026; color: #e8d5b8; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; text-align: left; }
+  .wrap th small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: #c7b9a7; font-weight: 400; }
+  .wrap .yes { color: #deebc9; }
+  .wrap .check { color: #bbd694; margin-right: 5px; font-weight: 750; }
+  .wrap .no { color: #bcaf9f; }
+  .wrap .new { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: #bbd694; color: #20291a; font-size: 10px; font-weight: 800; vertical-align: middle; }
+  .wrap tbody tr:last-child > * { border-bottom: 0; }
+  .wrap .plan-notes { margin-top: 14px; color: #c7b9a7; font-size: 12px; line-height: 1.65; }
+  .wrap .plan-notes p + p { margin-top: 6px; }
+  .wrap .mobile-hint { display: none; }
+  @media (max-width: 700px) {
+    .wrap .mobile-hint { display: block; margin-top: 8px; color: #d7e5c3; font-size: 13px; }
+    .wrap table { min-width: 650px; }
+    .wrap th, .wrap td { padding: 13px 12px; font-size: 13px; }
+    .wrap th:first-child { width: 140px; position: sticky; left: 0; z-index: 1; background: #2c251f; box-shadow: 1px 0 #5b5142; }
+    .wrap .group th { position: static; background: #383026; }
+    .wrap .plan-name { font-size: 19px; }
+    .wrap .plan-price { font-size: 26px; }
+  }
+  @media (max-width: 360px) {
+    .wrap table { min-width: 590px; }
+    .wrap th:first-child { width: 110px; }
+  }
+  .wrap .download-plans { display:inline-flex; align-items:center; justify-content:center; gap:10px; margin-top:16px; padding:12px 18px; min-height:48px; border-radius:9px; background:#c5dba7; color:#20291a; text-decoration:none; font-size:15px; font-weight:700; line-height:1.4; }
+  .wrap .download-plans:hover { background:#d5e8bd; }
+  .wrap .download-plans:focus-visible { outline:3px solid #f6f1e8; outline-offset:4px; }
+  .wrap .download-plans svg { flex-shrink:0; }
+  .wrap .download-detail { display:block; margin-top:7px; color:#c7b9a7; font-size:12px; }
+  @media print { .wrap .download-plans, .wrap .download-detail { display:none; } }
+  a { color: #f6f1e8; }
+  a.cta { display: inline-flex; align-items: center; min-height: 48px; padding: 12px 22px; border-radius: 999px; background: #6d8f4e; color: #fff; text-decoration: none; font-weight: 750; }
+</style>
+</head>
+<body>
+  <img class="mark" src="/cuaderno-cocina/video/icon.png" alt="Cuaderno Cocina">
+  <h1>Pide la <span>tuya</span></h1>
+  <video controls playsinline preload="metadata" poster="/cuaderno-cocina/video/poster.jpg">
+    <source src="/cuaderno-cocina/video/cuaderno-cocina-1080p30.mp4?v=20261011a" type="video/mp4">
+  </video>
+  <p class="prices">Esencial 500 € + 17 €/mes · Profesional 1.000 € + 20 €/mes · Integral 1.500 € + 30 €/mes</p>
+  <div class="wrap">
+    <div class="plan-intro">
+      <h2>Más control en cada paso de tu cocina</h2>
+      <p>Empieza por tus recetas, organiza los servicios y conecta la cocina con el almacén. Cada plan incluye todo lo del anterior.</p>
+      <a class="download-plans" href="/cuaderno-cocina/video/Cuaderno-Cocina-Planes.pdf" download="Cuaderno-Cocina-Planes.pdf"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5"/></svg>Descargar comparativa en PDF</a>
+      <span class="download-detail">A4 en color · La misma comparativa de esta página</span>
+      <span class="mobile-hint">Desliza la tabla para comparar los tres planes →</span>
+    </div>
+    <div class="plan-scroll" role="region" aria-label="Comparativa de planes, desplazable horizontalmente" tabindex="0">
+    <table>
+      <caption>Funciones actuales y precios de Esencial, Profesional e Integral. Los planes son acumulativos.</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="compare-label">Tu cocina, a tu medida</span><span class="compare-help">Compara lo que puedes hacer con cada plan.</span></th>
+          <th scope="col"><span class="plan-name">Esencial</span><span class="plan-purpose">Recetas, raciones y costes.<br>Con revisión de precios.</span><span class="plan-price">500 €</span><span class="plan-monthly">+ 17 €/mes</span><span class="plan-inherits">La base de tu cocina</span></th>
+          <th scope="col"><span class="plan-name">Profesional</span><span class="plan-purpose">De la reserva<br>al servicio preparado.</span><span class="plan-price">1.000 €</span><span class="plan-monthly">+ 20 €/mes</span><span class="plan-inherits">Todo Esencial +</span></th>
+          <th scope="col"><span class="plan-name">Integral</span><span class="plan-purpose">Del servicio<br>a la compra y el stock.</span><span class="plan-price">1.500 €</span><span class="plan-monthly">+ 30 €/mes</span><span class="plan-inherits">Todo Profesional +</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="benefit">
+          <th scope="row">Qué ganas en el día a día</th>
+          <td><strong>Saber qué lleva y cuánto cuesta cada receta.</strong>Reúne tus fichas, ajusta raciones y prepara la lista de compra.</td>
+          <td><strong>Saber para quién cocinas y qué preparar.</strong>Coordina menús, reservas y cantidades para cada servicio.</td>
+          <td><strong>Saber qué falta y qué se ha consumido.</strong>Calcula compras con las necesidades del servicio y las existencias.</td>
+        </tr>
+        <tr class="group"><th colspan="4">01 · Tu recetario y la organización diaria — en los tres planes</th></tr>
+        <tr><th scope="row">Recetas y raciones<small>Fichas, notas, categorías y cantidades por comensal.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Coste estimado por receta y ración<small>Calculado a partir de los ingredientes y sus precios.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Fotos, favoritas y variantes<small>Foto del ingrediente y galería de hasta 20 fotos por receta.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">8 declaraciones dietéticas<small>Estados y notas por receta; lo no declarado se muestra como desconocido.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Registro manual</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Registro manual</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Registro manual</td></tr>
+        <tr><th scope="row">Calendario y lista de compra<small>Comidas planificadas y lista con cantidades y recetas de origen.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>De 1 a 5 semanas</td><td class="yes"><span class="check" aria-hidden="true">✓</span>De 1 a 5 semanas</td><td class="yes"><span class="check" aria-hidden="true">✓</span>De 1 a 5 semanas</td></tr>
+        <tr><th scope="row">Trabajo en equipo por roles<small>Acceso a los datos del espacio según los permisos de cada persona.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Consulta, Cocina y Responsable</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Consulta, Cocina y Responsable</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Consulta, Cocina y Responsable</td></tr>
+        <tr class="group"><th colspan="4">02 · Menús, reservas y producción — desde Profesional</th></tr>
+        <tr><th scope="row">Plantillas de menú reutilizables<small>Tipos de plato y filtros según las declaraciones dietéticas.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>De 1 a 5 semanas</td><td class="yes"><span class="check" aria-hidden="true">✓</span>De 1 a 5 semanas</td></tr>
+        <tr><th scope="row">Eventos y ausencias de personal<small>Anotaciones de organización; las ausencias las gestiona Responsable.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Menús con portada, PDF y PNG<small>Formato A4 vertical u horizontal. Puedes guardar varias plantillas.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>1 menú por documento</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Hasta 5 menús juntos</td></tr>
+        <tr><th scope="row">Reservas de clientes y grupos<span class="new">NUEVO</span><small>Cliente, contacto, fecha, hora, menú, comensales y notas.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Seguimiento e historial de reservas<small>Solicitud, confirmación, cocina, servicio y anulación; cambios con motivo.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Producción diaria por menú<small>Suma comensales de las reservas confirmadas y aplica la merma de la receta.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Raciones e ingredientes</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Raciones, ingredientes y consumo de stock</td></tr>
+        <tr class="group"><th colspan="4">03 · Compras y existencias conectadas — en Integral</th></tr>
+        <tr><th scope="row">Propuesta de compra por periodo<small>Incluye reservas confirmadas y otros servicios pendientes de producir.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Según servicios y stock disponible</td></tr>
+        <tr><th scope="row">Proveedores, pedidos y recepciones<small>El stock aumenta cuando confirmas lo recibido.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Existencias y movimientos<small>El stock aumenta al confirmar la recepción. Producir registra el consumo.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Entradas, consumos y ajustes</td></tr>
+        <tr class="group"><th colspan="4">04 · Revisiones automáticas — tú apruebas el cambio</th></tr>
+        <tr><th scope="row">Vigilar precios<span class="new">NUEVO</span><small>Simula una tarifa antes de aplicarla y compara el coste de las recetas.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Desde Esencial</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Informes programados<span class="new">NUEVO</span><small>Cada día o cada semana. Guardar la programación no ejecuta el informe al momento.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Precios y costes</td><td class="yes"><span class="check" aria-hidden="true">✓</span>+ servicio y requisitos</td><td class="yes"><span class="check" aria-hidden="true">✓</span>+ compras y recepciones</td></tr>
+        <tr><th scope="row">Preparar el servicio<span class="new">NUEVO</span><small>Reúne reservas, fichas y necesidades de una fecha.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Propuesta de compra revisable<span class="new">NUEVO</span><small>Prepara un borrador. No envía el pedido ni cambia el stock.</small></th><td class="no"><span aria-label="No incluido">—</span></td><td class="no"><span aria-label="No incluido">—</span></td><td class="yes"><span class="check" aria-hidden="true">✓</span>Incluido</td></tr>
+        <tr><th scope="row">Aprobación por Responsable<span class="new">NUEVO</span><small>Ves los efectos y confirmas. Una propuesta desactualizada no se aplica.</small></th><td class="yes"><span class="check" aria-hidden="true">✓</span>Precios</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Precios</td><td class="yes"><span class="check" aria-hidden="true">✓</span>Precios y compras</td></tr>
+        <tr class="benefit">
+          <th scope="row">El salto de plan</th>
+          <td><strong>Organiza tu base.</strong>Recetario, raciones, costes y compra cotidiana.</td>
+          <td><strong>+500 € iniciales y +3 €/mes</strong>frente a Esencial: añade menús reutilizables, reservas y producción.</td>
+          <td><strong>+500 € iniciales y +10 €/mes</strong>frente a Profesional: añade compras, existencias y la propuesta de pedido.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="plan-notes">
+      <p>Las reservas las registra el equipo: Cocina y Responsable confirman; solo Responsable cambia el menú o anula. Planificar o confirmar no descuenta existencias; en Integral, pasar a cocina registra el consumo.</p>
+      <p>El coste de ingredientes es estimado. Las dietas son declaraciones manuales. Los PDF de menú son visuales, con texto no seleccionable. La impresión y exportación nativas de recetas se conservan en los tres planes.</p>
+      <p>Las revisiones automáticas no cambian precios, pedidos ni existencias hasta que Responsable aprueba la propuesta. No predicen la demanda ni certifican menús aptos.</p>
+      <p>Importes informativos. Esta página no contrata ni cobra. Las reservas no incluyen cobros, plano de mesas ni formulario público.</p>
+    </div>
+  </div>
+  <p class="prices"><a class="cta" href="mailto:alvaro.schwiedop@evocon-solutions.com">Pide una demostración</a></p>
+  <p class="prices"><a href="mailto:alvaro.schwiedop@evocon-solutions.com">alvaro.schwiedop@evocon-solutions.com</a></p>
+</body>
+</html>
