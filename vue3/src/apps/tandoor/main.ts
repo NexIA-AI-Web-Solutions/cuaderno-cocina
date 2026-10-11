@@ -42,6 +42,7 @@ let routes: RouteRecordRaw[] = [
     {path: '/ingredient-editor', component: () => import("@/pages/IngredientEditorPage.vue"), name: 'IngredientEditorPage', meta: {title: 'Ingredient Editor'}},
     {path: '/property-editor', component: () => import("@/pages/PropertyEditorPage.vue"), name: 'PropertyEditorPage', meta: {title: 'Property_Editor'}},
     {path: '/pantry', component: () => import("@/pages/PantryPage.vue"), name: 'PantryPage', meta: {title: 'Pantry'}},
+    {path: '/cuaderno/trabajadores', component: () => import("@/cuaderno/components/TrabajadoresPage.vue"), name: 'CuadernoTrabajadoresPage', meta: {title: 'Trabajadores'}},
     {path: '/cuaderno/precios', component: () => import("@/cuaderno/pages/PreciosPage.vue"), name: 'CuadernoPreciosPage', meta: {title: 'Costes'}},
     {path: '/cuaderno/lista', component: () => import("@/cuaderno/pages/ListaPage.vue"), name: 'CuadernoListaPage', meta: {title: 'Lista'}},
     {path: '/cuaderno/favoritas', component: () => import("@/cuaderno/pages/FavoriteRecipesPage.vue"), name: 'CuadernoFavoritasPage', meta: {title: 'Recetas favoritas'}},

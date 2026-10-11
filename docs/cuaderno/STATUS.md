@@ -648,3 +648,24 @@ extienden los resultados a Firefox, WebKit o iPad físico.
 - [x] Entorno, volúmenes, base de datos y Caddy conservados. No se ejecutó CI ni se repitió la suite completa ya aprobada.
 
 Evidencia: `evidence/ux-refresh-20261011/production-deployment.json`. Los gates históricos de otras campañas conservan su alcance.
+
+## 2026-10-11 — trabajadores digitales locales, candidato implementado
+
+Ocho trabajadores deterministas integrados con recetas, costes, servicios,
+reservas, compras e inventario nativos. Propuestas de precios y pedidos en
+borrador requieren aprobación de Responsable; conservan fuentes, efectos,
+resultado persistido, política y huellas. Reautorización del historial,
+invalidación por datos cambiados, idempotencia y concurrencia verificadas.
+Programación diaria/semanal de informes implementada, con ejecutor local todavía
+sin temporizador instalado. No APIs de pago, LLM ni dependencias nuevas de runtime.
+
+Backend completo 734 PASS y suite final enfocada 42 PASS (solapadas); frontend
+completo final 355 PASS y navegador 8/8 PASS tras el ajuste de legibilidad.
+Resultados de navegador, tipos, build y revisión en
+[evidencia](evidence/digital-workers-20261011/README.md). Manual en
+[TRABAJADORES_ES.md](TRABAJADORES_ES.md), decisión ADR 0015.
+
+Estado: candidato local implementado y comprobado. Producción conserva
+`cuaderno-ux-candidate:20261011-525c6f0`; no se ha desplegado esta funcionalidad,
+publicado código ni migrado datos reales. Pendientes imagen final, despliegue
+autorizado, aceptación pública y activación operativa del temporizador.

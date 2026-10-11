@@ -3324,6 +3324,37 @@
       "note": "Requires CUADERNO_PRIOR_RELEASE_BUNDLE created before upgrade; exact prior image must differ from candidate and is restored only to new retained targets.",
       "purpose": "rollback-final del candidato identificado; verified acredita la interfaz y sus pruebas unitarias, no un PASS del candidato.",
       "verification_note": "Interfaz implementada y ensayada; aceptación runtime pendiente con contexto idéntico."
+    },
+    "workers-backend": {
+      "purpose": "Pruebas PostgreSQL de trabajadores, aprobación y programación, solo contenedor aislado.",
+      "argv": [
+        "docker",
+        "exec",
+        "-e",
+        "TEST_DB_OPTIONS={\"options\": \"-c jit=off\"}",
+        "cuaderno-workers-web",
+        "sh",
+        "-c",
+        "export TEST_POSTGRES_USER=\"$POSTGRES_USER\" TEST_POSTGRES_PASSWORD=\"$POSTGRES_PASSWORD\"; timeout -s INT -k 30 900 /opt/recipes/venv/bin/pytest -o addopts=\"\" --reuse-db cuaderno/tests/test_workers.py cuaderno/tests/test_worker_analysis.py cuaderno/tests/test_worker_schedules.py"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 950,
+      "isolated_mutations": true,
+      "verified": true,
+      "verification_note": "2026-10-11: 42/42 PostgreSQL. cuaderno-workers-web -> cuaderno-workers-db, test_cuaderno_native_workers. Ver evidencia digital-workers-20261011; nunca cuaderno-prod."
+    },
+    "workers-ui": {
+      "purpose": "Regresiones de formulario, aprobación, evidencia y programación Vue.",
+      "argv": [
+        "/opt/jaautomation/runtime/node-v24.19.0/bin/node",
+        "--test",
+        "vue3/src/cuaderno/workerUi.test.mjs"
+      ],
+      "cwd": ".",
+      "timeout_seconds": 120,
+      "isolated_mutations": false,
+      "verified": true,
+      "verification_note": "2026-10-11: 23/23. Ejecutable Node24 disponible en este VPS; no dependencia nueva de producción."
     }
   }
 }

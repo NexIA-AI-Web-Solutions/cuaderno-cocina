@@ -137,7 +137,7 @@ def serialize_order(order: PurchaseOrder) -> dict:
 @transaction.atomic
 def create_order(*, request, data) -> PurchaseOrder:
     type(request.space).objects.select_for_update().get(pk=request.space.pk)
-    household = _membership_household(request)
+    household = _membership_household(request, data.get("household"))
     package = None
     if data.get("package") is not None:
         package = visible_packages(request.user, request.space).select_related("food", "unit").filter(

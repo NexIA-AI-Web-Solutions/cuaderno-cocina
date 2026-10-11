@@ -291,3 +291,22 @@ Evidencia específica: `evidence/ux-refresh-20261011/README.md`.
 - [x] Entorno, volúmenes, base de datos y Caddy conservados. No se ejecutó CI ni se repitió la suite completa ya aprobada.
 
 Evidencia: `evidence/ux-refresh-20261011/production-deployment.json`. Los gates históricos de otras campañas conservan su alcance.
+
+## Trabajadores digitales locales · 2026-10-11
+
+- [x] Ocho análisis deterministas, sin APIs/LLM ni nuevas dependencias de runtime.
+- [x] Precios por CSV/formulario y pedido en borrador con aprobación explícita.
+- [x] Fuentes, política, evidencia descargable, historial y resultado persistido.
+- [x] Permisos actuales, hogar, Decimal, CSRF, obsolescencia y concurrencia.
+- [x] Programación de informes de solo lectura; fechas móviles/fijas y pausa.
+- [x] PostgreSQL aislado: 734 pruebas completas y 42 enfocadas finales, solapadas.
+- [x] Frontend completo y comprobaciones enfocadas de los últimos cambios.
+- [x] Tipos, compilación y recorridos Chromium en 390/768/1440 px.
+- [ ] Imagen inmutable del nuevo candidato y controles de entrega correspondientes.
+- [ ] Autorización de despliegue, backup/migraciones y aceptación pública.
+- [ ] Activación del temporizador local y verificación operativa tras despliegue.
+- [ ] Firefox/WebKit e iPad físico; no cubiertos por esta campaña.
+
+Evidencia reproducible y límites: [README](evidence/digital-workers-20261011/README.md).
+El desarrollo está implementado; estas casillas abiertas son tareas de entrega,
+no funciones ocultas que requieran una clave API.

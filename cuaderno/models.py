@@ -631,3 +631,51 @@ def _entity_image_file_deleted(sender, instance, using, **kwargs):
 for _image_model in (FoodImage, MenuTemplateImage):
     post_delete.connect(_entity_image_file_deleted, sender=_image_model, weak=False,
                         dispatch_uid=f"cuaderno.{_image_model.__name__}.committed-file-delete")
+
+
+class WorkerRun(models.Model):
+    """A user's evidence-backed proposal, never an independent business authority."""
+    space = models.ForeignKey('cookbook.Space', on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='cuaderno_worker_runs')
+    kind = models.CharField(max_length=40)
+    status = models.CharField(max_length=16, default='read_only')
+    params = models.JSONField(default=dict)
+    report = models.JSONField(default=dict)
+    proposal = models.JSONField(default=dict)
+    policy = models.JSONField(default=dict)
+    input_digest = models.CharField(max_length=64)
+    evidence_digest = models.CharField(max_length=64)
+    result = models.JSONField(default=dict)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='cuaderno_worker_approvals')
+    created_at = models.DateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['space', 'created_by', '-id'], name='cuaderno_worker_inbox')]
+        constraints = [models.CheckConstraint(condition=models.Q(status__in=['read_only','pending','applied','dismissed','stale']), name='cuaderno_worker_state')]
+
+
+class WorkerEvent(models.Model):
+    """Append-only application audit: evidence, decision, and confirmed result."""
+    run = models.ForeignKey(WorkerRun, on_delete=models.CASCADE, related_name='events')
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    event = models.CharField(max_length=32)
+    data = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class WorkerSchedule(models.Model):
+    """Opt-in periodic read-only analyses; executor never approves proposals."""
+    space = models.ForeignKey('cookbook.Space', on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    kind = models.CharField(max_length=40)
+    params = models.JSONField(default=dict)
+    interval_hours = models.PositiveSmallIntegerField(default=24)
+    enabled = models.BooleanField(default=True)
+    next_run = models.DateTimeField(default=timezone.now, db_index=True)
+    last_run = models.ForeignKey(WorkerRun, on_delete=models.SET_NULL, null=True, blank=True)
+    last_error = models.CharField(max_length=256, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=models.Q(interval_hours__in=[24,168]), name='cuaderno_worker_schedule_interval')]

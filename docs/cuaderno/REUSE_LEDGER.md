@@ -56,3 +56,13 @@ Actualización de evidencia, sin reescribir adaptaciones históricas: previewa3c
 No completar con archivos inventados ni decir “portado” cuando solo se ha leído README.
 
 | R031 | Fotos de ingredientes/portadas y PDF/PNG de menús | Food, MenuTemplate, permisos/visibilidad nativos, validación de RecipeGallery y documento de planificación | entity_media.py / FoodImage / MenuTemplateImage / EntityImagePanel / menuExport | extend/reuse | Extensiones OneToOne sin duplicar ingredientes/calendario; contenido autenticado; exportación local A4 paginada sin dependencias nuevas | RED de endpoint y fusión → PostgreSQL65PASS; componentes/renderizado con RED/GREEN; revisión independiente; Playwright real pendiente | Fotos CC0 solo fixtures sintéticos; PDF rasterizado; sin servicios externos ni promesa de texto seleccionable | Candidato del9oct, guía MENU_MEDIA_EXPORTS_ES; publicación pendiente |
+
+## Trabajadores digitales — 11 de octubre de 2026
+
+Reutilizados motores nativos de coste/subrecetas/precios, reservas/fichas/checklist,
+reposición/recepciones y permisos Food/Recipe/Household. Nuevas entidades únicamente
+para ejecución/evidencia/aprobación/programación. La simulación modifica contexto
+en memoria; las compras usan `create_order` con hogar explícito autorizado.
+CSV y Decimal de biblioteca estándar; Vue/Vuetify y selectores existentes.
+No se ha copiado código de Maisa, Trace-it ni otro proveedor. No se añade paquete
+runtime, API externa o segundo almacén. Decisión y alternativas: ADR 0015.

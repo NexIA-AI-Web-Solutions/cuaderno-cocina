@@ -34,9 +34,11 @@ const python = [
 ].join('\n')
 
 function backendRenderedInstructions() {
+    const container = process.env.CUADERNO_MARKDOWN_TEST_CONTAINER || 'cuaderno-g0-t002-web'
+    assert.ok(['cuaderno-g0-t002-web', 'cuaderno-workers-web'].includes(container), 'El render se prueba solo en contenedores aislados.')
     const encoded = Buffer.from(JSON.stringify(cases), 'utf8').toString('base64')
     const result = spawnSync('docker', [
-        'exec', '-e', `MARKDOWN_CASES_B64=${encoded}`, 'cuaderno-g0-t002-web',
+        'exec', '-e', `MARKDOWN_CASES_B64=${encoded}`, container,
         '/opt/recipes/venv/bin/python', 'manage.py', 'shell', '-c', python,
     ], {encoding: 'utf8', timeout: 20_000, windowsHide: true})
     assert.notEqual(result.error?.code, 'ETIMEDOUT', 'render_instructions superó el límite local de 20 s')

@@ -38,9 +38,17 @@ from cuaderno.api.planning import (
     CalendarEntryDetailView, CourseDetailView, MenuTemplateDetailView,
 )
 
+from cuaderno.api.workers import WorkerListView, WorkerPreviewView, WorkerApplyView, WorkerDismissView, WorkerScheduleView
+
 apply_schema_annotations()
 
 urlpatterns = [
+    path("api/cuaderno/workers/schedules/", WorkerScheduleView.as_view()),
+    path("api/cuaderno/workers/schedules/<int:schedule_id>/", WorkerScheduleView.as_view()),
+    path("api/cuaderno/workers/", WorkerListView.as_view()),
+    path("api/cuaderno/workers/preview/", WorkerPreviewView.as_view()),
+    path("api/cuaderno/workers/<int:run_id>/apply/", WorkerApplyView.as_view()),
+    path("api/cuaderno/workers/<int:run_id>/dismiss/", WorkerDismissView.as_view()),
     path("api/cuaderno/reservations/", ReservationListView.as_view()),
     path("api/cuaderno/reservations/menus/", ReservationMenusView.as_view()),
     path("api/cuaderno/reservations/summary/", ReservationSummaryView.as_view()),

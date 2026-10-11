@@ -19,7 +19,8 @@ DATABASES['default']['CONN_MAX_AGE'] = 0
 UNINSTALL_MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 'django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 
-    'django.middleware.locale.LocaleMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware'
+    'django.middleware.locale.LocaleMiddleware', 'recipes.middleware.CuadernoLocaleMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 UNINSTALL_INSTALLED_APPS = [
@@ -27,7 +28,8 @@ UNINSTALL_INSTALLED_APPS = [
 
 # disable extras not needed for testing
 for x in UNINSTALL_MIDDLEWARE:
-    MIDDLEWARE.remove(x)  # noqa: F405
+    if x in MIDDLEWARE:  # Native and Cuaderno locale middleware are alternatives.
+        MIDDLEWARE.remove(x)  # noqa: F405
 
 for y in UNINSTALL_INSTALLED_APPS:
     INSTALLED_APPS.remove(y)  # noqa: F405

@@ -2,6 +2,7 @@
     <v-container class="cuaderno-production-page">
         <v-btn :to="{name: 'MealPlanPage'}" variant="text" prepend-icon="fa-solid fa-calendar-days" min-height="44" class="mb-3">Ver planificación de menús</v-btn>
         <h1 class="text-h5 mb-3">Producción</h1>
+        <v-btn :to="{name: 'CuadernoTrabajadoresPage', query: {kind: 'service_briefing'}}" variant="tonal" min-height="44" class="mb-3 no-print">Preparar resumen del servicio</v-btn>
         <p class="mb-4">
             Crear y confirmar un servicio no descuenta stock. Confirmar conserva sus necesidades y costes.
             Producir es una acción explícita: solo en Integral consume ingredientes de las existencias del hogar del servicio.

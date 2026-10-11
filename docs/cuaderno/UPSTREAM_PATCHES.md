@@ -53,3 +53,13 @@ P017/P019 compilados en933 con sourcebb6a+worktree024c8; sus notas «fuera591»/
 Actualización30sep cierre: P021/P022/P023 YA empacados en a3c/sourcef191+worktreee8999/build205924ZPASS. Runtime153pins/pipcheck/JIToff211202–211224PASS, PyJWT4PASS211029; seisHTTPsmokes212029–212733PASS. Los «no empacados»/«nuevo build pendiente» de las filas anteriores son su estado histórico previo: identidad actual en STATUS. Sin nueva migración: cookbook0243/cuaderno0016 reobservado2144UTC. Native final/upgradea3c/performance/scan válido siguen abiertos. Caddytemplate54525952bytes alinea52MiBnginx, no configuración productiva ejecutada.
 
 No hay port masivo de donantes. Antes de actualizar Tandoor, revisar por separado los dos caminos de merge y todos los escritores de InventoryEntry. Este registro no equivale a aprobación global ni G7.
+
+## Trabajadores locales — 11 de octubre de 2026
+
+Router/nav Vue integran `/cuaderno/trabajadores`; los módulos Cuaderno enlazan con
+contexto. `recipes/test_settings.py` admite el middleware de idioma Cuaderno como
+alternativa al de Django al preparar tests, corrigiendo un fallo de arranque de
+la suite. No se altera autenticación nativa, motor de inventario ni service worker.
+Las acciones reutilizan servicios existentes; `create_order` admite hogar explícito
+interno, validado por `_membership_household`, para preservar el destino de una
+propuesta preparada por Cocina y aprobada por Responsable de otro hogar.

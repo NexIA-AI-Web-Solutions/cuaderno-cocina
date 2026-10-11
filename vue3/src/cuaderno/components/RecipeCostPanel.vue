@@ -2,6 +2,7 @@
     <v-card class="mt-2 cost-card" v-if="recipeId">
         <v-card-title class="text-h6">Costes y presupuesto</v-card-title>
         <v-card-text>
+            <v-btn :to="{name: 'CuadernoTrabajadoresPage', query: {kind: 'cost_completion', recipe_id: recipeId}}" variant="tonal" min-height="44" class="mb-3 no-print" prepend-icon="fa-solid fa-list-check">Revisar datos del coste</v-btn>
             <section aria-labelledby="ingredient-cost-title">
                 <h2 id="ingredient-cost-title" class="text-subtitle-1 font-weight-bold mb-2">Coste de ingredientes</h2>
                 <div v-if="loadingCost" role="status">Calculando…</div>

@@ -11,6 +11,7 @@
                 <v-text-field v-model="date" label="Fecha de las reservas" type="date" hide-details class="reservation-date" :disabled="busy" />
                 <v-btn min-height="44" :disabled="busy || loading" @click="offset = 0; load()">Actualizar día</v-btn>
                 <v-btn v-if="canCreate" color="primary" min-height="44" :disabled="busy" @click="create">Nueva reserva</v-btn>
+                <v-btn :to="{name: 'CuadernoTrabajadoresPage', query: {kind: 'service_briefing', date}}" min-height="44" variant="tonal">Preparar este día</v-btn>
                 <v-btn :to="{name: 'CuadernoProduccionPage'}" min-height="44" variant="text">Ver producción</v-btn>
             </div>
             <section v-if="summary" aria-labelledby="reservation-summary-title" class="mb-5">

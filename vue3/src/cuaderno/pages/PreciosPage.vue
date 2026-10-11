@@ -4,6 +4,7 @@
             <v-card-title>Formatos y precios</v-card-title>
             <v-card-text>
                 <operational-role-notice :role="operationalRole" />
+                <v-btn :to="{name: 'CuadernoTrabajadoresPage', query: {kind: 'price_watch'}}" variant="tonal" min-height="44" class="mb-3">Revisar impacto o importar tarifa CSV</v-btn>
                 <p class="mb-4">
                     El precio es del envase, sin existencias.
                     <span v-if="currency">La moneda del espacio es {{ currency }}.</span>

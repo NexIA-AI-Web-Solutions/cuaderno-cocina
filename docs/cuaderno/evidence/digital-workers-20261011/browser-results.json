@@ -1,0 +1,377 @@
+{
+  "config": {
+    "argv": [
+      "/opt/jaautomation/runtime/node-v24.19.0/bin/node",
+      "/home/kripta/cuaderno-ux-refresh-20261011/tests/cuaderno/e2e/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "digital-workers.config.ts"
+    ],
+    "configFile": "/home/kripta/cuaderno-ux-refresh-20261011/tests/cuaderno/e2e/digital-workers.config.ts",
+    "rootDir": "/home/kripta/cuaderno-ux-refresh-20261011/tests/cuaderno/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/kripta/cuaderno-ux-refresh-20261011/docs/cuaderno/evidence/digital-workers-20261011/browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/home/kripta/cuaderno-ux-refresh-20261011/tests/cuaderno/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/digital-workers\\.spec\\.ts/"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "../../../docs/cuaderno/evidence/digital-workers-20261011/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "digital-workers.spec.ts",
+      "file": "digital-workers.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "all eight reports generate from real native records without business writes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15359,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:00.087Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-8df2847ab0155750eb85",
+          "file": "digital-workers.spec.ts",
+          "line": 88,
+          "column": 1
+        },
+        {
+          "title": "price proposal applies only after review and native price readback confirms the change",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3677,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:24.044Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-adf9be6104abf51b8da1",
+          "file": "digital-workers.spec.ts",
+          "line": 106,
+          "column": 1
+        },
+        {
+          "title": "purchase proposal creates a native draft with zero reception and preserves inventory",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3838,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:27.732Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-771d6eb8dbfc1cb52df4",
+          "file": "digital-workers.spec.ts",
+          "line": 123,
+          "column": 1
+        },
+        {
+          "title": "a concurrent price update produces stale UI and a new reviewed version",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3866,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:31.581Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-fd3117f91f99bce6ea7a",
+          "file": "digital-workers.spec.ts",
+          "line": 143,
+          "column": 1
+        },
+        {
+          "title": "worker report stays usable at 390px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3032,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:35.460Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "layout",
+                      "contentType": "application/json",
+                      "body": "eyJ2aWV3cG9ydCI6MzkwLCJkb2N1bWVudCI6MzkwLCJib2R5IjozOTB9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-268b92b75f897e6947ee",
+          "file": "digital-workers.spec.ts",
+          "line": 157,
+          "column": 39
+        },
+        {
+          "title": "worker report stays usable at 768px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2386,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:38.516Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "layout",
+                      "contentType": "application/json",
+                      "body": "eyJ2aWV3cG9ydCI6NzY4LCJkb2N1bWVudCI6NzY4LCJib2R5Ijo3Njh9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-ff1dfc74b03bf14dd874",
+          "file": "digital-workers.spec.ts",
+          "line": 157,
+          "column": 39
+        },
+        {
+          "title": "worker report stays usable at 1440px",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2671,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:40.924Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "layout",
+                      "contentType": "application/json",
+                      "body": "eyJ2aWV3cG9ydCI6MTQ0MCwiZG9jdW1lbnQiOjE0NDAsImJvZHkiOjE0NDB9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-8668ce48baf5c1e79ca1",
+          "file": "digital-workers.spec.ts",
+          "line": 157,
+          "column": 39
+        },
+        {
+          "title": "read-only schedules persist daily cadence and pause without implying a running executor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2718,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-11T10:21:43.609Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1169dc65c98974f84494-f398812d1f7f5b7140a4",
+          "file": "digital-workers.spec.ts",
+          "line": 186,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-11T10:20:59.281Z",
+    "duration": 47230.137,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

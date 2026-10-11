@@ -7,6 +7,7 @@
         <template v-if="warehouseEnabled">
         <v-alert v-if="!canOperate" type="info" variant="tonal" class="mb-4" role="status">Modo Consulta: puedes revisar compras y movimientos, pero no modificarlos.</v-alert>
 
+        <v-btn :to="{name: 'CuadernoTrabajadoresPage', query: {kind: 'purchase_review'}}" variant="tonal" min-height="44" class="mb-3 no-print">Preparar compras con evidencia</v-btn>
         <nav aria-label="Secciones del almacén" class="d-flex flex-wrap ga-2 mb-4">
             <v-btn :to="{hash: '#warehouse-purchases'}" @click="jumpTo('warehouse-purchases')" variant="tonal" min-height="44">Ir a compras</v-btn>
             <v-btn :to="{hash: '#warehouse-movements'}" @click="jumpTo('warehouse-movements')" variant="tonal" min-height="44">Ir a movimientos</v-btn>
