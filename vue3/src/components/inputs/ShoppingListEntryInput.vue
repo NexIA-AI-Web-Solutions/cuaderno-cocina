@@ -1,11 +1,12 @@
 <template>
-    <v-text-field :label="$t('Shopping_input_placeholder')" density="compact" @keyup.enter="parseIngredient()" v-model="ingredientInput" :loading="props.loading" hide-detail
+    <v-text-field :label="$t('Shopping_input_placeholder')" density="compact" @keyup.enter="parseIngredient()" v-model="ingredientInput" :loading="props.loading || loading || submitting" :disabled="props.loading || submitting" hide-detail
                   v-if="!useUserPreferenceStore().deviceSettings.shopping_input_autocomplete" s>
         <template #append>
             <v-btn
                 density="comfortable"
                 @click="parseIngredient()"
                 :icon="ingredientInputIcon"
+                aria-label="Añadir alimento a la compra" min-height="44" min-width="44" :disabled="props.loading || submitting"
                 color="create"
             ></v-btn>
         </template>
@@ -28,11 +29,17 @@
         :delay="300"
         :searchable="true"
         :strict="false"
+        :disabled="props.loading || submitting"
         :classes="{
                 dropdown: 'multiselect-dropdown z-3000',
                 containerActive: '',
             }"
     />
+    <v-alert v-if="failedDraft && useUserPreferenceStore().deviceSettings.shopping_input_autocomplete" type="error" variant="tonal" role="alert" class="mt-2">
+        El alimento no se ha añadido. Conservamos el texto para reintentar.
+        <v-text-field v-model="ingredientInput" label="Alimento pendiente" :disabled="submitting" hide-details class="mt-2" @keyup.enter="parseIngredient" />
+        <v-btn min-height="44" :disabled="submitting || !ingredientInput.trim()" :loading="submitting" @click="parseIngredient">Reintentar alimento</v-btn>
+    </v-alert>
 </template>
 
 <script setup lang="ts">
@@ -58,62 +65,65 @@ const ingredientModelInput = ref({} as Food)
 const searchQuery = ref('')
 
 const loading = ref(false)
+const submitting = ref(false)
+const failedDraft = ref(false)
 
 /**
  * add new ingredient from ingredient text input
  */
-function addIngredient(amount: number, unit: Unit | null, food: Food|FoodSimple | null) {
-    let sle = {
-        amount: Math.max(amount, 1),
-        unit: unit,
-        food: food,
+async function addIngredient(amount: number, unit: Unit | null, food: Food|FoodSimple | null) {
+    if (!Number.isFinite(amount) || amount <= 0 || !food) throw new Error('Indica un alimento y una cantidad positiva.')
+    const sle = {
+        amount, unit, food,
         shoppingLists: useShoppingStore().shoppingLists.filter(sl => useUserPreferenceStore().deviceSettings.shopping_selected_shopping_lists.includes(sl.id))
     } as ShoppingListEntryRequest
-
-    if (props.mealPlanId) {
-        sle.mealplanId = props.mealPlanId
-    }
-
-    useShoppingStore().createObject(sle, true).finally(() => {
-        loading.value = false
-    })
+    if (props.mealPlanId) sle.mealplanId = props.mealPlanId
+    const saved = await useShoppingStore().createObject(sle, true)
+    // The native store reports failed writes and resolves undefined.
+    if (!saved) { failedDraft.value = true; return false }
     ingredientInput.value = ''
-
+    ingredientModelInput.value = {} as Food
+    failedDraft.value = false
     ingredientInputIcon.value = 'fa-solid fa-check'
-    setTimeout(() => {
-        ingredientInputIcon.value = 'fa-solid fa-plus'
-    }, 1000)
+    setTimeout(() => { ingredientInputIcon.value = 'fa-solid fa-plus' }, 1000)
+    return true
 }
 
-function parseIngredient() {
-    const api = new ApiApi()
+async function parseIngredient() {
+    if (submitting.value || props.loading) return
+    const ingredient = ingredientInput.value.trim()
+    if (!ingredient) return
+    submitting.value = true
     loading.value = true
-
-    api.apiIngredientParserPostCreate({ingredientParserRequest: {ingredient: ingredientInput.value}}).then(r => {
-        if (r.ingredient) {
-            addIngredient(Number(r.ingredient.amount), r.ingredient.unit, r.ingredient.food)
-        }
-    }).catch(err => {
+    try {
+        const r = await new ApiApi().apiIngredientParserPostCreate({ingredientParserRequest: {ingredient}})
+        if (!r.ingredient) throw new Error('No se ha podido interpretar el alimento. Revisa el texto.')
+        return await addIngredient(Number(r.ingredient.amount), r.ingredient.unit, r.ingredient.food)
+    } catch (err) {
+        failedDraft.value = true
         useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err)
+    } finally {
+        submitting.value = false
         loading.value = false
-    })
+    }
 }
 
 // ----------- FUNCTIONS FOR TESTING MULTISELECT INPUT -------------
 
 function createObject(object: any, select$: Multiselect) {
     ingredientInput.value = object['name']
-    ingredientModelInput.value = {} as Food
     select$.close()
-    select$.clearSearch()
-    parseIngredient()
+    void parseIngredient().then(saved => { if (saved) select$.clearSearch() })
     return false
 }
 
-function selectObject(foodId: number, food: Food, select$: Multiselect) {
-    //ingredientInput.value = food.name
-    ingredientModelInput.value = {} as Food
-    addIngredient(1, null, food)
+async function selectObject(foodId: number, food: Food, select$: Multiselect) {
+    if (submitting.value || props.loading) return false
+    ingredientInput.value = food.name || ''
+    submitting.value = true
+    try { await addIngredient(1, null, food) }
+    catch (err) { failedDraft.value = true; useMessageStore().addError(ErrorMessageType.CREATE_ERROR, err) }
+    finally { submitting.value = false }
     return false
 }
 

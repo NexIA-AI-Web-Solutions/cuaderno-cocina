@@ -10,9 +10,7 @@
                               clearable hide-details>
                     <template v-slot:append>
                         <v-badge bordered :offset-x="5" :offset-y="5" color="secondary" v-model="hasFiltersApplied">
-                            <v-btn @click="panel ='search' " v-if="panel == ''" color="primary" icon>
-                                <i class="fa-solid fa-caret-down"></i></v-btn>
-                            <v-btn @click="panel ='' " v-if="panel == 'search'" color="primary" icon><i class="fa-solid fa-caret-up"></i></v-btn>
+                            <v-btn @click="panel = panel === 'search' ? '' : 'search'" :aria-label="panel === 'search' ? 'Ocultar filtros avanzados' : 'Mostrar filtros avanzados'" :aria-expanded="panel === 'search'" aria-controls="native-search-filter-panel" color="primary" icon min-height="44" min-width="44"><v-icon :icon="panel === 'search' ? 'fa-solid fa-caret-up' : 'fa-solid fa-caret-down'" /></v-btn>
                         </v-badge>
                     </template>
                 </v-text-field>
@@ -22,14 +20,14 @@
             <v-col>
                 <v-expansion-panels v-model="panel">
                     <v-expansion-panel value="search">
-                        <v-expansion-panel-text>
+                        <v-expansion-panel-text id="native-search-filter-panel">
                             <v-form :disabled="loading" class="mt-4">
 
                                 <div v-for="filter in Object.values(filters)" :key="filter.id">
                                     <template v-if="filter.enabled">
                                         <component :="getPropsFromFilter(filter)" :is="filter.is" density="compact" v-model:modelValue="filter.modelValue">
                                             <template #append>
-                                                <v-btn icon="fa-solid fa-times" size="small" variant="plain"
+                                                <v-btn icon="fa-solid fa-times" size="small" variant="plain" min-height="44" min-width="44" :aria-label="'Quitar filtro: ' + filter.label"
                                                        @click="filter.enabled = false; filter.modelValue = filter.default"></v-btn>
                                             </template>
                                         </component>
@@ -44,9 +42,9 @@
 
                                 <v-model-select model="CustomFilter" v-model="selectedCustomFilter" density="compact">
                                     <template #append>
-                                        <v-btn icon="fa-solid fa-upload" color="warning" :disabled="selectedCustomFilter == null"
+                                        <v-btn icon="fa-solid fa-upload" color="warning" min-height="44" :aria-label="'Cargar filtro guardado: ' + (selectedCustomFilter?.name || 'selecciona un filtro')" :disabled="selectedCustomFilter == null"
                                                @click="loadSelectedCustomFilter()"></v-btn>
-                                        <v-btn icon="$save" class="ms-1" color="save" @click="saveCustomFilter()"></v-btn>
+                                        <v-btn icon="$save" class="ms-1" color="save" min-height="44" aria-label="Guardar filtros de búsqueda" @click="saveCustomFilter()"></v-btn>
                                     </template>
                                 </v-model-select>
                             </v-form>
@@ -73,6 +71,8 @@
             </v-col>
         </v-row>
 
+        <v-alert v-if="searchError" type="error" role="alert" class="my-3">{{ searchError }} <v-btn variant="text" @click="searchRecipes({page: 1})">Reintentar búsqueda</v-btn></v-alert>
+        <v-alert v-if="searchFinished && !loading && !searchError && !recipes.length" type="info" variant="tonal" role="status" class="my-3">No encontramos recetas con esta búsqueda. Prueba otras palabras o elimina los filtros. <v-btn variant="text" @click="reset">Limpiar búsqueda y filtros</v-btn></v-alert>
         <v-row v-if="recipes.length > 0 && useUserPreferenceStore().deviceSettings.search_viewMode == 'table'">
             <v-col>
                 <v-card>
@@ -114,6 +114,7 @@
                             </v-avatar>
                         </template>
 
+                        <template #item.name="{item}"><router-link :to="{name: 'RecipeViewPage', params: {id: item.id}}" class="native-search-recipe-link" @click.stop>{{ item.name }}</router-link></template>
                         <template #item.keywords="{item}">
                             <keywords-bar :keywords="item.keywords"></keywords-bar>
                         </template>
@@ -149,14 +150,14 @@
         </v-row>
 
 
-        <v-dialog v-model="dialog">
+        <v-dialog v-model="dialog" max-width="560" :persistent="filterSaving" :aria-label="$t('SavedSearch')">
             <v-card>
                 <v-closable-card-title :title="$t('SavedSearch')" v-model="dialog"></v-closable-card-title>
                 <v-card-text>
-                    <v-text-field :label="$t('Name')" v-model="newFilterName"></v-text-field>
+                    <v-alert v-if="filterError" type="error" role="alert" class="mb-3">{{ filterError }}</v-alert><v-text-field :label="$t('Name')" v-model="newFilterName" maxlength="128" :disabled="filterSaving"></v-text-field>
                 </v-card-text>
                 <v-card-actions>
-                    <v-btn prepend-icon="$create" color="create" @click="createCustomFilter()">{{ $t('Create') }}</v-btn>
+                    <v-btn prepend-icon="$create" color="create" :disabled="filterSaving" :loading="filterSaving" @click="createCustomFilter()">{{ $t('Create') }}</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -218,7 +219,7 @@ const availableFilters = computed(() => {
     return f
 })
 
-const loading = ref(false)
+const loading = ref(false), searchFinished = ref(false), searchError = ref(''), filterSaving = ref(false), filterError = ref('')
 const dialog = ref(false)
 const panel = ref('')
 const addFilterSelect = ref<string | null>(null)
@@ -280,7 +281,7 @@ onMounted(() => {
 function searchRecipes(options: Pick<VDataTableUpdateOptions, 'page'>) {
     const revision = ++searchRevision
     let api = new ApiApi()
-    loading.value = true
+    loading.value = true; searchError.value = ''
     hasFiltersApplied.value = false
     selectedItems.value = []
 
@@ -302,12 +303,13 @@ function searchRecipes(options: Pick<VDataTableUpdateOptions, 'page'>) {
 
     return api.apiRecipeList(searchParameters, {signal: signal.value}).then((r) => {
         if (revision !== searchRevision) return
+        searchFinished.value = true
         recipes.value = r.results
         tableItemCount.value = r.count
     }).catch(err => {
         if (revision !== searchRevision) return
         if (err.name !== 'AbortError' && err.cause?.name !== 'AbortError') {
-            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+            searchError.value = 'No se han podido cargar las recetas. Reintenta la búsqueda.'
         }
     }).finally(() => {
         if (revision !== searchRevision) return
@@ -403,7 +405,7 @@ function saveCustomFilter() {
             loading.value = false
         })
     } else {
-        newFilterName.value = ''
+        newFilterName.value = ''; filterError.value = ''
         dialog.value = true
     }
 }
@@ -411,18 +413,20 @@ function saveCustomFilter() {
 /**
  * create a new saved search filter in the database via api
  */
-function createCustomFilter() {
-    let api = new ApiApi()
-
-    dialog.value = false
-    loading.value = true
-    api.apiCustomFilterCreate({customFilter: {name: newFilterName.value, search: JSON.stringify(filtersToCustomFilterFormat())} as CustomFilter}).then((r) => {
-        selectedCustomFilter.value = r
-    }).catch(err => {
-        useMessageStore().addError(ErrorMessageType.UPDATE_ERROR, err)
-    }).finally(() => {
-        loading.value = false
-    })
+async function createCustomFilter() {
+    if (filterSaving.value) return
+    const name = newFilterName.value.trim()
+    if (!name) {filterError.value = 'Indica un nombre para guardar el filtro.'; return}
+    if (name.length > 128) {filterError.value = 'El nombre admite hasta 128 caracteres.'; return}
+    const api = new ApiApi()
+    filterSaving.value = true; filterError.value = ''
+    try {
+        selectedCustomFilter.value = await api.apiCustomFilterCreate({customFilter: {name, search: JSON.stringify(filtersToCustomFilterFormat())} as CustomFilter})
+        dialog.value = false
+    } catch (err) {
+        filterError.value = 'No se ha podido guardar el filtro. Conservamos el nombre y los criterios para que puedas reintentar.'
+        dialog.value = true
+    } finally {filterSaving.value = false}
 }
 
 /**
@@ -968,6 +972,4 @@ function enableFilter(name: string | null) {
 
 </script>
 
-<style scoped>
-
-</style>
+<style scoped>.native-search-recipe-link{display:inline-flex;align-items:center;min-height:44px;text-underline-offset:3px;overflow-wrap:anywhere}.native-search-recipe-link:focus-visible{outline:2px solid currentColor;outline-offset:3px}</style>

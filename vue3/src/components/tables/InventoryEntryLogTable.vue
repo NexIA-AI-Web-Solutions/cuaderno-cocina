@@ -24,12 +24,8 @@
         </template>
 
         <template #item.amount="{item}">
-            <template v-if="item.oldAmount != item.newAmount">
-                {{ $n(item.oldAmount ?? 0) }} <i class="fa-solid fa-arrow-right"></i> {{ $n(item.newAmount ?? 0) }}
-            </template>
-            <template v-else>
-                {{ $n(item.newAmount ?? 0) }}
-            </template>
+            <span>Anterior: {{ item.oldAmount == null ? '—' : $n(item.oldAmount) }} {{ item.entry?.unit?.name || props.inventoryEntry?.unit?.name || '' }}</span><br>
+            <span>Nueva: {{ item.newAmount == null ? '—' : $n(item.newAmount) }} {{ item.entry?.unit?.name || props.inventoryEntry?.unit?.name || '' }}</span>
         </template>
 
         <template #item.location="{item}">
@@ -87,6 +83,8 @@ const tableHeaders = computed(() => {
     return headers
 })
 
+let requestGeneration = 0
+watch(() => props.inventoryEntry?.id, () => {items.value = []; itemCount.value = 0; loadItems({page: 1, itemsPerPage: pageSize.value})})
 watch(() => props.updateTrigger, () => {
     loadItems({page: 1, itemsPerPage: pageSize.value})
 })
@@ -95,6 +93,7 @@ watch(() => props.updateTrigger, () => {
  * load logs for selected inventory entry
  */
 function loadItems(options: VDataTableUpdateOptions) {
+    const generation = ++requestGeneration
     let api = new ApiApi()
 
     tableLoading.value = true
@@ -107,12 +106,15 @@ function loadItems(options: VDataTableUpdateOptions) {
         parameters.entryId = props.inventoryEntry.id!
     }
 
-    api.apiInventoryLogList(parameters).then((r: any) => {
+    return api.apiInventoryLogList(parameters).then((r: any) => {
+        if (generation !== requestGeneration) return
         items.value = r.results
         itemCount.value = r.count
     }).catch((err: any) => {
+        if (generation !== requestGeneration) return
         useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
     }).finally(() => {
+        if (generation !== requestGeneration) return
         tableLoading.value = false
     })
 

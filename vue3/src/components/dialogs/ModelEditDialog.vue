@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="1400" :activator="dialogActivator" v-model="dialog" :persistent="editingObjChangedState">
+    <v-dialog max-width="1400" :activator="dialogActivator" v-model="dialog" :persistent="editingObjChangedState" :aria-label="dialogName">
         <component :is="editorComponent" :item="props.item" :item-id="props.itemId" @create="createEvent" @save="saveEvent" @delete="deleteEvent" dialog @close="dialog = false; " @changed-state="(state:boolean) => {editingObjChangedState = state}" :itemDefaults="props.itemDefaults"></component>
     </v-dialog>
 </template>
@@ -7,7 +7,7 @@
 <script setup lang="ts">
 
 
-import {defineAsyncComponent, PropType, ref, shallowRef, watch} from "vue";
+import {computed, defineAsyncComponent, PropType, ref, shallowRef, watch} from "vue";
 import {type EditorSupportedModels, type EditorSupportedTypes, getGenericModelFromString} from "@/types/Models";
 import {useI18n} from "vue-i18n";
 
@@ -27,6 +27,7 @@ const props = defineProps({
     closeAfterDelete: {default: true},
 })
 
+const dialogName = computed(() => `${props.item || props.itemId ? t('Edit') : t('Create')} ${t(getGenericModelFromString(props.model, t).model.localizationKey)}`)
 const editorComponent = shallowRef(getGenericModelFromString(props.model, t).model.editorComponent)
 
 const dialog = defineModel<boolean | undefined>({default: undefined})

@@ -39,9 +39,11 @@ test('export chooser explains each supported format without altering native valu
     const component = readFileSync(new URL('../components/settings/ExportDataSettings.vue', import.meta.url), 'utf8')
     const script = component.split('<script setup lang="ts">')[1].split('</script>')[0]
     const executable = stripTypeScriptTypes(script, {mode: 'transform'}).replace(/^import .*;?$/gm, '')
-    const state = new Function('INTEGRATIONS', 'computed', 'ref', `${executable};return {exportFormats,exportType}`)(
-        formats, get => ({get value() {return get()}}), value => ({value}),
+    const cleanup = []
+    const state = new Function('INTEGRATIONS', 'computed', 'ref', 'onBeforeUnmount', `${executable};return {exportFormats,exportType}`)(
+        formats, get => ({get value() {return get()}}), value => ({value}), callback => cleanup.push(callback),
     )
+    assert.equal(cleanup.length, 1)
     assert.equal(state.exportType.value, 'DEFAULT')
     assert.deepEqual(state.exportFormats.value.map(item => item.value), formats.filter(format => format.export).map(format => format.id))
     for (const item of state.exportFormats.value) {

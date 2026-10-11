@@ -1,10 +1,11 @@
 <template>
-    <v-dialog max-width="900" v-model="dialog" activator="model" :persistent="formLoading">
+    <v-dialog max-width="900" v-model="dialog" activator="model" :persistent="formLoading" :aria-label="dialogTitle + ' existencia de despensa'">
         <v-card>
 
             <v-closable-card-title v-model="dialog" icon="fas fa-jar" :title="dialogTitle"></v-closable-card-title>
 
             <v-card-text>
+                <v-alert v-if="initialLoadError" type="error" role="alert" class="mb-3">{{ initialLoadError }} <v-btn variant="text" :disabled="formLoading" @click="loadInitialData">Reintentar carga</v-btn></v-alert>
 
                 <v-row v-if="['add','remove','move'].includes(bookingMode)">
                     <v-col>
@@ -53,7 +54,7 @@
                             <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
 
                             <v-alert v-if="saveError" type="error" role="alert" class="mb-3">{{ saveError }}</v-alert>
-                            <v-btn block @click="save" :loading="formLoading" prepend-icon="$save" color="save">{{ $t('Save') }}</v-btn>
+                            <v-btn block @click="save" :disabled="formLoading || Boolean(initialLoadError)" :loading="formLoading" prepend-icon="$save" color="save">{{ $t('Save') }}</v-btn>
                         </v-form>
                     </v-col>
                 </v-row>
@@ -141,7 +142,8 @@ const {t} = useI18n()
 // form
 const formLoading = ref(false)
 const requests = inventoryRequests()
-const saveError = ref('')
+const saveError = ref(''), initialLoadError = ref('')
+let loadGeneration = 0
 const freezerExpiryDialog = ref(false)
 
 const bookingMode = ref('add')
@@ -183,67 +185,44 @@ const dialogTitle = computed(() => {
     }
 })
 
-watch(dialog, (newValue, oldValue) => {
-    if (!newValue) {
-        resetForm()
-    } else {
-        const promises: Promise<unknown>[] = []
-        const api = new ApiApi()
-
-        formLoading.value = true
-        bookingMode.value = props.bookingMode
-
-        if (props.inventoryEntryId) {
-            let api = new ApiApi()
-            promises.push(api.apiInventoryEntryRetrieve({id: props.inventoryEntryId}).then(r => {
-                inventoryEntry.value = r
-                inventoryEntrySelected()
-            }))
-        }
-        if (props.foodId) {
-            let api = new ApiApi()
-            promises.push(api.apiFoodRetrieve({id: props.foodId}).then(r => {
-                food.value = r
-            }))
-        }
-
-        api.apiInventoryEntryList({pageSize: 1}).then(r => {
-            promises.push(api.apiInventoryEntryList({pageSize: 100, page: Math.max(1, Math.ceil(r.count / 100))}).then(r => {
-                const counts = new Map<number, { unit: Unit, count: number }>()
-                r.results.forEach(entry => {
-                    if (entry.unit) {
-                        const u = entry.unit
-                        const count = counts.get(u.id!) || {unit: u, count: 0}
-                        count.count++
-                        counts.set(u.id!, count)
-                    }
-                })
-
-                commonUnits.value = Array.from(counts.values())
-                    .sort((a, b) => b.count - a.count)
-                    .slice(0, 5)
-                    .map(c => c.unit)
-            }).catch(err => {
-                useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-            }))
-
-            Promise.allSettled(promises).finally(() => {
-                formLoading.value = false
-            })
-        }).catch(err => {
-            useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
-        })
-    }
+watch(dialog, (newValue) => {
+    loadGeneration++
+    formLoading.value = false
+    resetForm(); saveError.value = ''; initialLoadError.value = ''
+    if (newValue) {bookingMode.value = props.bookingMode; void loadInitialData()}
 })
+async function loadInitialData() {
+    if (!dialog.value || formLoading.value) return
+    const generation = ++loadGeneration, api = new ApiApi()
+    formLoading.value = true; initialLoadError.value = ''
+    try {
+        const entryPromise = ['remove','move'].includes(bookingMode.value) && props.inventoryEntryId ? api.apiInventoryEntryRetrieve({id: props.inventoryEntryId}) : Promise.resolve(null)
+        const foodPromise = bookingMode.value === 'add' && props.foodId ? api.apiFoodRetrieve({id: props.foodId}) : Promise.resolve(null)
+        const unitsPromise = api.apiInventoryEntryList({pageSize: 1}).then(r => api.apiInventoryEntryList({pageSize: 100, page: Math.max(1, Math.ceil(r.count / 100))}))
+        const [entry, selectedFood, recent] = await Promise.all([entryPromise, foodPromise, unitsPromise])
+        if (generation !== loadGeneration || !dialog.value) return
+        if (entry) {inventoryEntry.value = entry; inventoryEntrySelected()}
+        if (selectedFood) food.value = selectedFood
+        const counts = new Map<number, {unit: Unit; count: number}>()
+        recent.results.forEach(entry => {if (entry.unit) {const u = entry.unit, count = counts.get(u.id!) || {unit: u, count: 0}; count.count++; counts.set(u.id!, count)}})
+        commonUnits.value = Array.from(counts.values()).sort((a,b) => b.count - a.count).slice(0,5).map(c => c.unit)
+    } catch (err) {
+        if (generation !== loadGeneration) return
+        initialLoadError.value = 'No se han podido cargar los datos de la despensa. Puedes cerrar el diálogo o reintentar la carga.'
+    } finally {if (generation === loadGeneration) formLoading.value = false}
+}
 
 
 /**
  * save form depending on selected booking mode
  */
 function save() {
-    if (formLoading.value) return
+    if (formLoading.value || initialLoadError.value) return
     saveError.value = ''
     if (bookingMode.value == 'add') {
+        if (!food.value?.id) {saveError.value = 'Selecciona un alimento para añadir la existencia.'; return}
+        if (!inventoryLocation.value?.id) {saveError.value = 'Selecciona una ubicación para añadir la existencia.'; return}
+        if (!decimalInput(String(amount.value ?? ''))) {saveError.value = 'Indica una cantidad positiva.'; return}
         addInventory()
     } else if (bookingMode.value == 'remove') {
         removeInventory()
@@ -317,7 +296,7 @@ function moveInventory() {
         const updated = {...inventoryEntry.value}
         let changed = false
 
-        if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation != inventoryLocation.value) {
+        if (inventoryLocation.value != null && inventoryEntry.value.inventoryLocation?.id !== inventoryLocation.value.id) {
             updated.inventoryLocation = inventoryLocation.value
             changed = true
         }
@@ -371,8 +350,8 @@ function inventoryEntrySelected() {
     if (inventoryEntry.value) {
         food.value = inventoryEntry.value.food
         unit.value = inventoryEntry.value.unit
-        //inventoryLocation.value = inventoryEntry.value.inventoryLocation
-        //subLocation.value = inventoryEntry.value.subLocation
+        inventoryLocation.value = inventoryEntry.value.inventoryLocation
+        subLocation.value = inventoryEntry.value.subLocation ?? ''
         amount.value = inventoryEntry.value.amount
         //expires.value = inventoryEntry.value.expires
     }

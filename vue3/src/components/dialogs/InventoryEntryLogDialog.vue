@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="900" v-model="dialog" activator="model">
+    <v-dialog max-width="900" v-model="dialog" activator="model" :aria-label="'Historial de ' + (props.inventoryEntry?.food?.name || 'existencias')">
         <v-card>
 
             <v-closable-card-title v-model="dialog" icon="fa-solid fa-clock-rotate-left" :title="$t('History')"></v-closable-card-title>

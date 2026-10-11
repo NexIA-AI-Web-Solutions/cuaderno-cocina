@@ -7,7 +7,7 @@
             </v-card-title>
         </template>
         <template v-slot:append>
-            <v-btn variant="plain" density="compact" icon>
+            <v-btn variant="plain" density="comfortable" min-height="44" min-width="44" :aria-label="`Opciones del paso ${props.stepIndex + 1}`" icon>
                 <v-icon icon="$menu"></v-icon>
                 <v-menu activator="parent">
                     <v-list>
@@ -92,7 +92,7 @@
                                     </div>
                                     <div class="flex-col flex-grow-0 d-flex ma-1">
                                         <div class="d-flex align-center justify-center">
-                                            <v-btn variant="plain" class="" density="compact" tabindex="-1" icon>
+                                            <v-btn variant="plain" class="" density="comfortable" min-height="44" min-width="44" :aria-label="`Opciones de ${ingredient.food?.name || ingredient.note || 'ingrediente'} en el paso ${props.stepIndex + 1}`" icon>
                                                 <v-icon icon="$menu"></v-icon>
                                                 <v-menu activator="parent">
                                                     <v-list>
@@ -137,7 +137,7 @@
                 </v-col>
                 <v-col cols="12">
                     <v-label>{{ $t('Instructions') }}</v-label>
-                    <v-alert @click="dialogMarkdownEditor = true" class="mt-2 cursor-pointer" min-height="52px" v-if="mobile">
+                    <v-alert role="button" tabindex="0" :aria-label="`Editar instrucciones del paso ${props.stepIndex + 1}`" @keydown.enter.prevent="dialogMarkdownEditor = true" @keydown.space.prevent="dialogMarkdownEditor = true" @click="dialogMarkdownEditor = true" class="mt-2 cursor-pointer" min-height="52px" v-if="mobile">
                         <template v-if="step.instruction != '' && step.instruction != null">
                             {{ step.instruction }}
                         </template>

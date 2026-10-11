@@ -8,10 +8,10 @@
                 <v-row>
                     <v-col>
 
-                        <v-btn-toggle border divided v-model="mode">
-                            <v-btn value="md_list"><i class="fa-solid fa-list-check"></i></v-btn>
-                            <v-btn value="md_table"><i class="fa-solid fa-table-cells"></i></v-btn>
-                            <v-btn value="csv"><i class="fa-solid fa-file-csv"></i></v-btn>
+                        <v-btn-toggle role="group" aria-label="Formato de exportación de la compra" border divided v-model="mode">
+                            <v-btn value="md_list" aria-label="Lista Markdown" min-height="44"><i class="fa-solid fa-list-check"></i></v-btn>
+                            <v-btn value="md_table" aria-label="Tabla Markdown" min-height="44"><i class="fa-solid fa-table-cells"></i></v-btn>
+                            <v-btn value="csv" aria-label="Archivo CSV" min-height="44"><i class="fa-solid fa-file-csv"></i></v-btn>
                         </v-btn-toggle>
                     </v-col>
                 </v-row>
@@ -29,7 +29,7 @@
                 </v-row>
                 <v-row>
                     <v-col>
-                        <v-textarea :model-value="exportText" auto-grow max-rows="25" readonly>
+                        <v-textarea label="Vista previa de la exportación" :model-value="exportText" auto-grow max-rows="25" readonly>
 
                         </v-textarea>
                     </v-col>
@@ -72,7 +72,7 @@ const mode = ref<'md_list' | 'md_table' | 'csv'>('md_list')
  * shorthand for csvDelim user preference
  */
 const csvDelim = computed(() => {
-    return useUserPreferenceStore().userSettings.csvDelim
+    return useUserPreferenceStore().userSettings.csvDelim || ';'
 })
 
 /**
@@ -114,13 +114,18 @@ const exportText = computed(() => {
 /**
  * create the header for the exported list depending on the mode
  */
+function csvField(value: unknown): string {
+    const text = String(value ?? '')
+    return text.includes(csvDelim.value) || /["\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
 function formatHeader() {
     if (mode.value == 'md_list') {
         return ''
     } else if (mode.value == 'md_table') {
         return `|${t('Amount')}|${t('Unit')}|${t('Food')}|\n|-|-|-|`
     } else if (mode.value == 'csv') {
-        return `${t('Amount')} ${csvDelim.value} ${t('Unit')} ${csvDelim.value} ${t('Food')}`
+        return [t('Amount'), t('Unit'), t('Food')].map(csvField).join(csvDelim.value)
     }
     return ''
 }
@@ -135,7 +140,7 @@ function formatCategory(categoryName: string) {
     } else if (mode.value == 'md_table') {
         return `|${categoryName}|`
     } else if (mode.value == 'csv') {
-        return `${categoryName}${csvDelim.value}${csvDelim.value}`
+        return [categoryName, '', ''].map(csvField).join(csvDelim.value)
     }
     return ''
 }
@@ -150,7 +155,7 @@ function formatEntry(entry: ShoppingListEntry) {
     } else if (mode.value == 'md_table') {
         return `|${entry.amount}|${(entry.unit) ? entry.unit.name : ''}|${entry.food?.name}|`
     } else if (mode.value == 'csv') {
-        return `${entry.amount}${csvDelim.value}${(entry.unit) ? entry.unit.name : ''}${csvDelim.value}${entry.food?.name}`
+        return [entry.amount, entry.unit?.name || '', entry.food?.name || ''].map(csvField).join(csvDelim.value)
     }
     return ''
 }
@@ -159,16 +164,15 @@ function formatEntry(entry: ShoppingListEntry) {
  * encode the exportText into a URI and trigger browser to download the export as a file
  */
 function downloadExport() {
-    let data = encodeURI("data:text/text;charset=utf-8," + exportText.value)
-    let link = document.createElement("a")
-    link.setAttribute("href", data)
-
-    if (mode.value == 'md_list' || mode.value == 'md_table') {
-        link.setAttribute("download", `${t('Shopping_list')}.md`)
-    } else if (mode.value == 'csv') {
-        link.setAttribute("download", `${t('Shopping_list')}.csv`)
-    }
+    const url = URL.createObjectURL(new Blob([exportText.value], {type: mode.value === 'csv' ? 'text/csv;charset=utf-8' : 'text/markdown;charset=utf-8'}))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${t('Shopping_list')}.${mode.value === 'csv' ? 'csv' : 'md'}`
+    document.body.appendChild(link)
     link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+
 }
 
 </script>

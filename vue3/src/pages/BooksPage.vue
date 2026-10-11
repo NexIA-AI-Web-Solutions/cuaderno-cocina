@@ -1,17 +1,21 @@
 <template>
-    <v-container >
+    <v-container class="books-page">
+        <h1 class="text-h4 mb-2">Libros de recetas</h1><p class="mb-4">Agrupa tus recetas en libros para consultarlas y compartir una colección.</p>
+        <v-progress-linear v-if="loading" indeterminate aria-label="Cargando libros de recetas" class="mb-3" />
+        <v-alert v-if="loadError" type="error" role="alert" class="mb-3">{{ loadError }} <v-btn variant="text" :disabled="loading" @click="loadBooks">Reintentar carga</v-btn></v-alert>
         <v-row>
             <v-col cols="12" md="6" offset-md="3">
                 <v-text-field v-model="bookQuery" :label="$t('Search')" clearable>
                     <template #append>
-                        <v-btn icon color="create">
-                            <v-icon icon="$create"></v-icon>
-                            <model-edit-dialog model="RecipeBook" @create="(arg: RecipeBook) => {books.push(arg)}"></model-edit-dialog>
-                        </v-btn>
+                        <v-btn color="create" aria-label="Crear libro de recetas" min-height="44" @click="bookCreateOpen = true">Crear libro</v-btn>
                     </template>
                 </v-text-field>
             </v-col>
         </v-row>
+        <p v-if="!loading && !loadError && !books.length" class="my-4">Todavía no hay libros de recetas. <v-btn variant="tonal" @click="bookCreateOpen = true">Crear el primer libro</v-btn></p>
+        <p v-else-if="!loading && books.length && !visibleBooks.length" role="status" class="my-4">No hay libros que coincidan con «{{ bookQuery }}». <v-btn variant="text" @click="bookQuery = ''">Limpiar búsqueda</v-btn></p>
+        <v-btn variant="text" :disabled="loading" @click="loadBooks">Volver a cargar libros</v-btn>
+        <model-edit-dialog v-model="bookCreateOpen" model="RecipeBook" @create="(arg: RecipeBook) => {books.push(arg)}" />
         <v-row>
             <v-col cols="12" md="3" v-for="b in visibleBooks" :key="b.id">
                 <v-card>
@@ -44,10 +48,9 @@
 
 import {computed, onMounted, ref} from "vue";
 import {ApiApi, RecipeBook, RecipeBookEntry} from "@/openapi";
-import {ErrorMessageType, useMessageStore} from "@/stores/MessageStore";
 import ModelEditDialog from "@/components/dialogs/ModelEditDialog.vue";
 
-const loading = ref(false)
+const loading = ref(false), loadError = ref(''), bookCreateOpen = ref(false)
 
 const viewingBook = ref<null | RecipeBook>(null)
 const viewingBookEntries = ref([] as RecipeBookEntry[])
@@ -64,8 +67,9 @@ onMounted(() => {
 })
 
 async function loadBooks() {
+    if (loading.value) return
     const api = new ApiApi()
-    loading.value = true
+    loading.value = true; loadError.value = ''
     try {
         const loaded: RecipeBook[] = []
         let page = 1
@@ -77,18 +81,19 @@ async function loadBooks() {
         }
         books.value = loaded
     } catch (err) {
-        useMessageStore().addError(ErrorMessageType.FETCH_ERROR, err)
+        loadError.value = 'No se han podido cargar los libros. Conservamos la colección anterior; reintenta la carga.'
     } finally {
         loading.value = false
     }
 }
 
 function loadBookEntries(recipeBook : RecipeBook){
+    if (loading.value) return
     const api = new ApiApi()
-    loading.value = true
+    loading.value = true; loadError.value = ''
     api.apiRecipeBookEntryList({})
 }
 
 </script>
 
-<style scoped></style>
+<style scoped>.books-page :deep(.v-card-title){white-space:normal;overflow-wrap:anywhere}.books-page :deep(.v-field__append-inner),.books-page :deep(.v-input__append){flex-wrap:wrap}</style>

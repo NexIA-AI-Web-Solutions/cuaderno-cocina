@@ -28,8 +28,8 @@
                         {{ $t('External') }}
                     </v-chip>
                     <v-chip class="mb-1 me-1" size="x-small" prepend-icon="far fa-clock" label variant="outlined"
-                            v-if="props.recipe.workingTime != undefined && props.recipe.workingTime > 0">
-                        {{ recipe.workingTime! + recipe.waitingTime! }}
+                            v-if="totalMinutes > 0">
+                        {{ totalMinutes }} min
                     </v-chip>
                 </template>
             </keywords-component>
@@ -117,6 +117,8 @@ const props = defineProps({
     showMenu: {type: Boolean, default: true, required: false},
     servings: {type: Number, required: false},
 })
+
+const totalMinutes = computed(() => [props.recipe.workingTime, props.recipe.waitingTime].reduce<number>((total, value) => total + (typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0), 0))
 
 const router = useRouter()
 

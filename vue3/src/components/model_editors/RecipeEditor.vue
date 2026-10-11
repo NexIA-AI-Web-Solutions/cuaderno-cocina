@@ -60,7 +60,7 @@
                             <v-col cols="12" md="6">
                                 <v-number-input :label="$t('Servings')" v-model="editingObj.servings">
                                     <template #append-inner>
-                                        <v-btn icon variant="plain">
+                                        <v-btn icon variant="plain" aria-label="Escalar cantidades de la receta" min-height="44" min-width="44">
                                             <v-icon icon="fa-solid fa-sort-numeric-up"></v-icon>
                                             <number-scaler-dialog :number="editingObj.servings" @confirm="scaleRecipe" :text="$t('ScaleRecipeHelp')"></number-scaler-dialog>
                                         </v-btn>
@@ -89,11 +89,11 @@
                 <v-tabs-window-item value="steps">
                     <v-row>
                         <v-col>
-                            <v-btn-group density="compact" divided border>
+                            <v-btn-group role="group" aria-label="Organizar pasos de la receta" divided border>
 
-                                <v-btn prepend-icon="fa-solid fa-maximize" @click="handleSplitAllSteps" :disabled="editingObj.steps.length < 1"><span
+                                <v-btn aria-label="Dividir todos los pasos" min-height="44" prepend-icon="fa-solid fa-maximize" @click="handleSplitAllSteps" :disabled="editingObj.steps.length < 1"><span
                                     v-if="!mobile">{{ $t('Split') }}</span></v-btn>
-                                <v-btn prepend-icon="fa-solid fa-minimize" @click="editingObj.steps = handleMergeAllSteps()" :disabled="editingObj.steps.length < 2"><span
+                                <v-btn aria-label="Unir todos los pasos" min-height="44" prepend-icon="fa-solid fa-minimize" @click="editingObj.steps = handleMergeAllSteps()" :disabled="editingObj.steps.length < 2"><span
                                     v-if="!mobile">{{ $t('Merge') }}</span></v-btn>
                                 <ai-action-button :text="$t('Auto_Sort')" prepend-icon="$ai" :loading="aiStepSortLoading" @selected="aiStepSort"
                                                   :disabled="editingObj.steps.length < 1"></ai-action-button>
@@ -106,7 +106,7 @@
                     <v-form :disabled="loading || fileApiLoading">
                         <v-row v-if="editingObj.steps.length == 0">
                             <v-col class="text-center">
-                                <v-btn icon="$create" variant="outlined" size="x-small" @click="addStep(0)"></v-btn>
+                                <v-btn icon="$create" aria-label="Añadir primer paso" variant="outlined" min-height="44" min-width="44" @click="addStep(0)"></v-btn>
                             </v-col>
                         </v-row>
 
@@ -115,12 +115,12 @@
                                  <step-editor :model-value="s" @update:model-value="updateStep(i, $event)" v-model:recipe="editingObj" :step-index="i" @delete="deleteStepAtIndex(i)"
                                              @move="dialogStepManager = true"></step-editor>
 
-                                <div class="text-center mt-2">
-                                    <v-btn icon="$create" variant="outlined" size="x-small" @click="addStep(i+1)"></v-btn>
-                                    <v-btn icon="fa-solid fa-down-left-and-up-right-to-center" style="transform: rotate(135deg)" variant="outlined" size="x-small" class="ms-2"
+                                <div role="group" :aria-label="`Acciones después del paso ${i + 1}`" class="text-center mt-2 d-flex flex-wrap justify-center ga-2">
+                                    <v-btn icon="$create" :aria-label="`Añadir paso después del ${i + 1}`" variant="outlined" min-height="44" min-width="44" @click="addStep(i+1)"></v-btn>
+                                    <v-btn :aria-label="`Unir paso ${i + 1} con el siguiente`" icon="fa-solid fa-down-left-and-up-right-to-center" min-height="44" min-width="44" style="transform: rotate(135deg)" variant="outlined" class="ms-2"
                                            @click="mergeFollowingStep(i, s)" v-if="editingObj.steps.length > i + 1"
                                     ></v-btn>
-                                    <v-btn icon="fa-solid fa-arrow-down-1-9" variant="outlined" size="x-small" class="ms-2" @click="dialogStepManager = true"
+                                    <v-btn aria-label="Ordenar pasos" icon="fa-solid fa-arrow-down-1-9" min-height="44" min-width="44" variant="outlined" class="ms-2" @click="dialogStepManager = true"
                                            :disabled="editingObj.steps.length < 2"></v-btn>
                                 </div>
                             </v-col>
