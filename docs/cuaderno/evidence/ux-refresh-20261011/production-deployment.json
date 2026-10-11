@@ -1,0 +1,23 @@
+{
+  "backup": "/var/backups/cuaderno-cocina/ux100-20261011T084417Z",
+  "previous_image": "sha256:c16fd5a58da2eddf79f64588098e56d0c905b6e2b2e679dbafc15dd7596d11ba",
+  "candidate_image": "sha256:1093b2c6629b6de96b31531fdc699513353c970635007890aaf519c238390bdf",
+  "database_dump_bytes": 657239,
+  "deployed_at": "2026-10-11T08:46:28.749Z",
+  "production_url": "https://gex-dashboard.hopto.org/cuaderno-cocina/",
+  "status": "healthy",
+  "public_browser_checks": [
+    "public-home-and-exact-candidate-javascript",
+    "books",
+    "prices-search-and-dialog",
+    "mobile-pantry",
+    "desktop-recipe-recovery"
+  ],
+  "browser_errors": [],
+  "image_restarts": 0,
+  "public_javascript_sha256": "9a5d140c9933a7243ad13c5727c46cbd9fbc720e76259631d8ef78f14ace5e4d",
+  "approval": "User explicitly authorized production deployment and requested minimal checks/no unnecessary CI.",
+  "ci_run": false,
+  "full_suite_rerun": false,
+  "configuration_change": "CUADERNO_IMAGE only; production environment, ports, volumes and Caddy unchanged"
+}

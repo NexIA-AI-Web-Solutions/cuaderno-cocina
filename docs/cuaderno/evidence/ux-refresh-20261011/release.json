@@ -14,6 +14,9 @@
   "image_browser_smoke": "root/image-smoke.json",
   "preview": "http://127.0.0.1:18093/",
   "preview_scope": "VPS localhost, isolated synthetic database; not public deployment",
-  "production_deployed": false,
-  "rollback_image": "cuaderno-local:spanish-a7b3f79"
+  "production_deployed": true,
+  "rollback_image": "cuaderno-local:spanish-a7b3f79",
+  "deployed_at": "2026-10-11T08:46:28.749Z",
+  "deployment_evidence": "production-deployment.json",
+  "production_url": "https://gex-dashboard.hopto.org/cuaderno-cocina/"
 }

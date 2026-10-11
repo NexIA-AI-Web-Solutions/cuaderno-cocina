@@ -281,3 +281,13 @@ Evidencia específica: `evidence/ux-refresh-20261011/README.md`.
 - [x] Candidato local compilado y empaquetado.
 - [ ] Autorización de despliegue y aceptación pública posterior.
 - [ ] Firefox/WebKit, iPad físico y gates históricos ajenos a esta campaña.
+
+## Producción actualizada · 2026-10-11
+
+- [x] Autorización explícita del usuario para desplegar100 mejoras evitando CI/pruebas innecesarias.
+- [x] Backup de base y configuración; imagen anterior conservada.
+- [x] Servicio web actualizado a `cuaderno-ux-candidate:20261011-525c6f0` (digest `1093b2c6629b`), saludable y0 reinicios.
+- [x] Cinco comprobaciones públicas Chromium: inicio y SHA exacto de JS, libros, catálogo/diálogo de precios, despensa móvil y recuperación de receta.0 errores de página; sin escrituras de negocio.
+- [x] Entorno, volúmenes, base de datos y Caddy conservados. No se ejecutó CI ni se repitió la suite completa ya aprobada.
+
+Evidencia: `evidence/ux-refresh-20261011/production-deployment.json`. Los gates históricos de otras campañas conservan su alcance.

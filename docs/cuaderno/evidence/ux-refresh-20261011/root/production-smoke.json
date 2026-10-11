@@ -1,0 +1,15 @@
+{
+  "checked_at": "2026-10-11T08:46:28.749Z",
+  "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/",
+  "checks": [
+    "public-home-and-exact-candidate-javascript",
+    "books",
+    "prices-search-and-dialog",
+    "mobile-pantry",
+    "desktop-recipe-recovery"
+  ],
+  "errors": [],
+  "overlay": false,
+  "business_writes": 0,
+  "entry_sha256": "9a5d140c9933a7243ad13c5727c46cbd9fbc720e76259631d8ef78f14ace5e4d"
+}

@@ -22,7 +22,7 @@
     "page_errors": 0
   },
   "role_edition_combinations": 9,
-  "production_deployed": false,
+  "production_deployed": true,
   "production_business_writes": 0,
   "accepted_improvements": 100,
   "source_commit": "525c6f0",
@@ -54,5 +54,8 @@
     "page_errors": 0,
     "overlay": false
   },
-  "release": "release.json"
+  "release": "release.json",
+  "deployed_at": "2026-10-11T08:46:28.749Z",
+  "deployment_evidence": "production-deployment.json",
+  "production_url": "https://gex-dashboard.hopto.org/cuaderno-cocina/"
 }

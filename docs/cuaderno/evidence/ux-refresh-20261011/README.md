@@ -1,6 +1,6 @@
 # 100 mejoras de UI, UX y errores · 11 octubre 2026
 
-**100 resultados implementados y verificados**, registrados uno a uno en [100-mejoras.md](100-mejoras.md) y [improvements.json](improvements.json). Base productiva `a7b3f79`, imagen `c16fd5a58da2`; rama `cuaderno/ux-refresh-20261011`. Este candidato todavía no está desplegado.
+**100 resultados implementados y verificados**, registrados uno a uno en [100-mejoras.md](100-mejoras.md) y [improvements.json](improvements.json). Base productiva `a7b3f79`, imagen `c16fd5a58da2`; rama `cuaderno/ux-refresh-20261011`. Desplegado en producción el11 de octubre de2026, con autorización explícita del usuario.
 
 ## Resultado
 
@@ -44,7 +44,7 @@ El test heredado de renderizado Markdown requiere `cuaderno-g0-t002-web`: conten
 
 Chromium emulado no certifica Firefox/WebKit, dispositivo iPad físico ni todos los flujos existentes. El revisor detectó una carrera previa al cerrar/reabrir un diálogo con una mutación pendiente, fuera de los cambios aceptados; no se afirma que la aplicación carezca de otros errores. Los resultados no sustituyen los gates históricos de CI, restauración y aceptación de otras campañas.
 
-Producción conserva su imagen original. El despliegue real requiere autorización según `AGENTS.md`; la aceptación pública posterior queda pendiente. No se realizaron migraciones, publicación ni cambios de Caddy.
+El usuario autorizó el despliegue y pidió evitar pruebas/CI innecesarias. Se sustituyó únicamente la imagen del servicio web; se conservaron entorno, volúmenes, base de datos y Caddy. Se guardó una copia de la base y configuración y se retuvo la imagen anterior para rollback. No se lanzaron CI ni otra suite completa. El contenedor quedó saludable y cinco comprobaciones públicas Chromium pasaron sin errores, incluyendo coincidencia SHA-256 exacta del JavaScript servido. Véase [production-deployment.json](production-deployment.json).
 
 ## Paquete final
 
