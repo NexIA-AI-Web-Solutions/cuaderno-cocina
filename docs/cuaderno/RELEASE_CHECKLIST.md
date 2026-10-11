@@ -310,3 +310,23 @@ Evidencia: `evidence/ux-refresh-20261011/production-deployment.json`. Los gates 
 Evidencia reproducible y límites: [README](evidence/digital-workers-20261011/README.md).
 El desarrollo está implementado; estas casillas abiertas son tareas de entrega,
 no funciones ocultas que requieran una clave API.
+
+## Trabajadores digitales desplegados · 2026-10-11
+
+- [x] Autorización explícita: «deploy now into production asap».
+- [x] Backup de PostgreSQL, media y configuración; imagen anterior conservada.
+- [x] Imagen `cuaderno-workers:20261011-617bb7b`, runtime de fuente `617bb7b`.
+- [x] Migraciones 0021/0022 aplicadas; web saludable, cero reinicios.
+- [x] HTTPS readiness y SHA-256 del JavaScript público coinciden con el candidato.
+- [x] Temporizador local habilitado, comprobación cada cinco minutos; primera
+  ejecución termina correctamente sin informes vencidos ni cambios operativos.
+- [x] Activación de interfaz verificada con seis pruebas enfocadas de programación.
+
+Se conservan DB/media/puertos/Caddy y credenciales. No se lanzó CI ni se repitió
+la suite completa ya aprobada. Evidencia operativa en
+`evidence/digital-workers-20261011/production-deployment.json`; aceptación de
+navegador público en `production-browser.json` del mismo directorio.
+Los límites de Firefox/WebKit, iPad físico y gates históricos siguen vigentes.
+
+- [x] Aceptación pública Chromium aprobada: inicio, receta, ocho trabajadores,
+  ejecutor activo y móvil 390 px; cero errores, sin escrituras de negocio.

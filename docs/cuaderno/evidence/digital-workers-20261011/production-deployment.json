@@ -1,0 +1,36 @@
+{
+  "backup": "/var/backups/cuaderno-cocina/workers-20261011T102701Z",
+  "previous_image": "sha256:1093b2c6629b6de96b31531fdc699513353c970635007890aaf519c238390bdf",
+  "compose": "/home/kripta/cuaderno-cocina-deploy-20261006-f2e3f3ca6/source-spanish-20261010/deploy/cuaderno/compose.production.yml",
+  "database_dump_bytes": 657249,
+  "source_commit": "617bb7bf5fd2ac0f116860fabc6dc37c13cd6191",
+  "candidate_tag": "cuaderno-workers:20261011-617bb7b",
+  "candidate_image": "sha256:1aa98eb775333bd902a3f830093b31a750cdb1efa078dfa0f3a862d1d0e9acbf",
+  "deployed_at": "2026-10-11T10:32:41.138612+00:00",
+  "production_url": "https://gex-dashboard.hopto.org/cuaderno-cocina/",
+  "status": "healthy",
+  "image_restarts": 0,
+  "approval": "User: deploy now into production asap",
+  "migrations_applied": [
+    "0021_workerrun_workerevent_and_more",
+    "0022_workerschedule"
+  ],
+  "timer": "cuaderno-workers.timer",
+  "timer_poll_minutes": 5,
+  "timer_enabled": true,
+  "first_executor_result": "0 reports due, 0 errors, exit 0",
+  "ci_run": false,
+  "business_test_writes": false,
+  "database_backup_sha256": "9c121119c8c86394cbf002d031efeb78c740f053b3560be375843ffeb3efc895",
+  "media_backup_sha256": "b3a1c8e829092d8caac77e8955f835110c7207ee8f6ea2efdcdca90ae139aacf",
+  "configuration_change": "Image and CUADERNO_WORKERS_RUNNER_ACTIVE=1; local report timer installed. DB/media volumes, port, Caddy and credentials preserved.",
+  "public_browser_checks": [
+    "home",
+    "native recipe navigation",
+    "eight workers",
+    "scheduler active API and UI",
+    "390px mobile no overflow"
+  ],
+  "browser_errors": [],
+  "public_javascript_sha256": "70ab1c1fd7ac4030d19d4aac731fc67ec1a3edb73755eed7d4f243055158039d"
+}

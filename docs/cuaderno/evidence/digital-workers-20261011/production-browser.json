@@ -1,0 +1,53 @@
+{
+  "started_at": "2026-10-11T10:34:01.484Z",
+  "target": "https://gex-dashboard.hopto.org/cuaderno-cocina/",
+  "mode": "read-only production smoke",
+  "credential_fixture_note": "The older smoke-accounts.json login was stale; the authorized demo-access-20261009.json credential succeeded without resetting credentials.",
+  "checks": {
+    "login": true,
+    "home": true,
+    "recipe_navigation": {
+      "passed": true,
+      "native_recipe_id": 37
+    },
+    "worker_route_header_and_available_kinds": {
+      "passed": true,
+      "kinds": [
+        "cost_completion",
+        "price_watch",
+        "service_briefing",
+        "requirements_review",
+        "purchase_review",
+        "receipt_review",
+        "menu_candidates",
+        "service_learning"
+      ]
+    },
+    "scheduler_active_api_and_ui": {
+      "passed": true,
+      "runner_active": true,
+      "saved_schedule_count": 0
+    },
+    "mobile_390_no_overflow": {
+      "passed": true,
+      "viewport": 390,
+      "document": 390,
+      "body": 390
+    },
+    "no_pageerrors": true,
+    "no_business_mutations": true
+  },
+  "pageerrors": [],
+  "console_errors": [],
+  "rejected_mutations": [],
+  "suppressed_view_log_posts": 1,
+  "screenshots": [
+    "/home/kripta/cuaderno-ux-refresh-20261011/docs/cuaderno/evidence/digital-workers-20261011/production-home-1440.png",
+    "/home/kripta/cuaderno-ux-refresh-20261011/docs/cuaderno/evidence/digital-workers-20261011/production-recipe-1440.png",
+    "/home/kripta/cuaderno-ux-refresh-20261011/docs/cuaderno/evidence/digital-workers-20261011/production-workers-1440.png",
+    "/home/kripta/cuaderno-ux-refresh-20261011/docs/cuaderno/evidence/digital-workers-20261011/production-workers-390.png"
+  ],
+  "passed": true,
+  "browser_version": "151.0.7922.34",
+  "completed_at": "2026-10-11T10:34:08.279Z"
+}

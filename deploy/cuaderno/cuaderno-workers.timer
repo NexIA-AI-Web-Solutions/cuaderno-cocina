@@ -1,9 +1,9 @@
 [Unit]
-Description=Check Cuaderno Cocina report schedules every minute
+Description=Check Cuaderno Cocina report schedules every five minutes
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=1min
+OnUnitActiveSec=5min
 AccuracySec=10s
 Unit=cuaderno-workers.service
 

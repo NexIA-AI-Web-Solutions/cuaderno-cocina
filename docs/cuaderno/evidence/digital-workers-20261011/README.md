@@ -126,3 +126,32 @@ El ajuste final muestra total y coste por ración, colapsa detalles del motor y
 recorta únicamente ceros decimales redundantes para presentación. El navegador
 comprueba que el JSON descargado conserva los valores originales. No cambia
 el cálculo ni la precisión del backend.
+
+## Despliegue autorizado posterior
+
+El usuario autorizó «deploy now into production asap». El candidato se desplegó
+con imagen derivada de la base productiva existente; los metadatos runtime se
+regeneraron para `617bb7b`. [Registro de despliegue](production-deployment.json),
+[JavaScript público](production-assets.json) y [navegador público](production-browser.json).
+Las secciones anteriores describen el candidato antes de esta autorización.
+
+Se añadió configuración explícita del ejecutor: prueba roja significativa y
+seis pruebas de programación verdes (`runner-activation-red.log` y
+`runner-activation-green.log`). El timer del host consulta cada cinco minutos;
+la primera ejecución termina con cero tareas vencidas y cero errores. El estado
+activado de la API expresa configuración operativa, no monitorización en tiempo
+real del proceso. La construcción final y el check Django de la imagen aprobados
+se conservan en `production-build.log` e `image-django-check.log`.
+
+Rollback: detener `cuaderno-workers.timer`, restaurar `production.env` y el
+compose guardados en la ruta de backup del registro; recrear solo el servicio web
+con la imagen anterior. Las migraciones son aditivas: no borrar las tablas nuevas
+ni restaurar el dump automáticamente, para no perder actividad posterior.
+
+Aceptación pública Chromium aprobada: inicio, receta nativa, ocho trabajadores,
+API/interfaz del ejecutor activo y móvil 390 px; cero errores. El script permite
+solo lectura y login: intercepta una llamada de analítica `view-log` de la receta
+para evitar esa escritura, sin sustituir respuestas de negocio. El archivo viejo
+de credenciales smoke estaba desactualizado; se usaron las credenciales demo
+vigentes sin restablecer cuentas. No se generaron informes, propuestas ni
+programaciones sintéticas en producción.

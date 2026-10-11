@@ -1,8 +1,8 @@
 # Trabajadores digitales locales
 
-Candidato del 11 de octubre de 2026. Ruta de interfaz: `/cuaderno/trabajadores`.
-No usa LLM, claves API ni servicios externos de pago. La producción no cambia
-hasta el despliegue autorizado de este candidato.
+Desplegado el 11 de octubre de 2026. Ruta de interfaz: `/cuaderno/trabajadores`.
+No usa LLM, claves API ni servicios externos de pago. En producción se accede
+desde «Trabajadores» en la navegación de Cuaderno Cocina.
 
 ## Qué puedes hacer
 
@@ -63,11 +63,16 @@ El ejecutor se invoca dentro del runtime de la aplicación:
 /opt/recipes/venv/bin/python manage.py run_cuaderno_workers --limit 20
 ```
 
-El administrador debe integrarlo con un temporizador local si desea ejecuciones
-periódicas. Este candidato no modifica cron/systemd ni instala un servicio en
-producción. La pantalla informa de que el ejecutor no está activado. El comando
-es idempotente respecto de la ocurrencia vencida y registra fallos sin exponer
-las fuentes privadas en el mensaje.
+En esta instalación está activo `cuaderno-workers.timer`: comprueba cada cinco
+minutos si hay informes diarios/semanales vencidos. No crea programaciones por
+su cuenta; cada usuario debe guardarlas. La interfaz recibe la configuración
+`CUADERNO_WORKERS_RUNNER_ACTIVE=1`. El comando es idempotente respecto de la
+ocurrencia vencida y registra fallos sin exponer fuentes privadas.
+
+Operación: `systemctl status cuaderno-workers.timer` y
+`journalctl -u cuaderno-workers.service`. Para detener la ejecución, deshabilitar
+el timer y establecer la variable anterior a `0` antes de recrear el web.
+Una futura instalación debe configurar explícitamente ambos componentes.
 
 ## Evidencia y límites
 

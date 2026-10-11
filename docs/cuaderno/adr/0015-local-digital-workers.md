@@ -81,3 +81,12 @@ Pruebas PostgreSQL de lectura sin escrituras, Decimal, subrecetas, permisos,
 concurrencia, propuestas obsoletas, handoff, resultados históricos y programación;
 pruebas de Vue y navegador real contra instancia aislada. Comandos/resultados y
 limitaciones en `../evidence/digital-workers-20261011/README.md`.
+
+## Actualización operativa posterior
+
+El mismo 2026-10-11 el usuario autorizó el despliegue. Se instaló el timer local
+`cuaderno-workers.timer` (consulta cada cinco minutos) y se añadió el indicador
+explícito `CUADERNO_WORKERS_RUNNER_ACTIVE`, apagado por defecto. La instalación
+productiva lo activa; los informes siguen requiriendo programación voluntaria
+y nunca aprueban acciones. Evidencia en `production-deployment.json` y
+`production-browser.json` dentro de la carpeta de esta campaña.
