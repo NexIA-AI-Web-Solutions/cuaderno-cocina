@@ -1496,6 +1496,11 @@
   dependencies:
     upath "^2.0.1"
 
+"@vuetify/v0@^1.2.1":
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/@vuetify/v0/-/v0-1.2.3.tgz#4502d0a668db380a326def5aa644cbfa0b67b3a4"
+  integrity sha512-8qpYa88KxKrvi4jQcz+Zg4WH04un48Lt7Tj0Qq+LqvbUvHi+H177vWqBn9tQWgpxBVs1RXrTz5zw0Cy6txJHlw==
+
 "@vueuse/core@^14.2.1":
   version "14.3.0"
   resolved "https://registry.npmjs.org/@vueuse/core/-/core-14.3.0.tgz"
@@ -3514,10 +3519,12 @@ vuedraggable@^4.1.0:
   dependencies:
     sortablejs "1.14.0"
 
-vuetify@^3.13.1:
-  version "3.13.1"
-  resolved "https://registry.npmjs.org/vuetify/-/vuetify-3.13.1.tgz"
-  integrity sha512-AeHAEAvEJG8+jDhdycvtT5D3BdM+Syoe7WMuMJ5DXwf2Wcw+P7ZMdzYC23FTOCmQBqSZHchvW8W1l9g8o63qSA==
+vuetify@^4.2.4:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-4.2.4.tgz#20f47f5503ca9a50e1b96b1d87249d7d8700a75d"
+  integrity sha512-zLYtVGJcg2hK3DHoeiBXSImpzg4E0N19p3zCgGnNhMp/YwaVQZXP4cPkIKeL/evVnUeLP/CjSnFsFBThWSl2Ew==
+  dependencies:
+    "@vuetify/v0" "^1.2.1"
 
 w3c-xmlserializer@^5.0.0:
   version "5.0.0"
