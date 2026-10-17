@@ -1,0 +1,36 @@
+{
+  "verified_at": "2026-10-17T11:13:29.886497+00:00",
+  "production_url": "https://gex-dashboard.hopto.org/cuaderno-cocina/",
+  "source_commit": "c9e4457",
+  "image_tag": "cuaderno-ui:20261017-c9e4457",
+  "image": "sha256:3f907b80dd47cf684ebfe431b5f9a92b4cdd94255025ed2eefdf5b8d33d13fd1",
+  "previous_image_tag": "cuaderno-ui:20261017-80d671f",
+  "previous_image": "sha256:69aaf3400122259fda73a91521dc91d42bb44accffc75d756afd94de340b3a19",
+  "backup": "/var/backups/cuaderno-cocina/ux-round2-20261017",
+  "database_dump_bytes": 3554608,
+  "dump_archive_list_verified": true,
+  "health": "healthy",
+  "restarts": 0,
+  "backend_changed": false,
+  "schema_changes": false,
+  "configuration_change": "CUADERNO_IMAGE only (other lines compared unchanged)",
+  "public_manifest_sha256": "ba413883c8555e44d25628b11823351258aefc81849784d8101c969a06a6a4c4",
+  "public_browser_plans": 3,
+  "public_page_errors": 0,
+  "public_business_writes": 0,
+  "tests": {
+    "passed": 95,
+    "failed": 0,
+    "skipped": 0,
+    "build_exit": 0,
+    "typecheck_exit": 0
+  },
+  "review": "SHIP",
+  "harness_notes": [
+    "Public smoke selectors refined to target footer Close explicitly and await dialog exit animation; final run passed."
+  ],
+  "limitations": [
+    "Chromium emulation; no Firefox/WebKit or physical iPad.",
+    "No business persistence writes on production; client write-state behavior tested locally/intercepted."
+  ]
+}

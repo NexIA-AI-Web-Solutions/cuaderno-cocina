@@ -1,0 +1,103 @@
+{
+  "reports": [
+    {
+      "w": 390,
+      "contrast": {
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(146, 88, 47)"
+      },
+      "servingControlHeight": 44,
+      "zeroRejected": true,
+      "fractionalApplied": true,
+      "cancelReopenRestores": true,
+      "queryPreservesFraction": true,
+      "cookingCheckboxLocalToggle": true,
+      "editorButtons44": true,
+      "pasteEmptyDisabled": true,
+      "overflow": false
+    },
+    {
+      "w": 768,
+      "contrast": {
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(146, 88, 47)"
+      },
+      "servingControlHeight": 44,
+      "zeroRejected": true,
+      "fractionalApplied": true,
+      "cancelReopenRestores": true,
+      "queryPreservesFraction": true,
+      "cookingCheckboxLocalToggle": true,
+      "editorButtons44": true,
+      "pasteEmptyDisabled": true,
+      "overflow": false
+    },
+    {
+      "w": 1024,
+      "contrast": {
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(146, 88, 47)"
+      },
+      "servingControlHeight": 44,
+      "zeroRejected": true,
+      "fractionalApplied": true,
+      "cancelReopenRestores": true,
+      "queryPreservesFraction": true,
+      "cookingCheckboxLocalToggle": true,
+      "editorButtons44": true,
+      "pasteEmptyDisabled": true,
+      "overflow": false
+    },
+    {
+      "w": 1440,
+      "contrast": {
+        "color": "rgb(255, 255, 255)",
+        "background": "rgb(146, 88, 47)"
+      },
+      "servingControlHeight": 44,
+      "zeroRejected": true,
+      "fractionalApplied": true,
+      "cancelReopenRestores": true,
+      "queryPreservesFraction": true,
+      "cookingCheckboxLocalToggle": true,
+      "editorButtons44": true,
+      "pasteEmptyDisabled": true,
+      "overflow": false
+    }
+  ],
+  "pageErrors": [],
+  "blocked": [
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    }
+  ]
+}

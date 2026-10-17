@@ -714,3 +714,13 @@ Build/tipos verdes; regresión focalizada 111/111 y comprobación final 26/26.
 Revisión independiente SHIP. Ver `evidence/ui-visual-20261017/README.md`;
 desplegado en producción y aceptado con los tres planes, cero errores JS y
 health sano, sin reinicios. Imagen y rollback en `deployment.json`.
+
+## Flujos cotidianos de cocina · 2026-10-17
+
+Segunda ronda con tres agentes y navegador real: búsqueda por teclado, raciones
+fraccionarias/cancelación, editor de ingredientes, alta de formatos, servicio,
+reservas, retirada de despensa y confirmaciones/destinos de compras.
+95/95 pruebas focalizadas, build/tipos verdes y revisión independiente SHIP.
+Desplegado `cuaderno-ui:20261017-c9e4457`; aceptación pública en los tres planes,
+cero errores JS, manifest coincidente, health sano y cero reinicios.
+Evidencia y límites: `evidence/ux-workflows-20261017/README.md`.

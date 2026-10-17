@@ -38,3 +38,5 @@ Sólo activos Vue sobre la imagen productiva anterior `cuaderno-ui:20261017-80d6
 Rollback de interfaz: restaurar sólo `CUADERNO_IMAGE=cuaderno-ui:20261017-80d671f` en el env productivo y recrear exclusivamente web con el Compose existente (`up -d --no-deps --pull never web`). No restaurar la BD para revertir estos estáticos.
 
 No certifica todos los flujos, Firefox/WebKit ni iPad físico. No se probaron escrituras de negocio contra producción. El selector nativo mantiene su paginación/búsqueda heredada; este cambio limita el destino por alimento, no rediseña toda la gestión de inventario.
+
+Estado final: desplegado y aceptado en los tres planes. Revisión independiente SHIP; health saludable y cero reinicios. Manifest público idéntico al candidato (`deployment.json` y `public-checks.json`). Cero errores de JavaScript y cero escrituras de negocio en la aceptación pública; se bloquearon tres registros automáticos de visita. La prueba automática se ajustó para identificar el cierre de pie de diálogo y esperar su animación antes de evaluar el estado.

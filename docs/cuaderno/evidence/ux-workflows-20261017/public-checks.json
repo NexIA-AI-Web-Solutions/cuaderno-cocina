@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "plan": "esencial",
+      "search": true,
+      "advancedQueryRetained": true,
+      "closeEnterDoesNotNavigate": true,
+      "servingsCancelResets": true,
+      "recipeDisclosures": true,
+      "mobileShoppingBounds": true,
+      "pageOverflow": false
+    },
+    {
+      "plan": "profesional",
+      "search": true,
+      "advancedQueryRetained": true,
+      "closeEnterDoesNotNavigate": true,
+      "servingsCancelResets": true,
+      "recipeDisclosures": true,
+      "mobileShoppingBounds": true,
+      "pageOverflow": false
+    },
+    {
+      "plan": "integral",
+      "search": true,
+      "advancedQueryRetained": true,
+      "closeEnterDoesNotNavigate": true,
+      "servingsCancelResets": true,
+      "recipeDisclosures": true,
+      "mobileShoppingBounds": true,
+      "pageOverflow": false
+    }
+  ],
+  "errors": [],
+  "businessWrites": 0,
+  "blockedWriteAttempts": [
+    {
+      "plan": "esencial",
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "plan": "profesional",
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    },
+    {
+      "plan": "integral",
+      "method": "POST",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+    }
+  ],
+  "manifestSha256": "ba413883c8555e44d25628b11823351258aefc81849784d8101c969a06a6a4c4",
+  "preview": false
+}

@@ -339,3 +339,14 @@ Los límites de Firefox/WebKit, iPad físico y gates históricos siguen vigentes
 - [x] Backup de configuración/BD e imagen productiva anterior identificada.
 - [x] Imagen de interfaz aplicada y aceptación pública registrada (tres planes, cero errores JS).
 - [ ] Firefox/WebKit e iPad físico (fuera de esta validación Chromium).
+
+## Flujos de cocina y existencias · 2026-10-17
+
+- [x] Tres agentes; escenarios cotidianos antes/después, cuatro viewports y auditoría adicional de 360 px.
+- [x] 95/95 pruebas sin omitidas; build y tipos verdes; revisión independiente SHIP.
+- [x] Backup de configuración/BD verificado e imagen anterior conservada.
+- [x] Despliegue sólo de web; runtime/backend sin cambios y sin nuevas migraciones.
+- [x] Aceptación pública en Esencial/Profesional/Integral, hash idéntico, cero errores JS y sin escrituras de negocio.
+- [ ] Firefox/WebKit e iPad físico: fuera de esta validación.
+
+Registro: `evidence/ux-workflows-20261017/deployment.json`.
