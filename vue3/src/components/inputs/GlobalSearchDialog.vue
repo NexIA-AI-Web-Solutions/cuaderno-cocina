@@ -24,7 +24,6 @@
                     autocomplete="off"
                     clearable
                     :label="$t('Search')"
-                    :placeholder="$t('Search')"
                     role="combobox"
                     aria-autocomplete="list"
                     aria-controls="cuaderno-search-results"

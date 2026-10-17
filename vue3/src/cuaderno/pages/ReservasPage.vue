@@ -17,7 +17,7 @@
             <section v-if="summary" aria-labelledby="reservation-summary-title" class="mb-5">
                 <h2 id="reservation-summary-title" class="text-h6">Comensales pendientes del día: {{ summary.pending_covers }}</h2>
                 <p class="text-body-2 mb-3">Pendientes de cocina: {{ summary.pending_covers }} · en cocina: {{ summary.in_kitchen_covers }} · total activo: {{ summary.total_active_covers }}. Solicitadas, servidas y anuladas quedan fuera.</p>
-                <v-row>
+                <v-row v-if="summary.groups.length">
                     <v-col v-for="group in summary.groups" :key="summaryGroupKey(group)" cols="12" md="6">
                         <v-card variant="tonal"><v-card-text>
                             <h3 class="text-subtitle-1">{{ group.template_name }} · día {{ group.template_day + 1 }} · {{ group.meal_type_name }}</h3>
@@ -257,5 +257,5 @@ watch(date, () => { if (!busy.value) { offset.value = 0; void load(); } });
 onUnmounted(() => { generation++; controller?.abort(); });
 </script>
 <style scoped>
-.reservation-recipe-link{display:inline-flex;align-items:center;min-height:44px;color:rgb(var(--v-theme-primary));text-underline-offset:3px}.reservation-recipe-link:focus-visible{outline:2px solid rgb(var(--v-theme-primary));outline-offset:3px}.reservation-date{max-width:260px;min-width:200px}.reservation-wrap{overflow-wrap:anywhere;white-space:normal}.reservation-history{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;background:rgb(var(--v-theme-surface-variant));padding:12px;border-radius:6px} .cuaderno-reservations-page :deep(.v-card-title){white-space:normal;overflow-wrap:anywhere}
+.reservation-recipe-link{display:inline-flex;align-items:center;min-height:44px;color:rgb(var(--v-theme-primary));text-underline-offset:3px}.reservation-recipe-link:focus-visible{outline:2px solid rgb(var(--v-theme-primary));outline-offset:3px}.reservation-date{max-width:260px;min-width:200px}.reservation-wrap{overflow-wrap:anywhere;white-space:normal}.reservation-history{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;background:rgba(var(--v-theme-on-surface),.06);color:rgb(var(--v-theme-on-surface));padding:12px;border-radius:6px} .cuaderno-reservations-page :deep(.v-card-title){white-space:normal;overflow-wrap:anywhere}
 </style>

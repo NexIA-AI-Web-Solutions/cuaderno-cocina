@@ -6,6 +6,7 @@ import ts from 'typescript'
 const source = readFileSync(new URL('./stockMovementUi.ts', import.meta.url), 'utf8')
 const js = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}}).outputText
 const {
+    movementQuantityLabel,
     buildStandaloneWasteCause,
     canReverseGeneric,
     hasReplacementValuation,
@@ -15,6 +16,15 @@ const {
     standaloneWasteCause,
     standaloneWasteCauseLength,
 } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+
+test('movement quantities are readable without rounding or losing decimal precision', () => {
+    assert.equal(movementQuantityLabel('2.0000000000000000'), '2')
+    assert.equal(movementQuantityLabel('0.1250000000000000'), '0,125')
+    assert.equal(movementQuantityLabel('-0.0000000000000001'), '-0,0000000000000001')
+    assert.equal(movementQuantityLabel('9007199254740993.1250'), '9007199254740993,125')
+    assert.equal(movementQuantityLabel(null), 'Desconocido')
+    assert.equal(movementQuantityLabel('invalid'), 'Desconocido')
+})
 
 test('standalone waste cause is trimmed, required and bounded to 256 characters', () => {
     assert.equal(buildStandaloneWasteCause('  Rotura durante el emplatado  '), 'Rotura durante el emplatado')

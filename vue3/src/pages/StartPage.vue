@@ -14,7 +14,10 @@
                 <v-btn min-height="44" rounded="lg" variant="text" prepend-icon="$import" :to="{name: 'RecipeImportPage'}">{{ $t('Import') }}</v-btn>
             </div>
             <form class="cuaderno-home-search" role="search" aria-label="Buscar recetas" @submit.prevent="searchRecipes">
-                <v-text-field v-model="recipeQuery" type="search" label="Buscar en tus recetas" placeholder="Nombre de la receta" prepend-inner-icon="$search" variant="outlined" bg-color="surface" rounded="lg" hide-details clearable></v-text-field>
+                <div class="cuaderno-home-search-field">
+                    <label for="cuaderno-recipe-search" class="cuaderno-home-search-label">Buscar en tus recetas</label>
+                    <v-text-field id="cuaderno-recipe-search" v-model="recipeQuery" type="search" placeholder="Nombre de la receta" prepend-inner-icon="$search" variant="outlined" bg-color="surface" rounded="lg" hide-details clearable></v-text-field>
+                </div>
                 <v-btn type="submit" min-height="56" color="secondary" rounded="lg" variant="flat">{{ $t('Search') }}</v-btn>
             </form>
             <v-btn v-if="totalRecipes > 0" min-height="44" rounded="lg" append-icon="fa-solid fa-arrow-right" variant="text" :to="{name: 'SearchPage'}">Ver todas las recetas</v-btn>
@@ -155,12 +158,14 @@ onBeforeUnmount(() => {
 .cuaderno-home-intro { flex: 1 1 320px; }
 .cuaderno-home-eyebrow { color: rgb(var(--v-theme-primary)); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: 10px; }
 .cuaderno-home-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.cuaderno-home-search { display: flex; align-items: center; flex: 1 0 100%; gap: 12px; min-width: 0; }
+.cuaderno-home-search { display: flex; align-items: flex-end; flex: 1 0 100%; gap: 12px; min-width: 0; }
+.cuaderno-home-search-field { flex: 1; min-width: 0; }
+.cuaderno-home-search-label { display: block; margin-bottom: 8px; font-weight: 600; font-size: .875rem; }
 .cuaderno-home-search :deep(.v-input) { min-width: 0; }
 @media (max-width: 599px) {
     .cuaderno-home-header { gap: 16px; padding: 20px 16px; border-radius: 18px; }
     .cuaderno-home-search { flex-wrap: wrap; }
-    .cuaderno-home-search :deep(.v-input) { flex-basis: 100%; }
+    .cuaderno-home-search-field { flex-basis: 100%; }
     .cuaderno-home-search > .v-btn { width: 100%; min-height: 44px !important; }
 }
 .cuaderno-home-loading { max-width: 360px; padding-block: 16px; }

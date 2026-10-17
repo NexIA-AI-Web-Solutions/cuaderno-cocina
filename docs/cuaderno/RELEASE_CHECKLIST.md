@@ -330,3 +330,12 @@ Los límites de Firefox/WebKit, iPad físico y gates históricos siguen vigentes
 
 - [x] Aceptación pública Chromium aprobada: inicio, receta, ocho trabajadores,
   ejecutor activo y móvil 390 px; cero errores, sin escrituras de negocio.
+
+## UI visual · 2026-10-17
+
+- [x] Tres agentes y sesiones separadas; tres planes y cuatro viewports.
+- [x] Capturas antes/después, teclado, impresión, contraste y límites móviles.
+- [x] Build, tipos y pruebas focalizadas verdes; revisión independiente SHIP.
+- [x] Backup de configuración/BD e imagen productiva anterior identificada.
+- [ ] Imagen de interfaz aplicada y aceptación pública registrada.
+- [ ] Firefox/WebKit e iPad físico (fuera de esta validación Chromium).

@@ -705,3 +705,11 @@ anchos 1440/390/360 sin desbordamiento de página y cero errores. Evidencia:
 `evidence/comparison-20261011/publication.json` y `public-check.json`.
 Se conserva la revisión del vídeo publicada concurrentemente (`20261011a`).
 Copias de ambos estados previos en la ruta de backup del registro de publicación.
+
+## Reparación visual con tres agentes · 2026-10-17
+
+Candidato revisado en los tres planes con Chromium en móvil/tableta/escritorio.
+Búsqueda, recetas, compras, reservas, historial e informes corregidos.
+Build/tipos verdes; regresión focalizada 111/111 y comprobación final 26/26.
+Revisión independiente SHIP. Ver `evidence/ui-visual-20261017/README.md`;
+aceptación productiva pendiente de registrar tras despliegue de estáticos.

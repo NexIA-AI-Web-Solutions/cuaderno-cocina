@@ -12,7 +12,8 @@
             <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-3">{{ error }}</v-alert>
             <p v-if="notice" role="status" class="mb-3">{{ notice }}</p>
             <v-btn v-if="!extras && !loading" variant="text" @click="load">Volver a cargar</v-btn>
-            <template v-if="extras">
+            <details v-if="extras" class="recipe-extras-details">
+                <summary>Ver fotos, variantes y declaraciones dietéticas</summary>
                 <p class="text-body-2 mb-3">Las favoritas son personales. Las fotos y declaraciones pertenecen a esta receta y conservan sus permisos.</p>
                 <v-row v-if="extras.gallery.length">
                     <v-col v-for="photo in extras.gallery" :key="photo.id" cols="12" sm="6" md="4">
@@ -55,7 +56,7 @@
                     <v-btn variant="text" :disabled="busy" min-height="44" @click="load">Descartar cambios y actualizar</v-btn>
                 </div>
                 <p v-else class="mt-3">Tu acceso permite consultar esta receta y gestionar tus favoritas personales.</p>
-            </template>
+            </details>
         </v-card-text>
         <v-dialog :model-value="deletePhoto !== null" max-width="440" @update:model-value="value => { if (!value) deletePhoto = null }">
             <v-card title="Eliminar foto"><v-card-text>Se eliminará esta foto adicional de la receta.</v-card-text><v-card-actions><v-btn :disabled="busy" @click="deletePhoto = null">Cancelar</v-btn><v-btn color="error" :loading="busy" @click="removePhoto">Eliminar foto</v-btn></v-card-actions></v-card>
@@ -127,4 +128,22 @@ watch(() => props.recipeId, () => {extras.value = null; emit('permissions', fals
 .recipe-extras :deep(.v-card-title) {white-space: normal;}
 .diet-row + .diet-row {border-top: 1px solid rgba(var(--v-theme-on-surface), .12); margin-top: 8px;}
 figure {margin: 0;}
+.recipe-extras-details > summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 4px;
+}
+.recipe-extras-details > summary::before {content: '▸';}
+.recipe-extras-details[open] > summary::before {content: '▾';}
+.recipe-extras-details[open] > summary {margin-bottom: 12px;}
+.recipe-extras-details > summary:focus-visible {outline: 2px solid rgb(var(--v-theme-primary)); outline-offset: 3px;}
+@media print {
+    .recipe-extras-details::details-content {content-visibility: visible;}
+    .recipe-extras-details:not([open]) > :not(summary) {display: block;}
+    .recipe-extras-details > summary {display: none;}
+}
 </style>

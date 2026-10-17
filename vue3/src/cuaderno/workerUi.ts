@@ -125,6 +125,8 @@ export function workerStatusLabel(status: WorkerStatus): string {
     return {read_only: 'Solo lectura', pending: 'Pendiente de aprobación', applied: 'Aplicado', dismissed: 'Descartado', stale: 'Datos modificados'}[status]
 }
 const labels: Record<string, string> = {
+    start: 'Desde', end: 'Hasta', audience: 'Destinatarios', household_id: 'Hogar', admin_oversight: 'Revisión del responsable',
+    target_stock: 'Existencia objetivo', package_label: 'Formato', location_shortfalls: 'Faltantes por ubicación',
     recipe_id: 'Receta', recipe: 'Receta', package_id: 'Formato', package: 'Formato', food_id: 'Ingrediente', food: 'Ingrediente', supplier_id: 'Proveedor', order_id: 'Pedido',
     status: 'Estado', quantity: 'Cantidad', amount: 'Importe', currency: 'Moneda', cost: 'Coste', per_serving: 'Coste por ración', total: 'Total', servings: 'Raciones', budget: 'Presupuesto por persona',
     date: 'Fecha', service_date: 'Día del servicio', source: 'Fuente', version: 'Versión', source_version: 'Versión de la fuente', title: 'Título', label: 'Concepto', detail: 'Detalle', code: 'Aviso',
@@ -151,7 +153,7 @@ export function workerValue(value: unknown, depth = 0): string {
     if (value === null || value === undefined) return 'Desconocido'
     if (value === true) return 'Sí'
     if (value === false) return 'No'
-    if (typeof value === 'string') return ({complete: 'Completo', incomplete: 'Incompleto', invalid: 'Inválido', unavailable: 'No disponible', unknown: 'Desconocido', declared: 'Declarado', draft: 'Borrador', confirmed: 'Confirmado', produced: 'Producido', cancelled: 'Cancelado', pending: 'Pendiente', net: 'Neto', gross: 'Con impuestos', preview: 'Informe generado', applied: 'Propuesta aplicada', dismissed: 'Propuesta descartada', stale: 'Datos modificados', reference_prices: 'Precios de referencia', purchase_draft: 'Borrador de compra'} as Record<string, string>)[value] ?? value
+    if (typeof value === 'string') return ({complete: 'Completo', incomplete: 'Incompleto', invalid: 'Inválido', unavailable: 'No disponible', unknown: 'Desconocido', declared: 'Declarado', draft: 'Borrador', confirmed: 'Confirmado', produced: 'Producido', cancelled: 'Cancelado', pending: 'Pendiente', net: 'Neto', gross: 'Con impuestos', preview: 'Informe generado', applied: 'Propuesta aplicada', dismissed: 'Propuesta descartada', stale: 'Datos modificados', reference_prices: 'Precios de referencia', purchase_draft: 'Borrador de compra', ordered: 'Pedido', received: 'Recibido', partially_received: 'Recibido parcialmente', price_unknown: 'Precio desconocido'} as Record<string, string>)[value] ?? value
     if (typeof value === 'number') return String(value)
     if (depth > 4) return 'Consultar el informe descargado'
     if (Array.isArray(value)) return value.map(item => workerValue(item, depth + 1)).join(' · ')

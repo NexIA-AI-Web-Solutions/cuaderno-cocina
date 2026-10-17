@@ -116,7 +116,7 @@
 
                 <v-row class="pa-0" dense>
                     <v-col class="pa-0">
-                        <v-chip-group class="cuaderno-shopping-toolbar">
+                        <div class="cuaderno-shopping-toolbar" role="group" aria-label="Acciones y filtros de la lista de compras">
                             <!-- enable selection -->
                             <v-btn label size="small" variant="outlined" @click="selectEnabled = true;  selectedLines= []" v-if="!selectEnabled">
                                 <v-icon icon="fa-solid fa-list-check"></v-icon>
@@ -166,7 +166,7 @@
                                 :hide-create="!canManageShopping"
                                 @refresh="useShoppingStore().loadShoppingLists()"
                             ></shopping-list-select-chip>
-                        </v-chip-group>
+                        </div>
 
                     </v-col>
                 </v-row>
@@ -631,9 +631,9 @@ function isAllSelected(category: IShoppingListCategory | undefined = undefined) 
 .cuaderno-shopping-tabs { background: rgb(var(--v-theme-surface)); border-bottom: 1px solid rgba(var(--v-theme-on-surface), .14); }
 .cuaderno-shopping-tabs :deep(.v-tab) { text-transform: none; letter-spacing: normal; font-weight: 600; min-height: 48px; }
 .cuaderno-shopping-tabs :deep(.v-tab--selected) { color: rgb(var(--v-theme-primary)); background: rgba(var(--v-theme-primary), .08); border-radius: 10px 10px 0 0; }
-.cuaderno-shopping-toolbar { padding: 10px; border: 1px solid rgba(var(--v-theme-on-surface), .14); border-radius: 12px; background: rgb(var(--v-theme-surface)); }
-.cuaderno-shopping-toolbar :deep(.v-slide-group__content) { flex-wrap: wrap; gap: 6px; }
-.cuaderno-shopping-toolbar :deep(.v-btn), .cuaderno-shopping-toolbar :deep(.v-chip) { min-height: 44px; }
+.cuaderno-shopping-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px; border: 1px solid rgba(var(--v-theme-on-surface), .14); border-radius: 12px; background: rgb(var(--v-theme-surface)); }
+.cuaderno-shopping-toolbar :deep(.v-btn), .cuaderno-shopping-toolbar :deep(.v-chip) { min-height: 44px; max-width: 100%; margin: 0 !important; }
+.cuaderno-shopping-toolbar :deep(.v-chip__content) { min-width: 0; white-space: normal; }
 .cuaderno-shopping-empty { max-width: 640px; }
 
 

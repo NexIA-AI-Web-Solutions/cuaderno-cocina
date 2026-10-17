@@ -29,7 +29,8 @@
                 </template>
             </section>
 
-            <v-divider class="my-4" />
+            <details class="recipe-cost-details mt-4">
+                <summary>Cambios de precio, mermas y presupuesto</summary>
 
             <RecipePriceImpactPanel :key="impactRefreshToken" :recipe-id="recipeId" :servings="servings" />
 
@@ -103,6 +104,7 @@
                     <p v-if="saveMessage" class="mt-2" role="status">{{ saveMessage }}</p>
                 </form>
             </section>
+            </details>
         </v-card-text>
     </v-card>
 </template>
@@ -318,5 +320,23 @@ onBeforeUnmount(() => {
     .cost-card {
         break-inside: avoid;
     }
+}
+.recipe-cost-details > summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 4px;
+}
+.recipe-cost-details > summary::before {content: '▸';}
+.recipe-cost-details[open] > summary::before {content: '▾';}
+.recipe-cost-details[open] > summary {margin-bottom: 16px;}
+.recipe-cost-details > summary:focus-visible {outline: 2px solid rgb(var(--v-theme-primary)); outline-offset: 3px;}
+@media print {
+    .recipe-cost-details::details-content {content-visibility: visible;}
+    .recipe-cost-details:not([open]) > :not(summary) {display: block;}
+    .recipe-cost-details > summary {display: none;}
 }
 </style>

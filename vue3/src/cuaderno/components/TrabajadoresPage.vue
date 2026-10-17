@@ -76,7 +76,10 @@
                         <v-alert v-if="selectedRun.status === 'stale'" type="warning" variant="tonal" class="mb-4" role="alert">Los datos han cambiado desde la revisión. Genera una nueva versión y vuelve a revisar sus efectos antes de aprobar.</v-alert>
                         <v-alert v-if="actionMessage" :type="actionSuccess ? 'success' : 'error'" variant="tonal" class="mb-4" role="status">{{ actionMessage }}</v-alert>
                         <v-alert v-for="(warning, index) in selectedRun.report.warnings" :key="`warning-${index}`" type="warning" variant="tonal" class="mb-3">{{ workerValue(warning) }}</v-alert>
-                        <dl v-if="Object.keys(reportContext).length" class="worker-values mb-4"><div v-for="(value, key) in reportContext" :key="key"><dt>{{ workerFieldLabel(String(key)) }}</dt><dd><worker-value :value="value" /></dd></div></dl>
+                        <details v-if="Object.keys(reportContext).length" class="worker-evidence mb-4">
+                            <summary>Contexto y datos del informe</summary>
+                            <dl class="worker-values mt-3"><div v-for="(value, key) in reportContext" :key="key"><dt>{{ workerFieldLabel(String(key)) }}</dt><dd><worker-value :value="value" /></dd></div></dl>
+                        </details>
                         <p v-if="!selectedRun.report.items.length && !Object.keys(reportContext).length" class="my-4">No se encontraron resultados para este contexto. Puedes cambiar los filtros y generar otro informe.</p>
                         <v-card v-for="(item, index) in selectedRun.report.items" :key="`${item.id ?? index}`" variant="tonal" class="mb-3">
                             <v-card-title class="text-subtitle-1 text-wrap">{{ item.title }}</v-card-title>

@@ -1,0 +1,298 @@
+[
+  {
+    "width": 390,
+    "state": "empty",
+    "geometry": [
+      {
+        "text": "Pendientes de cocina: 0 · en cocina: 0 · total activo: 0. Solicitadas, servidas y anuladas quedan fuera.",
+        "top": 467.984375,
+        "bottom": 507.859375
+      },
+      {
+        "text": "No hay comensales confirmados pendientes para este día.",
+        "top": 519.859375,
+        "bottom": 567.859375
+      }
+    ],
+    "scroll": 390
+  },
+  {
+    "width": 390,
+    "state": "history",
+    "style": {
+      "color": "rgb(38, 51, 41)",
+      "background": "rgba(38, 51, 41, 0.06)"
+    },
+    "dialog": {
+      "width": 342,
+      "scroll": 342
+    }
+  },
+  {
+    "width": 390,
+    "state": "editor",
+    "focus": {
+      "focused": true,
+      "outline": "none"
+    },
+    "fields": [
+      {
+        "label": null,
+        "width": 294,
+        "right": 342
+      },
+      {
+        "label": null,
+        "width": 294,
+        "right": 342
+      },
+      {
+        "label": null,
+        "width": 294,
+        "right": 342
+      },
+      {
+        "label": null,
+        "width": 294,
+        "right": 342
+      },
+      {
+        "label": null,
+        "width": 294,
+        "right": 342
+      },
+      {
+        "label": null,
+        "width": 254,
+        "right": 302
+      },
+      {
+        "label": null,
+        "width": 294,
+        "right": 342
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "state": "empty",
+    "geometry": [
+      {
+        "text": "Pendientes de cocina: 0 · en cocina: 0 · total activo: 0. Solicitadas, servidas y anuladas quedan fuera.",
+        "top": 363.984375,
+        "bottom": 383.921875
+      },
+      {
+        "text": "No hay comensales confirmados pendientes para este día.",
+        "top": 395.921875,
+        "bottom": 419.921875
+      }
+    ],
+    "scroll": 768
+  },
+  {
+    "width": 768,
+    "state": "history",
+    "style": {
+      "color": "rgb(38, 51, 41)",
+      "background": "rgba(38, 51, 41, 0.06)"
+    },
+    "dialog": {
+      "width": 720,
+      "scroll": 720
+    }
+  },
+  {
+    "width": 768,
+    "state": "editor",
+    "focus": {
+      "focused": true,
+      "outline": "none"
+    },
+    "fields": [
+      {
+        "label": null,
+        "width": 672,
+        "right": 720
+      },
+      {
+        "label": null,
+        "width": 332,
+        "right": 380
+      },
+      {
+        "label": null,
+        "width": 332,
+        "right": 720
+      },
+      {
+        "label": null,
+        "width": 332,
+        "right": 380
+      },
+      {
+        "label": null,
+        "width": 332,
+        "right": 720
+      },
+      {
+        "label": null,
+        "width": 632,
+        "right": 680
+      },
+      {
+        "label": null,
+        "width": 672,
+        "right": 720
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "state": "empty",
+    "geometry": [
+      {
+        "text": "Pendientes de cocina: 0 · en cocina: 0 · total activo: 0. Solicitadas, servidas y anuladas quedan fuera.",
+        "top": 283.984375,
+        "bottom": 303.921875
+      },
+      {
+        "text": "No hay comensales confirmados pendientes para este día.",
+        "top": 315.921875,
+        "bottom": 339.921875
+      }
+    ],
+    "scroll": 1024
+  },
+  {
+    "width": 1024,
+    "state": "history",
+    "style": {
+      "color": "rgb(38, 51, 41)",
+      "background": "rgba(38, 51, 41, 0.06)"
+    },
+    "dialog": {
+      "width": 900,
+      "scroll": 900
+    }
+  },
+  {
+    "width": 1024,
+    "state": "editor",
+    "focus": {
+      "focused": true,
+      "outline": "none"
+    },
+    "fields": [
+      {
+        "label": null,
+        "width": 712,
+        "right": 868
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 508
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 868
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 508
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 868
+      },
+      {
+        "label": null,
+        "width": 672,
+        "right": 828
+      },
+      {
+        "label": null,
+        "width": 712,
+        "right": 868
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "state": "empty",
+    "geometry": [
+      {
+        "text": "Pendientes de cocina: 0 · en cocina: 0 · total activo: 0. Solicitadas, servidas y anuladas quedan fuera.",
+        "top": 283.984375,
+        "bottom": 303.921875
+      },
+      {
+        "text": "No hay comensales confirmados pendientes para este día.",
+        "top": 315.921875,
+        "bottom": 339.921875
+      }
+    ],
+    "scroll": 1440
+  },
+  {
+    "width": 1440,
+    "state": "history",
+    "style": {
+      "color": "rgb(38, 51, 41)",
+      "background": "rgba(38, 51, 41, 0.06)"
+    },
+    "dialog": {
+      "width": 900,
+      "scroll": 900
+    }
+  },
+  {
+    "width": 1440,
+    "state": "editor",
+    "focus": {
+      "focused": true,
+      "outline": "none"
+    },
+    "fields": [
+      {
+        "label": null,
+        "width": 712,
+        "right": 1076
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 716
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 1076
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 716
+      },
+      {
+        "label": null,
+        "width": 352,
+        "right": 1076
+      },
+      {
+        "label": null,
+        "width": 672,
+        "right": 1036
+      },
+      {
+        "label": null,
+        "width": 712,
+        "right": 1076
+      }
+    ]
+  }
+]

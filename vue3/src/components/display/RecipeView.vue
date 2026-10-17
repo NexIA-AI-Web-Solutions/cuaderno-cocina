@@ -145,6 +145,8 @@
             <step-view :model-value="step" @update:model-value="updateStep(index, $event)" :step-number="index+1" :ingredientFactor="ingredientFactor"></step-view>
         </v-card>
 
+        <recipe-cost-panel v-if="recipe.id" :recipe-id="recipe.id" :servings="servings"></recipe-cost-panel>
+
         <property-view v-model="recipe" :ingredientFactor="ingredientFactor"></property-view>
         <recipe-extras-panel v-if="recipe.id && useUserPreferenceStore().isAuthenticated" :key="recipe.id" :recipe-id="recipe.id" @permissions="canCreateVariant = $event" />
 
@@ -191,8 +193,6 @@
                 </v-row>
             </v-card-text>
         </v-card>
-
-        <recipe-cost-panel v-if="recipe.id" :recipe-id="recipe.id" :servings="servings"></recipe-cost-panel>
 
         <recipe-activity :recipe="recipe" :servings="servings" v-if="useUserPreferenceStore().userSettings.comments"></recipe-activity>
     </template>

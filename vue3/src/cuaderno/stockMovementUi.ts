@@ -1,5 +1,13 @@
 type UnknownRecord = Record<string, unknown>
 
+// Display only: keep every significant digit of the backend's decimal string.
+export function movementQuantityLabel(value: unknown): string {
+    if (typeof value !== 'string' || !/^-?\d+(?:\.\d+)?$/.test(value)) return 'Desconocido'
+    const [whole = '', fraction = ''] = value.split('.')
+    const significant = fraction.replace(/0+$/, '')
+    return significant ? `${whole},${significant}` : whole
+}
+
 function record(value: unknown): UnknownRecord | null {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
         ? value as UnknownRecord

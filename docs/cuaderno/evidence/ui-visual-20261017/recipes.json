@@ -1,0 +1,261 @@
+[
+  {
+    "w": 390,
+    "name": "recipe",
+    "overflow": false,
+    "costVisible": true,
+    "details": [
+      {
+        "open": false,
+        "height": 44
+      },
+      {
+        "open": false,
+        "height": 44
+      }
+    ],
+    "keyboardOpen": true,
+    "keyboardClosed": true,
+    "printAdvancedVisible": true,
+    "printDietVisible": true
+  },
+  {
+    "w": 390,
+    "name": "shopping",
+    "overflow": false,
+    "toolbar": {
+      "width": 364,
+      "height": 114,
+      "children": [
+        {
+          "text": "",
+          "right": 73,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "",
+          "right": 129,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Supermercado",
+          "right": 266.5625,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Lista de compras",
+          "right": 167.234375,
+          "inBounds": true,
+          "visible": "visible"
+        }
+      ]
+    }
+  },
+  {
+    "w": 768,
+    "name": "recipe",
+    "overflow": false,
+    "costVisible": true,
+    "details": [
+      {
+        "open": false,
+        "height": 44
+      },
+      {
+        "open": false,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "w": 768,
+    "name": "shopping",
+    "overflow": false,
+    "toolbar": {
+      "width": 742,
+      "height": 64,
+      "children": [
+        {
+          "text": "",
+          "right": 73,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "",
+          "right": 129,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Supermercado",
+          "right": 266.5625,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Lista de compras",
+          "right": 416.796875,
+          "inBounds": true,
+          "visible": "visible"
+        }
+      ]
+    }
+  },
+  {
+    "w": 1024,
+    "name": "recipe",
+    "overflow": false,
+    "costVisible": true,
+    "details": [
+      {
+        "open": false,
+        "height": 44
+      },
+      {
+        "open": false,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "w": 1024,
+    "name": "shopping",
+    "overflow": false,
+    "toolbar": {
+      "width": 998,
+      "height": 64,
+      "children": [
+        {
+          "text": "",
+          "right": 73,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "",
+          "right": 129,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Supermercado",
+          "right": 266.5625,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Lista de compras",
+          "right": 416.796875,
+          "inBounds": true,
+          "visible": "visible"
+        }
+      ]
+    }
+  },
+  {
+    "w": 1440,
+    "name": "recipe",
+    "overflow": false,
+    "costVisible": true,
+    "details": [
+      {
+        "open": false,
+        "height": 44
+      },
+      {
+        "open": false,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "w": 1440,
+    "name": "shopping",
+    "overflow": false,
+    "toolbar": {
+      "width": 1158,
+      "height": 64,
+      "children": [
+        {
+          "text": "",
+          "right": 329,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "",
+          "right": 385,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Supermercado",
+          "right": 522.5625,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Lista de compras",
+          "right": 672.796875,
+          "inBounds": true,
+          "visible": "visible"
+        }
+      ]
+    }
+  },
+  {
+    "w": 360,
+    "name": "recipe",
+    "overflow": false,
+    "costVisible": true,
+    "details": [
+      {
+        "open": false,
+        "height": 44
+      },
+      {
+        "open": false,
+        "height": 44
+      }
+    ]
+  },
+  {
+    "w": 360,
+    "name": "shopping",
+    "overflow": false,
+    "toolbar": {
+      "width": 334,
+      "height": 114,
+      "children": [
+        {
+          "text": "",
+          "right": 73,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "",
+          "right": 129,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Supermercado",
+          "right": 266.5625,
+          "inBounds": true,
+          "visible": "visible"
+        },
+        {
+          "text": "Lista de compras",
+          "right": 167.234375,
+          "inBounds": true,
+          "visible": "visible"
+        }
+      ]
+    }
+  }
+]

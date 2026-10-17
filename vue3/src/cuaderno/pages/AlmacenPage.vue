@@ -16,7 +16,7 @@
 
         <v-row id="warehouse-movements">
             <v-col cols="12" md="6">
-                <v-card class="print-card h-100">
+                <v-card class="print-card">
                     <v-card-title><h2 class="text-h6">Movimiento manual</h2></v-card-title>
                     <v-card-subtitle>Para recepciones de pedidos usa el flujo de compra superior.</v-card-subtitle>
                     <v-card-text>
@@ -41,17 +41,17 @@
                 </v-card>
             </v-col>
             <v-col cols="12" md="6">
-                <v-card class="h-100">
+                <v-card>
                     <v-card-title><h2 class="text-h6">Historial de existencias</h2></v-card-title>
                     <v-card-text>
                         <v-select v-model="historyKind" label="Filtrar movimientos por tipo" :items="historyKinds" item-title="title" item-value="value" clearable />
                         <v-checkbox v-model="onlySelectedEntry" label="Solo la existencia seleccionada" :disabled="!move.entry?.id" hide-details class="mb-3" />
                         <p v-if="history.length && !filteredHistory.length" role="status">No hay movimientos con estos filtros.</p>
-                        <v-list v-if="filteredHistory.length">
+                        <v-list v-if="filteredHistory.length" class="warehouse-history">
                             <v-list-item v-for="row in filteredHistory" :key="row.id">
-                                <v-list-item-title>{{ kindLabel(row.kind) }} · {{ row.quantity }}</v-list-item-title>
+                                <v-list-item-title>{{ kindLabel(row.kind) }} · {{ movementQuantityLabel(row.quantity) }}</v-list-item-title>
                                 <v-list-item-subtitle class="text-wrap">
-                                    existencia {{ row.entry }} · saldo {{ row.balance }}
+                                    existencia {{ row.entry }} · saldo {{ movementQuantityLabel(row.balance) }}
                                     <span v-if="row.reverses"> · revierte {{ row.reverses }}</span>
                                     <span v-if="isPurchaseMovement(row)"> · recepción de pedido {{ row.metadata_snapshot.origin.id }}</span>
                                     <span class="movement-detail d-block mt-1">{{ movementAuditLabel(row) }}</span>
@@ -100,6 +100,7 @@ import {inventoryRequests} from '@/cuaderno/inventoryRequests'
 import {cuadernoNavigationCapabilities} from '@/cuaderno/navigationUi'
 import {editionOperationalRole} from '@/cuaderno/operationalRoleUi'
 import {
+    movementQuantityLabel,
     buildStandaloneWasteCause,
     canReverseGeneric,
     hasReplacementValuation,
@@ -260,5 +261,13 @@ onMounted(loadEdition)
 .movement-detail { font-size: .875rem; line-height: 1.6; padding: 6px 10px; background: rgba(var(--v-theme-secondary), .08); border-radius: 6px; }
 
 .movement-detail { overflow-wrap: anywhere; }
+.warehouse-history :deep(.v-list-item-title) { white-space: normal; overflow-wrap: anywhere; }
+.warehouse-history :deep(.v-list-item-subtitle) { display: block; -webkit-line-clamp: unset; overflow: visible; opacity: 1; }
+.warehouse-history :deep(.v-list-item__content) { min-width: 0; }
+@media (max-width: 599px) {
+    .warehouse-history :deep(.v-list-item) { grid-template-columns: 1fr; padding-inline: 12px; }
+    .warehouse-history :deep(.v-list-item__content) { grid-column: 1; }
+    .warehouse-history :deep(.v-list-item__append) { grid-column: 1; justify-content: flex-end; }
+}
 @media print { .print-card { break-inside: avoid; } }
 </style>

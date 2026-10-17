@@ -223,6 +223,7 @@ onBeforeUnmount(removeNavigationHook)
     .cuaderno-app .v-btn { text-transform: none; letter-spacing: .01em; }
     .cuaderno-app .v-card { border-radius: 16px; border: 1px solid rgba(var(--v-theme-on-surface), .12); }
     .cuaderno-app .v-card-title { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+    .cuaderno-app .v-card-subtitle { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
     .cuaderno-app main h1, .cuaderno-app main h2 { overflow-wrap: anywhere; }
     .cuaderno-app :is(a, button, summary, [role="button"]):focus-visible {
         outline: 3px solid rgb(var(--v-theme-primary));
