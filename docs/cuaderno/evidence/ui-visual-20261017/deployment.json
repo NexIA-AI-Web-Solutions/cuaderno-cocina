@@ -1,0 +1,67 @@
+{
+  "verified_at": "2026-10-17T10:51:08.341119+00:00",
+  "production_url": "https://gex-dashboard.hopto.org/cuaderno-cocina/",
+  "source_commit": "80d671f",
+  "image": "sha256:69aaf3400122259fda73a91521dc91d42bb44accffc75d756afd94de340b3a19",
+  "image_tag": "cuaderno-ui:20261017-80d671f",
+  "previous_image": "sha256:1aa98eb775333bd902a3f830093b31a750cdb1efa078dfa0f3a862d1d0e9acbf",
+  "backup": "/var/backups/cuaderno-cocina/ui-20261017",
+  "database_dump_bytes": 3554578,
+  "dump_archive_list_verified": true,
+  "health": "healthy",
+  "restarts": 0,
+  "schema_changes": false,
+  "backend_changed": false,
+  "configuration_change": "CUADERNO_IMAGE only",
+  "browser": {
+    "results": [
+      {
+        "plan": "esencial",
+        "search": true,
+        "recipeDisclosures": true,
+        "mobileShoppingBounds": true,
+        "pageOverflow": false
+      },
+      {
+        "plan": "profesional",
+        "search": true,
+        "recipeDisclosures": true,
+        "mobileShoppingBounds": true,
+        "pageOverflow": false
+      },
+      {
+        "plan": "integral",
+        "search": true,
+        "recipeDisclosures": true,
+        "mobileShoppingBounds": true,
+        "pageOverflow": false
+      }
+    ],
+    "errors": [],
+    "businessWrites": 0,
+    "blockedWriteAttempts": [
+      {
+        "plan": "esencial",
+        "method": "POST",
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+      },
+      {
+        "plan": "profesional",
+        "method": "POST",
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+      },
+      {
+        "plan": "integral",
+        "method": "POST",
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/view-log/"
+      }
+    ],
+    "manifestSha256": "7dbfdf820d84cbfda48624103e8fa3843d32b3a3cf18557cc917f646b51a443e",
+    "preview": false
+  },
+  "limitations": [
+    "Chromium emulation only; no physical iPad, Firefox or WebKit validation.",
+    "Presentation checks; no business-data writes/persistence exercises."
+  ],
+  "startup": "Existing boot sequence regenerated static assets before becoming healthy; initial smoke attempted during startup was rerun after health readiness."
+}

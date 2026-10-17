@@ -38,6 +38,9 @@ cd vue3
 
 ## Entrega y límites
 
-Imagen derivada del runtime productivo exacto, sólo añade activos Vue y collectstatic. Sin cambios de modelos, migraciones, Caddy ni permisos. Copia de configuración y dump PostgreSQL: `/var/backups/cuaderno-cocina/ui-20261017` (acceso restringido). La aceptación pública se registrará en `deployment.json` tras recrear únicamente web.
+Imagen derivada del runtime productivo exacto, sólo añade activos Vue y collectstatic. Sin cambios de modelos, migraciones, Caddy ni permisos. Copia de configuración y dump PostgreSQL: `/var/backups/cuaderno-cocina/ui-20261017` (acceso restringido). Aceptación pública completada en los tres planes: `deployment.json` y `public-checks.json`. Sólo se recreó web; servicio sano, cero reinicios, manifest público idéntico al candidato. El navegador bloqueó los tres registros automáticos de visita a receta para evitar escrituras durante esta comprobación.
 
 Sólo Chromium emulado: Firefox/WebKit e iPad físico no comprobados. No se realizaron escrituras/persistencia de datos productivos para probar cambios de presentación.
+
+
+Recuperación de interfaz (no restaura ni modifica datos): cambiar sólo `CUADERNO_IMAGE` por `cuaderno-workers:20261011-617bb7b` en `/etc/cuaderno-cocina/production.env` y ejecutar el mismo Compose productivo con `up -d --no-deps --pull never web`. La imagen anterior permanece disponible. No restaurar la BD para una reversión de estos estáticos.

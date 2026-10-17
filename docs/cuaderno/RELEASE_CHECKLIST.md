@@ -337,5 +337,5 @@ Los límites de Firefox/WebKit, iPad físico y gates históricos siguen vigentes
 - [x] Capturas antes/después, teclado, impresión, contraste y límites móviles.
 - [x] Build, tipos y pruebas focalizadas verdes; revisión independiente SHIP.
 - [x] Backup de configuración/BD e imagen productiva anterior identificada.
-- [ ] Imagen de interfaz aplicada y aceptación pública registrada.
+- [x] Imagen de interfaz aplicada y aceptación pública registrada (tres planes, cero errores JS).
 - [ ] Firefox/WebKit e iPad físico (fuera de esta validación Chromium).

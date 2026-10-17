@@ -712,4 +712,5 @@ Candidato revisado en los tres planes con Chromium en móvil/tableta/escritorio.
 Búsqueda, recetas, compras, reservas, historial e informes corregidos.
 Build/tipos verdes; regresión focalizada 111/111 y comprobación final 26/26.
 Revisión independiente SHIP. Ver `evidence/ui-visual-20261017/README.md`;
-aceptación productiva pendiente de registrar tras despliegue de estáticos.
+desplegado en producción y aceptado con los tres planes, cero errores JS y
+health sano, sin reinicios. Imagen y rollback en `deployment.json`.
