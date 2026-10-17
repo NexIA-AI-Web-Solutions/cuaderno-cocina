@@ -129,9 +129,9 @@
                         </vue-draggable>
                     </v-list>
 
-                    <div class="text-center mt-2">
-                        <v-btn icon="$create" variant="outlined" size="x-small" @click="insertAndFocusIngredient()"></v-btn>
-                        <v-btn icon="fa-solid fa-clipboard-list" variant="outlined" size="x-small" class="ms-2" @click="dialogIngredientParser = true"></v-btn>
+                    <div class="d-flex flex-wrap justify-center ga-2 mt-2">
+                        <v-btn prepend-icon="$create" variant="tonal" min-height="44" @click="insertAndFocusIngredient()">Añadir ingrediente</v-btn>
+                        <v-btn prepend-icon="fa-solid fa-clipboard-list" variant="outlined" min-height="44" @click="dialogIngredientParser = true">Pegar lista</v-btn>
                     </div>
 
                 </v-col>
@@ -175,12 +175,13 @@
         :max-width="(mobile) ? '100vw': '75vw'"
         :fullscreen="mobile">
         <v-card :loading="ingredientParserLoading">
-            <v-closable-card-title :title="$t('Ingredients')" v-model="dialogIngredientParser"></v-closable-card-title>
+            <v-closable-card-title title="Pegar lista de ingredientes" v-model="dialogIngredientParser"></v-closable-card-title>
             <v-card-text>
-                <v-textarea v-model="ingredientTextInput" :placeholder="$t('paste_ingredients_placeholder')"></v-textarea>
+                <p class="mb-3">Escribe o pega un ingrediente por línea. Después podrás revisar las cantidades y unidades antes de guardar la receta.</p>
+                <v-textarea label="Lista de ingredientes" v-model="ingredientTextInput" placeholder="200 g de patatas&#10;2 huevos" persistent-placeholder rows="6"></v-textarea>
             </v-card-text>
             <v-card-actions>
-                <v-btn @click="parseAndInsertIngredients()" color="save" :loading="ingredientParserLoading">{{ $t('Add') }}</v-btn>
+                <v-btn @click="parseAndInsertIngredients()" color="primary" min-height="44" :disabled="!ingredientTextInput.trim()" :loading="ingredientParserLoading">{{ $t('Add') }}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>

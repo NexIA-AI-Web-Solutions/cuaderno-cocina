@@ -1,5 +1,5 @@
 export type PurchaseOfferRow = {id: number; package: number; supplier: number; amount: string; currency: string; valid_from: string}
-export type PurchaseOrderRow = {id: number; quantity: string; received_quantity: string; unit: number; supplier_name: string; package: number | null; price_snapshot: string | null; currency_snapshot: string; state: string}
+export type PurchaseOrderRow = {id: number; food?: number; household?: number; quantity: string; received_quantity: string; unit: number; supplier_name: string; package: number | null; price_snapshot: string | null; currency_snapshot: string; state: string}
 export type PurchaseReceiptRow = {id: number; quantity: string; movement: number; reversed_by: number | null}
 
 function record(value: unknown): Record<string, unknown> | null {

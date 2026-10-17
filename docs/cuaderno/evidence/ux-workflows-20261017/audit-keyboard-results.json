@@ -1,0 +1,146 @@
+[
+  {
+    "width": 1440,
+    "name": "offer-disabled",
+    "disabled": true
+  },
+  {
+    "width": 1440,
+    "name": "packages",
+    "options": [
+      "QA-SWARM-20261010-I-Food · QA-SWARM-20261010-I-Pack (10 QA-SWARM-20261010-I-Unit)",
+      "Calabacín · Saco 1 kg (1000 g)",
+      "Patata · Malla 1 kg (1000 g)",
+      "Cebolla · Malla 1 kg (1000 g)"
+    ]
+  },
+  {
+    "width": 1440,
+    "name": "meta-k-opens",
+    "visible": true
+  },
+  {
+    "width": 1440,
+    "name": "close-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/cuaderno/almacen",
+    "dialogs": 0
+  },
+  {
+    "width": 1440,
+    "name": "arrow-down",
+    "selected": "cuaderno-search-result-1"
+  },
+  {
+    "width": 1440,
+    "name": "arrow-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+  },
+  {
+    "width": 768,
+    "name": "offer-disabled",
+    "disabled": true
+  },
+  {
+    "width": 768,
+    "name": "packages",
+    "options": [
+      "QA-SWARM-20261010-I-Food · QA-SWARM-20261010-I-Pack (10 QA-SWARM-20261010-I-Unit)",
+      "Calabacín · Saco 1 kg (1000 g)",
+      "Patata · Malla 1 kg (1000 g)",
+      "Cebolla · Malla 1 kg (1000 g)"
+    ]
+  },
+  {
+    "width": 768,
+    "name": "meta-k-opens",
+    "visible": true
+  },
+  {
+    "width": 768,
+    "name": "close-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/cuaderno/almacen",
+    "dialogs": 0
+  },
+  {
+    "width": 768,
+    "name": "arrow-down",
+    "selected": "cuaderno-search-result-1"
+  },
+  {
+    "width": 768,
+    "name": "arrow-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+  },
+  {
+    "width": 390,
+    "name": "offer-disabled",
+    "disabled": true
+  },
+  {
+    "width": 390,
+    "name": "packages",
+    "options": [
+      "QA-SWARM-20261010-I-Food · QA-SWARM-20261010-I-Pack (10 QA-SWARM-20261010-I-Unit)",
+      "Calabacín · Saco 1 kg (1000 g)",
+      "Patata · Malla 1 kg (1000 g)",
+      "Cebolla · Malla 1 kg (1000 g)"
+    ]
+  },
+  {
+    "width": 390,
+    "name": "meta-k-opens",
+    "visible": true
+  },
+  {
+    "width": 390,
+    "name": "close-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/cuaderno/almacen",
+    "dialogs": 0
+  },
+  {
+    "width": 390,
+    "name": "arrow-down",
+    "selected": "cuaderno-search-result-1"
+  },
+  {
+    "width": 390,
+    "name": "arrow-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+  },
+  {
+    "width": 360,
+    "name": "offer-disabled",
+    "disabled": true
+  },
+  {
+    "width": 360,
+    "name": "packages",
+    "options": [
+      "QA-SWARM-20261010-I-Food · QA-SWARM-20261010-I-Pack (10 QA-SWARM-20261010-I-Unit)",
+      "Calabacín · Saco 1 kg (1000 g)",
+      "Patata · Malla 1 kg (1000 g)",
+      "Cebolla · Malla 1 kg (1000 g)"
+    ]
+  },
+  {
+    "width": 360,
+    "name": "meta-k-opens",
+    "visible": true
+  },
+  {
+    "width": 360,
+    "name": "close-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/cuaderno/almacen",
+    "dialogs": 0
+  },
+  {
+    "width": 360,
+    "name": "arrow-down",
+    "selected": "cuaderno-search-result-1"
+  },
+  {
+    "width": 360,
+    "name": "arrow-enter",
+    "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+  }
+]

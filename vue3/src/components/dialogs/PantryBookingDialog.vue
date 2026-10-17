@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="900" v-model="dialog" activator="model" :persistent="formLoading" :aria-label="dialogTitle + ' existencia de despensa'">
+    <v-dialog max-width="900" v-model="dialog" activator="model" :persistent="formLoading" :aria-label="dialogTitle + ' en despensa'">
         <v-card>
 
             <v-closable-card-title v-model="dialog" icon="fas fa-jar" :title="dialogTitle"></v-closable-card-title>
@@ -25,7 +25,9 @@
                                 </template>
                             </v-model-select>
 
-                            <v-number-input :label="$t('Amount')" :precision="2" v-model="amount" v-if="['add', 'remove'].includes(bookingMode)"></v-number-input>
+                            <p v-if="inventoryEntry && ['remove', 'move'].includes(bookingMode)" class="text-body-1 mb-3">Disponible: {{ inventoryEntry.amount == null ? '—' : $n(inventoryEntry.amount) }} {{ inventoryEntry.unit?.name || '(sin unidad)' }}</p>
+                            <p v-if="bookingMode === 'move'" class="text-body-2 mb-3">Se moverá toda la existencia a la ubicación elegida; la cantidad no cambia.</p>
+                            <v-number-input class="mb-3" :label="bookingMode === 'remove' ? 'Cantidad a retirar' : $t('Amount')" :hint="bookingMode === 'remove' ? 'Indica cuánto quieres descontar, en la unidad disponible.' : undefined" :persistent-hint="bookingMode === 'remove'" :precision="2" v-model="amount" v-if="['add', 'remove'].includes(bookingMode)"></v-number-input>
                             <v-model-select model="Unit" create v-model="unit" v-if="['add'].includes(bookingMode)" hide-details>
                                 <template #append-inner>
                                     <v-chip v-for="u in commonUnits" :key="u.id" @click="unit = u" size="small" class="mr-1">
@@ -50,11 +52,11 @@
 
                             <v-text-field :label="$t('SubLocation')" :hint="$t('SubLocationHelp')" v-model="subLocation" v-if="['add','move'].includes(bookingMode)"></v-text-field>
 
-                            <closable-help-alert :text="$t('CodeHelp')" class="mb-2"></closable-help-alert>
+                            <closable-help-alert v-if="bookingMode === 'add'" :text="$t('CodeHelp')" class="mb-2"></closable-help-alert>
                             <v-text-field :label="$t('Code')" v-model="code" v-if="['add'].includes(bookingMode)"></v-text-field>
 
                             <v-alert v-if="saveError" type="error" role="alert" class="mb-3">{{ saveError }}</v-alert>
-                            <v-btn block @click="save" :disabled="formLoading || Boolean(initialLoadError)" :loading="formLoading" prepend-icon="$save" color="save">{{ $t('Save') }}</v-btn>
+                            <v-btn block @click="save" :disabled="formLoading || Boolean(initialLoadError)" :loading="formLoading" prepend-icon="$save" color="save">{{ bookingMode === 'remove' ? 'Retirar cantidad' : bookingMode === 'move' ? 'Mover existencia' : $t('Save') }}</v-btn>
                         </v-form>
                     </v-col>
                 </v-row>
@@ -175,9 +177,9 @@ const dialogTitle = computed(() => {
     if (bookingMode.value == 'add') {
         return t('Add')
     } else if (bookingMode.value == 'remove') {
-        return t('Remove')
+        return 'Retirar cantidad'
     } else if (bookingMode.value == 'move') {
-        return t('Move')
+        return 'Mover existencia'
     } else if (bookingMode.value == 'confirm') {
         return t('Confirm')
     } else {
@@ -188,8 +190,9 @@ const dialogTitle = computed(() => {
 watch(dialog, (newValue) => {
     loadGeneration++
     formLoading.value = false
+    if (newValue) bookingMode.value = props.bookingMode
     resetForm(); saveError.value = ''; initialLoadError.value = ''
-    if (newValue) {bookingMode.value = props.bookingMode; void loadInitialData()}
+    if (newValue) void loadInitialData()
 })
 async function loadInitialData() {
     if (!dialog.value || formLoading.value) return
@@ -337,7 +340,7 @@ function resetForm() {
     inventoryLocation.value = null
     inventoryEntry.value = null
     subLocation.value = ''
-    amount.value = 1
+    amount.value = bookingMode.value === 'remove' ? undefined : 1
     unit.value = useUserPreferenceStore().defaultUnitObj
     expires.value = undefined
     code.value = ''
@@ -352,7 +355,7 @@ function inventoryEntrySelected() {
         unit.value = inventoryEntry.value.unit
         inventoryLocation.value = inventoryEntry.value.inventoryLocation
         subLocation.value = inventoryEntry.value.subLocation ?? ''
-        amount.value = inventoryEntry.value.amount
+        amount.value = bookingMode.value === 'remove' ? undefined : inventoryEntry.value.amount
         //expires.value = inventoryEntry.value.expires
     }
 }

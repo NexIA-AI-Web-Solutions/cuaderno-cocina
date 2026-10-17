@@ -1,0 +1,289 @@
+{
+  "result": [
+    {
+      "width": 1440,
+      "name": "cancel-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "name": "cancel-dismiss-no-post",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "name": "cancel-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+        "method": "POST",
+        "body": "{\"action\":\"cancel\"}"
+      }
+    },
+    {
+      "width": 1440,
+      "name": "reverse-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 1440,
+      "name": "reverse-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+        "method": "POST",
+        "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+      }
+    },
+    {
+      "width": 1440,
+      "name": "destinations",
+      "options": [
+        "#2 - 1000.00 (g) Calabacín"
+      ]
+    },
+    {
+      "width": 1440,
+      "name": "withdraw",
+      "text": " Retirar cantidad\nEntrada de inventario\nCantidad a retirar\nIndica cuánto quieres descontar, en la unidad disponible.\nRETIRAR CANTIDAD",
+      "amount": ""
+    },
+    {
+      "width": 1440,
+      "name": "advanced",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+    },
+    {
+      "width": 768,
+      "name": "cancel-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 768,
+      "name": "cancel-dismiss-no-post",
+      "pass": true
+    },
+    {
+      "width": 768,
+      "name": "cancel-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+        "method": "POST",
+        "body": "{\"action\":\"cancel\"}"
+      }
+    },
+    {
+      "width": 768,
+      "name": "reverse-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 768,
+      "name": "reverse-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+        "method": "POST",
+        "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+      }
+    },
+    {
+      "width": 768,
+      "name": "destinations",
+      "options": [
+        "#2 - 1000.00 (g) Calabacín"
+      ]
+    },
+    {
+      "width": 768,
+      "name": "withdraw",
+      "text": " Retirar cantidad\nEntrada de inventario\nCantidad a retirar\nIndica cuánto quieres descontar, en la unidad disponible.\nRETIRAR CANTIDAD",
+      "amount": ""
+    },
+    {
+      "width": 768,
+      "name": "advanced",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+    },
+    {
+      "width": 390,
+      "name": "cancel-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 390,
+      "name": "cancel-dismiss-no-post",
+      "pass": true
+    },
+    {
+      "width": 390,
+      "name": "cancel-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+        "method": "POST",
+        "body": "{\"action\":\"cancel\"}"
+      }
+    },
+    {
+      "width": 390,
+      "name": "reverse-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 390,
+      "name": "reverse-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+        "method": "POST",
+        "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+      }
+    },
+    {
+      "width": 390,
+      "name": "destinations",
+      "options": [
+        "#2 - 1000.00 (g) Calabacín"
+      ]
+    },
+    {
+      "width": 390,
+      "name": "withdraw",
+      "text": " Retirar cantidad\nEntrada de inventario\nCantidad a retirar\nIndica cuánto quieres descontar, en la unidad disponible.\nRETIRAR CANTIDAD",
+      "amount": ""
+    },
+    {
+      "width": 390,
+      "name": "advanced",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+    },
+    {
+      "width": 360,
+      "name": "cancel-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 360,
+      "name": "cancel-dismiss-no-post",
+      "pass": true
+    },
+    {
+      "width": 360,
+      "name": "cancel-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+        "method": "POST",
+        "body": "{\"action\":\"cancel\"}"
+      }
+    },
+    {
+      "width": 360,
+      "name": "reverse-open-no-post",
+      "pass": true
+    },
+    {
+      "width": 360,
+      "name": "reverse-confirm-blocked",
+      "pass": true,
+      "last": {
+        "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+        "method": "POST",
+        "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+      }
+    },
+    {
+      "width": 360,
+      "name": "destinations",
+      "options": [
+        "#2 - 1000.00 (g) Calabacín"
+      ]
+    },
+    {
+      "width": 360,
+      "name": "withdraw",
+      "text": " Retirar cantidad\nEntrada de inventario\nCantidad a retirar\nIndica cuánto quieres descontar, en la unidad disponible.\nRETIRAR CANTIDAD",
+      "amount": ""
+    },
+    {
+      "width": 360,
+      "name": "advanced",
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/advanced-search?query=arroz"
+    }
+  ],
+  "writes": [
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+      "method": "POST",
+      "body": "{\"action\":\"cancel\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+      "method": "POST",
+      "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+      "method": "POST",
+      "body": "{\"action\":\"cancel\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+      "method": "POST",
+      "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+      "method": "POST",
+      "body": "{\"action\":\"cancel\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+      "method": "POST",
+      "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-orders/3/",
+      "method": "POST",
+      "body": "{\"action\":\"cancel\"}"
+    },
+    {
+      "url": "https://gex-dashboard.hopto.org/cuaderno-cocina/api/cuaderno/purchase-receipts/1/reverse/",
+      "method": "POST",
+      "body": "{\"idempotency_key\":\"cuaderno-ui-purchase-reversal-1\"}"
+    }
+  ],
+  "gets": [
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=10",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=10",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/2/",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page_size=1",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=100",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=10",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/2/",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page_size=1",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=100",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=10",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/2/",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page_size=1",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=100",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?empty=true&food_id=21&page=1&page_size=25",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=10",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/2/",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page_size=1",
+    "https://gex-dashboard.hopto.org/cuaderno-cocina/api/inventory-entry/?page=1&page_size=100"
+  ]
+}

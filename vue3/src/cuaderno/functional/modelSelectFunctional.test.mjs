@@ -7,6 +7,13 @@ const load = (api, props = {}) => {
     harness.hooks.beforeMount.forEach(fn => fn())
     return harness
 }
+test('receipt selector sends food scope and includes empty inventory destinations', async () => {
+    let received
+    const h=load({list:params=>{received=params;return Promise.resolve({results:[],next:null})}}, {searchParameters:{foodId:21,empty:true}})
+    await h.exposed.searchItems()
+    assert.equal(received.foodId,21)
+    assert.equal(received.empty,true)
+})
 test('BUGFIX-01: latest selector search survives reversed responses', async () => {
     const a = deferred(), b = deferred();const h = load({list: ({query}) => query === 'a' ? a.promise : b.promise});const s = h.exposed
     s.search.value = 'a';s.searchItems();s.search.value = 'b';s.searchItems()

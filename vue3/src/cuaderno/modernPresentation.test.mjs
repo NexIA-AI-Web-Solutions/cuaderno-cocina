@@ -186,12 +186,12 @@ test('quick search retains usable selection at the final result and handles erro
     const script = component.split('<script setup lang="ts">')[1].split('</script>')[0]
     const executable = stripTypeScriptTypes(script, {mode: 'transform'}).replace(/^import .*$/gm, '')
     const box = value => ({value})
-    const state = new Function('computed', 'onMounted', 'onUnmounted', 'ref', 'watch', 'useRouter', 'useDisplay', 'useI18n', 'useDebouncedSearch', `${executable};return {dialog,flatRecipes,selectedResult,searchResults,handleKeydown}`)(
-        get => ({get value() {return get()}}), () => {}, () => {}, box, () => {}, () => ({push() {}}), () => ({mobile: box(true)}), () => ({t: key => key}), () => ({inputValue: box(''), debouncedValue: box(''), signal: box(undefined), reset() {}}),
+    const state = new Function('computed', 'onMounted', 'onUnmounted', 'ref', 'watch', 'useRouter', 'useDisplay', 'useI18n', 'useDebouncedSearch', 'document', `${executable};return {dialog,flatRecipes,selectedResult,searchResults,handleKeydown}`)(
+        get => ({get value() {return get()}}), () => {}, () => {}, box, () => {}, () => ({push() {}}), () => ({mobile: box(true)}), () => ({t: key => key}), () => ({inputValue: box(''), debouncedValue: box(''), signal: box(undefined), reset() {}}), {getElementById: () => null},
     )
     state.flatRecipes.value = [{id: 1, name: 'Benign recipe'}]
     state.dialog.value = true
-    for (let index = 0; index < 5; index++) state.handleKeydown({key: 'ArrowDown'})
+    for (let index = 0; index < 5; index++) state.handleKeydown({key: 'ArrowDown', target: {id: 'id_global_search_input'}, preventDefault() {}})
     assert.equal(state.selectedResult.value, state.searchResults.value.length - 1)
     const body = script.match(/\.catch\(err => \{\s*(if \(err[^]*?)\n\s*\}\)\.finally/)[1]
     let reports = 0

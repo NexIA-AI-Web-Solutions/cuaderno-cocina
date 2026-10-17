@@ -135,6 +135,7 @@ const props = defineProps({
     create: {type: Boolean, default: false},
     searchOnLoad: {type: Boolean, default: false},
     limit: {type: Number, default: 25},
+    searchParameters: {type: Object as PropType<Record<string, string | number | boolean | undefined>>, default: () => ({})},
 
     // default props
     label: {type: String, default: ''},
@@ -299,7 +300,7 @@ function searchItems() {
     }
     console.log('search query is', query)
     loading.value = true
-    return modelClass.value.list({query: query, page: 1, pageSize: props.limit}).then((r: any) => {
+    return modelClass.value.list({...props.searchParameters, query: query, page: 1, pageSize: props.limit}).then((r: any) => {
         if (revision !== searchRevision || query !== (search.value ?? '')) return
         if (modelClass.value.model.isPaginated) {
             hasMoreItems.value = !!r.next

@@ -75,8 +75,8 @@
                 <div v-if="chosenMenuDishes.length" class="mb-3"><h3 class="text-subtitle-1">Platos del menú seleccionado</h3><ul class="ml-5"><li v-for="(dish,index) in chosenMenuDishes" :key="index">{{ dish.course_name ? dish.course_name + ': ' : '' }}{{ dish.recipe_name }}</li></ul></div><p v-if="selected && !canManage" class="text-body-2 mb-3">El menú solo lo cambia Responsable.</p>
                 <p v-if="!menus.length" class="text-body-2 mb-3">Guarda una plantilla con platos en Planificación para disponer de menús.</p>
                 <v-text-field v-model="draft.covers" label="Número de comensales" inputmode="numeric" :disabled="busy" />
-                <v-textarea v-model="draft.note" label="Nota de organización" maxlength="1000" :disabled="busy" />
-                <v-textarea v-model="draft.reason" label="Motivo del registro o cambio" maxlength="1000" :disabled="busy" />
+                <v-textarea v-model="draft.note" label="Nota de organización" rows="2" auto-grow maxlength="1000" :disabled="busy" />
+                <v-textarea v-model="draft.reason" label="Motivo del registro o cambio" rows="2" auto-grow required aria-required="true" hint="Obligatorio. Por ejemplo: reserva telefónica o cambio de comensales." persistent-hint maxlength="1000" :disabled="busy" />
                 <p v-if="selected">Revisión que estás editando: {{ selected.revision }}.</p>
             </v-card-text><v-card-actions class="flex-wrap ga-2"><v-btn min-height="44" :disabled="busy" @click="editorOpen = false">Volver</v-btn><v-btn v-if="conflict && selected" min-height="44" :disabled="busy" @click="reloadSelected">Recargar y sustituir borrador</v-btn><v-btn color="primary" min-height="44" :loading="busy" :disabled="!canOperate || conflict || busy" @click="save">{{ selected ? 'Guardar cambios' : 'Registrar reserva' }}</v-btn></v-card-actions></v-card>
         </v-dialog>

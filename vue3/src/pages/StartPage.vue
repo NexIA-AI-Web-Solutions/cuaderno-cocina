@@ -15,7 +15,7 @@
             </div>
             <form class="cuaderno-home-search" role="search" aria-label="Buscar recetas" @submit.prevent="searchRecipes">
                 <div class="cuaderno-home-search-field">
-                    <label for="cuaderno-recipe-search" class="cuaderno-home-search-label">Buscar en tus recetas</label>
+                    <label id="cuaderno-recipe-search-label" for="cuaderno-recipe-search" class="cuaderno-home-search-label">Buscar en tus recetas</label>
                     <v-text-field id="cuaderno-recipe-search" v-model="recipeQuery" type="search" placeholder="Nombre de la receta" prepend-inner-icon="$search" variant="outlined" bg-color="surface" rounded="lg" hide-details clearable></v-text-field>
                 </div>
                 <v-btn type="submit" min-height="56" color="secondary" rounded="lg" variant="flat">{{ $t('Search') }}</v-btn>

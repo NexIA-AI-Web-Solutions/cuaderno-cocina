@@ -18,6 +18,32 @@
         <v-row class="no-print">
             <v-col cols="12" md="6">
                 <v-card class="print-card">
+                    <v-card-title><h2 class="text-h6">Servicio</h2></v-card-title>
+                    <v-card-text>
+                        <v-text-field v-model="service.title" label="Nombre" :disabled="!canOperate || savingService" />
+                        <v-text-field v-model="service.date" label="Fecha del servicio" type="date" :disabled="!canOperate || savingService" />
+                        <v-row dense>
+                            <v-col cols="12" sm="4"><v-text-field v-model="service.baseCovers" label="Comensales previstos" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
+                            <v-col cols="6" sm="4"><v-text-field v-model="service.extra" label="Altas" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
+                            <v-col cols="6" sm="4"><v-text-field v-model="service.cancelled" label="Cancelaciones" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
+                        </v-row>
+                        <p class="text-body-2">Total del servicio: {{ serviceCoversTotal ?? '—' }} comensales.</p>
+                        <v-model-select v-model="service.recipe" model="Recipe" label="Receta del servicio" search-on-load :disabled="!canOperate || savingService" />
+                        <allergen-assessment-panel
+                            class="no-print"
+                            title="Alérgenos de la receta seleccionada"
+                            source="recipe"
+                            :assessment="recipeAllergens"
+                            :loading="loadingRecipeAllergens"
+                            :error="recipeAllergenError"
+                        />
+                        <v-btn color="primary" :loading="savingService" :disabled="!canOperate" min-height="44" @click="saveService">Anotar servicio</v-btn>
+                        <p class="mt-2" role="status">{{ serviceMessage }}</p>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-card class="print-card">
                     <v-card-title><h2 class="text-h6">Ficha desde recetas</h2></v-card-title>
                     <v-card-text>
                         <p class="text-body-2 mb-3">Calcula las necesidades de las recetas con sus cantidades guardadas. Las subrecetas necesitan un rendimiento de salida declarado.</p>
@@ -41,32 +67,6 @@
                         <v-model-select v-model="output.unit" model="Unit" label="Unidad de salida" search-on-load :disabled="!canOperate || savingYield" />
                         <v-btn color="primary" :loading="savingYield" :disabled="!canOperate" min-height="44" @click="saveYield">Guardar rendimiento</v-btn>
                         <p class="mt-2" role="status">{{ yieldMessage }}</p>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-                <v-card class="print-card">
-                    <v-card-title><h2 class="text-h6">Servicio</h2></v-card-title>
-                    <v-card-text>
-                        <v-text-field v-model="service.title" label="Nombre" :disabled="!canOperate || savingService" />
-                        <v-text-field v-model="service.date" label="Fecha del servicio" type="date" :disabled="!canOperate || savingService" />
-                        <v-row dense>
-                            <v-col cols="12" sm="4"><v-text-field v-model="service.baseCovers" label="Comensales previstos" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
-                            <v-col cols="6" sm="4"><v-text-field v-model="service.extra" label="Altas" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
-                            <v-col cols="6" sm="4"><v-text-field v-model="service.cancelled" label="Cancelaciones" inputmode="numeric" :disabled="!canOperate || savingService" /></v-col>
-                        </v-row>
-                        <p class="text-body-2">Total del servicio: {{ serviceCoversTotal ?? '—' }} comensales.</p>
-                        <v-model-select v-model="service.recipe" model="Recipe" label="Receta del servicio" search-on-load :disabled="!canOperate || savingService" />
-                        <allergen-assessment-panel
-                            class="no-print"
-                            title="Alérgenos de la receta seleccionada"
-                            source="recipe"
-                            :assessment="recipeAllergens"
-                            :loading="loadingRecipeAllergens"
-                            :error="recipeAllergenError"
-                        />
-                        <v-btn color="primary" :loading="savingService" :disabled="!canOperate" min-height="44" @click="saveService">Anotar servicio</v-btn>
-                        <p class="mt-2" role="status">{{ serviceMessage }}</p>
                     </v-card-text>
                 </v-card>
             </v-col>

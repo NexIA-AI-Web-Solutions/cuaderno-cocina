@@ -1,0 +1,20 @@
+{
+  "reviewer": "visual_audit",
+  "verdict": "SHIP",
+  "scope": [
+    "PurchasingPanel",
+    "VModelSelect",
+    "GlobalSearchDialog",
+    "PantryBookingDialog visual"
+  ],
+  "viewports": [
+    1440,
+    768,
+    390,
+    360
+  ],
+  "businessWrites": 0,
+  "blockedConfirmationRequests": 8,
+  "browser": "Chromium emulated",
+  "blockers": []
+}

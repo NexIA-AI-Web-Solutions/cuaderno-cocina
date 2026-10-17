@@ -15,6 +15,7 @@
                     Modo Consulta: puedes revisar formatos, precios e historial, pero no modificarlos.
                 </v-alert>
                 <v-btn v-if="canOperate" variant="tonal" min-height="44" class="mb-4" :aria-expanded="showCreate" :disabled="saving" @click="showCreate = !showCreate">{{ showCreate ? 'Ocultar nuevo formato' : 'Nuevo formato' }}</v-btn>
+                <p v-if="canOperate && showCreate" class="text-body-2 mb-3">Ejemplo: una garrafa de 5 L por 32 €: unidad L, contenido 5 y precio 32. El precio corresponde al envase completo.</p>
                 <v-row v-if="canOperate && showCreate">
                     <v-col cols="12" md="4">
                         <v-model-select v-model="food" model="Food" label="Ingrediente" search-on-load :disabled="!canOperate || saving" />
@@ -116,7 +117,7 @@
                             placeholder="32,00"
                             inputmode="decimal"
                             :disabled="savingPrice || !canOperate"
-                            hint="Máximo 16 enteros y 16 decimales."
+                            hint="Precio total del envase. Admite coma decimal, por ejemplo 32,00."
                             persistent-hint
                         />
                         <v-checkbox
@@ -267,6 +268,7 @@ async function save() {
         createMessage.value = 'No se puede guardar un precio hasta confirmar la moneda del espacio. El formulario se conserva.'
         return
     }
+    const submittedDraft = {food: food.value, unit: unit.value, label: label.value, quantity: quantity.value, price: price.value, explicitFree: newPackageExplicitFree.value, search: catalogSearch.value}
     createController?.abort()
     createController = new AbortController()
     const controller = createController
@@ -290,7 +292,12 @@ async function save() {
         return
     }
     createSucceeded.value = true
-    createMessage.value = 'Formato guardado.'
+    createMessage.value = `Formato «${submittedDraft.label.trim()}» guardado. Ya puedes consultarlo en Formatos guardados.`
+    if (food.value === submittedDraft.food && unit.value === submittedDraft.unit && label.value === submittedDraft.label && quantity.value === submittedDraft.quantity && price.value === submittedDraft.price && newPackageExplicitFree.value === submittedDraft.explicitFree) {
+        food.value = null; unit.value = null; label.value = ''; quantity.value = ''; price.value = ''; newPackageExplicitFree.value = false
+        showCreate.value = false
+    }
+    if (catalogSearch.value === submittedDraft.search) catalogSearch.value = ''
     await load()
 }
 

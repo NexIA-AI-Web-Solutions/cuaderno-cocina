@@ -9,6 +9,7 @@
     </slot>
 
     <v-dialog v-model="dialog"
+              :aria-label="$t('Search')"
               location-strategy="connected"
               :max-width="(mobile) ? '100vw': '800px'"
               :fullscreen="mobile"
@@ -40,8 +41,8 @@
                 <v-card :variant="cardVariant(index)" v-for="(item, index) in searchResults" hover class="mt-2 cuaderno-search-result"
                         :class="{'cuaderno-search-result-selected': selectedResult === index}"
                         role="option" :aria-selected="selectedResult === index" :id="`cuaderno-search-result-${index}`"
-                        @click="selectedResult = index" :key="index">
-                    <v-card-title @click="goToSelectedRecipe(index)">
+                        @click="goToSelectedRecipe(index)" :key="index">
+                    <v-card-title>
                         <v-avatar v-if="item.image" :image="item.image"></v-avatar>
                         <v-avatar v-else-if="item.recipeId !== undefined" color="tandoor">{{ item.name.charAt(0) }}</v-avatar>
                         <v-icon :icon="item.icon" v-if="item.icon"></v-icon>
@@ -64,7 +65,7 @@
 
             </v-card-text>
             <v-card-actions>
-                <v-btn @click="dialog=false"  :to="{name: 'SearchPage'}" variant="plain" prepend-icon="$search">{{ $t('Advanced') }}</v-btn>
+                <v-btn @click="openAdvancedSearch" variant="plain" prepend-icon="$search" min-height="44">{{ $t('Advanced') }}</v-btn>
                 <v-btn @click="dialog=false" variant="plain">{{ $t('Close') }}</v-btn>
             </v-card-actions>
         </v-card>
@@ -160,27 +161,31 @@ watch(dialog, (newValue) => {
 })
 
 watch(searchQuery, () => {
-    /**
-     * update selected result if search result length changes due to search_query changes
-     */
-    if (selectedResult.value >= searchResults.value.length) {
-        selectedResult.value = searchResults.value.length - 1
-    }
+    selectedResult.value = 0
 })
 
 function handleKeydown(e: KeyboardEvent) {
+    if (e.isComposing) return
     if (dialog.value) {
+        // Enter on Close/Advanced belongs to that button, not the combobox.
+        if ((e.target as HTMLElement | null)?.id !== 'id_global_search_input') return
         if (e.key == 'ArrowUp') {
+            e.preventDefault()
             selectedResult.value = Math.max(0, selectedResult.value - 1)
         }
         if (e.key == 'ArrowDown') {
+            e.preventDefault()
             selectedResult.value = Math.min(Math.max(0, searchResults.value.length - 1), selectedResult.value + 1)
         }
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            document.getElementById(`cuaderno-search-result-${selectedResult.value}`)?.scrollIntoView({block: 'nearest'})
+        }
         if (e.key == 'Enter') {
+            e.preventDefault()
             goToSelectedRecipe(selectedResult.value)
         }
     } else {
-        if (e.key == 'k' && e.ctrlKey) {
+        if (e.key.toLowerCase() == 'k' && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             dialog.value = true
         }
@@ -256,13 +261,18 @@ function goToSelectedRecipe(index: number) {
     if (searchResult.type == 'link_advanced_search') {
         router.push({name: 'SearchPage', query: {'query': searchQuery.value}})
     } else {
-        console.log('going to', searchResult.recipeId)
         if (searchResult.recipeId != null) {
             router.push({name: 'RecipeViewPage', params: {'id': searchResult.recipeId}})
         }
     }
 
 
+}
+
+function openAdvancedSearch() {
+    const query = (searchQuery.value || '').trim()
+    dialog.value = false
+    void router.push({name: 'SearchPage', query: query ? {query} : {}})
 }
 </script>
 

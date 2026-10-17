@@ -49,12 +49,13 @@
                         </v-col>
                         <v-col class="pt-1 pb-1">
 
-                            <div class="cursor-pointer">
+                            <v-btn variant="tonal" class="recipe-servings-control" min-height="44" :aria-label="`Cambiar raciones: ${servings}`">
                                 <i class="fas fa-sort-numeric-up fa-fw mr-1"></i> {{ servings }} <br/>
-                                <div class="text-grey"><span v-if="recipe.servingsText">{{ recipe.servingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
+                                <div>{{ useUserPreferenceStore().isPrintMode ? $t('Servings') : 'Cambiar raciones' }}</div>
+                                <div v-if="recipe.servingsText" class="text-caption">{{ recipe.servingsText }}</div>
                                 <recipe-scaling-dialog :recipe="recipe" :number="servings" @confirm="(s: number) => {servings = s}" :title="$t('Servings')">
                                 </recipe-scaling-dialog>
-                            </div>
+                            </v-btn>
                         </v-col>
                     </v-row>
                 </v-container>
@@ -103,12 +104,13 @@
                                 <div class="text-grey">{{ $t('WaitingTime') }}</div>
                             </v-col>
                             <v-col>
-                                <div class="cursor-pointer">
+                                <v-btn variant="tonal" class="recipe-servings-control" min-height="44" :aria-label="`Cambiar raciones: ${servings}`">
                                     <i class="fas fa-sort-numeric-up fa-fw mr-1"></i> {{ servings }} <br/>
-                                    <div class="text-grey"><span v-if="recipe.servingsText">{{ recipe.servingsText }}</span><span v-else>{{ $t('Servings') }}</span></div>
+                                    <div>{{ useUserPreferenceStore().isPrintMode ? $t('Servings') : 'Cambiar raciones' }}</div>
+                                    <div v-if="recipe.servingsText" class="text-caption">{{ recipe.servingsText }}</div>
                                     <recipe-scaling-dialog :recipe="recipe" :number="servings" @confirm="(s: number) => {servings = s}" :title="$t('Servings')">
                                     </recipe-scaling-dialog>
-                                </div>
+                                </v-btn>
                             </v-col>
                         </v-row>
 
@@ -308,5 +310,15 @@ function aiConvertRecipe() {
 </script>
 
 <style scoped>
+.recipe-servings-control {
+    height: auto;
+    padding: 6px 8px;
+    width: 100%;
+    white-space: normal;
+    letter-spacing: normal;
+    text-transform: none;
+}
+.recipe-servings-control :deep(.v-btn__content) {display: block;}
+
 
 </style>

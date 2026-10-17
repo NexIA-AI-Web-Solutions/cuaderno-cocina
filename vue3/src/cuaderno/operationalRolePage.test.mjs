@@ -79,7 +79,7 @@ async function mount(transport) {
     ).outputText)
     const filename = 'PreciosPage.vue'
     const unitSource = readFileSync(new URL('./pages/PreciosPage.vue', import.meta.url), 'utf8')
-        .replace('</script>', '\ndefineExpose({save})\n</script>')
+        .replace('</script>', '\ndefineExpose({save, food, unit, label, quantity, price, newPackageExplicitFree, catalogSearch})\n</script>')
     const {descriptor, errors} = parse(unitSource, {filename})
     assert.deepEqual(errors, [])
     let code = compileScript(descriptor, {id: `role-page-${id}`, inlineTemplate: true,
@@ -108,7 +108,7 @@ async function mount(transport) {
     }
     const instance = app.mount(root)
     await flush()
-    return {root, calls, submit: () => instance.save(), close() { app.unmount(); globalThis.__cuadernoRolePageUnit.delete(id) }}
+    return {root, calls, draft: instance, submit: () => instance.save(), close() { app.unmount(); globalThis.__cuadernoRolePageUnit.delete(id) }}
 }
 
 test('uses the existing edition request and ignores a late role from an aborted load', async () => {
@@ -296,5 +296,57 @@ test('catalog search matches Spanish names and can be cleared without loading or
         search.props['onUpdate:modelValue'](null);await flush()
         assert.ok(button(mounted.root,'Cebolla — Saco'))
         assert.equal(mounted.calls.length,2)
+    } finally {mounted.close()}
+})
+
+
+test('successful format creation clears and closes the draft so a second click cannot duplicate it', async () => {
+    let rejected = true
+    const mounted = await mount((url, options) => {
+        if (options.method === 'POST') return rejected ? {ok:false,status:503,data:{detail:'offline'}} : {ok:true,status:201,data:{id:9}}
+        return {ok:true,status:200,data:url === '/api/cuaderno/packages/' ? [] : {currency:'EUR',operational_role:role('user')}}
+    })
+    try {
+        await button(mounted.root, 'Nuevo formato').props.onClick(); await flush()
+        Object.assign(mounted.draft, {food:{id:2},unit:{id:3},label:'Garrafa',quantity:'5',price:'32,00'})
+        await mounted.submit(); await flush()
+        assert.equal(mounted.draft.label, 'Garrafa', 'a failed write preserves the form')
+        assert.ok(button(mounted.root, 'Guardar formato'))
+        rejected = false
+        mounted.draft.catalogSearch = 'aceite'
+        await mounted.submit(); await flush()
+        assert.equal(button(mounted.root, 'Guardar formato'), undefined)
+        assert.equal(mounted.draft.food, null)
+        assert.equal(mounted.draft.unit, null)
+        assert.equal(mounted.draft.label, '')
+        assert.equal(mounted.draft.quantity, '')
+        assert.equal(mounted.draft.price, '')
+        assert.equal(mounted.draft.catalogSearch, '')
+        await mounted.submit(); await flush()
+        assert.equal(mounted.calls.filter(call => call.options.method === 'POST').length, 2, 'repeated submit does not recreate the saved format')
+        await button(mounted.root, 'Nuevo formato').props.onClick(); await flush()
+        assert.ok(button(mounted.root, 'Guardar formato'), 'the next format starts with a fresh draft')
+    } finally {mounted.close()}
+})
+
+
+test('a create response preserves a newer draft and search instead of clearing changed context', async () => {
+    let resolveWrite
+    const mounted = await mount((url, options) => {
+        if (options.method === 'POST') return new Promise(resolve => {resolveWrite = resolve})
+        return {ok:true,status:200,data:url === '/api/cuaderno/packages/' ? [] : {currency:'EUR',operational_role:role('user')}}
+    })
+    try {
+        await button(mounted.root, 'Nuevo formato').props.onClick(); await flush()
+        Object.assign(mounted.draft, {food:{id:2},unit:{id:3},label:'Garrafa',quantity:'5',price:'32,00',catalogSearch:'aceite'})
+        const pending = mounted.submit(); await flush()
+        mounted.draft.label = 'Botella'
+        mounted.draft.catalogSearch = 'vinagre'
+        resolveWrite({ok:true,status:201,data:{id:9}})
+        await pending; await flush()
+        assert.equal(mounted.draft.label, 'Botella')
+        assert.equal(mounted.draft.catalogSearch, 'vinagre')
+        assert.ok(button(mounted.root, 'Guardar formato'))
+        assert.match(textOf(mounted.root), /Garrafa.*guardado/)
     } finally {mounted.close()}
 })

@@ -53,8 +53,8 @@ provide(RECIPE_SHARE_TOKEN_KEY, shareToken)
 const servings = computed(() => {
     const value = params.servings
     if (!value) return undefined
-    const parsed = parseInt(value as string, 10)
-    return parsed > 0 ? parsed : undefined
+    const parsed = Number(value)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
 })
 
 const recipe = ref({} as Recipe)

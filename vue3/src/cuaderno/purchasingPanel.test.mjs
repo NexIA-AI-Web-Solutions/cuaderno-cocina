@@ -74,7 +74,7 @@ test('pending receipt locks context controls and clears only its unchanged draft
     const root = {type: 'root', props: {}, children: [], parent: null}
     const app = renderer().createApp(component)
     for (const name of ['v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-subtitle', 'v-card-text', 'v-select', 'v-autocomplete', 'v-text-field', 'v-checkbox',
-        'v-btn', 'v-alert', 'v-spacer', 'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-progress-linear', 'v-table']) {
+        'v-dialog', 'v-card-actions', 'v-btn', 'v-alert', 'v-spacer', 'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-progress-linear', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false, props: {modelValue: {default: null}, label: String, disabled: Boolean, loading: Boolean}, emits: ['update:modelValue'],
             setup(props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name, {...context.attrs, ...props, 'onUpdate:modelValue': value => context.emit('update:modelValue', value)}, [context.slots.default?.(), context.slots.append?.()]) }}))
     }
@@ -147,7 +147,7 @@ test('Consulta keeps purchase history readable while every write control is disa
     const root = {type: 'root', props: {}, children: [], parent: null}
     const app = renderer().createApp(component, {canOperate: false})
     for (const name of ['v-row', 'v-col', 'v-card', 'v-card-title', 'v-card-subtitle', 'v-card-text', 'v-select', 'v-autocomplete', 'v-text-field', 'v-checkbox',
-        'v-btn', 'v-alert', 'v-spacer', 'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-progress-linear', 'v-table']) {
+        'v-dialog', 'v-card-actions', 'v-btn', 'v-alert', 'v-spacer', 'v-list', 'v-list-item', 'v-list-item-title', 'v-list-item-subtitle', 'v-progress-linear', 'v-table']) {
         app.component(name, Vue.defineComponent({inheritAttrs: false, props: {modelValue: {default: null}, label: String, disabled: Boolean, loading: Boolean}, emits: ['update:modelValue'],
             setup(props, context) { return () => Vue.h(name === 'v-btn' ? 'button' : name, {...context.attrs, ...props, 'onUpdate:modelValue': value => context.emit('update:modelValue', value)}, [context.slots.default?.(), context.slots.append?.()]) }}))
     }

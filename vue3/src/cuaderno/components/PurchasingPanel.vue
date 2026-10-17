@@ -55,12 +55,14 @@
                         return-object
                         clearable
                         label="Oferta (opcional)"
-                        :disabled="!props.canOperate"
+                        :disabled="!props.canOperate || !draft.package || !draft.supplier?.id"
+                        hint="Selecciona primero el formato y el proveedor."
+                        persistent-hint
                         no-data-text="No hay ofertas para este formato y proveedor"
                     />
                     <v-text-field v-model="draft.packageCount" label="Número de envases" inputmode="decimal" :disabled="!props.canOperate" />
                     <v-alert v-if="draft.package" type="info" variant="tonal" class="mb-3">
-                        Cantidad del pedido: {{ draftQuantity || '—' }} {{ draft.package.unit_name }}.
+                        Cantidad del pedido: {{ quantityLabel(draftQuantity) }} {{ draft.package.unit_name }}.
                     </v-alert>
                     <v-btn color="primary" min-height="44" :loading="savingOrder" :disabled="!props.canOperate" @click="saveOrder">Crear borrador</v-btn>
                     <p class="mt-2" role="status" aria-live="polite">{{ orderMessage }}</p>
@@ -114,7 +116,7 @@
                                         min-height="44"
                                         :loading="busyOrder === order.id"
                                         :disabled="!props.canOperate"
-                                        @click="changeOrder(order, 'cancel')"
+                                        @click="requestPurchaseAction('cancel', order)"
                                     >Cancelar</v-btn>
                                     <v-btn
                                         v-if="['ordered', 'part_received'].includes(order.state)"
@@ -134,10 +136,12 @@
                             <div v-if="receiptOrder?.id === order.id" class="receipt-form mt-3 pa-3 rounded border">
                                 <p class="font-weight-medium mb-2">Recibir {{ order.supplier_name || `pedido ${order.id}` }}</p>
                                 <v-model-select
+                                    :key="order.id"
                                     v-model="receipt.entry"
                                     model="InventoryEntry"
                                     label="Existencia de destino"
-                                    hint="Debe ser el mismo alimento y hogar del pedido"
+                                    :search-parameters="{foodId: order.food ?? packages.find(item => item.id === order.package)?.food, empty: true}"
+                                    hint="Selecciona una ubicación del mismo hogar. También aparecen existencias con saldo cero."
                                     persistent-hint
                                     search-on-load
                                     :disabled="receiving || !props.canOperate"
@@ -173,7 +177,7 @@
                                                 min-height="44"
                                                 :loading="reversingReceipt === document.id"
                                                 :disabled="!props.canOperate"
-                                                @click="reverseReceipt(order, document)"
+                                                @click="requestPurchaseAction('reverse', order, document)"
                                             >Revertir recepción</v-btn>
                                         </template>
                                     </v-list-item>
@@ -256,6 +260,21 @@
             </v-card>
         </v-col>
     </v-row>
+    <v-dialog :model-value="!!confirmation" :persistent="confirming" max-width="520" :aria-label="confirmation?.kind === 'reverse' ? 'Revertir recepción' : 'Cancelar pedido'" @update:model-value="value => { if (!value) dismissPurchaseAction() }">
+        <v-card v-if="confirmation">
+            <v-card-title>{{ confirmation.kind === 'reverse' ? 'Revertir recepción' : 'Cancelar pedido' }}</v-card-title>
+            <v-card-text>
+                <p class="font-weight-medium mb-3">{{ orderName(confirmation.order) }}</p>
+                <p v-if="confirmation.kind === 'reverse'">Se retirarán del inventario {{ quantityLabel(confirmation.document?.quantity ?? null) }} {{ unitName(confirmation.order) }} de esta recepción. El documento original se conservará en el historial.</p>
+                <p v-else>Se cancelará la parte pendiente del pedido. Las cantidades ya recibidas seguirán en el inventario.</p>
+                <v-alert v-if="confirmationError" type="error" variant="tonal" class="mt-3" role="alert">{{ confirmationError }}</v-alert>
+            </v-card-text>
+            <v-card-actions class="flex-wrap">
+                <v-btn min-height="44" :disabled="confirming" @click="dismissPurchaseAction">Volver sin cambios</v-btn>
+                <v-btn color="error" min-height="44" :loading="confirming" :disabled="!props.canOperate || confirming" @click="confirmPurchaseAction">{{ confirmation.kind === 'reverse' ? 'Confirmar reversión' : 'Confirmar cancelación' }}</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
     </div>
 </template>
 
@@ -311,8 +330,11 @@ const orderMessage = ref('')
 const ordersMessage = ref('')
 const receiptMessage = ref('')
 const replenishmentMessage = ref('')
+const confirmation = ref<{kind: 'cancel' | 'reverse'; order: Order; document?: ReceiptDocument} | null>(null)
+const confirmationError = ref('')
+const confirming = ref(false)
 
-function packageLabel(item: Package) { return `${item.food_name} · ${item.label} (${item.quantity} ${item.unit_name})` }
+function packageLabel(item: Package) { return `${item.food_name} · ${item.label} (${quantityLabel(item.quantity)} ${item.unit_name})` }
 function offerLabel(item: Offer) { return `${item.amount} ${item.currency} · ${new Date(item.valid_from).toLocaleDateString('es-ES')}` }
 function orderName(order: Order) {
     const item = packages.value.find(item => item.id === order.package)
@@ -336,6 +358,10 @@ function decimalText(integer: bigint, scale: number) {
     let value = scale ? `${digits.slice(0, -scale)}.${digits.slice(-scale)}` : digits
     if (scale) value = value.replace(/0+$/, '').replace(/\.$/, '')
     return `${negative ? '-' : ''}${value}`
+}
+function quantityLabel(value: string | null) {
+    const parts = value === null ? null : decimalParts(value)
+    return parts ? decimalText(parts.integer, parts.scale).replace('.', ',') : '—'
 }
 function multiplyDecimal(left: string, right: string) {
     const a = decimalParts(left); const b = decimalParts(right)
@@ -438,9 +464,37 @@ async function changeOrder(order: Order, action: 'order' | 'cancel') {
     if (result.ok) {
         const saved = purchaseOrders([result.data])
         if (saved === null || saved[0]?.id !== order.id) ordersMessage.value = 'El servidor no confirmó el estado del pedido. Actualiza la lista.'
-        else { Object.assign(order, saved[0]); ordersMessage.value = '' }
+        else { Object.assign(order, saved[0]); ordersMessage.value = ''; return true }
     }
     else ordersMessage.value = apiError(result.status, result.data)
+    return false
+}
+
+function requestPurchaseAction(kind: 'cancel' | 'reverse', order: Order, document?: ReceiptDocument) {
+    if (!props.canOperate || confirming.value || receiving.value || busyOrder.value !== null || reversingReceipt.value !== null) return
+    if (kind === 'reverse' && (!document || document.reversed_by !== null)) return
+    confirmationError.value = ''
+    confirmation.value = {kind, order, document}
+}
+function dismissPurchaseAction() {
+    if (confirming.value) return
+    confirmation.value = null
+    confirmationError.value = ''
+}
+async function confirmPurchaseAction() {
+    const action = confirmation.value
+    if (!action || !props.canOperate || confirming.value) return
+    confirming.value = true
+    confirmationError.value = ''
+    try {
+        const ok = action.kind === 'cancel'
+            ? await changeOrder(action.order, 'cancel')
+            : action.document && await reverseReceipt(action.order, action.document)
+        if (ok) confirmation.value = null
+        else confirmationError.value = ordersMessage.value || 'No se pudo completar la operación. Revisa el estado y vuelve a intentarlo.'
+    } finally {
+        confirming.value = false
+    }
 }
 
 function openReceipt(order: Order) {
@@ -460,6 +514,11 @@ async function receive(order: Order) {
     if (receiving.value) return
     const quantity = decimalInput(receipt.quantity)
     if (!receipt.entry?.id || !quantity) { receiptMessage.value = 'Selecciona la existencia de destino e indica la cantidad recibida.'; return }
+    if ((order.food && receipt.entry.food?.id !== order.food)
+        || (order.household && receipt.entry.inventoryLocation?.household?.id !== order.household)) {
+        receiptMessage.value = 'El destino debe corresponder al mismo alimento y hogar del pedido.'
+        return
+    }
     const payload = {entry: receipt.entry.id, quantity}
     const submittedDraft = {order: order.id, entry: receipt.entry.id as number, quantity: receipt.quantity}
     receiving.value = true
@@ -497,8 +556,9 @@ async function reverseReceipt(order: Order, document: ReceiptDocument) {
     reversingReceipt.value = document.id
     const result = await readJson(await cuadernoFetch(`/api/cuaderno/purchase-receipts/${document.id}/reverse/`, {method: 'POST', body: JSON.stringify({idempotency_key: `cuaderno-ui-purchase-reversal-${document.id}`})}))
     reversingReceipt.value = null
-    if (result.ok) await Promise.all([loadOrders(), loadReceipts(order.id)])
-    else ordersMessage.value = apiError(result.status, result.data)
+    if (result.ok) { await Promise.all([loadOrders(), loadReceipts(order.id)]); return true }
+    ordersMessage.value = apiError(result.status, result.data)
+    return false
 }
 
 async function loadReplenishment() {
